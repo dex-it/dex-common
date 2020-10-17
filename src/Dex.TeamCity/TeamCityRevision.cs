@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace Dex.TeamCity
             if (fileName != null)
             {
                 var split = fileName.Split('.');
-                result.Build = Convert.ToInt32(split[0]);
+                result.Build = Convert.ToInt32(split[0], CultureInfo.InvariantCulture);
                 result.Revision = content;
                 result.TeamCityRevision = fileName;
             }

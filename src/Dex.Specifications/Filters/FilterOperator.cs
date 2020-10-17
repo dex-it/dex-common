@@ -27,7 +27,7 @@ namespace Dex.Specifications.Filters
         {
             if (string.IsNullOrEmpty(typeName))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(typeName));
             }
 
             Type = typeName;

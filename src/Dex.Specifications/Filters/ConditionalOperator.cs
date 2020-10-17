@@ -32,7 +32,7 @@ namespace Dex.Specifications.Filters
 
             if (string.IsNullOrEmpty(propertyName))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(propertyName));
             }
 
             Property = propertyName;

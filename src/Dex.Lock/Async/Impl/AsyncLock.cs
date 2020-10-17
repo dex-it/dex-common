@@ -30,8 +30,8 @@ namespace Dex.Lock.Async.Impl
 
             try
             {
-                await _semaphore.WaitAsync();
-                await asyncAction();
+                await _semaphore.WaitAsync().ConfigureAwait(false);
+                await asyncAction().ConfigureAwait(false);
             }
             finally
             {

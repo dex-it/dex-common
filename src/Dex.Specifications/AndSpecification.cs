@@ -38,7 +38,7 @@ namespace Dex.Specifications
             get
             {
                 Expression<Func<T, bool>> result = Specifications.First();
-                return Specifications.Skip(1).Aggregate(result, (current, specification) => current.And((Expression<Func<T, bool>>)specification));
+                return Specifications.Skip(1).Aggregate(result, (current, specification) => current.And(specification));
             }
         }
     }

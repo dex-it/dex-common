@@ -25,7 +25,7 @@ namespace Dex.PdfGenerator.Providers
                 .UseMemoryCachingProvider()
                 .Build();
 
-            var html = await engine.CompileRenderAsync(_templateKey ?? Guid.NewGuid().ToString(), _templateString, _model);
+            var html = await engine.CompileRenderAsync(_templateKey ?? Guid.NewGuid().ToString(), _templateString, _model).ConfigureAwait(false);
             return _staticPathProvider == null ? html : html.Replace("{Provider}", _staticPathProvider.GetBaseUri());
         }
     }

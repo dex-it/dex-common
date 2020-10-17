@@ -19,13 +19,8 @@ namespace Dex.Specifications.Filters
         /// <exception cref="ArgumentNullException">Логический оператор не задан</exception>
         public ConditionBuilder(BooleanOperator booleanOperator)
         {
-            if (booleanOperator == null)
-            {
-                throw new ArgumentNullException();
-            }
-
             _typeName = typeof(T).AssemblyQualifiedName;
-            _operator = booleanOperator;
+            _operator = booleanOperator ?? throw new ArgumentNullException(nameof(booleanOperator));
         }
 
 

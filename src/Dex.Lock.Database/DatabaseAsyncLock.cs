@@ -26,7 +26,7 @@ namespace Dex.Lock.Database
             ExecuteCommand($"CREATE TABLE {tableName} (CODE integer);");
             try
             {
-                await asyncAction();
+                await asyncAction().ConfigureAwait(false);
             }
             finally
             {

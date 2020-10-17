@@ -53,7 +53,7 @@ namespace Dex.PdfGenerator
             {
                 PaperSize = PaperKind.A4,
                 DPI = 300,
-                Orientation = DinkToPdf.Orientation.Landscape,
+                Orientation = Orientation.Landscape,
                 Out = Guid.NewGuid() + ".pdf",
             };
 

@@ -48,8 +48,6 @@ namespace Dex.Lock.RwLock
                 case LockMode.Write:
                     _locker.ExitWriteLock();
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
         }
     }

@@ -29,7 +29,7 @@ namespace Dex.Buffer
         {
             if (maxCount <= 0) throw new ArgumentOutOfRangeException(nameof(maxCount));
 
-            if (_queue.Count == 0)
+            if (_queue.IsEmpty)
             {
                 return;
             }
@@ -48,8 +48,6 @@ namespace Dex.Buffer
         {
             _timer.Dispose();
         }
-
-        //
 
         private void Process()
         {

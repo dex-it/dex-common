@@ -57,7 +57,7 @@ namespace Dex.Extensions
 
             foreach (var obj in source)
             {
-                await action(obj);
+                await action(obj).ConfigureAwait(false);
             }
         }
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -28,7 +27,7 @@ namespace Dex.Lock.TestProject
 
             var tasks = Enumerable.Range(1, 25).Select(i => aLock.LockAsync(() => AppendToListTask(list))).ToList();
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
 
             foreach (var x in list)
             {
