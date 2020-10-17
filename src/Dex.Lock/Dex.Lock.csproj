@@ -3,7 +3,6 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <PackageTags>dex; lock</PackageTags>
-        <PackageLicenseUrl>https://github.com/dex-it/dex-common/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/dex-it/dex-common</RepositoryUrl>
         <Copyright>dex</Copyright>
         <PackageProjectUrl>https://github.com/dex-it/dex-common/projects/1</PackageProjectUrl>
