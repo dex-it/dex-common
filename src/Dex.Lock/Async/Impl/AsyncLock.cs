@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Dex.Lock.Async.Impl
 {
-    public class AsyncLock : IAsyncLock
+    public class AsyncLock : IAsyncLock, IDisposable
     {
         [NotNull]
         private readonly SemaphoreSlim _semaphore;
@@ -17,6 +17,13 @@ namespace Dex.Lock.Async.Impl
             _semaphore = new SemaphoreSlim(1);
         }
 
+        /// <summary>
+        /// Выполняет блокировку задачи (Task), все задачи запущенные через LockAsync будут выполнятся последовательно
+        /// </summary>
+        /// <param name="asyncAction"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ObjectDisposedException"></exception>
         public async Task LockAsync(Func<Task> asyncAction)
         {
             if (asyncAction == null) throw new ArgumentNullException(nameof(asyncAction));
@@ -32,6 +39,13 @@ namespace Dex.Lock.Async.Impl
             }
         }
 
+        /// <summary>
+        /// Action будет разделять блоировку совместно с задачами (Task) запущеными через LockAsync и будет выполнятся последовательно 
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ObjectDisposedException"></exception>
         public Task LockAsync(Action action)
         {
             if (action == null) throw new ArgumentNullException(nameof(action));
@@ -43,6 +57,11 @@ namespace Dex.Lock.Async.Impl
             }
 
             return LockAsync(Act);
+        }
+
+        public void Dispose()
+        {
+            _semaphore?.Dispose();
         }
     }
 }
