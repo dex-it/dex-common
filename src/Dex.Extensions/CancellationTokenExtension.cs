@@ -13,6 +13,7 @@ namespace Dex.Extensions
 
         public static CancellationTokenSource CreateLinkedSourceWithTimeout(this CancellationTokenSource tokenSource, TimeSpan timeout)
         {
+            if (tokenSource == null) throw new ArgumentNullException(nameof(tokenSource));
             return CreateLinkedSourceWithTimeout(tokenSource.Token, timeout);
         }
     }
