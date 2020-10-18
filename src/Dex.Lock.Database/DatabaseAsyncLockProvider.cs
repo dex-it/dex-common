@@ -33,7 +33,7 @@ namespace Dex.Lock.Database
 
         private string CreateKey(T key)
         {
-            return _instanceId + key.ToString().Replace("-", "");
+            return _instanceId + key.ToString().Replace("-", "", StringComparison.InvariantCulture);
         }
     }
 }
