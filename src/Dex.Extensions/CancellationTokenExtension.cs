@@ -1,13 +1,16 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace Dex.Extensions
 {
     public static class CancellationTokenExtension
     {
+        [SuppressMessage("Microsoft.Reliability", "CA2000")]
         public static CancellationTokenSource CreateLinkedSourceWithTimeout(this CancellationToken token, TimeSpan timeout)
         {
-            using var cancellationTokenSource = new CancellationTokenSource(timeout);
+            var cancellationTokenSource = new CancellationTokenSource(timeout);
+            cancellationTokenSource.Token.Register(() => cancellationTokenSource.Dispose());
             return CancellationTokenSource.CreateLinkedTokenSource(token, cancellationTokenSource.Token);
         }
 
