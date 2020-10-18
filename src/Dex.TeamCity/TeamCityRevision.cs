@@ -27,14 +27,18 @@ namespace Dex.TeamCity
         {
             if (File.Exists(zipFileName))
             {
-                using var archive = ZipFile.OpenRead(zipFileName);
-                var file = GetRevisionFile(archive.Entries.Select(e => e.FullName));
-                if (file != null)
+                using (var archive = ZipFile.OpenRead(zipFileName))
                 {
-                    var entry = archive.Entries.First(e => e.FullName == file);
-                    using var entryStream = entry.Open();
-                    using TextReader reader = new StreamReader(entryStream);
-                    return GetDto(file, reader.ReadToEnd());
+                    var file = GetRevisionFile(archive.Entries.Select(e => e.FullName));
+                    if (file != null)
+                    {
+                        var entry = archive.Entries.First(e => e.FullName == file);
+                        using var entryStream = entry.Open();
+                        using (TextReader reader = new StreamReader(entryStream))
+                        {
+                            return GetDto(file, reader.ReadToEnd());
+                        }
+                    }
                 }
             }
 
