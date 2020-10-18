@@ -19,7 +19,7 @@ namespace Dex.Extensions.TestProject
             try
             {
                 using (var cts1 = new CancellationTokenSource(200.MilliSeconds()))
-                using (var cts2 = cts1.CreateLinkedSourceWithTimeout(100.MilliSeconds()))
+                using (var cts2 = cts1.CreateLinkedSourceWithTimeout(20.MilliSeconds()))
                 {
                     await Task.Delay(1.Seconds(), cts2.Token).ConfigureAwait(false);
                 }
@@ -40,7 +40,7 @@ namespace Dex.Extensions.TestProject
             try
             {
                 using (var cts1 = new CancellationTokenSource(200.MilliSeconds()))
-                using (var cts2 = cts1.Token.CreateLinkedSourceWithTimeout(100.MilliSeconds()))
+                using (var cts2 = cts1.Token.CreateLinkedSourceWithTimeout(20.MilliSeconds()))
                 {
                     await Task.Delay(1.Seconds(), cts2.Token).ConfigureAwait(false);
                 }
