@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -24,18 +26,24 @@ namespace Dex.Extensions
 
         public static byte[] GetMd5Hash(this string value, Encoding encoding)
         {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (encoding == null) throw new ArgumentNullException(nameof(encoding));
             using var md5 = MD5.Create();
             return md5.ComputeHash(encoding.GetBytes(value));
         }
 
         public static byte[] GetSha256Hash(this string value, Encoding encoding)
         {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (encoding == null) throw new ArgumentNullException(nameof(encoding));
             using var sha256 = SHA256.Create();
             return sha256.ComputeHash(encoding.GetBytes(value));
         }
 
         public static byte[] GetSha1Hash(this string value, Encoding encoding)
         {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (encoding == null) throw new ArgumentNullException(nameof(encoding));
             using var sha1 = SHA1.Create();
             return sha1.ComputeHash(encoding.GetBytes(value));
         }
@@ -76,7 +84,7 @@ namespace Dex.Extensions
 
             foreach (var b in hash)
             {
-                sb.Append(b.ToString("x2"));
+                sb.Append(b.ToString("x2", CultureInfo.InvariantCulture));
             }
 
             return sb.ToString();
