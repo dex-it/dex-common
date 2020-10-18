@@ -43,7 +43,7 @@ namespace Dex.Extensions
             var propertyInfo = declaringType.GetTypeInfo().GetProperty(propertyName);
             if (propertyInfo == null)
             {
-                throw new ArgumentException($"Type {declaringType} does not contain property {propertyName}", nameof(propertyName));
+                throw new ArgumentException($"Type \"{declaringType}\" does not contain property \"{propertyName}\"", nameof(propertyName));
             }
 
             var instance = Expression.Parameter(typeof(object), "i");
