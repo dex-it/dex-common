@@ -11,6 +11,7 @@ namespace Dex.Buffer
         private readonly TimeSpan _period;
         private readonly Action<T[]> _onFlush;
         private readonly Timer _timer;
+        private bool _isDisposed;
 
         public TimeBuffer(TimeSpan period, Action<T[]> onFlush)
         {
@@ -18,6 +19,7 @@ namespace Dex.Buffer
             _period = period;
             _timer = new Timer(state => Process(), null, Timeout.Infinite, Timeout.Infinite);
             _timer.Change((int) period.TotalMilliseconds, Timeout.Infinite);
+            _isDisposed = false;
         }
 
         public void Enqueue(T obj)
@@ -46,7 +48,17 @@ namespace Dex.Buffer
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed || !disposing) return;
+
             _timer.Dispose();
+
+            _isDisposed = true;
         }
 
         private void Process()
