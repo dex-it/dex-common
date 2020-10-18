@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace Dex.Inflector
 {
-    public static class Inflector
+    public static class NameInflector
     {
         private static readonly List<Rule> Plurals = new List<Rule>();
         private static readonly List<Rule> Singulars = new List<Rule>();
@@ -16,7 +16,7 @@ namespace Dex.Inflector
 
         #region Default Rules
 
-        static Inflector()
+        static NameInflector()
         {
             AddPlural("$", "s");
             AddPlural("s$", "s");
