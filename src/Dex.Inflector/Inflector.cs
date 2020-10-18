@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using JetBrains.Annotations;
 
 namespace Dex.Inflector
 {
-    [PublicAPI]
     public static class Inflector
     {
         private static readonly List<Rule> Plurals = new List<Rule>();
