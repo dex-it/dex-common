@@ -15,6 +15,7 @@ namespace Dex.Extensions
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design","CA1031")]
         public static void SafeDispose(this IDisposable disposable, Action<IDisposable, Exception> exceptionHandler = null)
         {
             try

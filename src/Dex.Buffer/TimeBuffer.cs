@@ -61,6 +61,7 @@ namespace Dex.Buffer
             _isDisposed = true;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031")]
         private void Process()
         {
             try
