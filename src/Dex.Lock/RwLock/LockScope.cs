@@ -6,18 +6,22 @@ namespace Dex.Lock.RwLock
 {
     public class LockScope : IDisposable
     {
+        private bool _isDisposed;
         private readonly ReaderWriterLockSlim _locker;
         private readonly LockMode _lmMode;
 
         internal enum LockMode
         {
-            Read, Upgrade, Write
+            Read,
+            Upgrade,
+            Write
         }
 
         internal LockScope([NotNull] ReaderWriterLockSlim locker, LockMode lmMode)
         {
             _locker = locker ?? throw new ArgumentNullException(nameof(locker));
             _lmMode = lmMode;
+            _isDisposed = false;
 
             switch (lmMode)
             {
@@ -37,6 +41,14 @@ namespace Dex.Lock.RwLock
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed || !disposing) return;
+            
             switch (_lmMode)
             {
                 case LockMode.Read:
@@ -49,6 +61,8 @@ namespace Dex.Lock.RwLock
                     _locker.ExitWriteLock();
                     break;
             }
+
+            _isDisposed = true;
         }
     }
 }

@@ -7,18 +7,24 @@ using DinkToPdf;
 
 namespace Dex.PdfGenerator
 {
-    public class PdfGenerator : IPdfGenerator
+    public class PdfGenerator : IPdfGenerator, IDisposable
     {
-        private SynchronizedConverter _synchronizedConverter; 
+        private readonly SynchronizedConverter _synchronizedConverter; 
+        private PdfTools _pdfTools; 
+        private bool _isDisposed;
         
         public PdfGenerator()
         {
-            _synchronizedConverter = new SynchronizedConverter(new PdfTools());
+            _isDisposed = false;
+            _pdfTools = new PdfTools();
+            _synchronizedConverter = new SynchronizedConverter(_pdfTools);
         }
         
         public async Task<string> Generate(IHtmlProvider provider, PdfGeneratorSettings settings = null)
         {
-            var html = await provider.GetHtml();
+            if (provider == null) throw new ArgumentNullException(nameof(provider));
+            
+            var html = await provider.GetHtml().ConfigureAwait(false);
             
             return CreatePdf(html, settings);
         }
@@ -74,6 +80,25 @@ namespace Dex.PdfGenerator
             globalSettings.DocumentTitle = settings.DocumentTitle ?? Path.GetFileNameWithoutExtension(outFile); 
 
             return globalSettings;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed || !disposing) return;
+
+            if (_pdfTools != null)
+            {
+               ((IDisposable) _pdfTools).Dispose();
+               _pdfTools = null;
+            }
+
+            _isDisposed = true;
         }
     }
 }
