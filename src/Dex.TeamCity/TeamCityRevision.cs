@@ -1,13 +1,9 @@
-﻿#region usings
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-
-#endregion
 
 namespace Dex.TeamCity
 {

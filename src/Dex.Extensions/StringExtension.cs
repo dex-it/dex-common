@@ -70,8 +70,6 @@ namespace Dex.Extensions
             return GetSha1HashString(value, Encoding.UTF8);
         }
 
-        #region private
-
         private static string GetStringFromHash(IEnumerable<byte> hash)
         {
             var sb = new StringBuilder();
@@ -83,7 +81,5 @@ namespace Dex.Extensions
 
             return sb.ToString();
         }
-
-        #endregion
     }
 }
