@@ -55,9 +55,9 @@ namespace Dex.Specifications.Filters
         /// <exception cref="ArgumentException">Тип аргумента не соответствует типу фильтра</exception>
         public bool IsSatisfiedBy(object item)
         {
-            if (item != null && TargetType != item.GetType() && TargetType.GetTypeInfo().IsAssignableFrom(item.GetType()))
+            if (item != null && TargetType != item.GetType() && TargetType.GetTypeInfo().IsInstanceOfType(item))
             {
-                throw new ArgumentException();
+                throw new ArgumentOutOfRangeException(nameof(item));
             }
 
             try
@@ -121,9 +121,17 @@ namespace Dex.Specifications.Filters
         /// <exception cref="ArgumentException">Типы операторов не совпадают</exception>
         public static FilterOperator operator |(FilterOperator left, FilterOperator right)
         {
-            if (left.TargetType != right.TargetType)
+            if (left == null)
             {
-                throw new ArgumentException();
+                return right;
+            }
+            else if (right == null)
+            {
+                return left;
+            }
+            else if (left.TargetType != right.TargetType)
+            {
+                throw new ArgumentOutOfRangeException(nameof(right), $"Expected  TargetType \"{left.TargetType}\"");
             }
 
             return new OrOperator(left.Type, left, right);
@@ -137,9 +145,17 @@ namespace Dex.Specifications.Filters
         /// <exception cref="ArgumentException">Типы операторов не совпадают</exception>
         public static FilterOperator operator &(FilterOperator left, FilterOperator right)
         {
-            if (left.TargetType != right.TargetType)
+            if (left == null)
             {
-                throw new ArgumentException();
+                return right;
+            }
+            else if (right == null)
+            {
+                return left;
+            }
+            else if (left.TargetType != right.TargetType)
+            {
+                throw new ArgumentOutOfRangeException(nameof(right), $"Expected  TargetType \"{left.TargetType}\"");
             }
 
             return new AndOperator(left.Type, left, right);
