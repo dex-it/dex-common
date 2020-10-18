@@ -65,7 +65,7 @@ namespace Dex.PdfGenerator
 
             if (settings == null) return globalSettings;
 
-            if (settings?.PaperWidth > 0 && settings?.PaperHeight > 0)
+            if (settings.PaperWidth > 0 && settings.PaperHeight > 0)
             {
                 globalSettings.PaperSize = new PechkinPaperSize(settings.PaperWidth + "mm", settings.PaperHeight + "mm");
             }
