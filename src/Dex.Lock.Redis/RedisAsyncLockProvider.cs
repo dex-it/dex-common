@@ -17,12 +17,12 @@ namespace Dex.Lock.Redis
             _instanceId = instanceId ?? Guid.NewGuid().ToString("N");
         }
 
-        public IAsyncLock Get(T key)
+        public IAsyncLock GetLock(T key)
         {
             return new RedisAsyncLock(_database, CreateKey(key));
         }
 
-        public Task<bool> Remove(T key)
+        public Task<bool> RemoveLock(T key)
         {
             var asyncLock = new RedisAsyncLock(_database, CreateKey(key));
             return asyncLock.RemoveLockObject();

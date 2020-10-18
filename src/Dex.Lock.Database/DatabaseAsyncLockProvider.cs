@@ -17,13 +17,13 @@ namespace Dex.Lock.Database
             _instanceId = instanceId ?? Guid.NewGuid().ToString("N");
         }
 
-        public IAsyncLock Get([NotNull] T key)
+        public IAsyncLock GetLock([NotNull] T key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             return new DatabaseAsyncLock(_dbConnection, CreateKey(key));
         }
 
-        public Task<bool> Remove([NotNull] T key)
+        public Task<bool> RemoveLock([NotNull] T key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             var databaseAsyncLock = new DatabaseAsyncLock(_dbConnection, CreateKey(key));

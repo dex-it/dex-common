@@ -4,8 +4,8 @@ namespace Dex.Lock.Async
 {
     public interface IAsyncLockProvider<in T>
     {
-        IAsyncLock Get(T key);
+        IAsyncLock GetLock(T key);
 
-        Task<bool> Remove(T key);
+        Task<bool> RemoveLock(T key);
     }
 }
