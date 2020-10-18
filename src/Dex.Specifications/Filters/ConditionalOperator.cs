@@ -44,7 +44,7 @@ namespace Dex.Specifications.Filters
         /// <param name="typeName">Тип</param>
         /// <param name="propertyExpression">Лямбда-выражение доступа к свойству</param>
         protected ConditionalOperator(string typeName, LambdaExpression propertyExpression)
-            : this(typeName, propertyExpression.Body.ToString())
+            : this(typeName, propertyExpression?.Body.ToString())
         {
         }
 
@@ -96,7 +96,7 @@ namespace Dex.Specifications.Filters
                 var methodMatch = methodTemplate.Match(term);
 
                 result = methodMatch.Success
-                                ? Expression.Call(result, methodMatch.Groups["method"].Value, new Type[] { })
+                                ? Expression.Call(result, methodMatch.Groups["method"].Value, Array.Empty<Type>())
                                 : (Expression)Expression.PropertyOrField(result, term);
             }
 

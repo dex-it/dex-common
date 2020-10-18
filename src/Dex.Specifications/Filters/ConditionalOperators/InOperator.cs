@@ -25,6 +25,7 @@ namespace Dex.Specifications.Filters.ConditionalOperators
 
         protected override Expression CreateFilter(Expression property)
         {
+            if (property == null) throw new ArgumentNullException(nameof(property));
             // Value.Contains(property)
 
             Expression result;

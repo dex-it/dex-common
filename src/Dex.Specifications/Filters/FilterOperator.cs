@@ -105,6 +105,11 @@ namespace Dex.Specifications.Filters
         /// <param name="filterOperator">Оператор</param>
         public static FilterOperator operator !(FilterOperator filterOperator)
         {
+            if (filterOperator == null)
+            {
+                return null;
+            }
+
             return new NotOperator(filterOperator.Type, filterOperator);
         }
 

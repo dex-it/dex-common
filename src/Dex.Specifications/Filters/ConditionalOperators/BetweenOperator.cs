@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Linq.Expressions;
 using System.Runtime.Serialization;
 
 namespace Dex.Specifications.Filters.ConditionalOperators
@@ -67,6 +68,7 @@ namespace Dex.Specifications.Filters.ConditionalOperators
         /// <param name="property">Выражение для фильтруемого свойства</param>
         protected override Expression CreateFilter(Expression property)
         {
+            if (property == null) throw new ArgumentNullException(nameof(property));
             // property >= BeginValue && property <= EndValue
 
             Expression betweenExpression;

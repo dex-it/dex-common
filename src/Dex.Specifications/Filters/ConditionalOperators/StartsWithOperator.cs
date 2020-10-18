@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 
@@ -22,8 +23,18 @@ namespace Dex.Specifications.Filters.ConditionalOperators
 
         protected override Expression CreateFilter(Expression property)
         {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+            
+            const string startsWithMethodName = "StartsWith";
+            var startsWithMethodInfo = property.Type.GetTypeInfo()?.GetMethod(startsWithMethodName, new[] {typeof(string)});
+            if (startsWithMethodInfo == null)
+            {
+                throw new ArgumentException($"Type \"{property.Type}\" does not contain method \"{startsWithMethodName}\"", nameof(property));
+            }
+
+            
             // property.StartsWith(Value)
-            return Expression.Call(property, property.Type.GetTypeInfo().GetMethod("StartsWith", new[] { typeof(string) }), Expression.Constant(Value ?? string.Empty));
+            return Expression.Call(property, startsWithMethodInfo, Expression.Constant(Value ?? string.Empty));
         }
     }
 }
