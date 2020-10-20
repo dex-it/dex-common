@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -21,10 +22,10 @@ namespace Dex.Extensions.TestProject
                 using (var cts1 = new CancellationTokenSource(200.MilliSeconds()))
                 using (var cts2 = cts1.CreateLinkedSourceWithTimeout(20.MilliSeconds()))
                 {
-                    await Task.Delay(1.Seconds(), cts2.Token).ConfigureAwait(false);
+                    await Task.Delay(1.Seconds(), cts2.Token);
                 }
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException)
             {
                 Assert.Less(sw.ElapsedMilliseconds, 200.MilliSeconds().Milliseconds);
                 return;
@@ -42,10 +43,10 @@ namespace Dex.Extensions.TestProject
                 using (var cts1 = new CancellationTokenSource(200.MilliSeconds()))
                 using (var cts2 = cts1.Token.CreateLinkedSourceWithTimeout(20.MilliSeconds()))
                 {
-                    await Task.Delay(1.Seconds(), cts2.Token).ConfigureAwait(false);
+                    await Task.Delay(1.Seconds(), cts2.Token);
                 }
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException)
             {
                 Assert.Less(sw.ElapsedMilliseconds, 200.MilliSeconds().Milliseconds);
                 return;
