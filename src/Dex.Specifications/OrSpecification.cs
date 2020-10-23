@@ -9,7 +9,7 @@ namespace Dex.Specifications
     /// Объединение спецификаций по ИЛИ
     /// </summary>
     /// <typeparam name="T">Тип объекта, для которого применяется спецификация</typeparam>
-    class OrSpecification<T> : CompositeSpecification<T>
+    public class OrSpecification<T> : CompositeSpecification<T>
     {
         /// <summary>
         /// Конструктор
