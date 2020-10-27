@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 
@@ -14,15 +16,17 @@ namespace Dex.Specifications.TestProject
             var country = Guid.NewGuid();
             var employees = 5;
 
-            var sp = new Sp<Company>()
+            var sp = Sp<Company>
                 .Equal(c => c.Employees, employees)
                 .Equal(c => c.Id, id)
                 .Equal(c => c.CountryId, country);
 
-            var expected = $@"SELECT c.""Id"", c.""CountryId"", c.""Employees"", c.""Name""{Environment.NewLine}FROM ""Companies"" AS c{Environment.NewLine}WHERE ((c.""Employees"" = @__property_0) AND (c.""Id"" = @__property_1)) AND (c.""CountryId"" = @__property_2)";
+            Expression<Func<Company, bool>> query = c => c.Employees == employees && c.Id == id && c.CountryId == country;
 
-            var sql = GetSql(sp);
-            Assert.AreEqual(expected, sql);
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(expressionSql, specificationSql);
         }
 
         [Test]
@@ -30,14 +34,15 @@ namespace Dex.Specifications.TestProject
         {
             var companyNameFirst = "company1";
 
-            var sp = new Sp<Company>()
+            var sp = Sp<Company>
                 .Equal(c => c.Name, companyNameFirst);
 
-            var expected = $@"SELECT c.""Id"", c.""CountryId"", c.""Employees"", c.""Name""{Environment.NewLine}FROM ""Companies"" AS c{Environment.NewLine}WHERE (c.""Name"" = @__property_0) OR ((c.""Name"" IS NULL) AND (@__property_0 IS NULL))";
+            Expression<Func<Company, bool>> query = c => c.Name == companyNameFirst; 
 
-            var sql = GetSql(sp);
-
-            Assert.AreEqual(expected, sql);
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+            
+            Assert.AreEqual(specificationSql, expressionSql);
         }
 
         [Test]
@@ -46,15 +51,20 @@ namespace Dex.Specifications.TestProject
             var companyIdFirst = Guid.NewGuid();
             var companyIdSecond = Guid.NewGuid();
 
-            var sp = new Sp<Company>()
+            var sp2 = Sp<Company>
+                .Equal(c => c.Id, companyIdFirst)
+                .And(Sp<Company>.Equal(c => c.Id, companyIdSecond));
+
+            var sp = Sp<Company>
                 .Equal(c => c.Id, companyIdFirst)
                 .And(s => s.Equal(c => c.Id, companyIdSecond));
 
-            var expected = $@"SELECT c.""Id"", c.""CountryId"", c.""Employees"", c.""Name""{Environment.NewLine}FROM ""Companies"" AS c{Environment.NewLine}WHERE (c.""Id"" = @__property_0) AND (c.""Id"" = @__property_1)";
-
-            var sql = GetSql(sp);
+            Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst && c.Id == companyIdSecond; 
             
-            Assert.AreEqual(expected, sql);
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+            
+            Assert.AreEqual(specificationSql, expressionSql);
         }
 
         [Test]
@@ -63,15 +73,16 @@ namespace Dex.Specifications.TestProject
             var companyIdFirst = Guid.NewGuid();
             var companyIdSecond = Guid.NewGuid();
 
-            var sp = new Sp<Company>()
+            var sp = Sp<Company>
                 .Equal(c => c.Id, companyIdFirst)
-                .Or(s => s.Equal(c => c.Id, companyIdSecond));
+                .Or(Sp<Company>.Equal(c => c.Id, companyIdSecond));
 
-            var expected = $@"SELECT c.""Id"", c.""CountryId"", c.""Employees"", c.""Name""{Environment.NewLine}FROM ""Companies"" AS c{Environment.NewLine}WHERE (c.""Id"" = @__property_0) OR (c.""Id"" = @__property_1)";
-
-            var sql = GetSql(sp);
+            Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst || c.Id == companyIdSecond; 
             
-            Assert.AreEqual(expected, sql);
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+            
+            Assert.AreEqual(specificationSql, expressionSql);
         }
         
         [Test]
@@ -81,25 +92,45 @@ namespace Dex.Specifications.TestProject
             var companyFirstId = Guid.NewGuid();
             var companySecondId = Guid.NewGuid();
 
-            var sp = new Sp<Company>()
+            var sp = Sp<Company>
                 .Like(c => c.Name, companyName)
-                .And(s => s.Equal(c => c.CountryId, companyFirstId)
-                                         .Or(spec => spec.Equal(c => c.CountryId, companySecondId)));
+                .And(Sp<Company>.Equal(c => c.Id, companyFirstId)
+                                         .Or(Sp<Company>.Equal(c => c.Id, companySecondId)));
 
-            var expected = $@"SELECT c.""Id"", c.""CountryId"", c.""Employees"", c.""Name""{Environment.NewLine}FROM ""Companies"" AS c{Environment.NewLine}WHERE (c.""Name"" LIKE @__Format_1 ESCAPE '') AND ((c.""CountryId"" = @__property_2) OR (c.""CountryId"" = @__property_3))";
+            Expression<Func<Company, bool>> query = c => EF.Functions.Like(c.Name, $"%{companyName}%") && (c.Id == companyFirstId || c.Id == companySecondId); 
 
-            var sql = GetSql(sp);
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
 
-            Assert.AreEqual(expected, sql);
+            Assert.AreEqual(specificationSql, expressionSql);
         }
 
-        private string GetSql(Sp<Company> sp)
+        private string GetSql(Expression<Func<Company, bool>> expression)
+        {
+            var query = GetDbContext().Companies.Where(expression);
+            var sql = query.ToSql();
+
+            var regex = new Regex(@"\B@\w+");
+
+            var match = regex.Match(sql);
+
+            var counter = 0;
+            while (match.Success)
+            {
+                sql = sql.Replace(match.Value, $"paramProperty{counter++}");
+
+                match = regex.Match(sql);
+            }
+
+            return sql;
+        }
+
+        private DbContext GetDbContext()
         {
             var contextOptions = new DbContextOptionsBuilder().UseNpgsql("empty").Options;
-            
+
             var dbContext = new DbContext(contextOptions);
-            var query = dbContext.Companies.Where(sp);
-            return query.ToSql();
+            return dbContext;
         }
     }
 }
