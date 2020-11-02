@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Linq.Expressions;
 using Dex.Specifications.Expressions;
-using JetBrains.Annotations;
 
 namespace Dex.Specifications
 {
@@ -10,7 +9,6 @@ namespace Dex.Specifications
     /// Объединение спецификаций по И
     /// </summary>
     /// <typeparam name="T">Тип объекта, для которого применяется спецификация</typeparam>
-    [PublicAPI]
     class AndSpecification<T> : CompositeSpecification<T>
     {
         /// <summary>
