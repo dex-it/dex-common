@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Dex.Specifications.Expressions;
-using JetBrains.Annotations;
 
 namespace Dex.Specifications
 {
@@ -41,7 +40,7 @@ namespace Dex.Specifications
             }
         }
 
-        public Specification<TO> In<TO>([NotNull] Expression<Func<TO, T>> selector)
+        public Specification<TO> In<TO>(Expression<Func<TO, T>> selector)
         {
             if (selector == null) throw new ArgumentNullException(nameof(selector));
 
