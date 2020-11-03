@@ -10,7 +10,6 @@ namespace Dex.Lock.Async.Impl
 {
     [DebuggerTypeProxy(typeof(DebugView))]
     [DebuggerDisplay("Taken = {_taken == 1 ? true : false}")]
-    [SuppressMessage("Design", "CA1001:Типы, владеющие высвобождаемыми полями, должны быть высвобождаемыми", Justification = "Не содержит высвобождаемые ресурсы")]
     public sealed class AsyncLock : IAsyncLock
     {
         // Для добавления потока в очередь и удаления из очереди.
