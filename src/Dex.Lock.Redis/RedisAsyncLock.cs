@@ -1,7 +1,7 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
+using Dex.Lock.Async.Impl;
 using StackExchange.Redis;
 
 namespace Dex.Lock.Redis
@@ -13,7 +13,8 @@ namespace Dex.Lock.Redis
         private readonly IDatabase _database;
         private readonly string _key;
 
-        internal RedisAsyncLock([NotNull] IDatabase database, [NotNull] string key)
+        // TODO check database for support, dirty connection close, Danilov
+        internal RedisAsyncLock(IDatabase database, string key)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _key = key ?? throw new ArgumentNullException(nameof(key));
@@ -62,6 +63,11 @@ namespace Dex.Lock.Redis
             }
 
             await LockAsync(Act).ConfigureAwait(false);
+        }
+
+        public ValueTask<LockReleaser> LockAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

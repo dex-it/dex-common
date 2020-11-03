@@ -1,9 +1,9 @@
 using System;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
+using Dex.Lock.Async.Impl;
 
 namespace Dex.Lock.Database
 {
@@ -12,7 +12,8 @@ namespace Dex.Lock.Database
         private readonly IDbConnection _dataConnection;
         private readonly string _key;
 
-        internal DatabaseAsyncLock([NotNull] IDbConnection dataConnection, [NotNull] string key)
+        // TODO check database for support, dirty connection close, Danilov
+        internal DatabaseAsyncLock(IDbConnection dataConnection, string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             _dataConnection = dataConnection ?? throw new ArgumentNullException(nameof(dataConnection));
@@ -48,6 +49,20 @@ namespace Dex.Lock.Database
             return LockAsync(Act);
         }
 
+        public async ValueTask<LockReleaser> LockAsync()
+        {
+            var tableName = CreateTableName();
+            ExecuteCommand($"CREATE TABLE {tableName} (CODE integer);");
+            try
+            {
+                await asyncAction().ConfigureAwait(false);
+            }
+            finally
+            {
+                RemoveLockObject(tableName);
+            }
+        }
+
         internal void RemoveLockObject(string tableName)
         {
             ExecuteCommand($"DROP TABLE {tableName};");
@@ -58,7 +73,7 @@ namespace Dex.Lock.Database
             return $"LT_{_key}";
         }
 
-        private void ExecuteCommand([NotNull] string command)
+        private void ExecuteCommand(string command)
         {
             using var cmd = _dataConnection.CreateCommand();
             cmd.CommandText = command;

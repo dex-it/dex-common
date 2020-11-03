@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Dex.Lock.IntegrationalTest
+namespace Dex.Lock.DevelopmentTest
 {
     class Program
     {
@@ -19,10 +19,12 @@ namespace Dex.Lock.IntegrationalTest
             var task2 = locker.LockAsync();
 
             releaser1.Dispose();
+            releaser1.Dispose();
 
             Thread.Sleep(1000);
 
-            var releaser2 = await task1;        
+            var releaser2 = await task1;
+            releaser1.Dispose();
 
             Thread.Sleep(1000);
 
@@ -35,23 +37,6 @@ namespace Dex.Lock.IntegrationalTest
             var locker4 = await locker.LockAsync();
 
             locker4.Dispose();
-
-            //Task.Delay(3_000).ContinueWith(_ => releaser1.Dispose());
-
-            //var pendingTask1 = locker.LockAsync();
-            //var pendingTask2 = locker.LockAsync();
-
-            //var releaser1 = await pendingTask1;
-
-            //Debugger.Break();
-
-            //releaser1.Dispose();
-
-            //var releaser2 = await pendingTask2;
-
-            //Debugger.Break();
-
-            //releaser2.Dispose();
         }
     }
 }

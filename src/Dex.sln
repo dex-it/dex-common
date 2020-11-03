@@ -31,7 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Tests", "_Tests", "{DC15F5
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Lock.TestProject", "Tests\Dex.Lock.TestProject\Dex.Lock.TestProject.csproj", "{C2F2359D-ED4C-4AAE-80C4-6E2D3DA01BE4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Lock.IntegrationalTest", "Dex.Lock.IntegrationalTest\Dex.Lock.IntegrationalTest.csproj", "{5A9D9C7D-880A-41A1-B955-9FCBD0C0F373}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Lock.DevelopmentTest", "Dex.Lock.DevelopmentTest\Dex.Lock.DevelopmentTest.csproj", "{5A9D9C7D-880A-41A1-B955-9FCBD0C0F373}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

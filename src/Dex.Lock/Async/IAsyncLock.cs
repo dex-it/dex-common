@@ -1,13 +1,10 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Dex.Lock.Async.Impl;
 
 namespace Dex.Lock.Async
 {
     public interface IAsyncLock
     {
-        Task LockAsync(Func<Task> asyncAction);
-        Task LockAsync(Action action);
         ValueTask<LockReleaser> LockAsync();
     }
 }

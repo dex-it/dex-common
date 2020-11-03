@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
 using StackExchange.Redis;
@@ -11,7 +10,7 @@ namespace Dex.Lock.Redis
         private readonly IDatabase _database;
         private readonly string _instanceId;
 
-        public RedisAsyncLockProvider([NotNull] IDatabase database, string instanceId = null)
+        public RedisAsyncLockProvider(IDatabase database, string? instanceId = null)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _instanceId = instanceId ?? Guid.NewGuid().ToString("N");
@@ -22,6 +21,7 @@ namespace Dex.Lock.Redis
             return new RedisAsyncLock(_database, CreateKey(key));
         }
 
+        [Obsolete("Проверить снимается ли блокировка если обрыв соединения")]
         public Task<bool> RemoveLock(T key)
         {
             var asyncLock = new RedisAsyncLock(_database, CreateKey(key));

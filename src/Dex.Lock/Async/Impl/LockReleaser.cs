@@ -1,12 +1,9 @@
-﻿using Dex.Lock.Async.Impl;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using System.Text;
 
-namespace Dex.Lock.Async
+namespace Dex.Lock.Async.Impl
 {
     /// <summary>
     /// Держит блокировку <see cref="AsyncLock"/> до вызова Dispose.

@@ -1,17 +1,18 @@
-﻿using Dex.Lock.RwLock;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Dex.Lock.Async.Impl
 {
     [DebuggerTypeProxy(typeof(DebugView))]
-    [DebuggerDisplay("Taken = {System.Threading.Volatile.Read(ref _taken) == 1 ? true : false}")]
+    [DebuggerDisplay("Taken = {" + nameof(DebugDisplay) + "}")]
     public sealed class AsyncLock : IAsyncLock
     {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private bool DebugDisplay => Volatile.Read(ref _taken) == 1;
+
         // Для добавления потока в очередь и удаления из очереди.
         private readonly object _syncObj = new object();
 
@@ -32,11 +33,10 @@ namespace Dex.Lock.Async.Impl
         /// Когда блокировка захвачена таском.
         /// </summary>
         /// <remarks>Модификация через блокировку <see cref="_syncObj"/> или атомарно.</remarks>
-        internal int _taken;
+        private int _taken;
 
         public AsyncLock()
         {
-            
             _queue = new WaitQueue(this);
         }
 
@@ -46,31 +46,29 @@ namespace Dex.Lock.Async.Impl
         /// <exception cref="ArgumentNullException"></exception>
         public Task LockAsync(Func<Task> asyncAction)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (asyncAction != null)
             {
                 ValueTask<LockReleaser> lockTask = LockAsync();
 
-                if (lockTask.IsCompletedSuccessfully)
-                // Блокировка захвачена синхронно.
+                if (lockTask.IsCompletedSuccessfully) // Блокировка захвачена синхронно.
                 {
                     IDisposable? releaser = lockTask.Result;
                     try
                     {
                         Task userTask = asyncAction();
 
-                        if (userTask.IsCompletedSuccessfully())
-                        // Пользовательский метод выполнился синхронно.
+                        if (userTask.IsCompletedSuccessfully()) // Пользовательский метод выполнился синхронно.
                         {
                             return Task.CompletedTask; // Освободит блокировку.
                         }
-                        else
-                        // Будем ждать пользовательский метод.
+                        else // Будем ждать пользовательский метод.
                         {
                             IDisposable releaserCopy = releaser;
 
                             // Предотвратить преждевременный Dispose.
                             releaser = null;
-                            
+
                             return WaitUserActionAndRelease(userTask, releaserCopy);
 
                             static async Task WaitUserActionAndRelease(Task userTask, IDisposable releaser)
@@ -91,8 +89,7 @@ namespace Dex.Lock.Async.Impl
                         releaser?.Dispose();
                     }
                 }
-                else
-                // Блокировка занята другим потоком.
+                else // Блокировка занята другим потоком.
                 {
                     return WaitLockAsync(lockTask.AsTask(), asyncAction);
 
@@ -120,6 +117,7 @@ namespace Dex.Lock.Async.Impl
         /// <exception cref="ArgumentNullException"></exception>
         public Task LockAsync(Action action)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (action != null)
             {
                 var task = LockAsync();
@@ -133,6 +131,7 @@ namespace Dex.Lock.Async.Impl
                     {
                         task.Result.Dispose();
                     }
+
                     return Task.CompletedTask;
                 }
                 else
@@ -168,8 +167,7 @@ namespace Dex.Lock.Async.Impl
             // Попытка захватить блокировку атомарно.
             bool taken = Interlocked.CompareExchange(ref _taken, 1, 0) == 0;
 
-            if (taken)
-            // Захватили блокировку.
+            if (taken) // Захватили блокировку.
             {
                 // Несмотря на то что мы не захватили _syncObj,
                 // другие потоки не могут вызвать CreateNextReleaser одновременно с нами.
@@ -179,21 +177,18 @@ namespace Dex.Lock.Async.Impl
                 return new ValueTask<LockReleaser>(result: releaser);
             }
             else
-            // Блокировка занята другим потоком.
             {
                 lock (_syncObj)
                 {
-                    if (_taken == 1)
-                    // Блокировка занята другим потоком -> становимся в очередь.
+                    if (_taken == 1) // Блокировка занята другим потоком -> становимся в очередь.
                     {
                         return new ValueTask<LockReleaser>(task: _queue.EnqueueAndWait());
                     }
                     else
-                    // Блокировка уже освободилась -> захватили блокировку.
                     {
                         _taken = 1;
 
-                        LockReleaser releaser = CreateNextReleaser();
+                        var releaser = SafeCreateNextReleaser();
 
                         return new ValueTask<LockReleaser>(result: releaser);
                     }
@@ -211,25 +206,19 @@ namespace Dex.Lock.Async.Impl
 
             lock (_syncObj)
             {
-                if (userReleaser.ReleaseToken == _releaseTaskToken)
-                // У текущего потока (релизера) есть право освободить блокировку.
+                if (userReleaser.ReleaseToken == _releaseTaskToken) // У текущего потока (релизера) есть право освободить блокировку.
                 {
-                    // Запретить освобождать блокировку всем потокам.
-                    InvalidateAllReleasers();
-
-                    if (_queue.Count == 0)
-                    // Больше потоков нет -> освободить блокировку.
+                    if (_queue.Count == 0) // Больше потоков нет -> освободить блокировку.
                     {
+                        // Запретить освобождать блокировку всем потокам.
+                        SafeGetNextReleaserToken();
+
                         _taken = 0;
                     }
-                    else
-                    // На блокировку претендуют другие потоки.
+                    else // На блокировку претендуют другие потоки.
                     {
-                        // Даём следующему потоку в очереди право на освобождение блокировки.
-                        var rightfullReleaser = new LockReleaser(this, _releaseTaskToken);
-
                         // Передать владение блокировкой следующему потоку (разрешить войти в критическую секцию).
-                        _queue.DequeueAndEnter(rightfullReleaser);
+                        _queue.DequeueAndEnter(SafeCreateNextReleaser());
                     }
                 }
             }
@@ -244,31 +233,41 @@ namespace Dex.Lock.Async.Impl
         {
             Debug.Assert(_taken == 1, "Блокировка должна быть захвачена");
 
-            ++_releaseTaskToken;
+            return new LockReleaser(this, GetNextReleaserToken());
+        }
+        private LockReleaser SafeCreateNextReleaser()
+        {
+            Debug.Assert(Monitor.IsEntered(_syncObj));
+            Debug.Assert(_taken == 1, "Блокировка должна быть захвачена");
 
-            return new LockReleaser(this, _releaseTaskToken);
+            return new LockReleaser(this, SafeGetNextReleaserToken());
         }
 
         /// <summary>
         /// Предотвращает освобождение блокировки чужим потоком.
         /// </summary>
         /// <remarks>Увеличивает <see cref="_releaseTaskToken"/>.</remarks>
-        private void InvalidateAllReleasers()
+        private short GetNextReleaserToken()
+        {
+            Debug.Assert(_taken == 1);
+            return ++_releaseTaskToken;
+        }
+        private short SafeGetNextReleaserToken()
         {
             Debug.Assert(Monitor.IsEntered(_syncObj));
-            Debug.Assert(_taken == 1);
-
-            ++_releaseTaskToken;
+            return GetNextReleaserToken();
         }
 
-        internal sealed class WaitQueue
+        private sealed class WaitQueue
         {
             private readonly AsyncLock _context;
+
             /// <summary>
             /// Очередь ожидающий потоков (тасков) претендующих на захват блокировки.
             /// </summary>
             /// <remarks>Доступ только через блокировку <see cref="_context._syncObj"/>.</remarks>
             private readonly Queue<TaskCompletionSource<LockReleaser>> _queue = new Queue<TaskCompletionSource<LockReleaser>>();
+
             public int Count => _queue.Count;
 
             public WaitQueue(AsyncLock context)

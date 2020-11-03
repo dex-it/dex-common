@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Threading.Tasks;
 
-namespace System.Threading.Tasks
+namespace Dex.Lock.Async.Impl
 {
     internal static class TaskExtensions
     {
