@@ -8,6 +8,9 @@ using System.Text;
 
 namespace Dex.Lock.Async
 {
+    /// <summary>
+    /// Держит блокировку <see cref="AsyncLock"/> до вызова Dispose.
+    /// </summary>
     [StructLayout(LayoutKind.Auto)]
     [DebuggerTypeProxy(typeof(DebugView))]
     [DebuggerDisplay("Disposed = {_context._releaseTaskToken != ReleaseToken}")]

@@ -170,6 +170,9 @@ namespace Dex.Lock.Async.Impl
             if (taken)
             // Захватили блокировку.
             {
+                // Несмотря на то что мы не захватили _syncObj,
+                // другие потоки не могут вызвать CreateNextReleaser одновременно с нами.
+
                 LockReleaser releaser = CreateNextReleaser();
 
                 return new ValueTask<LockReleaser>(result: releaser);
@@ -182,7 +185,7 @@ namespace Dex.Lock.Async.Impl
                     if (_taken == 1)
                     // Блокировка занята другим потоком -> становимся в очередь.
                     {
-                        return new ValueTask<LockReleaser>(task: _queue.Enqueue());
+                        return new ValueTask<LockReleaser>(task: _queue.EnqueueAndWait());
                     }
                     else
                     // Блокировка уже освободилась -> захватили блокировку.
@@ -208,7 +211,7 @@ namespace Dex.Lock.Async.Impl
             lock (_syncObj)
             {
                 if (userReleaser.ReleaseToken == _releaseTaskToken)
-                // У текущего потока есть право освободить блокировку.
+                // У текущего потока (релизера) есть право освободить блокировку.
                 {
                     // Запретить освобождать блокировку всем потокам.
                     InvalidateAllReleasers();
@@ -222,10 +225,10 @@ namespace Dex.Lock.Async.Impl
                     // На блокировку претендуют другие потоки.
                     {
                         // Даём следующему потоку в очереди право на освобождение блокировки.
-                        var nextReleaser = new LockReleaser(this, _releaseTaskToken);
+                        var rightfullReleaser = new LockReleaser(this, _releaseTaskToken);
 
                         // Передать владение блокировкой следующему потоку (разрешить войти в критическую секцию).
-                        _queue.DequeueAndEnter(nextReleaser);
+                        _queue.DequeueAndEnter(rightfullReleaser);
                     }
                 }
             }
@@ -234,6 +237,7 @@ namespace Dex.Lock.Async.Impl
         /// <summary>
         /// Увеличивает идентификатор что-бы инвалидировать все ранее созданные <see cref="LockReleaser"/>.
         /// </summary>
+        /// <remarks>Увеличивает <see cref="_releaseTaskToken"/>.</remarks>
         /// <returns><see cref="LockReleaser"/> у которого есть эксклюзивное право освободить текущую блокировку.</returns>
         private LockReleaser CreateNextReleaser()
         {
@@ -271,7 +275,10 @@ namespace Dex.Lock.Async.Impl
                 _context = context;
             }
 
-            internal Task<LockReleaser> Enqueue()
+            /// <summary>
+            /// Добавляет поток в очередь на ожидание эксклюзивной блокировки.
+            /// </summary>
+            internal Task<LockReleaser> EnqueueAndWait()
             {
                 Debug.Assert(Monitor.IsEntered(_context._syncObj), "Выполнять можно только в блокировке");
 
@@ -293,7 +300,6 @@ namespace Dex.Lock.Async.Impl
             }
         }
 
-        /// <summary>A debugger view of the <see cref="AsyncLock"/></summary>
         [DebuggerNonUserCode]
         private sealed class DebugView
         {
