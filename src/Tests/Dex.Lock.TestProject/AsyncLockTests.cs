@@ -23,7 +23,7 @@ namespace Dex.Lock.TestProject
 
             static Task AppendToListTask(ICollection<string> list)
             {
-                return Task.Run(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
+                return Task.Factory.StartNew(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
             }
 
             var tasks = Enumerable.Range(1, 25)

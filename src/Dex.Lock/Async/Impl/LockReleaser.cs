@@ -10,7 +10,7 @@ namespace Dex.Lock.Async
 {
     [StructLayout(LayoutKind.Auto)]
     [DebuggerTypeProxy(typeof(DebugView))]
-    [DebuggerDisplay("Disposed = {_context._releaseTokenIndex != ReleaseToken}")]
+    [DebuggerDisplay("Disposed = {_context._releaseTaskToken != ReleaseToken}")]
     [SuppressMessage("Performance", "CA1815:Переопределите операторы Equals и равенства для типов значений", Justification = "<Ожидание>")]
     public readonly struct LockReleaser : IDisposable
     {
