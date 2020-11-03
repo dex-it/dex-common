@@ -57,7 +57,7 @@ namespace Dex.Extensions
 
             foreach (var obj in source)
             {
-                await action(obj);
+                await action(obj).ConfigureAwait(false);
             }
         }
 
@@ -71,71 +71,78 @@ namespace Dex.Extensions
             ForEach(source, action);
         }
 
-        public static void For<T>([NotNull] this IEnumerable<T> source, [NotNull] Action<int, T> action)
+        public static void For<T>(this IEnumerable<T> source, Action<int, T> action)
         {
             if (source == null)
-            {
                 throw new ArgumentNullException(nameof(source));
-            }
 
             if (action == null)
-            {
                 throw new ArgumentNullException(nameof(action));
-            }
 
-            var array = source.ToArray();
+            T[] array = source.ToArray();
             for (var i = 0; i < array.Length; i++)
             {
-                var obj = array[i];
+                T obj = array[i];
                 action(i, obj);
             }
         }
 
-        public static bool NullSafeAny<T>(this IEnumerable<T> source, Func<T, bool> predicate = null)
+        public static bool NullSafeAny<T>(this IEnumerable<T> source, Func<T, bool>? predicate = null)
         {
-            if (source == null) return false;
+            if (source == null) 
+                return false;
 
             return predicate == null
                 ? source.Any()
                 : source.Any(predicate);
         }
 
-        public static T Random<T>([NotNull] this IEnumerable<T> source)
+        public static T Random<T>(this IEnumerable<T> source)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            var enumerable = source as T[] ?? source.ToArray();
-            var skip = RndGen.Value.Next(enumerable.Length);
+            if (source == null) 
+                throw new ArgumentNullException(nameof(source));
+
+            T[] enumerable = source as T[] ?? source.ToArray();
+            int skip = RndGen.Value.Next(enumerable.Length);
             return enumerable.Skip(skip).First();
         }
 
-        public static IEnumerable<T> Append<T>([NotNull] this IEnumerable<T> source, [NotNull] params T[] elements)
+        public static List<T> Append<T>(this IEnumerable<T> source, params T[] elements)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (elements == null) throw new ArgumentNullException(nameof(elements));
-            var result = source.ToList();
+            if (source == null) 
+                throw new ArgumentNullException(nameof(source));
+
+            if (elements == null)
+                throw new ArgumentNullException(nameof(elements));
+
+            List<T> result = source.ToList();
             result.AddRange(elements);
             return result;
         }
 
-        public static T[] Append<T>([NotNull] this T[] source, [NotNull] params T[] elements)
+        public static T[] Append<T>(this T[] source, params T[] elements)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (source == null) 
+                throw new ArgumentNullException(nameof(source));
 
-            return ((IEnumerable<T>) source).Append(elements).ToArray();
+            return ((IEnumerable<T>)source).Append(elements).ToArray();
         }
 
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T> source)
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
         {
             return source == null || !source.Any();
         }
 
-        public static IEnumerable<IEnumerable<T>> Split<T>([NotNull] this IEnumerable<T> instance, int partitionSize)
+        public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> instance, int partitionSize)
         {
-            if (instance == null) throw new ArgumentNullException(nameof(instance));
-            if (partitionSize <= 0) throw new ArgumentOutOfRangeException(nameof(partitionSize));
+            if (instance == null) 
+                throw new ArgumentNullException(nameof(instance));
+
+            if (partitionSize <= 0) 
+                throw new ArgumentOutOfRangeException(nameof(partitionSize));
 
             return instance
-                .Select((value, index) => new {Index = index, Value = value})
+                .Select((value, index) => new { Index = index, Value = value })
                 .GroupBy(item => item.Index / partitionSize)
                 .Select(item => item.Select(x => x.Value));
         }

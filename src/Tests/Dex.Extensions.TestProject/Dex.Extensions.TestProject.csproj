@@ -13,7 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Dex.Lock\Dex.Lock.csproj" />
+    <ProjectReference Include="..\..\Dex.Extensions\Dex.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Update="C:\Users\v.danilov\source\repos\dex-common\src\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
 </Project>

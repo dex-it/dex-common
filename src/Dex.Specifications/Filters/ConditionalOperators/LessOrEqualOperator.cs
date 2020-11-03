@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Linq.Expressions;
 using System.Runtime.Serialization;
 
 namespace Dex.Specifications.Filters.ConditionalOperators
@@ -21,6 +22,7 @@ namespace Dex.Specifications.Filters.ConditionalOperators
 
         protected override Expression CreateFilter(Expression property)
         {
+            if (property == null) throw new ArgumentNullException(nameof(property));
             // property <= Value
             return Expression.LessThanOrEqual(property, CreateConstant(property.Type, Value));
         }

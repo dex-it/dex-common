@@ -21,6 +21,7 @@ namespace Dex.Specifications.Expressions
         /// <returns>Инвертированное выражение</returns>
         public static Expression<Func<T, bool>> Not<T>(this Expression<Func<T, bool>> first)
         {
+            if (first == null) throw new ArgumentNullException(nameof(first));
             return Expression.Lambda<Func<T, bool>>(Expression.Not(first.Body), first.Parameters);
         }
 
@@ -58,6 +59,10 @@ namespace Dex.Specifications.Expressions
         /// <returns>Объединенное выражение</returns>
         public static Expression<T> Compose<T>(this Expression<T> first, Expression<T> second, Func<Expression, Expression, Expression> expressionType)
         {
+            if (first == null) throw new ArgumentNullException(nameof(first));
+            if (second == null) throw new ArgumentNullException(nameof(second));
+            if (expressionType == null) throw new ArgumentNullException(nameof(expressionType));
+            
             // Замена именованных параметров второго выражения соответствующими параметрами первого
             var parameterExpressionMap = first.Parameters.Select((f, i) => new { f, s = second.Parameters[i] }).ToDictionary(p => p.s, p => p.f);
             var secondBody = ParameterExpressionRewriter.ReplaceParameters(parameterExpressionMap, second.Body);
@@ -75,6 +80,10 @@ namespace Dex.Specifications.Expressions
         /// <returns>Объединенное выражение</returns>
         public static LambdaExpression Compose(this LambdaExpression first, LambdaExpression second, Func<Expression, Expression, Expression> expressionType)
         {
+            if (first == null) throw new ArgumentNullException(nameof(first));
+            if (second == null) throw new ArgumentNullException(nameof(second));
+            if (expressionType == null) throw new ArgumentNullException(nameof(expressionType));
+            
             // Замена именованных параметров второго выражения соответствующими параметрами первого
             var parameterExpressionMap = first.Parameters.Select((f, i) => new { f, s = second.Parameters[i] }).ToDictionary(p => p.s, p => p.f);
             var secondBody = ParameterExpressionRewriter.ReplaceParameters(parameterExpressionMap, second.Body);

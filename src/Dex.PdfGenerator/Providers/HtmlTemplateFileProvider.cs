@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using RazorLight;
 
@@ -25,8 +26,8 @@ namespace Dex.PdfGenerator.Providers
                 .UseMemoryCachingProvider()
                 .Build();
 
-            var html = await engine.CompileRenderAsync(_templateFileName, _model);
-            return _staticPathProvider == null ? html : html.Replace("{Provider}", _staticPathProvider.GetBaseUri());
+            var html = await engine.CompileRenderAsync(_templateFileName, _model).ConfigureAwait(false);
+            return _staticPathProvider == null ? html : html.Replace("{Provider}", _staticPathProvider.GetBaseUri(), StringComparison.InvariantCulture);
         }
     }
 }

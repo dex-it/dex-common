@@ -63,9 +63,9 @@ namespace Dex.Specifications.Filters
             {
                 operators = operators.ToArray();
                 // Если типы операторов не совпадают
-                if (operators.Any() && operators.Select(o => o.Type.ToLower()).Distinct().Count() > 1)
+                if (operators.Any() && operators.Select(o => o.Type.ToUpperInvariant()).Distinct().Count() > 1)
                 {
-                    throw new ArgumentException();
+                    throw new ArgumentOutOfRangeException(nameof(operators));
                 }
 
                 _operators = operators.ToList();
@@ -87,12 +87,12 @@ namespace Dex.Specifications.Filters
         {
             if (filterOperator == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(filterOperator));
             }
 
             if (filterOperator.Type != Type)
             {
-                throw new ArgumentException();
+                throw new ArgumentOutOfRangeException(nameof(filterOperator));
             }
 
             _operators.Add(filterOperator);
@@ -107,7 +107,7 @@ namespace Dex.Specifications.Filters
         {
             if (filterOperator == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(filterOperator));
             }
 
             _operators.Remove(filterOperator);

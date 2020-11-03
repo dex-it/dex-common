@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
 
@@ -15,7 +16,7 @@ namespace Dex.Lock.Database
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             _dataConnection = dataConnection ?? throw new ArgumentNullException(nameof(dataConnection));
-            _key = key.ToUpper();
+            _key = key.ToUpper(CultureInfo.InvariantCulture);
         }
 
         public async Task LockAsync(Func<Task> asyncAction)
@@ -26,7 +27,7 @@ namespace Dex.Lock.Database
             ExecuteCommand($"CREATE TABLE {tableName} (CODE integer);");
             try
             {
-                await asyncAction();
+                await asyncAction().ConfigureAwait(false);
             }
             finally
             {
