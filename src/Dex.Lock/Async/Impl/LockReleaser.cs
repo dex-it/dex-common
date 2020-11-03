@@ -48,6 +48,7 @@ namespace Dex.Lock.Async
                 _self = self;
             }
 
+            public AsyncLock Locker => _self._context;
             public bool Disposed => _self._context._releaseTaskToken != _self.ReleaseToken;
         }
     }

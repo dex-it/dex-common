@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Dex.Lock.Async.Impl
 {
     [DebuggerTypeProxy(typeof(DebugView))]
-    [DebuggerDisplay("Taken = {_taken == 1 ? true : false}")]
+    [DebuggerDisplay("Taken = {System.Threading.Volatile.Read(ref _taken) == 1 ? true : false}")]
     public sealed class AsyncLock : IAsyncLock
     {
         // Для добавления потока в очередь и удаления из очереди.
@@ -36,6 +36,7 @@ namespace Dex.Lock.Async.Impl
 
         public AsyncLock()
         {
+            
             _queue = new WaitQueue(this);
         }
 
