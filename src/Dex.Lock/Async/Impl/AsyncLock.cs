@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Dex.Lock.Async.Impl
 {
-    public class AsyncLock : IAsyncLock, IDisposable
+    public sealed class AsyncLock : IAsyncLock, IDisposable
     {
         [NotNull]
         private readonly SemaphoreSlim _semaphore;
