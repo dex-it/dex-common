@@ -19,19 +19,19 @@ namespace Dex.Lock.TestProject
         {
             var list = new List<string>();
 
-            using (var aLock = new AsyncLock())
+            var aLock = new AsyncLock();
+
+            static Task AppendToListTask(ICollection<string> list)
             {
-                static Task AppendToListTask(ICollection<string> list)
-                {
-                    return Task.Run(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
-                }
-
-                var tasks = Enumerable.Range(1, 25)
-                    .Select(i => aLock.LockAsync(() => AppendToListTask(list)))
-                    .ToList();
-
-                await Task.WhenAll(tasks).ConfigureAwait(false);
+                return Task.Run(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
             }
+
+            var tasks = Enumerable.Range(1, 25)
+                .Select(i => aLock.LockAsync(() => AppendToListTask(list)))
+                .ToList();
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
 
             foreach (var x in list)
             {

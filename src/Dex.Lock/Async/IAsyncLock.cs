@@ -6,7 +6,8 @@ namespace Dex.Lock.Async
 {
     public interface IAsyncLock
     {
-        Task LockAsync([NotNull] Func<Task> asyncAction);
-        Task LockAsync([NotNull] Action action);
+        Task LockAsync(Func<Task> asyncAction);
+        Task LockAsync(Action action);
+        ValueTask<LockReleaser> LockAsync();
     }
 }
