@@ -22,7 +22,7 @@ namespace Dex.Lock.Async.Impl
         private readonly WaitQueue _queue;
 
         /// <summary>
-        /// Идентификатор потока у которого есть право освободить блокировку.
+        /// Токен для потока у которого есть право освободить блокировку.
         /// Может только увеличиваться.
         /// </summary>
         /// <remarks>Превентивная защита от освобождения блокировки чужим потоком.</remarks>
@@ -156,6 +156,12 @@ namespace Dex.Lock.Async.Impl
                 throw new ArgumentNullException(nameof(action));
         }
 
+        /// <summary>
+        /// Блокирует выполнение до тех пор пока не будет захвачена блокировка
+        /// предоставляющая эксклюзивный доступ к текущему экземпляру <see cref="AsyncLock"/>.
+        /// Освобождение блокировки производится вызовом <see cref="LockReleaser.Dispose"/>.
+        /// </summary>
+        /// <returns>Ресурс удерживающий блокировку.</returns>
         public ValueTask<LockReleaser> LockAsync()
         {
             // Попытка захватить блокировку атомарно.
@@ -194,14 +200,14 @@ namespace Dex.Lock.Async.Impl
         /// <summary>
         /// Освобождает блокировку по запросу пользователя.
         /// </summary>
-        internal void ReleaseLock(LockReleaser releaser)
+        internal void ReleaseLock(LockReleaser userReleaser)
         {
             Debug.Assert(_taken == 1, "Нарушение порядка захвата блокировки");
-            Debug.Assert(releaser.ReleaseToken == _releaseTaskToken, "Освобождения блокировки чужим потоком");
+            Debug.Assert(userReleaser.ReleaseToken == _releaseTaskToken, "Освобождения блокировки чужим потоком");
 
             lock (_syncObj)
             {
-                if (releaser.ReleaseToken == _releaseTaskToken)
+                if (userReleaser.ReleaseToken == _releaseTaskToken)
                 // У текущего потока есть право освободить блокировку.
                 {
                     // Запретить освобождать блокировку всем потокам.
@@ -210,7 +216,6 @@ namespace Dex.Lock.Async.Impl
                     if (_queue.Count == 0)
                     // Больше потоков нет -> освободить блокировку.
                     {
-                        Debug.Assert(_taken == 1);
                         _taken = 0;
                     }
                     else
@@ -300,7 +305,7 @@ namespace Dex.Lock.Async.Impl
             }
 
             /// <summary>
-            /// Сколько потоков ожидают блокировку.
+            /// Сколько потоков (тасков) ожидают блокировку.
             /// </summary>
             public int PendingTasks => _self._queue.Count;
         }
