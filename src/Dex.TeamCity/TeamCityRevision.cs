@@ -1,12 +1,9 @@
-﻿#region usings
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-
-#endregion
 
 namespace Dex.TeamCity
 {
@@ -30,14 +27,18 @@ namespace Dex.TeamCity
         {
             if (File.Exists(zipFileName))
             {
-                using var archive = ZipFile.OpenRead(zipFileName);
-                var file = GetRevisionFile(archive.Entries.Select(e => e.FullName));
-                if (file != null)
+                using (var archive = ZipFile.OpenRead(zipFileName))
                 {
-                    var entry = archive.Entries.First(e => e.FullName == file);
-                    using var entryStream = entry.Open();
-                    using TextReader reader = new StreamReader(entryStream);
-                    return GetDto(file, reader.ReadToEnd());
+                    var file = GetRevisionFile(archive.Entries.Select(e => e.FullName));
+                    if (file != null)
+                    {
+                        var entry = archive.Entries.First(e => e.FullName == file);
+                        using var entryStream = entry.Open();
+                        using (TextReader reader = new StreamReader(entryStream))
+                        {
+                            return GetDto(file, reader.ReadToEnd());
+                        }
+                    }
                 }
             }
 
@@ -52,7 +53,7 @@ namespace Dex.TeamCity
             if (fileName != null)
             {
                 var split = fileName.Split('.');
-                result.Build = Convert.ToInt32(split[0]);
+                result.Build = Convert.ToInt32(split[0], CultureInfo.InvariantCulture);
                 result.Revision = content;
                 result.TeamCityRevision = fileName;
             }

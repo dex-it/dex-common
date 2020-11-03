@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CA2007: Попробуйте вызвать ConfigureAwait для ожидаемой задачи
+dotnet_diagnostic.CA2007.severity = none

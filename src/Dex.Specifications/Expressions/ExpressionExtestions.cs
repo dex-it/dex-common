@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using JetBrains.Annotations;
 
 namespace Dex.Specifications.Expressions
 {
@@ -19,8 +20,9 @@ namespace Dex.Specifications.Expressions
         /// <typeparam name="T">Тип данных, над которым производится выражение</typeparam>
         /// <param name="first">Заданное выражение</param>
         /// <returns>Инвертированное выражение</returns>
-        public static Expression<Func<T, bool>> Not<T>(this Expression<Func<T, bool>> first)
+        public static Expression<Func<T, bool>> Not<T>([NotNull] this Expression<Func<T, bool>> first)
         {
+            if (first == null) throw new ArgumentNullException(nameof(first));
             return Expression.Lambda<Func<T, bool>>(Expression.Not(first.Body), first.Parameters);
         }
 
@@ -56,8 +58,12 @@ namespace Dex.Specifications.Expressions
         /// <param name="second">Выражение для объединения</param>
         /// <param name="expressionType">Тип операции для объединения</param>
         /// <returns>Объединенное выражение</returns>
-        public static Expression<T> Compose<T>(this Expression<T> first, Expression<T> second, Func<Expression, Expression, Expression> expressionType)
+        public static Expression<T> Compose<T>([NotNull] this Expression<T> first, [NotNull] Expression<T> second, [NotNull] Func<Expression, Expression, Expression> expressionType)
         {
+            if (first == null) throw new ArgumentNullException(nameof(first));
+            if (second == null) throw new ArgumentNullException(nameof(second));
+            if (expressionType == null) throw new ArgumentNullException(nameof(expressionType));
+            
             // Замена именованных параметров второго выражения соответствующими параметрами первого
             var parameterExpressionMap = first.Parameters.Select((f, i) => new { f, s = second.Parameters[i] }).ToDictionary(p => p.s, p => p.f);
             var secondBody = ParameterExpressionRewriter.ReplaceParameters(parameterExpressionMap, second.Body);
@@ -73,8 +79,12 @@ namespace Dex.Specifications.Expressions
         /// <param name="second">Выражение для объединения</param>
         /// <param name="expressionType">Тип операции для объединения</param>
         /// <returns>Объединенное выражение</returns>
-        public static LambdaExpression Compose(this LambdaExpression first, LambdaExpression second, Func<Expression, Expression, Expression> expressionType)
+        public static LambdaExpression Compose([NotNull] this LambdaExpression first, [NotNull] LambdaExpression second, [NotNull] Func<Expression, Expression, Expression> expressionType)
         {
+            if (first == null) throw new ArgumentNullException(nameof(first));
+            if (second == null) throw new ArgumentNullException(nameof(second));
+            if (expressionType == null) throw new ArgumentNullException(nameof(expressionType));
+            
             // Замена именованных параметров второго выражения соответствующими параметрами первого
             var parameterExpressionMap = first.Parameters.Select((f, i) => new { f, s = second.Parameters[i] }).ToDictionary(p => p.s, p => p.f);
             var secondBody = ParameterExpressionRewriter.ReplaceParameters(parameterExpressionMap, second.Body);

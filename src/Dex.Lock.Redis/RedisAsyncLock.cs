@@ -25,22 +25,22 @@ namespace Dex.Lock.Redis
             var c = MaxTries;
             while (c-- > 0)
             {
-                var success = await _database.LockTakeAsync(_key, string.Empty, TimeSpan.MaxValue);
+                var success = await _database.LockTakeAsync(_key, string.Empty, TimeSpan.MaxValue).ConfigureAwait(false);
                 if (success)
                 {
                     try
                     {
-                        await asyncAction();
+                        await asyncAction().ConfigureAwait(false);
                     }
                     finally
                     {
-                        await RemoveLockObject();
+                        await RemoveLockObject().ConfigureAwait(false);
                     }
 
                     return;
                 }
 
-                await Task.Delay(IterationDelay);
+                await Task.Delay(IterationDelay).ConfigureAwait(false);
             }
 
             throw new TimeoutException("[" + IterationDelay * MaxTries + "ms]");
@@ -61,7 +61,7 @@ namespace Dex.Lock.Redis
                 return Task.FromResult(true);
             }
 
-            await LockAsync(Act);
+            await LockAsync(Act).ConfigureAwait(false);
         }
     }
 }

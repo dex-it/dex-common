@@ -12,8 +12,11 @@ namespace Dex.Lock.Async.Impl
         [NotNull]
         private readonly SemaphoreSlim _semaphore;
 
+        private bool _isDisposed;
+
         public AsyncLock()
         {
+            _isDisposed = false;
             _semaphore = new SemaphoreSlim(1);
         }
 
@@ -30,8 +33,8 @@ namespace Dex.Lock.Async.Impl
 
             try
             {
-                await _semaphore.WaitAsync();
-                await asyncAction();
+                await _semaphore.WaitAsync().ConfigureAwait(false);
+                await asyncAction().ConfigureAwait(false);
             }
             finally
             {
@@ -61,7 +64,16 @@ namespace Dex.Lock.Async.Impl
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed || !disposing) return;
+
             _semaphore?.Dispose();
+            _isDisposed = true;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace Dex.Specifications.Expressions
@@ -73,8 +74,8 @@ namespace Dex.Specifications.Expressions
 
         protected override Expression VisitParameter(ParameterExpression parameterExpression)
         {
-            Expression replacement;
-            if (_parameterExpressionMap.TryGetValue(parameterExpression.Name, out replacement))
+            if (parameterExpression == null) throw new ArgumentNullException(nameof(parameterExpression));
+            if (_parameterExpressionMap.TryGetValue(parameterExpression.Name, out var replacement))
             {
                 return base.VisitMember((MemberExpression)replacement);
             }

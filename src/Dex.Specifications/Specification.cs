@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Dex.Specifications.Expressions;
+using JetBrains.Annotations;
 
 namespace Dex.Specifications
 {
@@ -40,13 +41,15 @@ namespace Dex.Specifications
             }
         }
 
-        public Specification<TO> In<TO>(Expression<Func<TO, T>> selector)
+        public Specification<TO> In<TO>([NotNull] Expression<Func<TO, T>> selector)
         {
-            var parametersMap = new Dictionary<string, Expression> { { Predicate.Parameters[0].Name, selector.Body } };
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+            var parametersMap = new Dictionary<string, Expression> {{Predicate.Parameters[0].Name, selector.Body}};
 
             var creator = Expression.Lambda<Func<TO, bool>>(Predicate.Body, selector.Parameters);
             var result = ParameterExpressionToPropertyRewriter.ReplaceParameters(parametersMap, creator);
-            return new Specification<TO>((Expression<Func<TO, bool>>)result);
+            return new Specification<TO>((Expression<Func<TO, bool>>) result);
         }
 
         public static Specification<T> operator !(Specification<T> specification)
@@ -66,17 +69,19 @@ namespace Dex.Specifications
 
         public static implicit operator Predicate<T>(Specification<T> specification)
         {
+            if (specification == null) return default;
             return specification.IsSatisfiedBy;
         }
 
         public static implicit operator Func<T, bool>(Specification<T> specification)
         {
+            if (specification == null) return default;
             return specification.IsSatisfiedBy;
         }
 
         public static implicit operator Expression<Func<T, bool>>(Specification<T> specification)
         {
-            return specification.Predicate;
+            return specification?.Predicate;
         }
     }
 }

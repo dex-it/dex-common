@@ -9,13 +9,13 @@ namespace Dex.Lock.Async.Impl
     {
         private readonly ConcurrentDictionary<T, AsyncLock> _locks = new ConcurrentDictionary<T, AsyncLock>();
 
-        public IAsyncLock Get([NotNull] T key)
+        public IAsyncLock GetLock([NotNull] T key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             return _locks.GetOrAdd(key, key1 => new AsyncLock());
         }
 
-        public Task<bool> Remove([NotNull] T key)
+        public Task<bool> RemoveLock([NotNull] T key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             return Task.FromResult(_locks.TryRemove(key, out _));

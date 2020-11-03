@@ -9,6 +9,7 @@
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Mvc.RazorPages" Version="2.2.5" />
+        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0" Condition="'$(Configuration)'=='Debug'"/>
       <PackageReference Include="RazorLight" Version="2.0.0-beta1" />
       <PackageReference Include="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1" />
     </ItemGroup>

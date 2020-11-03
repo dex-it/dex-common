@@ -17,12 +17,7 @@ namespace Dex.Specifications
         /// <exception cref="ArgumentNullException"/>
         public NotSpecification(Specification<T> specification)
         {
-            if (specification == null)
-            {
-                throw new ArgumentNullException();
-            }
-
-            _specification = specification;
+            _specification = specification ?? throw new ArgumentNullException(nameof(specification));
         }
 
 

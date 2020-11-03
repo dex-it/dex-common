@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -18,17 +17,21 @@ namespace Dex.Lock.TestProject
         [Test]
         public async Task LockAsyncFuncTest1()
         {
-            using var aLock = new AsyncLock();
             var list = new List<string>();
 
-            static Task AppendToListTask(ICollection<string> list)
+            using (var aLock = new AsyncLock())
             {
-                return Task.Run(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
+                static Task AppendToListTask(ICollection<string> list)
+                {
+                    return Task.Run(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
+                }
+
+                var tasks = Enumerable.Range(1, 25)
+                    .Select(i => aLock.LockAsync(() => AppendToListTask(list)))
+                    .ToList();
+
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
-
-            var tasks = Enumerable.Range(1, 25).Select(i => aLock.LockAsync(() => AppendToListTask(list))).ToList();
-
-            await Task.WhenAll(tasks);
 
             foreach (var x in list)
             {
