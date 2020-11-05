@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -235,6 +236,8 @@ namespace Dex.Lock.Async.Impl
 
             return new LockReleaser(this, GetNextReleaserToken());
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private LockReleaser SafeCreateNextReleaser()
         {
             Debug.Assert(Monitor.IsEntered(_syncObj));
@@ -252,6 +255,8 @@ namespace Dex.Lock.Async.Impl
             Debug.Assert(_taken == 1);
             return ++_releaseTaskToken;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private short SafeGetNextReleaserToken()
         {
             Debug.Assert(Monitor.IsEntered(_syncObj));
