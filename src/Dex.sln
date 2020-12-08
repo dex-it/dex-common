@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Lock.TestProject", "Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Extensions.TestProject", "Tests\Dex.Extensions.TestProject\Dex.Extensions.TestProject.csproj", "{D6405FC8-65B5-4B0C-B327-DBB64BBF7E5F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Ef", "Dex.Ef\Dex.Ef.csproj", "{DC6B199F-B25F-453B-B77E-148D51037ACB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -387,6 +389,34 @@ Global
 		{D6405FC8-65B5-4B0C-B327-DBB64BBF7E5F}.Test|Any CPU.Build.0 = Debug|Any CPU
 		{D6405FC8-65B5-4B0C-B327-DBB64BBF7E5F}.Test|x86.ActiveCfg = Debug|Any CPU
 		{D6405FC8-65B5-4B0C-B327-DBB64BBF7E5F}.Test|x86.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Debug|x86.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Dev|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Dev|Any CPU.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Dev|x86.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Dev|x86.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_plehanova|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_plehanova|Any CPU.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_plehanova|x86.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_plehanova|x86.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_soviet|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_soviet|Any CPU.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_soviet|x86.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release_soviet|x86.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release|x86.ActiveCfg = Release|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Release|x86.Build.0 = Release|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Stage|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Stage|Any CPU.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Stage|x86.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Stage|x86.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Test|x86.ActiveCfg = Debug|Any CPU
+		{DC6B199F-B25F-453B-B77E-148D51037ACB}.Test|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
