@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable CA1040
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Dex.Ef.Contracts.Entities
