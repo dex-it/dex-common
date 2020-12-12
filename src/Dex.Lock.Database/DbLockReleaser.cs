@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Dex.Lock.Database
 {
-    public sealed class DbLockReleaser : IDisposable
+    public sealed class DbLockReleaser : IAsyncDisposable, IDisposable
     {
         private readonly DatabaseAsyncLock _asyncLock;
         private readonly string _tableName;
@@ -13,6 +14,10 @@ namespace Dex.Lock.Database
             _tableName = tableName;
         }
 
+        public ValueTask DisposeAsync()
+        {
+            return new ValueTask(_asyncLock.RemoveLockObjectAsync(_tableName));
+        }
 
         public void Dispose()
         {

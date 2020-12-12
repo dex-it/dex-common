@@ -55,7 +55,7 @@ namespace Dex.Lock.TestProject
                     var lockerProvider = new DatabaseAsyncLockProvider(dbTransaction, "6D6AC302-23");
                     var locker = lockerProvider.GetLocker("AddToListSample");
 
-                    using (await locker.LockAsync())
+                    await using (await locker.LockAsync())
                     {
                         for (var i = 0; i < iterations; i++)
                         {

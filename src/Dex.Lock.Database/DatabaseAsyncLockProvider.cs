@@ -2,7 +2,6 @@ using System;
 using System.Data;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Dex.Lock.Async;
 
 namespace Dex.Lock.Database
@@ -27,14 +26,6 @@ namespace Dex.Lock.Database
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             return new DatabaseAsyncLock(DbConnection, CreateKey(key));
-        }
-
-        public Task<bool> RemoveLocker(string key)
-        {
-            if (key == null) throw new ArgumentNullException(nameof(key));
-            var databaseAsyncLock = new DatabaseAsyncLock(DbConnection, CreateKey(key));
-            databaseAsyncLock.RemoveLockObject(CreateKey(key));
-            return Task.FromResult(true);
         }
 
         private string CreateKey(string key)

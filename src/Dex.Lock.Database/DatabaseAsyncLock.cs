@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Globalization;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
@@ -21,15 +22,20 @@ namespace Dex.Lock.Database
 
         public ValueTask<DbLockReleaser> LockAsync()
         {
-            #pragma warning disable CA2000
+#pragma warning disable CA2000
             return new ValueTask<DbLockReleaser>(InternalLockAsync());
         }
 
-        private Task<DbLockReleaser> InternalLockAsync()
+        private async Task<DbLockReleaser> InternalLockAsync()
         {
             var tableName = CreateTableName();
-            ExecuteCommand($"CREATE TABLE {tableName} (CODE integer);");
-            return Task.FromResult(new DbLockReleaser(this, tableName));
+            await ExecuteCommandAsync($"CREATE TABLE {tableName} (CODE integer);").ConfigureAwait(false);
+            return new DbLockReleaser(this, tableName);
+        }
+
+        internal Task RemoveLockObjectAsync(string tableName)
+        {
+            return ExecuteCommandAsync($"DROP TABLE {tableName};");
         }
 
         internal void RemoveLockObject(string tableName)
@@ -37,9 +43,26 @@ namespace Dex.Lock.Database
             ExecuteCommand($"DROP TABLE {tableName};");
         }
 
+        //--
+        
         private string CreateTableName()
         {
             return $"LT_{_key}";
+        }
+
+        private async Task ExecuteCommandAsync(string command)
+        {
+            using var cmd = _dataConnection.CreateCommand();
+            cmd.CommandText = command;
+
+            if (cmd is DbCommand dbCommand)
+            {
+                await dbCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private void ExecuteCommand(string command)
