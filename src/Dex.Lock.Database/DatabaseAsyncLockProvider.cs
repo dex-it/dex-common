@@ -1,38 +1,56 @@
 using System;
 using System.Data;
+using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
 
 namespace Dex.Lock.Database
 {
-    public class DatabaseAsyncLockProvider<T> : IAsyncLockProvider<T, DbLockReleaser>
+    public class DatabaseAsyncLockProvider : IAsyncLockProvider<string, DbLockReleaser>
     {
-        private readonly IDbConnection _dbConnection;
+        private readonly IDbTransaction _dbTransaction;
         private readonly string _instanceId;
+        private IDbConnection DbConnection => _dbTransaction.Connection;
 
-        internal DatabaseAsyncLockProvider(IDbConnection dbConnection, string? instanceId)
+        public DatabaseAsyncLockProvider(IDbTransaction dbTransaction, string? instanceId)
         {
-            _dbConnection = dbConnection ?? throw new ArgumentNullException(nameof(dbConnection));
-            _instanceId = instanceId ?? Guid.NewGuid().ToString("N");
+            _dbTransaction = dbTransaction ?? throw new ArgumentNullException(nameof(dbTransaction));
+
+            var nInstanceId = RemoveSymbols(instanceId);
+            _instanceId = (nInstanceId?.Length != 0
+                ? nInstanceId
+                : Guid.NewGuid().ToString("N"))!;
         }
 
-        public IAsyncLock<DbLockReleaser> GetLocker(T key)
+        public IAsyncLock<DbLockReleaser> GetLocker(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            return new DatabaseAsyncLock(_dbConnection, CreateKey(key));
+            return new DatabaseAsyncLock(DbConnection, CreateKey(key));
         }
 
-        public Task<bool> RemoveLocker(T key)
+        public Task<bool> RemoveLocker(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            var databaseAsyncLock = new DatabaseAsyncLock(_dbConnection, CreateKey(key));
+            var databaseAsyncLock = new DatabaseAsyncLock(DbConnection, CreateKey(key));
             databaseAsyncLock.RemoveLockObject(CreateKey(key));
             return Task.FromResult(true);
         }
 
-        private string CreateKey(T key)
+        private string CreateKey(string key)
         {
-            return _instanceId + key.ToString().Replace("-", "", StringComparison.InvariantCulture);
+            var nKey = RemoveSymbols(key);
+
+            if (string.IsNullOrEmpty(nKey))
+                throw new InvalidDataException("key, must contains only letters, digits (en locale)");
+
+            return _instanceId + nKey;
+        }
+
+        private static string? RemoveSymbols(string? instanceId)
+        {
+            if (instanceId == null) return null;
+            return Regex.Replace(instanceId, "[^A-Za-z0-9]", "");
         }
     }
 }
