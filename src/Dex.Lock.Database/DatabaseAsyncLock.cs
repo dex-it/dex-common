@@ -3,11 +3,10 @@ using System.Data;
 using System.Globalization;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
-using Dex.Lock.Async.Impl;
 
 namespace Dex.Lock.Database
 {
-    public class DatabaseAsyncLock : IAsyncLock
+    public class DatabaseAsyncLock : IAsyncLock<DbLockReleaser>
     {
         private readonly IDbConnection _dataConnection;
         private readonly string _key;
@@ -20,47 +19,17 @@ namespace Dex.Lock.Database
             _key = key.ToUpper(CultureInfo.InvariantCulture);
         }
 
-        public async Task LockAsync(Func<Task> asyncAction)
+        public ValueTask<DbLockReleaser> LockAsync()
         {
-            if (asyncAction == null) throw new ArgumentNullException(nameof(asyncAction));
-
-            var tableName = CreateTableName();
-            ExecuteCommand($"CREATE TABLE {tableName} (CODE integer);");
-            try
-            {
-                await asyncAction().ConfigureAwait(false);
-            }
-            finally
-            {
-                RemoveLockObject(tableName);
-            }
+            #pragma warning disable CA2000
+            return new ValueTask<DbLockReleaser>(InternalLockAsync());
         }
 
-        public Task LockAsync(Action action)
-        {
-            if (action == null) throw new ArgumentNullException(nameof(action));
-
-            Task Act()
-            {
-                action();
-                return Task.FromResult(true);
-            }
-
-            return LockAsync(Act);
-        }
-
-        public async ValueTask<LockReleaser> LockAsync()
+        private Task<DbLockReleaser> InternalLockAsync()
         {
             var tableName = CreateTableName();
             ExecuteCommand($"CREATE TABLE {tableName} (CODE integer);");
-            try
-            {
-                await asyncAction().ConfigureAwait(false);
-            }
-            finally
-            {
-                RemoveLockObject(tableName);
-            }
+            return Task.FromResult(new DbLockReleaser(this, tableName));
         }
 
         internal void RemoveLockObject(string tableName)

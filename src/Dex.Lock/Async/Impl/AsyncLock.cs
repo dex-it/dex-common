@@ -9,7 +9,7 @@ namespace Dex.Lock.Async.Impl
 {
     [DebuggerTypeProxy(typeof(DebugView))]
     [DebuggerDisplay("Taken = {" + nameof(DebugDisplay) + "}")]
-    public sealed class AsyncLock : IAsyncLock
+    public sealed class AsyncLock : IAsyncLock<LockReleaser>
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private bool DebugDisplay => Volatile.Read(ref _taken) == 1;

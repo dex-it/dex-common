@@ -1,29 +1,28 @@
 using System;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
 
 namespace Dex.Lock.Database
 {
-    public class DatabaseAsyncLockProvider<T> : IAsyncLockProvider<T>
+    public class DatabaseAsyncLockProvider<T> : IAsyncLockProvider<T, DbLockReleaser>
     {
         private readonly IDbConnection _dbConnection;
         private readonly string _instanceId;
 
-        internal DatabaseAsyncLockProvider([NotNull] IDbConnection dbConnection, string instanceId)
+        internal DatabaseAsyncLockProvider(IDbConnection dbConnection, string? instanceId)
         {
             _dbConnection = dbConnection ?? throw new ArgumentNullException(nameof(dbConnection));
             _instanceId = instanceId ?? Guid.NewGuid().ToString("N");
         }
 
-        public IAsyncLock GetLock([NotNull] T key)
+        public IAsyncLock<DbLockReleaser> GetLocker(T key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             return new DatabaseAsyncLock(_dbConnection, CreateKey(key));
         }
 
-        public Task<bool> RemoveLock([NotNull] T key)
+        public Task<bool> RemoveLocker(T key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             var databaseAsyncLock = new DatabaseAsyncLock(_dbConnection, CreateKey(key));

@@ -8,7 +8,7 @@
     <PackageProjectUrl>https://github.com/dex-it/dex-common/projects/1</PackageProjectUrl>
     <RepositoryType>github</RepositoryType>
     <Nullable>enable</Nullable>
-    <LangVersion>Latest</LangVersion>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

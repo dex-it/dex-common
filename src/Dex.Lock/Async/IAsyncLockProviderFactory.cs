@@ -1,7 +1,9 @@
+using System;
+
 namespace Dex.Lock.Async
 {
-    public interface IAsyncLockProviderFactory
+    public interface IAsyncLockProviderFactory<TR> where TR : IDisposable
     {
-        IAsyncLockProvider<T> Create<T>(string instanceId = null);
+        IAsyncLockProvider<T, TR> Create<T>(string? instanceId = null);
     }
 }

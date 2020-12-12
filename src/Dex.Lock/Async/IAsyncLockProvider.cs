@@ -1,11 +1,12 @@
+using System;
 using System.Threading.Tasks;
 
 namespace Dex.Lock.Async
 {
-    public interface IAsyncLockProvider<in T>
+    public interface IAsyncLockProvider<in T, TR> where TR : IDisposable
     {
-        IAsyncLock GetLock(T key);
+        IAsyncLock<TR> GetLocker(T key);
 
-        Task<bool> RemoveLock(T key);
+        Task<bool> RemoveLocker(T key);
     }
 }
