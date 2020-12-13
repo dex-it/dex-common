@@ -7,7 +7,6 @@ namespace Dex.Lock.Database
     public class DatabaseAsyncLockProvider : BaseLockProvider<DbLockReleaser>
     {
         private readonly IDbTransaction _dbTransaction;
-        private IDbConnection DbConnection => _dbTransaction.Connection;
         public override string InstanceKey { get; }
 
         public DatabaseAsyncLockProvider(IDbTransaction dbTransaction, string instanceId)
@@ -19,7 +18,7 @@ namespace Dex.Lock.Database
         public override IAsyncLock<DbLockReleaser> GetLocker(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            return new DatabaseAsyncLock(DbConnection, CreateKey(key));
+            return new DatabaseAsyncLock(_dbTransaction, CreateKey(key));
         }
     }
 }

@@ -9,14 +9,15 @@ namespace Dex.Lock.Database
 {
     public class DatabaseAsyncLock : IAsyncLock<DbLockReleaser>
     {
-        private readonly IDbConnection _dataConnection;
+        private readonly IDbTransaction _dbTransaction;
+        private IDbConnection DataConnection => _dbTransaction.Connection;
         private readonly string _key;
 
         // TODO check database for support, dirty connection close, Danilov
-        internal DatabaseAsyncLock(IDbConnection dataConnection, string key)
+        internal DatabaseAsyncLock(IDbTransaction dbTransaction, string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            _dataConnection = dataConnection ?? throw new ArgumentNullException(nameof(dataConnection));
+            _dbTransaction = dbTransaction ?? throw new ArgumentNullException(nameof(dbTransaction));
             _key = key.ToUpper(CultureInfo.InvariantCulture);
         }
 
@@ -44,7 +45,7 @@ namespace Dex.Lock.Database
         }
 
         //--
-        
+
         private string CreateTableName()
         {
             return $"LT_{_key}";
@@ -52,7 +53,8 @@ namespace Dex.Lock.Database
 
         private async Task ExecuteCommandAsync(string command)
         {
-            using var cmd = _dataConnection.CreateCommand();
+            using var cmd = DataConnection.CreateCommand();
+            cmd.Transaction = _dbTransaction;
             cmd.CommandText = command;
 
             if (cmd is DbCommand dbCommand)
@@ -67,7 +69,7 @@ namespace Dex.Lock.Database
 
         private void ExecuteCommand(string command)
         {
-            using var cmd = _dataConnection.CreateCommand();
+            using var cmd = DataConnection.CreateCommand();
             cmd.CommandText = command;
             cmd.ExecuteNonQuery();
         }
