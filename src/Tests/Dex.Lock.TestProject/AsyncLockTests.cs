@@ -18,7 +18,6 @@ namespace Dex.Lock.TestProject
         public async Task LockAsyncFuncTest1()
         {
             var list = new List<string>();
-
             var aLock = new AsyncLock();
 
             static Task AppendToListTask(ICollection<string> list)
@@ -32,11 +31,7 @@ namespace Dex.Lock.TestProject
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
-
-            foreach (var x in list)
-            {
-                TestContext.WriteLine(x);
-            }
+            Assert.AreEqual(25, list.Count);
         }
     }
 }

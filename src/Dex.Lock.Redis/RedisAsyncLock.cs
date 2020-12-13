@@ -21,18 +21,33 @@ namespace Dex.Lock.Redis
 
         public async ValueTask<RedisLockReleaser> LockAsync()
         {
-            await _database.LockTakeAsync(_key, string.Empty, Timeout).ConfigureAwait(false);
+            var expired = DateTime.Now + Timeout;
+            bool lockTacked;
+            do
+            {
+                lockTacked = await _database
+                    .LockTakeAsync(_key, string.Empty, Timeout, CommandFlags.DemandMaster)
+                    .ConfigureAwait(false);
+
+                if (lockTacked) break; // lock tacked
+
+                await Task.Delay(10).ConfigureAwait(false);
+            } while (expired > DateTime.Now);
+
+            if (!lockTacked)
+                throw new TimeoutException($"Lock can't tacked until timeout: {Timeout}");
+
             return new RedisLockReleaser(this);
         }
 
         internal Task<bool> RemoveLockObjectAsync()
         {
-            return _database.LockReleaseAsync(_key, string.Empty);
+            return _database.LockReleaseAsync(_key, string.Empty, CommandFlags.DemandMaster);
         }
 
         internal bool RemoveLockObject()
         {
-            return _database.LockRelease(_key, string.Empty);
+            return _database.LockRelease(_key, string.Empty, CommandFlags.DemandMaster);
         }
     }
 }

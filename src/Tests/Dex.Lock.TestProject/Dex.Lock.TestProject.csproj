@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Dex.Lock.Database\Dex.Lock.Database.csproj" />
+    <ProjectReference Include="..\..\Dex.Lock.Redis\Dex.Lock.Redis.csproj" />
     <ProjectReference Include="..\..\Dex.Lock\Dex.Lock.csproj" />
   </ItemGroup>
 
