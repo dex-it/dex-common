@@ -14,9 +14,9 @@ namespace Dex.Lock.Database
             _tableName = tableName;
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            return new ValueTask(_asyncLock.RemoveLockObjectAsync(_tableName));
+            await _asyncLock.RemoveLockObjectAsync(_tableName).ConfigureAwait(false);
         }
 
         public void Dispose()
