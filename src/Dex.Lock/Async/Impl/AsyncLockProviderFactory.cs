@@ -1,8 +1,8 @@
 namespace Dex.Lock.Async.Impl
 {
-    public class AsyncLockProviderFactory : IAsyncLockProviderFactory
+    public class AsyncLockProviderFactory : IAsyncLockProviderFactory<LockReleaser>
     {
-        public IAsyncLockProvider<T> Create<T>(string instanceId = null)
+        public IAsyncLockProvider<T, LockReleaser> Create<T>(string? instanceId)
         {
             return new AsyncLockProvider<T>();
         }

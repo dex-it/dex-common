@@ -18,25 +18,20 @@ namespace Dex.Lock.TestProject
         public async Task LockAsyncFuncTest1()
         {
             var list = new List<string>();
+            var aLock = new AsyncLock();
 
-            using (var aLock = new AsyncLock())
+            static Task AppendToListTask(ICollection<string> list)
             {
-                static Task AppendToListTask(ICollection<string> list)
-                {
-                    return Task.Run(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
-                }
-
-                var tasks = Enumerable.Range(1, 25)
-                    .Select(i => aLock.LockAsync(() => AppendToListTask(list)))
-                    .ToList();
-
-                await Task.WhenAll(tasks).ConfigureAwait(false);
+                return Task.Factory.StartNew(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
             }
 
-            foreach (var x in list)
-            {
-                TestContext.WriteLine(x);
-            }
+            var tasks = Enumerable.Range(1, 25)
+                .Select(i => aLock.LockAsync(() => AppendToListTask(list)))
+                .ToList();
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            Assert.AreEqual(25, list.Count);
         }
     }
 }
