@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dex.Lock.Async.Impl;
+using System;
 using System.Threading.Tasks;
 
 namespace Dex.Lock.Database
@@ -14,9 +15,10 @@ namespace Dex.Lock.Database
             _tableName = tableName;
         }
 
-        public async ValueTask DisposeAsync()
+        public ValueTask DisposeAsync()
         {
-            await _asyncLock.RemoveLockObjectAsync(_tableName).ConfigureAwait(false);
+            var task = _asyncLock.RemoveLockObjectAsync(_tableName);
+            return new ValueTask(task);
         }
 
         public void Dispose()

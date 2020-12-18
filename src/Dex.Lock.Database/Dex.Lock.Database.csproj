@@ -12,11 +12,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Dex.Lock\Dex.Lock.csproj" />
+      <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.1">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0" Condition="'$(Configuration)'=='Debug'" />
+      <ProjectReference Include="..\Dex.Lock\Dex.Lock.csproj" />
     </ItemGroup>
 
 </Project>
