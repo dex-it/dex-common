@@ -19,6 +19,9 @@
         [DebuggerStepThrough]
         public static async Task WhenAllOrAnyException(IEnumerable<Task> tasks)
         {
+            if (tasks == null)
+                throw new ArgumentNullException(nameof(tasks));
+
             var list = tasks.ToList();
             while (list.Count > 0)
             {

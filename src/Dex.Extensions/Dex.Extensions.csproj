@@ -9,6 +9,7 @@
       <Copyright>dex</Copyright>
       <PackageProjectUrl>https://github.com/dex-it/dex-common/projects/1</PackageProjectUrl>
       <RepositoryType>github</RepositoryType>
+      <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>
