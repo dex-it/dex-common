@@ -6,7 +6,7 @@
     using System.Linq;
     using System.Text;
 
-    public static class TaskEx
+    public static class TaskHelper
     {
         /// <remarks>Проглатывает последующие исключения.</remarks>
         [DebuggerStepThrough]
@@ -22,7 +22,7 @@
             var list = tasks.ToList();
             while (list.Count > 0)
             {
-                var completedTask = await Task.WhenAny(list);
+                var completedTask = await Task.WhenAny(list).ConfigureAwait(false);
                 list.Remove(completedTask);
 
                 if (completedTask.Exception?.InnerException is Exception ex)
