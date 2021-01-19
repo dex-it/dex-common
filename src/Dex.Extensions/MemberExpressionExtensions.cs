@@ -8,9 +8,10 @@ namespace Dex.Extensions
     {
         public static Func<T, object> GetValueGetter<T>(this PropertyInfo propertyInfo)
         {
+            if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));
             if (typeof(T) != propertyInfo.DeclaringType)
             {
-                throw new ArgumentException();
+                throw new ArgumentOutOfRangeException(nameof(propertyInfo));
             }
 
             var instance = Expression.Parameter(propertyInfo.DeclaringType, "i");
@@ -21,6 +22,8 @@ namespace Dex.Extensions
 
         public static Func<object, object> GetValueGetter(this PropertyInfo propertyInfo)
         {
+            if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));
+            
             var declaringType = propertyInfo.DeclaringType;
             var propertyName = propertyInfo.Name;
 
@@ -38,6 +41,11 @@ namespace Dex.Extensions
         public static Action<object, object> GetValueSetter(this Type declaringType, string propertyName)
         {
             var propertyInfo = declaringType.GetTypeInfo().GetProperty(propertyName);
+            if (propertyInfo == null)
+            {
+                throw new ArgumentException($"Type \"{declaringType}\" does not contain property \"{propertyName}\"", nameof(propertyName));
+            }
+
             var instance = Expression.Parameter(typeof(object), "i");
             var setMethod = propertyInfo.GetSetMethod();
             var argument = Expression.Parameter(typeof(object), "a");
@@ -51,9 +59,10 @@ namespace Dex.Extensions
 
         public static Action<T, object> GetValueSetter<T>(this PropertyInfo propertyInfo)
         {
+            if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));
             if (typeof(T) != propertyInfo.DeclaringType)
             {
-                throw new ArgumentException();
+                throw new ArgumentOutOfRangeException(nameof(propertyInfo));
             }
 
             var instance = Expression.Parameter(propertyInfo.DeclaringType, "i");

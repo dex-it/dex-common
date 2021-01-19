@@ -1,50 +1,42 @@
 using System;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
+using System.Data.Common;
+using System.Globalization;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
 
 namespace Dex.Lock.Database
 {
-    public class DatabaseAsyncLock : IAsyncLock
+    public class DatabaseAsyncLock : IAsyncLock<DbLockReleaser>
     {
-        private readonly IDbConnection _dataConnection;
+        private readonly IDbTransaction _dbTransaction;
+        private IDbConnection DataConnection => _dbTransaction.Connection;
         private readonly string _key;
 
-        internal DatabaseAsyncLock([NotNull] IDbConnection dataConnection, [NotNull] string key)
+        // TODO check database for support, dirty connection close, Danilov
+        internal DatabaseAsyncLock(IDbTransaction dbTransaction, string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            _dataConnection = dataConnection ?? throw new ArgumentNullException(nameof(dataConnection));
-            _key = key.ToUpper();
+            _dbTransaction = dbTransaction ?? throw new ArgumentNullException(nameof(dbTransaction));
+            _key = key.ToUpper(CultureInfo.InvariantCulture);
         }
 
-        public async Task LockAsync(Func<Task> asyncAction)
+        public ValueTask<DbLockReleaser> LockAsync()
         {
-            if (asyncAction == null) throw new ArgumentNullException(nameof(asyncAction));
+#pragma warning disable CA2000
+            return new ValueTask<DbLockReleaser>(InternalLockAsync());
+        }
 
+        private async Task<DbLockReleaser> InternalLockAsync()
+        {
             var tableName = CreateTableName();
-            ExecuteCommand($"CREATE TABLE {tableName} (CODE integer);");
-            try
-            {
-                await asyncAction();
-            }
-            finally
-            {
-                RemoveLockObject(tableName);
-            }
+            await ExecuteCommandAsync($"CREATE TABLE {tableName} (CODE integer);").ConfigureAwait(false);
+            return new DbLockReleaser(this, tableName);
         }
 
-        public Task LockAsync(Action action)
+        internal Task RemoveLockObjectAsync(string tableName)
         {
-            if (action == null) throw new ArgumentNullException(nameof(action));
-
-            Task Act()
-            {
-                action();
-                return Task.FromResult(true);
-            }
-
-            return LockAsync(Act);
+            return ExecuteCommandAsync($"DROP TABLE {tableName};");
         }
 
         internal void RemoveLockObject(string tableName)
@@ -52,14 +44,32 @@ namespace Dex.Lock.Database
             ExecuteCommand($"DROP TABLE {tableName};");
         }
 
+        //--
+
         private string CreateTableName()
         {
             return $"LT_{_key}";
         }
 
-        private void ExecuteCommand([NotNull] string command)
+        private async Task ExecuteCommandAsync(string command)
         {
-            using var cmd = _dataConnection.CreateCommand();
+            using var cmd = DataConnection.CreateCommand();
+            cmd.Transaction = _dbTransaction;
+            cmd.CommandText = command;
+
+            if (cmd is DbCommand dbCommand)
+            {
+                await dbCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void ExecuteCommand(string command)
+        {
+            using var cmd = DataConnection.CreateCommand();
             cmd.CommandText = command;
             cmd.ExecuteNonQuery();
         }

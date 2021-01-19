@@ -25,6 +25,7 @@ namespace Dex.Specifications.Filters.ConditionalOperators
 
         protected override Expression CreateFilter(Expression property)
         {
+            if (property == null) throw new ArgumentNullException(nameof(property));
             // Value.Contains(property)
 
             Expression result;
@@ -32,7 +33,7 @@ namespace Dex.Specifications.Filters.ConditionalOperators
             var values = Value as IEnumerable;
 
             // Если коллекция содержит элементы
-            if (values != null && values.Cast<object>().Count() > 0)
+            if (values != null && values.Cast<object>().Any())
             {
                 var containsMethod = Value.GetType().GetTypeInfo().GetMethod("Contains", new[] { property.Type });
 

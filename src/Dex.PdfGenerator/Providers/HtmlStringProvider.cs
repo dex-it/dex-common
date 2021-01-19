@@ -17,8 +17,8 @@ namespace Dex.PdfGenerator.Providers
 
         public Task<string> GetHtml()
         {
-            var result = _staticPathProvider == null ? _html : _html.Replace("{Provider}", _staticPathProvider.GetBaseUri());
-            return Task.FromResult<string>(result);
+            var result = _staticPathProvider == null ? _html : _html.Replace("{Provider}", _staticPathProvider.GetBaseUri(), StringComparison.InvariantCulture);
+            return Task.FromResult(result);
         }
     }
 }

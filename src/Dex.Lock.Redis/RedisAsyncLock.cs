@@ -1,67 +1,53 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
 using StackExchange.Redis;
 
 namespace Dex.Lock.Redis
 {
-    internal class RedisAsyncLock : IAsyncLock
+    internal class RedisAsyncLock : IAsyncLock<RedisLockReleaser>
     {
-        private const int MaxTries = 50;
-        private const int IterationDelay = 50;
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(1);
+
         private readonly IDatabase _database;
         private readonly string _key;
 
-        internal RedisAsyncLock([NotNull] IDatabase database, [NotNull] string key)
+        // TODO check database for support, dirty connection close, Danilov
+        internal RedisAsyncLock(IDatabase database, string key)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _key = key ?? throw new ArgumentNullException(nameof(key));
         }
 
-        public async Task LockAsync(Func<Task> asyncAction)
+        public async ValueTask<RedisLockReleaser> LockAsync()
         {
-            if (asyncAction == null) throw new ArgumentNullException(nameof(asyncAction));
-            var c = MaxTries;
-            while (c-- > 0)
+            var expired = DateTime.Now + Timeout;
+            bool lockTacked;
+            do
             {
-                var success = await _database.LockTakeAsync(_key, string.Empty, TimeSpan.MaxValue);
-                if (success)
-                {
-                    try
-                    {
-                        await asyncAction();
-                    }
-                    finally
-                    {
-                        await RemoveLockObject();
-                    }
+                lockTacked = await _database
+                    .LockTakeAsync(_key, string.Empty, Timeout, CommandFlags.DemandMaster)
+                    .ConfigureAwait(false);
 
-                    return;
-                }
+                if (lockTacked) break; // lock tacked
 
-                await Task.Delay(IterationDelay);
-            }
+                await Task.Delay(10).ConfigureAwait(false);
+            } while (expired > DateTime.Now);
 
-            throw new TimeoutException("[" + IterationDelay * MaxTries + "ms]");
+            if (!lockTacked)
+                throw new TimeoutException($"Lock can't tacked until timeout: {Timeout}");
+
+            return new RedisLockReleaser(this);
         }
 
-        internal Task<bool> RemoveLockObject()
+        internal Task<bool> RemoveLockObjectAsync()
         {
-            return _database.LockReleaseAsync(_key, string.Empty);
+            return _database.LockReleaseAsync(_key, string.Empty, CommandFlags.DemandMaster);
         }
 
-        public async Task LockAsync(Action action)
+        internal bool RemoveLockObject()
         {
-            if (action == null) throw new ArgumentNullException(nameof(action));
-
-            Task Act()
-            {
-                action();
-                return Task.FromResult(true);
-            }
-
-            await LockAsync(Act);
+            return _database.LockRelease(_key, string.Empty, CommandFlags.DemandMaster);
         }
     }
 }

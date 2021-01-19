@@ -1,39 +1,24 @@
 using System;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using Dex.Lock.Async;
 
 namespace Dex.Lock.Database
 {
-    public class DatabaseAsyncLockProvider<T> : IAsyncLockProvider<T>
+    public class DatabaseAsyncLockProvider : BaseLockProvider<DbLockReleaser>
     {
-        private readonly IDbConnection _dbConnection;
-        private readonly string _instanceId;
+        private readonly IDbTransaction _dbTransaction;
+        public override string InstanceKey { get; }
 
-        internal DatabaseAsyncLockProvider([NotNull] IDbConnection dbConnection, string instanceId)
+        public DatabaseAsyncLockProvider(IDbTransaction dbTransaction, string instanceId)
         {
-            _dbConnection = dbConnection ?? throw new ArgumentNullException(nameof(dbConnection));
-            _instanceId = instanceId ?? Guid.NewGuid().ToString("N");
+            _dbTransaction = dbTransaction ?? throw new ArgumentNullException(nameof(dbTransaction));
+            InstanceKey = CreateKey(instanceId);
         }
 
-        public IAsyncLock Get([NotNull] T key)
+        public override IAsyncLock<DbLockReleaser> GetLocker(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            return new DatabaseAsyncLock(_dbConnection, CreateKey(key));
-        }
-
-        public Task<bool> Remove([NotNull] T key)
-        {
-            if (key == null) throw new ArgumentNullException(nameof(key));
-            var databaseAsyncLock = new DatabaseAsyncLock(_dbConnection, CreateKey(key));
-            databaseAsyncLock.RemoveLockObject(CreateKey(key));
-            return Task.FromResult(true);
-        }
-
-        private string CreateKey(T key)
-        {
-            return _instanceId + key.ToString().Replace("-", "");
+            return new DatabaseAsyncLock(_dbTransaction, CreateKey(key));
         }
     }
 }

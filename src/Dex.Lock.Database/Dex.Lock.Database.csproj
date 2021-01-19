@@ -7,10 +7,16 @@
         <Copyright>dex</Copyright>
         <PackageProjectUrl>https://github.com/dex-it/dex-common/projects/1</PackageProjectUrl>
         <RepositoryType>github</RepositoryType>
+        <Nullable>enable</Nullable>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Dex.Lock\Dex.Lock.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0" Condition="'$(Configuration)'=='Debug'" />
     </ItemGroup>
 
 </Project>

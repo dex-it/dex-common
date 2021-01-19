@@ -11,7 +11,7 @@ namespace Dex.Extensions
             return Enum.GetValues(typeof(T)).Cast<T>().ToArray();
         }
 
-        public static T Parse<T>([NotNull] string value)
+        public static T Parse<T>(string value)
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
@@ -19,12 +19,12 @@ namespace Dex.Extensions
             return (T) Enum.Parse(typeof(T), value, true);
         }
 
-        public static bool TryParse<T>([NotNull] string value, out T obj) where T : struct
+        public static bool TryParse<T>(string value, out T obj) where T : struct
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
 
-            return Enum.TryParse(value, true, out obj);
+            return Enum.TryParse(value, ignoreCase: true, out obj);
         }
     }
 }
