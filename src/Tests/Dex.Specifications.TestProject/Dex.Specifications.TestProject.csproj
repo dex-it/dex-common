@@ -16,6 +16,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Dex.Specifications.EntityFramework\Dex.Specifications.EntityFramework.csproj" />
+      <ProjectReference Include="..\..\Dex.Specifications.Extensions\Dex.Specifications.Extensions.csproj" />
     </ItemGroup>
 
 </Project>

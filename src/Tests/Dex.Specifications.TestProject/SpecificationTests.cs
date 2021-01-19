@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
+using Dex.Specifications.EntityFramework;
+using Dex.Specifications.Extensions;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 
@@ -46,14 +48,10 @@ namespace Dex.Specifications.TestProject
         }
 
         [Test]
-        public void AndSpecificationTest()
+        public void AndExtensionSpecificationTest()
         {
             var companyIdFirst = Guid.NewGuid();
             var companyIdSecond = Guid.NewGuid();
-
-            var sp2 = Sp<Company>
-                .Equal(c => c.Id, companyIdFirst)
-                .And(Sp<Company>.Equal(c => c.Id, companyIdSecond));
 
             var sp = Sp<Company>
                 .Equal(c => c.Id, companyIdFirst)
@@ -67,6 +65,43 @@ namespace Dex.Specifications.TestProject
             Assert.AreEqual(specificationSql, expressionSql);
         }
 
+        [Test]
+        public void AndSpecificationTest()
+        {
+            var companyIdFirst = Guid.NewGuid();
+            var companyIdSecond = Guid.NewGuid();
+
+            var sp = Sp<Company>
+                .Equal(c => c.Id, companyIdFirst)
+                .And(Sp<Company>.Equal(c => c.Id, companyIdSecond));
+
+            Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst && c.Id == companyIdSecond; 
+            
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+            
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+
+        
+        [Test]
+        public void OrExtensionSpecificationTest()
+        {
+            var companyIdFirst = Guid.NewGuid();
+            var companyIdSecond = Guid.NewGuid();
+
+            var sp = Sp<Company>
+                .Equal(c => c.Id, companyIdFirst)
+                .Or(s => s.Equal(c => c.Id, companyIdSecond));
+
+            Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst || c.Id == companyIdSecond; 
+            
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+            
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+        
         [Test]
         public void OrSpecificationTest()
         {
@@ -84,7 +119,27 @@ namespace Dex.Specifications.TestProject
             
             Assert.AreEqual(specificationSql, expressionSql);
         }
-        
+
+        [Test]
+        public void MultipleOrSpecificationTest()
+        {
+            var countryId = Guid.NewGuid();
+            var id = Guid.NewGuid();
+            var employees = 3;
+
+            var sp = Sp<Company>
+                .Equal(c => c.CountryId, countryId)
+                .Or(s => s.Equal(c => c.Id, id)
+                    .Or(s2 => s2.Equal(c => c.Employees, employees)));
+
+            Expression<Func<Company, bool>> query = c => c.CountryId == countryId || (c.Id == id || c.Employees == employees);
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+
         [Test]
         public void AndPlusOrSpecificationTest()
         {
@@ -94,8 +149,8 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Like(c => c.Name, companyName)
-                .And(Sp<Company>.Equal(c => c.Id, companyFirstId)
-                                         .Or(Sp<Company>.Equal(c => c.Id, companySecondId)));
+                .And(s => s.Equal(c => c.Id, companyFirstId)
+                    .Or(s2 => s2.Equal(c => c.Id, companySecondId)));
 
             Expression<Func<Company, bool>> query = c => EF.Functions.Like(c.Name, $"%{companyName}%") && (c.Id == companyFirstId || c.Id == companySecondId); 
 
@@ -105,9 +160,62 @@ namespace Dex.Specifications.TestProject
             Assert.AreEqual(specificationSql, expressionSql);
         }
 
-        private string GetSql(Expression<Func<Company, bool>> expression)
+        [Test]
+        public void NotSpecificationTest()
         {
-            var query = GetDbContext().Companies.Where(expression);
+            var companyId = Guid.NewGuid();
+
+            var sp = Sp<Company>
+                .Not(s => s.Equal(c => c.Id, companyId));
+            
+            Expression<Func<Company, bool>> query = c => c.Id != companyId;
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+
+        [Test]
+        public void OrNotSpecificationTest()
+        {
+            var companyId = Guid.NewGuid();
+            var countryId = Guid.NewGuid();
+
+            var sp = Sp<Company>
+                .Equal(s => s.Id, companyId)
+                .Or(s => s.Not(s2 => s2.Equal(c => c.CountryId, countryId)));
+            
+            Expression<Func<Company, bool>> query = c => c.Id == companyId || c.CountryId != countryId;
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+        
+        [Test]
+        public void AndNotSpecificationTest()
+        {
+            var companyId = Guid.NewGuid();
+            var countryId = Guid.NewGuid();
+
+            var sp = Sp<Company>
+                .Equal(s => s.Id, companyId)
+                .And(s => s.Not(s2 => s2.Equal(c => c.CountryId, countryId)));
+            
+            Expression<Func<Company, bool>> query = c => c.Id == companyId && c.CountryId != countryId;
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+        
+        private static string GetSql(Expression<Func<Company, bool>> expression)
+        {
+            using var dbContext = GetDbContext();
+            var query = dbContext.Companies.Where(expression);
             var sql = query.ToSql();
 
             var regex = new Regex(@"\B@\w+");
@@ -125,7 +233,7 @@ namespace Dex.Specifications.TestProject
             return sql;
         }
 
-        private DbContext GetDbContext()
+        private static DbContext GetDbContext()
         {
             var contextOptions = new DbContextOptionsBuilder().UseNpgsql("empty").Options;
 

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using Dex.Specifications.EntityFramework;
 
-namespace Dex.Specifications.TestProject
+namespace Dex.Specifications.EntityFramework
 {
     public static class SpecificationExtensions
     {
@@ -32,36 +31,6 @@ namespace Dex.Specifications.TestProject
             if (elements == null) throw new ArgumentNullException(nameof(elements));
 
             return current & new InSpecification<T, TProperty>(expression, elements);
-        }
-
-        public static Specification<T> And<T>(this Specification<T> current, Func<Specification<T>, Specification<T>> func)
-        {
-            if (current == null) throw new ArgumentNullException(nameof(current));
-
-            return func(current) & new Specification<T>(e => true);
-        }
-
-        public static Specification<T> Or<T>(this Specification<T> current, Func<Specification<T>, Specification<T>> func)
-        {
-            if (current == null) throw new ArgumentNullException(nameof(current));
-
-            return func(current) | new Specification<T>(e => true);
-        }
-        
-        public static Specification<T> And<T>(this Specification<T> current, Specification<T> specification)
-        {
-            if (current == null) throw new ArgumentNullException(nameof(current));
-            if (specification == null) throw new ArgumentNullException(nameof(specification));
-
-            return current & specification;
-        }
-
-        public static Specification<T> Or<T>(this Specification<T> current, Specification<T> specification)
-        {
-            if (current == null) throw new ArgumentNullException(nameof(current));
-            if (specification == null) throw new ArgumentNullException(nameof(specification));
-
-            return current | specification;
         }
     }
 }
