@@ -4,7 +4,7 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
-namespace Dex.Specifications.TestProject
+namespace Dex.Specifications.EntityFramework.TestProject
 {
     public static class QueryableExtensions
     {

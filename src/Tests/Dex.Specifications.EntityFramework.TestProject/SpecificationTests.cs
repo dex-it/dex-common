@@ -2,12 +2,11 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
-using Dex.Specifications.EntityFramework;
 using Dex.Specifications.Extensions;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 
-namespace Dex.Specifications.TestProject
+namespace Dex.Specifications.EntityFramework.TestProject
 {
     public class SpecificationTests
     {
@@ -20,8 +19,8 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Equal(c => c.Employees, employees)
-                .Equal(c => c.Id, id)
-                .Equal(c => c.CountryId, country);
+                .AndEqual(c => c.Id, id)
+                .AndEqual(c => c.CountryId, country);
 
             Expression<Func<Company, bool>> query = c => c.Employees == employees && c.Id == id && c.CountryId == country;
 
@@ -55,7 +54,7 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Equal(c => c.Id, companyIdFirst)
-                .And(s => s.Equal(c => c.Id, companyIdSecond));
+                .And(s => s.AndEqual(c => c.Id, companyIdSecond));
 
             Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst && c.Id == companyIdSecond; 
             
@@ -82,7 +81,6 @@ namespace Dex.Specifications.TestProject
             
             Assert.AreEqual(specificationSql, expressionSql);
         }
-
         
         [Test]
         public void OrExtensionSpecificationTest()
@@ -92,7 +90,7 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Equal(c => c.Id, companyIdFirst)
-                .Or(s => s.Equal(c => c.Id, companyIdSecond));
+                .Or(s => s.AndEqual(c => c.Id, companyIdSecond));
 
             Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst || c.Id == companyIdSecond; 
             
@@ -129,8 +127,8 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Equal(c => c.CountryId, countryId)
-                .Or(s => s.Equal(c => c.Id, id)
-                    .Or(s2 => s2.Equal(c => c.Employees, employees)));
+                .Or(s => s.AndEqual(c => c.Id, id)
+                    .Or(s2 => s2.AndEqual(c => c.Employees, employees)));
 
             Expression<Func<Company, bool>> query = c => c.CountryId == countryId || (c.Id == id || c.Employees == employees);
 
@@ -149,8 +147,8 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Like(c => c.Name, companyName)
-                .And(s => s.Equal(c => c.Id, companyFirstId)
-                    .Or(s2 => s2.Equal(c => c.Id, companySecondId)));
+                .And(s => s.AndEqual(c => c.Id, companyFirstId)
+                    .Or(s2 => s2.AndEqual(c => c.Id, companySecondId)));
 
             Expression<Func<Company, bool>> query = c => EF.Functions.Like(c.Name, $"%{companyName}%") && (c.Id == companyFirstId || c.Id == companySecondId); 
 
@@ -161,12 +159,31 @@ namespace Dex.Specifications.TestProject
         }
 
         [Test]
-        public void NotSpecificationTest()
+        public void NotCustomSpecificationTest()
+        {
+            var companyId = Guid.NewGuid();
+            var countryId = Guid.NewGuid();
+            var employees = 5;
+
+            var specification = new EfEqualSpecification<Company, Guid>(c => c.CountryId, countryId)
+                .AndEqual(c => c.Employees, employees);
+
+            var sp = new EfEqualSpecification<Company, Guid>(c => c.Id, companyId).Not(specification);
+            Expression<Func<Company, bool>> query = c => c.Id == companyId && !(c.CountryId == countryId && c.Employees == employees);
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+
+        [Test]
+        public void NotExtensionSpecificationTest()
         {
             var companyId = Guid.NewGuid();
 
             var sp = Sp<Company>
-                .Not(s => s.Equal(c => c.Id, companyId));
+                .Not(s => s.AndEqual(c => c.Id, companyId));
             
             Expression<Func<Company, bool>> query = c => c.Id != companyId;
 
@@ -177,6 +194,21 @@ namespace Dex.Specifications.TestProject
         }
 
         [Test]
+        public void NotSimpleSpecificationTest()
+        {
+            var companyId = Guid.NewGuid();
+
+            var sp = new NotSpecification<Company>(new EfEqualSpecification<Company, Guid>(c => c.Id, companyId));
+
+            Expression<Func<Company, bool>> query = c => c.Id != companyId;
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+        
+        [Test]
         public void OrNotSpecificationTest()
         {
             var companyId = Guid.NewGuid();
@@ -184,7 +216,7 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Equal(s => s.Id, companyId)
-                .Or(s => s.Not(s2 => s2.Equal(c => c.CountryId, countryId)));
+                .Or(s => s.Not(s2 => s2.AndEqual(c => c.CountryId, countryId)));
             
             Expression<Func<Company, bool>> query = c => c.Id == companyId || c.CountryId != countryId;
 
@@ -202,7 +234,7 @@ namespace Dex.Specifications.TestProject
 
             var sp = Sp<Company>
                 .Equal(s => s.Id, companyId)
-                .And(s => s.Not(s2 => s2.Equal(c => c.CountryId, countryId)));
+                .And(s => s.Not(s2 => s2.AndEqual(c => c.CountryId, countryId)));
             
             Expression<Func<Company, bool>> query = c => c.Id == companyId && c.CountryId != countryId;
 

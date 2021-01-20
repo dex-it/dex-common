@@ -6,6 +6,22 @@ namespace Dex.Extensions
 {
     public static class MemberExpressionExtensions
     {
+        public static string GetMemberName(this Expression memberExpression)
+        {
+            if (memberExpression == null) throw new ArgumentNullException(nameof(memberExpression));
+
+            var lambdaExpression = (LambdaExpression) memberExpression;
+            
+            if (!(lambdaExpression.Body is MemberExpression))
+            {
+                throw new InvalidOperationException("Expression must be a member expression");
+            }
+
+            var expression = (MemberExpression) lambdaExpression.Body;
+
+            return expression.Member.Name;
+        }
+        
         public static Func<T, object> GetValueGetter<T>(this PropertyInfo propertyInfo)
         {
             if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));

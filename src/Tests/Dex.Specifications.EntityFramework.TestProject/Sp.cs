@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using Dex.Specifications.EntityFramework;
 
-namespace Dex.Specifications.TestProject
+namespace Dex.Specifications.EntityFramework.TestProject
 {
     public static class Sp<T>
     {
@@ -12,7 +11,7 @@ namespace Dex.Specifications.TestProject
             if (expression == null) throw new ArgumentNullException(nameof(expression));
             if (string.IsNullOrWhiteSpace(pattern)) throw new ArgumentException("Value cannot be null or whitespace.", nameof(pattern));
             
-            return new CaseSensitiveLikeSpecification<T>(expression, pattern);
+            return new EfLikeSpecification<T>(expression, pattern);
         }
 
         public static Specification<T> Equal<TProperty>(Expression<Func<T, TProperty>> expression, TProperty property)
@@ -20,7 +19,7 @@ namespace Dex.Specifications.TestProject
             if (expression == null) throw new ArgumentNullException(nameof(expression));
             if (property == null) throw new ArgumentNullException(nameof(property));
             
-            return new EqualSpecification<T, TProperty>(expression, property);
+            return new EfEqualSpecification<T, TProperty>(expression, property);
         }
 
         public static Specification<T> In<TProperty>(Expression<Func<T, TProperty>> expression, IEnumerable<TProperty> elements)
@@ -28,7 +27,7 @@ namespace Dex.Specifications.TestProject
             if (expression == null) throw new ArgumentNullException(nameof(expression));
             if (elements == null) throw new ArgumentNullException(nameof(elements));
 
-            return new InSpecification<T, TProperty>(expression, elements);
+            return new EfInSpecification<T, TProperty>(expression, elements);
         }
 
         public static Specification<T> Not(Func<Specification<T>, Specification<T>> func)

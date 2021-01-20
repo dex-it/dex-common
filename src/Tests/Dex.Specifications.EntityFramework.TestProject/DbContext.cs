@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Specifications.TestProject
+namespace Dex.Specifications.EntityFramework.TestProject
 {
     public class DbContext : Microsoft.EntityFrameworkCore.DbContext
     {

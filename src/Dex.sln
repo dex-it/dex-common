@@ -35,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Lock.DevelopmentTest", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Ef", "Dex.Ef\Dex.Ef.csproj", "{DC6B199F-B25F-453B-B77E-148D51037ACB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Specifications.TestProject", "Tests\Dex.Specifications.TestProject\Dex.Specifications.TestProject.csproj", "{FAFBF1BF-0B09-4C2E-8971-EDAF11A53480}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Specifications.EntityFramework.TestProject", "Tests\Dex.Specifications.EntityFramework.TestProject\Dex.Specifications.EntityFramework.TestProject.csproj", "{FAFBF1BF-0B09-4C2E-8971-EDAF11A53480}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Specifications.EntityFramework", "Dex.Specifications.EntityFramework\Dex.Specifications.EntityFramework.csproj", "{55D8F1C7-4833-45CC-82D0-55B62E04D528}"
 EndProject

@@ -10,6 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
       <ProjectReference Include="..\Dex.Specifications\Dex.Specifications.csproj" />
     </ItemGroup>
 
