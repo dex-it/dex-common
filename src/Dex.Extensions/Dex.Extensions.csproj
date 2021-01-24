@@ -3,15 +3,15 @@
   <PropertyGroup>
       <LangVersion>Latest</LangVersion>
       <Nullable>enable</Nullable>
-      <TargetFramework>netcoreapp3.1</TargetFramework>
       <PackageTags>dex; extensions</PackageTags>
       <RepositoryUrl>https://github.com/dex-it/dex-common</RepositoryUrl>
       <Copyright>dex</Copyright>
       <PackageProjectUrl>https://github.com/dex-it/dex-common/projects/1</PackageProjectUrl>
       <RepositoryType>github</RepositoryType>
+      <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
-      <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0" Condition="'$(Configuration)'=='Debug'"/>
+      <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0" Condition="'$(Configuration)'=='Debug'" />
   </ItemGroup>
 </Project>

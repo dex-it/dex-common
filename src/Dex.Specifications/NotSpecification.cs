@@ -8,7 +8,7 @@ namespace Dex.Specifications
     /// Инверсия спецификации
     /// </summary>
     /// <typeparam name="T">Тип объекта, для которого применяется спецификация</typeparam>
-    class NotSpecification<T> : Specification<T>
+    public class NotSpecification<T> : Specification<T>
     {
         /// <summary>
         /// Конструктор

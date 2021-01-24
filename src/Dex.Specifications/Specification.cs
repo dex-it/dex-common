@@ -32,7 +32,7 @@ namespace Dex.Specifications
 
         protected virtual Expression<Func<T, bool>> Predicate
         {
-            get { return _predicate; }
+            get => _predicate;
             set
             {
                 _predicate = value;

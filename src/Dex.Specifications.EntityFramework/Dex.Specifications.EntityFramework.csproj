@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+        <PackageTags>dex;specifications;entityframework</PackageTags>
+        <RepositoryUrl>https://github.com/dex-it/dex-common</RepositoryUrl>
+        <Copyright>dex</Copyright>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/projects/1</PackageProjectUrl>
+        <RepositoryType>github</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
+      <ProjectReference Include="..\Dex.Specifications\Dex.Specifications.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.9" />
+    </ItemGroup>
+
+</Project>

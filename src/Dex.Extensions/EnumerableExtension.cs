@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,7 +24,7 @@ namespace Dex.Extensions
             return collection.Select((arg, i) => matchFunc(arg, i) ? replaceFunc(arg, i) : arg);
         }
 
-        public static void ForEach<T>([NotNull] this IEnumerable<T> source, [NotNull] Action<T> action)
+        public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             if (source == null)
             {
@@ -43,7 +42,7 @@ namespace Dex.Extensions
             }
         }
 
-        public static async Task ForEachAsync<T>([NotNull] this IEnumerable<T> source, [NotNull] Func<T, Task> action)
+        public static async Task ForEachAsync<T>(this IEnumerable<T> source, Func<T, Task> action)
         {
             if (source == null)
             {
@@ -63,11 +62,6 @@ namespace Dex.Extensions
 
         public static void NullSafeForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
-            if (source == null || action == null)
-            {
-                return;
-            }
-
             ForEach(source, action);
         }
 
@@ -89,9 +83,6 @@ namespace Dex.Extensions
 
         public static bool NullSafeAny<T>(this IEnumerable<T> source, Func<T, bool>? predicate = null)
         {
-            if (source == null) 
-                return false;
-
             return predicate == null
                 ? source.Any()
                 : source.Any(predicate);

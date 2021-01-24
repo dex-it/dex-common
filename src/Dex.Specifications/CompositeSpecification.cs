@@ -6,7 +6,7 @@ namespace Dex.Specifications
     /// Композитная спецификация
     /// </summary>
     /// <typeparam name="T">Тип объекта, для которого применяется спецификация</typeparam>
-    abstract class CompositeSpecification<T> : Specification<T>
+    public abstract class CompositeSpecification<T> : Specification<T>
     {
         /// <summary>
         /// Список спецификаций
