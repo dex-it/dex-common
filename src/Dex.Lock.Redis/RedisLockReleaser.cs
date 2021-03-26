@@ -18,9 +18,10 @@ namespace Dex.Lock.Redis
             _redisAsyncLock.RemoveLockObject();
         }
 
-        public async ValueTask DisposeAsync()
+        public ValueTask DisposeAsync()
         {
-            await _redisAsyncLock.RemoveLockObjectAsync().ConfigureAwait(false);
+            var task = _redisAsyncLock.RemoveLockObjectAsync();
+            return new ValueTask(task);
         }
     }
 }

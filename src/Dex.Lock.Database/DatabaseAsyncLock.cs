@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading.Tasks;
 using Dex.Lock.Async;
@@ -21,9 +22,9 @@ namespace Dex.Lock.Database
             _key = key.ToUpper(CultureInfo.InvariantCulture);
         }
 
+        //[SuppressMessage("Reliability", "CA2000:Ликвидировать объекты перед потерей области", Justification = "Ответственность передаётся выше по стеку")]
         public ValueTask<DbLockReleaser> LockAsync()
         {
-#pragma warning disable CA2000
             return new ValueTask<DbLockReleaser>(InternalLockAsync());
         }
 
