@@ -15,7 +15,7 @@ namespace Dex.Pagination
 
             // setup defaults
             page = Math.Max(1, page);
-            pageSize = Math.Max(10, pageSize);
+            pageSize = Math.Max(1, pageSize);
 
             return source.Skip((page - 1) * pageSize).Take(pageSize);
         }
