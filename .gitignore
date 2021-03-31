@@ -295,3 +295,4 @@ crashlytics-build.properties
 /Sources/Taxi/YandexTaxi.sln.startup.json
 /Sources/Taxi/YandexTaxi.sln.startup.json
 /Sources/Taxi/Taxi.Dispatcher.Desktop/Resources/MapScripts/script.js.map
+/src/nuget-upload.txt
