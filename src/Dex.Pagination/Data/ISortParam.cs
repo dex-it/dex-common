@@ -1,4 +1,4 @@
-﻿namespace Dex.Pagination
+﻿namespace Dex.Pagination.Data
 {
     public interface ISortParam
     {

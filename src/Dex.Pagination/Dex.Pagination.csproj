@@ -2,15 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Update="PageFilter.cs">
-      <DependentUpon>IPageFilter.cs</DependentUpon>
-    </Compile>
-    <Compile Update="SortParam.cs">
-      <DependentUpon>ISortParam.cs</DependentUpon>
-    </Compile>
-  </ItemGroup>
 
 </Project>
