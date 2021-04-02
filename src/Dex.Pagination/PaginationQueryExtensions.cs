@@ -8,6 +8,14 @@ namespace Dex.Pagination
 {
     public static class PaginationQueryExtensions
     {
+        /// <summary>
+        /// Paging filter for IQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">source query</param>
+        /// <param name="page">page number</param>
+        /// <param name="pageSize">page size</param>
+        /// <returns></returns>
         public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, int page, int pageSize)
         {
             if (source == null)
@@ -20,6 +28,13 @@ namespace Dex.Pagination
             return source.Skip((page - 1) * pageSize).Take(pageSize);
         }
 
+        /// <summary>
+        /// Paging filter for IQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">source query</param>
+        /// <param name="pageFilter">this interface with page number and page size</param>
+        /// <returns></returns>
         public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, IPageFilter pageFilter)
         {
             if (source == null)
@@ -30,6 +45,13 @@ namespace Dex.Pagination
             return source.FilterPage(pageFilter.Page, pageFilter.PageSize);
         }
 
+        /// <summary>
+        /// Sorting for IQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">source query</param>
+        /// <param name="sortParam">interface with properties FieldName and IsDescending</param>
+        /// <returns></returns>
         public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, ISortParam sortParam)
         {
             if (source == null)
@@ -40,6 +62,13 @@ namespace Dex.Pagination
             return source.OrderByParams(new[] {sortParam});
         }
 
+        /// <summary>
+        /// Sorting for IQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">source query</param>
+        /// <param name="sortParams">array interface with properties FieldName and IsDescending</param>
+        /// <returns></returns>
         public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, ISortParam[] sortParams)
         {
             if (source == null)
@@ -59,12 +88,15 @@ namespace Dex.Pagination
             return result;
         }
 
-        private static Expression<Func<TSource, IComparable>> BuildSelector<TSource>(string fieldName)
+        private static Expression<Func<TSource, object>> BuildSelector<TSource>(string fieldName)
         {
             var param = Expression.Parameter(typeof(TSource));
             var member = fieldName.Split('.').Aggregate<string, Expression>(param, Expression.Property);
 
-            return Expression.Lambda<Func<TSource, IComparable>>(Expression.Convert(member, typeof(IComparable)), param);
+            if (!typeof(IComparable).IsAssignableFrom(member.Type))
+                throw new InvalidCastException("Member type is not IComparable");
+
+            return Expression.Lambda<Func<TSource, object>>(Expression.Convert(member, typeof(object)), param);
         }
     }
 }
