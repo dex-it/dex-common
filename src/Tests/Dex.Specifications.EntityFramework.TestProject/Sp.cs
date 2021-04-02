@@ -10,7 +10,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
         {
             if (expression == null) throw new ArgumentNullException(nameof(expression));
             if (string.IsNullOrWhiteSpace(pattern)) throw new ArgumentException("Value cannot be null or whitespace.", nameof(pattern));
-            
+
             return new EfLikeSpecification<T>(expression, pattern);
         }
 
@@ -18,7 +18,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
         {
             if (expression == null) throw new ArgumentNullException(nameof(expression));
             if (property == null) throw new ArgumentNullException(nameof(property));
-            
+
             return new EfEqualSpecification<T, TProperty>(expression, property);
         }
 
