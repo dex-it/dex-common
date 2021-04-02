@@ -8,6 +8,14 @@ namespace Dex.Pagination
 {
     public static class PaginationQueryExtensions
     {
+        /// <summary>
+        /// Paging filter for IQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">source query</param>
+        /// <param name="page">page number</param>
+        /// <param name="pageSize">page size</param>
+        /// <returns></returns>
         public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, int page, int pageSize)
         {
             if (source == null)
@@ -20,6 +28,13 @@ namespace Dex.Pagination
             return source.Skip((page - 1) * pageSize).Take(pageSize);
         }
 
+        /// <summary>
+        /// Paging filter for IQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">source query</param>
+        /// <param name="pageFilter">this interface with page number and page size</param>
+        /// <returns></returns>
         public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, IPageFilter pageFilter)
         {
             if (source == null)
