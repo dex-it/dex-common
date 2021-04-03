@@ -28,7 +28,9 @@ namespace Dex.Lock.DevelopmentTest
 
             Thread.Sleep(1000);
 
+#pragma warning disable 4014
             Task.Delay(2_000).ContinueWith(_ => releaser2.Dispose());
+#pragma warning restore 4014
 
             var releaser3 = await task2;
 
