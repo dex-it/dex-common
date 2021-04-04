@@ -1,4 +1,5 @@
 using System.Linq;
+using Dex.Pagination.Data;
 using Dex.TestDomain;
 using Dex.TestHelper;
 using NUnit.Framework;
