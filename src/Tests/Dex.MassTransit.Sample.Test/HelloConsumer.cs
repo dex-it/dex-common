@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using MassTransit;
 
-namespace Dex.MassTransit.Test
+namespace Dex.MassTransit.Sample.Test
 {
     public class HelloConsumer : IConsumer<HelloMessage>
     {

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.Extensions.Hosting;
 
-namespace Dex.MassTransit.Test
+namespace Dex.MassTransit.Sample.Test
 {
     internal class HelloMessageGenerator : IHostedService
     {

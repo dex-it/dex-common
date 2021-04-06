@@ -6,7 +6,7 @@ using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Dex.MassTransit.Test
+namespace Dex.MassTransit.Sample.Test
 {
     public class Program
     {

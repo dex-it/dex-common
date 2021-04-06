@@ -51,7 +51,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Lock.DevelopmentTest", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Extensions", "Dex.MassTransit.Extensions\Dex.MassTransit.Extensions.csproj", "{656BE770-558C-4314-A697-285F2518514E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Test", "Tests\Dex.MassTransit.Test\Dex.MassTransit.Test.csproj", "{B3DD5036-97F3-434D-A108-23188D56707C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Sample.Test", "Tests\Dex.MassTransit.Sample.Test\Dex.MassTransit.Sample.Test.csproj", "{B3DD5036-97F3-434D-A108-23188D56707C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

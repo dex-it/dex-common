@@ -1,6 +1,6 @@
 ﻿using MassTransit;
 
-namespace Dex.MassTransit.Test
+namespace Dex.MassTransit.Sample.Test
 {
     public class HelloMessage : IConsumer
     {
