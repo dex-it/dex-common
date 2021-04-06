@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GreenPipes;
 using MassTransit;
+using Microsoft.Extensions.Hosting;
 
 namespace Dex.MassTransit.Extensions
 {
@@ -11,6 +12,9 @@ namespace Dex.MassTransit.Extensions
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ISendEndpointProvider _sendEndpointProvider;
         private readonly IPublishEndpoint _publishEndpoint;
+
+        // TODO
+        private ILogId _logId;
 
         public MassTransitSender(IHostApplicationLifetime lifetime, ISendEndpointProvider sendEndpointProvider, IPublishEndpoint publishEndpoint)
         {
