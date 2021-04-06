@@ -27,13 +27,18 @@ namespace Dex.MassTransit.Sample.Test
             }
         }
 
+        private static void ConfigureRabbitMqOptions(RabbitMqOptions rabbitMqOptions)
+        {
+            rabbitMqOptions.Port = 49158;
+        }
+        
         private static IHostBuilder CreatePublisherHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
                     // register services
 
-                    services.Configure<RabbitMqOptions>(options => options.Port = 49158);
+                    services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
 
                     services.AddMassTransit(configurator =>
                     {
@@ -54,8 +59,8 @@ namespace Dex.MassTransit.Sample.Test
                 {
                     // register services
 
-                    services.Configure<RabbitMqOptions>(options => options.Port = 49158);
-                    
+                    services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
+
                     services.AddMassTransit(configurator =>
                     {
                         configurator.AddConsumer<HelloConsumer>();
@@ -66,7 +71,7 @@ namespace Dex.MassTransit.Sample.Test
                             context.RegisterReceiveEndpoint<HelloConsumer, HelloMessage>(factoryConfigurator);
                         });
                     });
-                    
+
                     services.AddMassTransitHostedService();
                 });
     }
