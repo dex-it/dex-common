@@ -10,6 +10,7 @@ using MassTransit.AmazonSqsTransport;
 using MassTransit.ExtensionsDependencyInjectionIntegration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+
 // ReSharper disable UnusedType.Global
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -17,53 +18,28 @@ namespace Dex.MassTransit.Extensions
 {
     public static class QueueMassTransitConfigurator
     {
-        public static QueueType QueueType = QueueType.Rabbit;
-
         public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator, Action<IBusRegistrationContext, IBusFactoryConfigurator> registerConsumers)
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
             if (registerConsumers == null) throw new ArgumentNullException(nameof(registerConsumers));
 
-            switch (QueueType)
+            collectionConfigurator.UsingAmazonSqs((busRegistrationContext, mqBusFactoryConfigurator) =>
             {
-                case QueueType.Rabbit:
-                    collectionConfigurator.UsingRabbitMq((registrationContext, mqBusFactoryConfigurator) =>
-                    {
-                        var rabbitMqOptions = registrationContext.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
-                        mqBusFactoryConfigurator.Host(rabbitMqOptions.Host, rabbitMqOptions.Port, rabbitMqOptions.VHost,
-                            $"{Environment.MachineName}:{AppDomain.CurrentDomain.FriendlyName}");
+                var amazonMqOptions = busRegistrationContext.GetRequiredService<IOptions<AmazonMqOptions>>().Value;
+                mqBusFactoryConfigurator.Host(amazonMqOptions.Region, configurator =>
+                {
+                    configurator.AccessKey(amazonMqOptions.AccessKey);
+                    configurator.SecretKey(amazonMqOptions.SecretKey);
+                });
 
-                        mqBusFactoryConfigurator.AutoDelete = false;
-                        mqBusFactoryConfigurator.Durable = true;
+                mqBusFactoryConfigurator.AutoDelete = false;
+                mqBusFactoryConfigurator.Durable = true;
 
-                        // mqBusFactoryConfigurator.ConnectConsumeObserver(busRegistrationContext.GetRequiredService<LogIdMassTransitObserver>()); // TODO
+                // mqBusFactoryConfigurator.ConnectConsumeObserver(busRegistrationContext.GetRequiredService<LogIdMassTransitObserver>()); // TODO
 
-                        // register consumers here
-                        registerConsumers(registrationContext, mqBusFactoryConfigurator);
-                    });
-                    break;
-                case QueueType.AmazonSQS:
-                    collectionConfigurator.UsingAmazonSqs((busRegistrationContext, mqBusFactoryConfigurator) =>
-                    {
-                        var amazonMqOptions = busRegistrationContext.GetRequiredService<IOptions<AmazonMqOptions>>().Value;
-                        mqBusFactoryConfigurator.Host(amazonMqOptions.Region, configurator =>
-                        {
-                            configurator.AccessKey(amazonMqOptions.AccessKey);
-                            configurator.SecretKey(amazonMqOptions.SecretKey);
-                        });
-
-                        mqBusFactoryConfigurator.AutoDelete = false;
-                        mqBusFactoryConfigurator.Durable = true;
-
-                        // mqBusFactoryConfigurator.ConnectConsumeObserver(busRegistrationContext.GetRequiredService<LogIdMassTransitObserver>()); // TODO
-
-                        // register consumers here
-                        registerConsumers(busRegistrationContext, mqBusFactoryConfigurator);
-                    });
-                    break;
-                default:
-                    throw new NotSupportedException();
-            }
+                // register consumers here
+                registerConsumers(busRegistrationContext, mqBusFactoryConfigurator);
+            });
         }
 
         /// <summary>
@@ -73,20 +49,20 @@ namespace Dex.MassTransit.Extensions
         /// <param name="cfg">configuration factory</param>
         /// <param name="endpointConsumer">configure consumer delegate</param>
         /// <param name="isForPublish">true for Publish, false when only Send</param>
-        /// <typeparam name="Td">Consumer message type</typeparam>
+        /// <typeparam name="TD">Consumer message type</typeparam>
         /// <typeparam name="T">Consumer type</typeparam>
         /// <typeparam name="T1">Consumer type</typeparam>
         /// <typeparam name="T2">Consumer type</typeparam>
         /// <exception cref="ArgumentNullException"></exception>
-        public static void RegisterReceiveEndpoint<T, T1, T2, Td>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
+        public static void RegisterReceiveEndpoint<T, T1, T2, TD>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
             Action<IEndpointConfigurator> endpointConsumer = null, bool isForPublish = true)
-            where T : class, IConsumer<Td>
-            where Td : class, IConsumer, new()
+            where T : class, IConsumer<TD>
+            where TD : class, IConsumer, new()
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             if (cfg == null) throw new ArgumentNullException(nameof(cfg));
 
-            var endPoint = isForPublish ? provider.CreateQueueNameFromType<Td>() : provider.RegisterSendEndPoint<Td>();
+            var endPoint = isForPublish ? provider.CreateQueueNameFromType<TD>() : provider.RegisterSendEndPoint<TD>();
             RegisterConsumersEndpoint(provider, cfg, endPoint, endpointConsumer, new[] {typeof(T), typeof(T1), typeof(T2)}, isForPublish);
         }
 
@@ -97,19 +73,19 @@ namespace Dex.MassTransit.Extensions
         /// <param name="cfg">configuration factory</param>
         /// <param name="endpointConsumer">configure consumer delegate</param>
         /// <param name="isForPublish">true for Publish, false when only Send</param>
-        /// <typeparam name="Td">Consumer message type</typeparam>
+        /// <typeparam name="TD">Consumer message type</typeparam>
         /// <typeparam name="T">Consumer type</typeparam>
         /// <typeparam name="T1">Consumer type</typeparam>
         /// <exception cref="ArgumentNullException"></exception>
-        public static void RegisterReceiveEndpoint<T, T1, Td>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
+        public static void RegisterReceiveEndpoint<T, T1, TD>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
             Action<IEndpointConfigurator> endpointConsumer = null, bool isForPublish = true)
-            where T : class, IConsumer<Td>
-            where Td : class, IConsumer, new()
+            where T : class, IConsumer<TD>
+            where TD : class, IConsumer, new()
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             if (cfg == null) throw new ArgumentNullException(nameof(cfg));
 
-            var endPoint = isForPublish ? provider.CreateQueueNameFromType<Td>() : provider.RegisterSendEndPoint<Td>();
+            var endPoint = isForPublish ? provider.CreateQueueNameFromType<TD>() : provider.RegisterSendEndPoint<TD>();
             RegisterConsumersEndpoint(provider, cfg, endPoint, endpointConsumer, new[] {typeof(T), typeof(T1)}, isForPublish);
         }
 
@@ -120,18 +96,18 @@ namespace Dex.MassTransit.Extensions
         /// <param name="cfg">configuration factory</param>
         /// <param name="endpointConsumer">configure consumer delegate</param>
         /// <param name="isForPublish">true for Publish, false when only Send</param>
-        /// <typeparam name="Td">Consumer message type</typeparam>
+        /// <typeparam name="TD">Consumer message type</typeparam>
         /// <typeparam name="T">Consumer type</typeparam>
         /// <exception cref="ArgumentNullException"></exception>
-        public static void RegisterReceiveEndpoint<T, Td>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
+        public static void RegisterReceiveEndpoint<T, TD>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
             Action<IEndpointConfigurator> endpointConsumer = null, bool isForPublish = false)
-            where T : class, IConsumer<Td>
-            where Td : class, IConsumer, new()
+            where T : class, IConsumer<TD>
+            where TD : class, IConsumer, new()
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             if (cfg == null) throw new ArgumentNullException(nameof(cfg));
 
-            var endPoint = isForPublish ? provider.CreateQueueNameFromType<Td>() : provider.RegisterSendEndPoint<Td>();
+            var endPoint = isForPublish ? provider.CreateQueueNameFromType<TD>() : provider.RegisterSendEndPoint<TD>();
             RegisterConsumersEndpoint(provider, cfg, endPoint, endpointConsumer, new[] {typeof(T)}, isForPublish);
         }
 
@@ -143,18 +119,18 @@ namespace Dex.MassTransit.Extensions
         /// <param name="endpointConsumer"></param>
         /// <param name="isForPublish"></param>
         /// <typeparam name="T"></typeparam>
-        /// <typeparam name="Td"></typeparam>
+        /// <typeparam name="TD"></typeparam>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ConfigurationException"></exception>
-        public static void RegisterReceiveEndpointAsFifo<T, Td>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
+        public static void RegisterReceiveEndpointAsFifo<T, TD>(this IBusRegistrationContext provider, IBusFactoryConfigurator cfg,
             Action<IEndpointConfigurator> endpointConsumer = null, bool isForPublish = false)
-            where T : class, IConsumer<Td>
-            where Td : class, IConsumer, new()
+            where T : class, IConsumer<TD>
+            where TD : class, IConsumer, new()
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             if (cfg == null) throw new ArgumentNullException(nameof(cfg));
 
-            var endPoint = isForPublish ? provider.CreateQueueNameFromType<Td>() : provider.RegisterSendEndPoint<Td>();
+            var endPoint = isForPublish ? provider.CreateQueueNameFromType<TD>() : provider.RegisterSendEndPoint<TD>();
 
             if (QueueType == QueueType.AmazonSQS && !endPoint.Path.Contains(".fifo"))
             {

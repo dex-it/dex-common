@@ -53,6 +53,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Extensions"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Sample.Test", "Tests\Dex.MassTransit.Sample.Test\Dex.MassTransit.Sample.Test.csproj", "{B3DD5036-97F3-434D-A108-23188D56707C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Rabbit", "Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj", "{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.SQS", "Dex.MassTransit.SQS\Dex.MassTransit.SQS.csproj", "{9529B11F-EA92-4226-93C0-9500530652BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -687,6 +691,62 @@ Global
 		{B3DD5036-97F3-434D-A108-23188D56707C}.Test|Any CPU.Build.0 = Debug|Any CPU
 		{B3DD5036-97F3-434D-A108-23188D56707C}.Test|x86.ActiveCfg = Debug|Any CPU
 		{B3DD5036-97F3-434D-A108-23188D56707C}.Test|x86.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Debug|x86.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Dev|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Dev|Any CPU.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Dev|x86.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Dev|x86.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_plehanova|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_plehanova|Any CPU.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_plehanova|x86.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_plehanova|x86.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_soviet|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_soviet|Any CPU.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_soviet|x86.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release_soviet|x86.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release|x86.ActiveCfg = Release|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Release|x86.Build.0 = Release|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Stage|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Stage|Any CPU.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Stage|x86.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Stage|x86.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Test|x86.ActiveCfg = Debug|Any CPU
+		{BCB30FA9-1FAB-49AE-B0AF-1F810335FAED}.Test|x86.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Debug|x86.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Dev|Any CPU.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Dev|Any CPU.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Dev|x86.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Dev|x86.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_plehanova|Any CPU.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_plehanova|Any CPU.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_plehanova|x86.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_plehanova|x86.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_soviet|Any CPU.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_soviet|Any CPU.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_soviet|x86.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release_soviet|x86.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release|x86.ActiveCfg = Release|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Release|x86.Build.0 = Release|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Stage|Any CPU.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Stage|Any CPU.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Stage|x86.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Stage|x86.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Test|x86.ActiveCfg = Debug|Any CPU
+		{9529B11F-EA92-4226-93C0-9500530652BC}.Test|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

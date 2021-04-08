@@ -7,7 +7,6 @@
     <ItemGroup>
       <PackageReference Include="Dex.Extensions" Version="1.0.5" />
       <PackageReference Include="MassTransit" Version="7.1.7" />
-      <PackageReference Include="MassTransit.AmazonSQS" Version="7.1.7" />
       <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.7" />
       <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.7" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
