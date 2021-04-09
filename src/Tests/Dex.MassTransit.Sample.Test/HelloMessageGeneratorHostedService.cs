@@ -6,12 +6,12 @@ using Microsoft.Extensions.Hosting;
 
 namespace Dex.MassTransit.Sample.Test
 {
-    internal class HelloMessageGenerator : IHostedService
+    internal class HelloMessageGeneratorHostedService : IHostedService
     {
         private readonly ISendEndpointProvider _sendEndpoint;
         private readonly CancellationTokenSource _tokenSource = new();
 
-        public HelloMessageGenerator(ISendEndpointProvider sendEndpoint)
+        public HelloMessageGeneratorHostedService(ISendEndpointProvider sendEndpoint)
         {
             _sendEndpoint = sendEndpoint ?? throw new ArgumentNullException(nameof(sendEndpoint));
         }

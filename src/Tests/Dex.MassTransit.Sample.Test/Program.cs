@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 
 namespace Dex.MassTransit.Sample.Test
 {
@@ -32,13 +35,18 @@ namespace Dex.MassTransit.Sample.Test
         {
             //rabbitMqOptions.Port = 49158;
         }
-        
+
         private static IHostBuilder CreatePublisherHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    // register services
+                    services.AddLogging(builder =>
+                    {
+                        builder.AddOpenTelemetry(options => options
+                            .AddConsoleExporter());
+                    });
 
+                    // register services
                     services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
 
                     services.AddMassTransit(configurator =>
@@ -51,16 +59,22 @@ namespace Dex.MassTransit.Sample.Test
                     });
 
                     services.AddMassTransitHostedService();
-                    services.AddHostedService<HelloMessageGenerator>();
+                    services.AddHostedService<HelloMessageGeneratorHostedService>();
                 });
 
         private static IHostBuilder CreateConsumerHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    // register services
+                    services.AddLogging(builder =>
+                    {
+                        builder.AddOpenTelemetry(options => options
+                            .AddConsoleExporter());
+                    });
 
+                    // register services
                     services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
+                    services.AddSingleton<MassTransitTelemetryLogger>();
 
                     services.AddMassTransit(configurator =>
                     {
@@ -74,6 +88,9 @@ namespace Dex.MassTransit.Sample.Test
                     });
 
                     services.AddMassTransitHostedService();
+                    services.AddHostedService<MetricTraceExporterHostedService>();
                 });
     }
+
+
 }
