@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Dex.MassTransit.Extensions;
-using Dex.MassTransit.Extensions.Options;
+using Dex.MassTransit.Rabbit;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,7 +28,7 @@ namespace Dex.MassTransit.Sample.Test
 
         private static void ConfigureRabbitMqOptions(RabbitMqOptions rabbitMqOptions)
         {
-            rabbitMqOptions.Port = 49158;
+            //rabbitMqOptions.Port = 49158;
         }
         
         private static IHostBuilder CreatePublisherHostBuilder(string[] args) =>

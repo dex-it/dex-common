@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace Dex.MassTransit.Extensions.Options
+﻿namespace Dex.MassTransit.Rabbit
 {
     public class RabbitMqOptions
     {
