@@ -74,29 +74,26 @@ namespace Dex.MassTransit.SQS
         /// <summary>
         /// Configure recieve endpoint for Fifo queues
         /// </summary>
-        /// <param name="provider"></param>
-        /// <param name="cfg"></param>
+        /// <param name="busRegistrationContext"></param>
+        /// <param name="busFactoryConfigurator"></param>
         /// <param name="endpointConsumer"></param>
         /// <param name="isForPublish"></param>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TD"></typeparam>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ConfigurationException"></exception>
-        public static void RegisterReceiveEndpointAsFifo<T, TD>(this IBusRegistrationContext provider, IAmazonSqsBusFactoryConfigurator cfg,
+        public static void RegisterReceiveEndpointAsFifo<T, TD>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
             Action<IEndpointConfigurator> endpointConsumer = null, bool isForPublish = false)
             where T : class, IConsumer<TD>
             where TD : class, IConsumer, new()
         {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-            if (cfg == null) throw new ArgumentNullException(nameof(cfg));
+            if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
+            if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TD>(provider, cfg, configurator =>
+            RegisterConsumersEndpoint<TD>(busRegistrationContext, busFactoryConfigurator, configurator =>
             {
-                if (configurator is IAmazonSqsReceiveEndpointConfigurator awssqs)
-                {
-                    awssqs.ConfigureConsumeTopology = false;
-                    awssqs.QueueAttributes.Add(QueueAttributeName.FifoQueue, true);
-                }
+                configurator.ConfigureConsumeTopology = false;
+                configurator.QueueAttributes.Add(QueueAttributeName.FifoQueue, true);
 
                 endpointConsumer?.Invoke(configurator);
             }, new[] {typeof(T)}, isForPublish);
@@ -180,7 +177,7 @@ namespace Dex.MassTransit.SQS
         }
 
         private static void RegisterConsumersEndpoint<TD>(IRegistration busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator> endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) where TD : class, IConsumer, new()
+            Action<IAmazonSqsReceiveEndpointConfigurator> endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) where TD : class, IConsumer, new()
         {
             var endPoint = isForPublish ? busRegistrationContext.CreateQueueNameFromType<TD>() : busRegistrationContext.RegisterSendEndPoint<TD>();
             if (!endPoint.Path.Contains(".fifo"))

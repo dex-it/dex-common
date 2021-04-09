@@ -95,7 +95,7 @@ namespace Dex.MassTransit.Rabbit
         }
 
         private static void RegisterConsumersEndpoint<TD>(IRegistration busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator> endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) where TD : class, IConsumer, new()
+            Action<IRabbitMqReceiveEndpointConfigurator> endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) where TD : class, IConsumer, new()
         {
             var endPoint = isForPublish ? busRegistrationContext.CreateQueueNameFromType<TD>() : busRegistrationContext.RegisterSendEndPoint<TD>();
 

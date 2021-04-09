@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
@@ -21,6 +22,7 @@ namespace Dex.MassTransit.Sample.Test
             {
                 if (task.IsFaulted)
                 {
+                    Debugger.Break();
                     Console.WriteLine(task.Exception);
                 }
             }
