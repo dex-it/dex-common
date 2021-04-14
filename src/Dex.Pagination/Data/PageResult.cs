@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Dex.Pagination.Data
 {
-    public class PageResult<T>
+    public record PageResult<T>
     {
         public IEnumerable<T> Items { get; set; } = ArraySegment<T>.Empty;
 
