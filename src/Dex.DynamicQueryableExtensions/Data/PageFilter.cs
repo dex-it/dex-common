@@ -1,4 +1,4 @@
-﻿namespace Dex.Pagination.Data
+﻿namespace Dex.DynamicQueryableExtensions.Data
 {
     public record PageFilter : IPageFilter
     {

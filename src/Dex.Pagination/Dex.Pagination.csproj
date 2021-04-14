@@ -6,13 +6,4 @@
     <LangVersion>default</LangVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Update="Data\SortParam.cs">
-      <DependentUpon>ISortParam.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Data\PageFilter.cs">
-      <DependentUpon>IPageFilter.cs</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
 </Project>

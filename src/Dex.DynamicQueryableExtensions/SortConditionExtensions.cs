@@ -1,29 +1,29 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
-using Dex.Pagination.Data;
+using Dex.DynamicQueryableExtensions.Data;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Dex.Pagination
+namespace Dex.DynamicQueryableExtensions
 {
-    public static class OrderByExtensions
+    public static class SortConditionExtensions
     {
         /// <summary>
         /// Sorting for IQueryable
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
-        /// <param name="sortParam">interface with properties FieldName and IsDescending</param>
+        /// <param name="sortCondition">interface with properties FieldName and IsDescending</param>
         /// <returns></returns>
-        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, ISortParam sortParam)
+        public static IQueryable<T> SortByParams<T>(this IQueryable<T> source, ISortCondition sortCondition)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (sortParam == null)
-                throw new ArgumentNullException(nameof(sortParam));
+            if (sortCondition == null)
+                throw new ArgumentNullException(nameof(sortCondition));
 
-            return source.OrderByParams(new[] {sortParam});
+            return source.SortByParams(new[] {sortCondition});
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Dex.Pagination
         /// <param name="source">source query</param>
         /// <param name="sortParams">array interface with properties FieldName and IsDescending</param>
         /// <returns></returns>
-        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, ISortParam[] sortParams)
+        public static IQueryable<T> SortByParams<T>(this IQueryable<T> source, ISortCondition[] sortParams)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));

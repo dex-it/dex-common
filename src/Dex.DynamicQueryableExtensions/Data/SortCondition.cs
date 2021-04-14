@@ -1,8 +1,9 @@
 ﻿using System;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
-namespace Dex.Pagination.Data
+namespace Dex.DynamicQueryableExtensions.Data
 {
-    public sealed record SortParam : ISortParam
+    public sealed record SortCondition : ISortCondition
     {
         private readonly string _fieldName = string.Empty;
 
@@ -14,7 +15,7 @@ namespace Dex.Pagination.Data
 
         public bool IsDesc { get; init; }
 
-        public bool Equals(SortParam? other)
+        public bool Equals(SortCondition other)
         {
             if (other == null) return false;
             return other.FieldName == FieldName && other.IsDesc == IsDesc;

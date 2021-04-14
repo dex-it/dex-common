@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>disable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Data\SortCondition.cs">
+        <DependentUpon>ISortParam.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Data\PageFilter.cs">
+        <DependentUpon>IPageFilter.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Data\QueryFilterEncodedRequest.cs">
+        <DependentUpon>IQueryFilterEncoded.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+</Project>

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
-using Dex.Pagination.Data;
+using Dex.DynamicQueryableExtensions.Data;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Dex.Pagination
+namespace Dex.DynamicQueryableExtensions
 {
-    public static class PaginationQueryExtensions
+    public static class PaginationExtensions
     {
         /// <summary>
         /// Paging filter for IQueryable
