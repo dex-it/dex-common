@@ -6,9 +6,9 @@
 
     <ItemGroup>
       <PackageReference Include="Dex.Extensions" Version="1.0.5" />
-      <PackageReference Include="MassTransit.AmazonSQS" Version="7.1.7" />
-      <PackageReference Include="MassTransit.AspNetCore" Version="7.1.7" />
-      <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.7" />
+      <PackageReference Include="MassTransit.AmazonSQS" Version="7.1.8" />
+      <PackageReference Include="MassTransit.AspNetCore" Version="7.1.8" />
+      <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.8" />
       <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
     </ItemGroup>
 
