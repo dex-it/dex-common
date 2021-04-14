@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <PackageTags>dex; lock</PackageTags>
     <RepositoryUrl>https://github.com/dex-it/dex-common</RepositoryUrl>
     <Copyright>dex</Copyright>
@@ -9,6 +8,7 @@
     <RepositoryType>github</RepositoryType>
     <Nullable>enable</Nullable>
     <LangVersion>default</LangVersion>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
