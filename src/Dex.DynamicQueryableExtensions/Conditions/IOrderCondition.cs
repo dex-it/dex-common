@@ -1,6 +1,6 @@
 ﻿namespace Dex.DynamicQueryableExtensions.Data
 {
-    public interface ISortCondition
+    public interface IOrderCondition
     {
         string FieldName { get; }
         bool IsDesc { get; }

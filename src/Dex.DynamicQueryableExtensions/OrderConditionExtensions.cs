@@ -7,23 +7,23 @@ using Dex.DynamicQueryableExtensions.Data;
 
 namespace Dex.DynamicQueryableExtensions
 {
-    public static class SortConditionExtensions
+    public static class OrderConditionExtensions
     {
         /// <summary>
         /// Sorting for IQueryable
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
-        /// <param name="sortCondition">interface with properties FieldName and IsDescending</param>
+        /// <param name="orderCondition">interface with properties FieldName and IsDescending</param>
         /// <returns></returns>
-        public static IQueryable<T> SortByParams<T>(this IQueryable<T> source, ISortCondition sortCondition)
+        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, IOrderCondition orderCondition)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (sortCondition == null)
-                throw new ArgumentNullException(nameof(sortCondition));
+            if (orderCondition == null)
+                throw new ArgumentNullException(nameof(orderCondition));
 
-            return source.SortByParams(new[] {sortCondition});
+            return source.OrderByParams(new[] {orderCondition});
         }
 
         /// <summary>
@@ -31,22 +31,22 @@ namespace Dex.DynamicQueryableExtensions
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
-        /// <param name="sortParams">array interface with properties FieldName and IsDescending</param>
+        /// <param name="orderConditions">array interface with properties FieldName and IsDescending</param>
         /// <returns></returns>
-        public static IQueryable<T> SortByParams<T>(this IQueryable<T> source, ISortCondition[] sortParams)
+        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, IOrderCondition[] orderConditions)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (sortParams == null || !sortParams.Any())
-                throw new ArgumentNullException(nameof(sortParams));
+            if (orderConditions == null || !orderConditions.Any())
+                throw new ArgumentNullException(nameof(orderConditions));
 
-            var selector = BuildSelector<T>(sortParams[0].FieldName);
-            var result = sortParams[0].IsDesc ? source.OrderByDescending(selector) : source.OrderBy(selector);
+            var selector = BuildSelector<T>(orderConditions[0].FieldName);
+            var result = orderConditions[0].IsDesc ? source.OrderByDescending(selector) : source.OrderBy(selector);
 
-            for (var i = 1; i < sortParams.Length; i++)
+            for (var i = 1; i < orderConditions.Length; i++)
             {
-                selector = BuildSelector<T>(sortParams[i].FieldName);
-                result = sortParams[i].IsDesc ? result.ThenByDescending(selector) : result.ThenBy(selector);
+                selector = BuildSelector<T>(orderConditions[i].FieldName);
+                result = orderConditions[i].IsDesc ? result.ThenByDescending(selector) : result.ThenBy(selector);
             }
 
             return result;

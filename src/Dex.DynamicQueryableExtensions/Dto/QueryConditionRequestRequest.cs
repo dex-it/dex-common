@@ -3,22 +3,24 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Dex.DynamicQueryableExtensions.Conditions;
+using Dex.DynamicQueryableExtensions.Data;
 
-namespace Dex.DynamicQueryableExtensions.Data
+namespace Dex.DynamicQueryableExtensions.Dto
 {
-    public record QueryFilterEncodedRequest : IQueryFilterEncoded
+    public record QueryConditionRequestRequest
     {
-        public string EncodedFilter { get; set; }
+        public string EncodedFilter { get; init; }
 
-        public IComplexQueryCondition DecodeFilter()
+        public IQueryCondition DecodeFilter()
         {
             if (string.IsNullOrWhiteSpace(EncodedFilter))
                 return null;
 
             try
             {
-                var data = Encoding.UTF8.GetString(Convert.FromBase64String(EncodedFilter));
-                return JsonSerializer.Deserialize<ComplexQueryCondition>(data, new JsonSerializerOptions()
+                var data = Encoding.UTF8.GetString(Convert.FromBase64String(Uri.UnescapeDataString(EncodedFilter)));
+                return JsonSerializer.Deserialize<QueryCondition>(data, new JsonSerializerOptions
                 {
                     Converters =
                     {
@@ -34,14 +36,16 @@ namespace Dex.DynamicQueryableExtensions.Data
             }
         }
 
-        private class SortConditionConverter : JsonConverter<ISortCondition>
+        #region deserializer
+
+        private class SortConditionConverter : JsonConverter<IOrderCondition>
         {
-            public override ISortCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            public override IOrderCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {
-                return JsonSerializer.Deserialize<SortCondition>(ref reader, options);
+                return JsonSerializer.Deserialize<OrderCondition>(ref reader, options);
             }
 
-            public override void Write(Utf8JsonWriter writer, ISortCondition value, JsonSerializerOptions options)
+            public override void Write(Utf8JsonWriter writer, IOrderCondition value, JsonSerializerOptions options)
             {
                 JsonSerializer.Serialize(writer, value, options);
             }
@@ -59,5 +63,7 @@ namespace Dex.DynamicQueryableExtensions.Data
                 JsonSerializer.Serialize(writer, value, options);
             }
         }
+
+        #endregion
     }
 }

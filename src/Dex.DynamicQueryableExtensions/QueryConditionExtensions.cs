@@ -1,11 +1,12 @@
 ﻿using System.Linq;
-using Dex.DynamicQueryableExtensions.Data;
+using Dex.DynamicQueryableExtensions.Conditions;
+// ReSharper disable UnusedType.Global
 
 namespace Dex.DynamicQueryableExtensions
 {
-    public static class ComplexConditionExtensions
+    public static class QueryConditionExtensions
     {
-        public static IQueryable<T> ApplyCondition<T>(this IQueryable<T> source, IComplexQueryCondition condition)
+        public static IQueryable<T> ApplyCondition<T>(this IQueryable<T> source, IQueryCondition condition)
         {
             if (condition == null)
                 return source;
@@ -14,7 +15,7 @@ namespace Dex.DynamicQueryableExtensions
                 source = source.Filter(condition.FilterCondition);
 
             if (condition.SortCondition != null)
-                source = source.SortByParams(condition.SortCondition);
+                source = source.OrderByParams(condition.SortCondition);
 
             if (condition.Page > 0 && condition.PageSize > 0)
                 source = source.FilterPage(condition.Page, condition.PageSize);

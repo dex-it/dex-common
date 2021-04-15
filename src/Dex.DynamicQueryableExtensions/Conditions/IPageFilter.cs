@@ -2,7 +2,7 @@
 {
     public interface IPageFilter
     {
-        int Page { get; set; }
-        int PageSize { get; set; }
+        int Page { get; }
+        int PageSize { get; }
     }
 }

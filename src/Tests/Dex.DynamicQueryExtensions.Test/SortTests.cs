@@ -17,7 +17,7 @@ namespace Dex.DynamicQueryExtensions.Test
             var queryActual = dbContext.Employees.OrderBy(x => x.Company.CreatedUtc);
             var sqlActual = queryActual.ToSql();
 
-            var expectedQuery = dbContext.Employees.SortByParams(new SortCondition
+            var expectedQuery = dbContext.Employees.OrderByParams(new OrderCondition
             {
                 FieldName = "Company.CreatedUtc",
                 IsDesc = false
@@ -38,7 +38,7 @@ namespace Dex.DynamicQueryExtensions.Test
                 new SortTestData {Name = "Max4", Number = 4},
             };
 
-            var a1 = array.AsQueryable().SortByParams(new SortCondition {FieldName = nameof(SortTestData.Number), IsDesc = true});
+            var a1 = array.AsQueryable().OrderByParams(new OrderCondition {FieldName = nameof(SortTestData.Number), IsDesc = true});
             var a2 = array.OrderByDescending(x => x.Number);
 
             Assert.True(a1.SequenceEqual(a2));

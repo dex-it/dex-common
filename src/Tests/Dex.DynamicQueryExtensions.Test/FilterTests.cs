@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using Dex.DynamicQueryableExtensions;
 using Dex.DynamicQueryableExtensions.Data;
 using NUnit.Framework;
 using System.Linq;
 using System.Text;
+using Dex.DynamicQueryableExtensions.Conditions;
+using Dex.DynamicQueryableExtensions.Dto;
 using Newtonsoft.Json;
 
 namespace Dex.DynamicQueryExtensions.Test
@@ -131,10 +134,10 @@ namespace Dex.DynamicQueryExtensions.Test
         [Test]
         public void DeserializeQueryFilterTest()
         {
-            var filter = new ComplexQueryCondition()
+            var filter = new QueryCondition()
             {
-                Page = 1,
-                PageSize = 10,
+                Page = 5,
+                PageSize = 20,
                 FilterCondition = new IFilterCondition[]
                 {
                     new FilterCondition
@@ -142,12 +145,12 @@ namespace Dex.DynamicQueryExtensions.Test
                         FieldName = "name", Operation = FilterOperation.EQ, Value = new[] {"mmx"}
                     }
                 },
-                SortCondition = new ISortCondition[] {new SortCondition() {FieldName = "id"}}
+                SortCondition = new IOrderCondition[] {new OrderCondition() {FieldName = "id"}}
             };
 
             var base64String = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(filter)));
 
-            var x = new QueryFilterEncodedRequest()
+            var x = new QueryConditionRequestRequest()
             {
                 EncodedFilter = base64String
             };
@@ -158,6 +161,27 @@ namespace Dex.DynamicQueryExtensions.Test
             Assert.AreEqual(filter.PageSize, filter2.PageSize);
             Assert.AreEqual(filter.FilterCondition, filter2.FilterCondition);
             Assert.AreEqual(filter.SortCondition, filter2.SortCondition);
+        }
+
+        [Test]
+        public void CheckInitPropertiesTest2()
+        {
+            var f = new FilterCondition() {Value = new[] {"xxx"}};
+            var s = new OrderCondition() {FieldName = "Field"};
+
+            Assert.IsNotNull(f.FieldName);
+            Assert.IsNotNull(s.FieldName);
+            Assert.True(f.Value.Contains("xxx"));
+            Assert.True(s.FieldName == "Field");
+        }
+
+        [Test]
+        public void EscapedStringTest()
+        {
+            var orig = "=0000000000+";
+            var escaped = Uri.EscapeDataString(orig);
+            var unEscaped = Uri.UnescapeDataString(escaped);
+            Assert.AreEqual(orig, unEscaped);
         }
     }
 }
