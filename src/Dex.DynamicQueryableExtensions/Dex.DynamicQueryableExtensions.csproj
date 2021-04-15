@@ -6,18 +6,20 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Compile Update="Data\SortCondition.cs">
-        <DependentUpon>ISortParam.cs</DependentUpon>
+        <DependentUpon>ISortCondition.cs</DependentUpon>
       </Compile>
       <Compile Update="Data\PageFilter.cs">
         <DependentUpon>IPageFilter.cs</DependentUpon>
       </Compile>
       <Compile Update="Data\QueryFilterEncodedRequest.cs">
         <DependentUpon>IQueryFilterEncoded.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Data\FilterCondition.cs">
+        <DependentUpon>IFilterCondition.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Data\ComplexQueryCondition.cs">
+        <DependentUpon>IComplexQueryCondition.cs</DependentUpon>
       </Compile>
     </ItemGroup>
 

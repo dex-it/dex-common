@@ -1,7 +1,10 @@
-﻿using Dex.DynamicQueryableExtensions;
+﻿using System;
+using Dex.DynamicQueryableExtensions;
 using Dex.DynamicQueryableExtensions.Data;
 using NUnit.Framework;
 using System.Linq;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace Dex.DynamicQueryExtensions.Test
 {
@@ -48,7 +51,7 @@ namespace Dex.DynamicQueryExtensions.Test
                 {
                     FieldName = "name",
                     Operation = FilterOperation.EQ,
-                    Value = new[] { "A_User" }
+                    Value = new[] {"A_User"}
                 }
             }).ToList();
 
@@ -103,7 +106,7 @@ namespace Dex.DynamicQueryExtensions.Test
                 {
                     FieldName = "name",
                     Operation = FilterOperation.LK,
-                    Value = new[] { "User" }
+                    Value = new[] {"User"}
                 },
                 new FilterCondition
                 {
@@ -123,7 +126,38 @@ namespace Dex.DynamicQueryExtensions.Test
         {
             public int Id { get; init; }
             public string Name { get; init; }
-            
+        }
+
+        [Test]
+        public void DeserializeQueryFilterTest()
+        {
+            var filter = new ComplexQueryCondition()
+            {
+                Page = 1,
+                PageSize = 10,
+                FilterCondition = new IFilterCondition[]
+                {
+                    new FilterCondition
+                    {
+                        FieldName = "name", Operation = FilterOperation.EQ, Value = new[] {"mmx"}
+                    }
+                },
+                SortCondition = new ISortCondition[] {new SortCondition() {FieldName = "id"}}
+            };
+
+            var base64String = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(filter)));
+
+            var x = new QueryFilterEncodedRequest()
+            {
+                EncodedFilter = base64String
+            };
+
+            var filter2 = x.DecodeFilter();
+
+            Assert.AreEqual(filter.Page, filter2.Page);
+            Assert.AreEqual(filter.PageSize, filter2.PageSize);
+            Assert.AreEqual(filter.FilterCondition, filter2.FilterCondition);
+            Assert.AreEqual(filter.SortCondition, filter2.SortCondition);
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Dex.DynamicQueryableExtensions.Data
 {
@@ -18,7 +18,15 @@ namespace Dex.DynamicQueryableExtensions.Data
             try
             {
                 var data = Encoding.UTF8.GetString(Convert.FromBase64String(EncodedFilter));
-                return JsonConvert.DeserializeObject<ComplexQueryCondition>(data, new StringEnumConverter(), new FilterParamConverter(), new SortParamConverter());
+                return JsonSerializer.Deserialize<ComplexQueryCondition>(data, new JsonSerializerOptions()
+                {
+                    Converters =
+                    {
+                        new JsonStringEnumConverter(),
+                        new FilterConditionConverter(),
+                        new SortConditionConverter()
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -26,18 +34,29 @@ namespace Dex.DynamicQueryableExtensions.Data
             }
         }
 
-        private class FilterParamConverter : CustomCreationConverter<IFilterCondition>
+        private class SortConditionConverter : JsonConverter<ISortCondition>
         {
-            public override IFilterCondition Create(Type objectType)
+            public override ISortCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {
-                return new FilterCondition();
+                return JsonSerializer.Deserialize<SortCondition>(ref reader, options);
+            }
+
+            public override void Write(Utf8JsonWriter writer, ISortCondition value, JsonSerializerOptions options)
+            {
+                JsonSerializer.Serialize(writer, value, options);
             }
         }
-        private class SortParamConverter : CustomCreationConverter<ISortCondition>
+
+        private class FilterConditionConverter : JsonConverter<IFilterCondition>
         {
-            public override ISortCondition Create(Type objectType)
+            public override IFilterCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {
-                return new SortCondition();
+                return JsonSerializer.Deserialize<FilterCondition>(ref reader, options);
+            }
+
+            public override void Write(Utf8JsonWriter writer, IFilterCondition value, JsonSerializerOptions options)
+            {
+                JsonSerializer.Serialize(writer, value, options);
             }
         }
     }
