@@ -8,8 +8,8 @@ namespace Dex.CreditCard.Tests
     public class Tests
     {
         // http://support.worldpay.com/support/kb/bg/testandgolive/tgl5103.html
-        
-        private readonly IDictionary<string, CardType> _cards = new Dictionary<string, CardType>
+
+        private readonly IDictionary<string, CardType> _validCards = new Dictionary<string, CardType>
         {
             {"2201382000000013", CardType.Mir},
             {"2200000000000046", CardType.Mir},
@@ -31,6 +31,8 @@ namespace Dex.CreditCard.Tests
             {"36148900647913", CardType.DinersClub},
         };
 
+        private string _invalidCard = "2201382000000010";
+
 
         [SetUp]
         public void Setup()
@@ -40,7 +42,7 @@ namespace Dex.CreditCard.Tests
         [Test]
         public void ResolveCardTypeTest1()
         {
-            foreach (var card in _cards)
+            foreach (var card in _validCards)
             {
                 Assert.AreEqual(card.Value, CreditCardTypeDetector.FindType(card.Key));
             }
@@ -49,10 +51,16 @@ namespace Dex.CreditCard.Tests
         [Test]
         public void LyhnCardTypeTest1()
         {
-            foreach (var card in _cards)
+            foreach (var card in _validCards)
             {
                 Assert.True(LuhnAlgorithm.HasValidCheckDigit(card.Key));
             }
+        }
+
+        [Test]
+        public void LyhnCardTypeInvalidTest1()
+        {
+            Assert.False(LuhnAlgorithm.HasValidCheckDigit(_invalidCard));
         }
     }
 }
