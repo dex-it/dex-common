@@ -2,6 +2,7 @@
 {
     public enum CardType
     {
+        Uncertain,
         Mir,
         Visa,
         MasterCard,

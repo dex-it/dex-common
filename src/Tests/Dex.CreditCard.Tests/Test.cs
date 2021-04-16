@@ -51,7 +51,7 @@ namespace Dex.CreditCard.Tests
         {
             foreach (var card in _cards)
             {
-                Assert.True(card.Key.HasValidCheckDigit());
+                Assert.True(LuhnAlgorithm.HasValidCheckDigit(card.Key));
             }
         }
     }

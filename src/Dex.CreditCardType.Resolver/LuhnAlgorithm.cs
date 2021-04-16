@@ -1,24 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+
 // ReSharper disable UnusedType.Global
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace Dex.CreditCardType.Resolver
 {
-    public static class LuhnCheckDigitExtension
+    public static class LuhnAlgorithm
     {
         private static readonly int[] Results = {0, 2, 4, 6, 8, 1, 3, 5, 7, 9};
-
-        #region extension methods for IList<int>
 
         /// <summary>
         /// For a list of digits, compute the ending checkdigit 
         /// </summary>
         /// <param name="digits">The list of digits for which to compute the check digit</param>
         /// <returns>the check digit</returns>
-        public static int ComputeCheckDigit(this IList<int> digits)
+        public static int ComputeCheckDigit(IList<int> digits)
         {
             var i = 0;
             var lengthMod = digits.Count % 2;
@@ -30,10 +28,10 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The original list of digits</param>
         /// <returns>the new list of digits including checkdigit</returns>
-        public static IList<int> AppendCheckDigit(this IList<int> digits)
+        public static IList<int> AppendCheckDigit(IList<int> digits)
         {
             var result = digits;
-            result.Add(digits.ComputeCheckDigit());
+            result.Add(ComputeCheckDigit(digits));
             return result;
         }
 
@@ -42,21 +40,18 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The list of digits to check</param>
         /// <returns>true/false depending on valid checkdigit</returns>
-        public static bool HasValidCheckDigit(this IList<int> digits)
+        public static bool HasValidCheckDigit(IList<int> digits)
         {
             return digits.Last() == ComputeCheckDigit(digits.Take(digits.Count - 1).ToList());
         }
 
-        #endregion extension methods for IList<int>
-
-        #region extension methods for strings
 
         /// <summary>
         /// Internal conversion function to convert string into a list of ints
         /// </summary>
         /// <param name="digits">the original string</param>
         /// <returns>the list of ints</returns>
-        private static IList<int> ToDigitList(this string digits)
+        private static IList<int> ToDigitList(string digits)
         {
             return digits.Select(d => d - 48).ToList();
         }
@@ -66,9 +61,9 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The string of digits for which to compute the check digit</param>
         /// <returns>the check digit</returns>
-        public static string ComputeCheckDigit(this string digits)
+        public static string ComputeCheckDigit(string digits)
         {
-            return digits.ToDigitList().ComputeCheckDigit().ToString(CultureInfo.InvariantCulture);
+            return ComputeCheckDigit(ToDigitList(digits)).ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -76,9 +71,9 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The original string of digits</param>
         /// <returns>the new string of digits including checkdigit</returns>
-        public static string AppendCheckDigit(this string digits)
+        public static string AppendCheckDigit(string digits)
         {
-            return digits + digits.ComputeCheckDigit();
+            return digits + ComputeCheckDigit(digits);
         }
 
         /// <summary>
@@ -86,21 +81,17 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The string of digits to check</param>
         /// <returns>true/false depending on valid checkdigit</returns>
-        public static bool HasValidCheckDigit(this string digits)
+        public static bool HasValidCheckDigit(string digits)
         {
-            return digits.ToDigitList().HasValidCheckDigit();
+            return HasValidCheckDigit(ToDigitList(digits));
         }
-
-        #endregion extension methods for strings
-
-        #region extension methods for integers
 
         /// <summary>
         /// Internal conversion function to convert int into a list of ints, one for each digit
         /// </summary>
         /// <param name="digits">the original int</param>
         /// <returns>the list of ints</returns>
-        private static IList<int> ToDigitList(this int digits)
+        private static IList<int> ToDigitList(int digits)
         {
             return digits.ToString(CultureInfo.InvariantCulture).Select(d => d - 48).ToList();
         }
@@ -110,9 +101,9 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The integer for which to compute the check digit</param>
         /// <returns>the check digit</returns>
-        public static int ComputeCheckDigit(this int digits)
+        public static int ComputeCheckDigit(int digits)
         {
-            return digits.ToDigitList().ComputeCheckDigit();
+            return ComputeCheckDigit(ToDigitList(digits));
         }
 
         /// <summary>
@@ -120,9 +111,9 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The original integer</param>
         /// <returns>the new integer including checkdigit</returns>
-        public static int AppendCheckDigit(this int digits)
+        public static int AppendCheckDigit(int digits)
         {
-            return digits * 10 + digits.ComputeCheckDigit();
+            return digits * 10 + ComputeCheckDigit(digits);
         }
 
         /// <summary>
@@ -130,21 +121,17 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The integer to check</param>
         /// <returns>true/false depending on valid checkdigit</returns>
-        public static bool HasValidCheckDigit(this int digits)
+        public static bool HasValidCheckDigit(int digits)
         {
-            return digits.ToDigitList().HasValidCheckDigit();
+            return HasValidCheckDigit(ToDigitList(digits));
         }
-
-        #endregion extension methods for integers
-
-        #region extension methods for int64s
 
         /// <summary>
         /// Internal conversion function to convert int into a list of ints, one for each digit
         /// </summary>
         /// <param name="digits">the original int</param>
         /// <returns>the list of ints</returns>
-        private static IList<int> ToDigitList(this Int64 digits)
+        private static IList<int> ToDigitList(long digits)
         {
             return digits.ToString(CultureInfo.InvariantCulture).Select(d => d - 48).ToList();
         }
@@ -154,9 +141,9 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The integer for which to compute the check digit</param>
         /// <returns>the check digit</returns>
-        public static int ComputeCheckDigit(this Int64 digits)
+        public static int ComputeCheckDigit(long digits)
         {
-            return digits.ToDigitList().ComputeCheckDigit();
+            return ComputeCheckDigit(ToDigitList(digits));
         }
 
         /// <summary>
@@ -164,9 +151,9 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The original integer</param>
         /// <returns>the new integer including checkdigit</returns>
-        public static Int64 AppendCheckDigit(this Int64 digits)
+        public static long AppendCheckDigit(long digits)
         {
-            return digits * 10 + digits.ComputeCheckDigit();
+            return digits * 10 + ComputeCheckDigit(digits);
         }
 
         /// <summary>
@@ -174,11 +161,9 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">The integer to check</param>
         /// <returns>true/false depending on valid checkdigit</returns>
-        public static bool HasValidCheckDigit(this Int64 digits)
+        public static bool HasValidCheckDigit(long digits)
         {
-            return digits.ToDigitList().HasValidCheckDigit();
+            return HasValidCheckDigit(ToDigitList(digits));
         }
-
-        #endregion extension methods for int64s
     }
 }
