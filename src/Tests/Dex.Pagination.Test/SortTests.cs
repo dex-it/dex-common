@@ -1,11 +1,11 @@
 using System.Linq;
-using Dex.DynamicQueryableExtensions;
-using Dex.DynamicQueryableExtensions.Data;
+using Dex.Pagination;
+using Dex.Pagination.Conditions;
 using Dex.TestDomain;
 using Dex.TestHelper;
 using NUnit.Framework;
 
-namespace Dex.DynamicQueryExtensions.Test
+namespace Dex.Pagination.Test
 {
     public class SortTests
     {
@@ -44,7 +44,22 @@ namespace Dex.DynamicQueryExtensions.Test
             Assert.True(a1.SequenceEqual(a2));
         }
 
-        record SortTestData
+        [Test]
+        public void OrderByEmptyParamTest()
+        {
+            var array = new[]
+            {
+                new SortTestData {Name = "Max", Number = 1},
+                new SortTestData {Name = "Max2", Number = 2},
+                new SortTestData {Name = "Max3", Number = 3},
+                new SortTestData {Name = "Max4", Number = 4},
+            };
+
+            var a1 = array.AsQueryable().ApplyCondition(new QueryCondition());
+            Assert.True(array.SequenceEqual(a1));
+        }
+
+        private record SortTestData
         {
             public string Name { get; init; }
             public int Number { get; init; }

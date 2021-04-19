@@ -3,19 +3,19 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Dex.DynamicQueryableExtensions.Conditions;
-using Dex.DynamicQueryableExtensions.Data;
+using Dex.Pagination.Conditions;
+// ReSharper disable UnusedType.Global
 
-namespace Dex.DynamicQueryableExtensions.Dto
+namespace Dex.Pagination.Dto
 {
     public record QueryConditionRequestRequest
     {
-        public string EncodedFilter { get; init; }
+        public string EncodedFilter { get; init; } = string.Empty;
 
         public IQueryCondition DecodeFilter()
         {
             if (string.IsNullOrWhiteSpace(EncodedFilter))
-                return null;
+                return new QueryCondition();
 
             try
             {
@@ -25,10 +25,9 @@ namespace Dex.DynamicQueryableExtensions.Dto
                     Converters =
                     {
                         new JsonStringEnumConverter(),
-                        new FilterConditionConverter(),
                         new SortConditionConverter()
                     }
-                });
+                }) ?? new QueryCondition();
             }
             catch (Exception ex)
             {
@@ -42,23 +41,10 @@ namespace Dex.DynamicQueryableExtensions.Dto
         {
             public override IOrderCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {
-                return JsonSerializer.Deserialize<OrderCondition>(ref reader, options);
+                return JsonSerializer.Deserialize<OrderCondition>(ref reader, options) ?? new OrderCondition();
             }
 
             public override void Write(Utf8JsonWriter writer, IOrderCondition value, JsonSerializerOptions options)
-            {
-                JsonSerializer.Serialize(writer, value, options);
-            }
-        }
-
-        private class FilterConditionConverter : JsonConverter<IFilterCondition>
-        {
-            public override IFilterCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            {
-                return JsonSerializer.Deserialize<FilterCondition>(ref reader, options);
-            }
-
-            public override void Write(Utf8JsonWriter writer, IFilterCondition value, JsonSerializerOptions options)
             {
                 JsonSerializer.Serialize(writer, value, options);
             }

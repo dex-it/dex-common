@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Dex.DynamicQueryableExtensions.Dto
+namespace Dex.Pagination.Dto
 {
     public record PageResult<T>
     {

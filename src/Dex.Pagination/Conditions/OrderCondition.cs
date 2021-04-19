@@ -2,7 +2,7 @@
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
-namespace Dex.DynamicQueryableExtensions.Data
+namespace Dex.Pagination.Conditions
 {
     public sealed record OrderCondition : IOrderCondition
     {

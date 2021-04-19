@@ -1,8 +1,8 @@
-﻿using Dex.DynamicQueryableExtensions;
+﻿using Dex.Pagination;
 using NUnit.Framework;
 using System.Linq;
 
-namespace Dex.DynamicQueryExtensions.Test
+namespace Dex.Pagination.Test
 {
     public class PagingTests
     {

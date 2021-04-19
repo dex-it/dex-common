@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
-using Dex.DynamicQueryableExtensions.Data;
+using Dex.Pagination.Conditions;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Dex.DynamicQueryableExtensions
+namespace Dex.Pagination
 {
     public static class OrderConditionExtensions
     {
@@ -37,8 +37,10 @@ namespace Dex.DynamicQueryableExtensions
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (orderConditions == null || !orderConditions.Any())
+            if (orderConditions == null)
                 throw new ArgumentNullException(nameof(orderConditions));
+
+            if (!orderConditions.Any()) return source;
 
             var selector = BuildSelector<T>(orderConditions[0].FieldName);
             var result = orderConditions[0].IsDesc ? source.OrderByDescending(selector) : source.OrderBy(selector);

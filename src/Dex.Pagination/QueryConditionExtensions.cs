@@ -1,8 +1,9 @@
 ﻿using System.Linq;
-using Dex.DynamicQueryableExtensions.Conditions;
+using Dex.Pagination.Conditions;
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable UnusedType.Global
 
-namespace Dex.DynamicQueryableExtensions
+namespace Dex.Pagination
 {
     public static class QueryConditionExtensions
     {
@@ -11,14 +12,11 @@ namespace Dex.DynamicQueryableExtensions
             if (condition == null)
                 return source;
 
-            if (condition.FilterCondition != null)
-                source = source.Filter(condition.FilterCondition);
-
-            if (condition.SortCondition != null)
+            if (condition.SortCondition is not null)
                 source = source.OrderByParams(condition.SortCondition);
 
-            if (condition.Page > 0 && condition.PageSize > 0)
-                source = source.FilterPage(condition.Page, condition.PageSize);
+            if (condition.PageCondition is not null)
+                source = source.FilterPage(condition.PageCondition);
 
             return source;
         }

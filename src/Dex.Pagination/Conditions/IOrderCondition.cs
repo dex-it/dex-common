@@ -1,4 +1,4 @@
-﻿namespace Dex.DynamicQueryableExtensions.Data
+﻿namespace Dex.Pagination.Conditions
 {
     public interface IOrderCondition
     {

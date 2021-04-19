@@ -1,9 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <LangVersion>default</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Update="Data\OrderCondition.cs">
+        <DependentUpon>ISortCondition.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Data\PageFilter.cs">
+        <DependentUpon>IPageFilter.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Data\FilterCondition.cs">
+        <DependentUpon>IFilterCondition.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Data\QueryCondition.cs">
+        <DependentUpon>IComplexQueryCondition.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
 
 </Project>

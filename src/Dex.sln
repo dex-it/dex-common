@@ -37,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Specifications.EntityFr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Specifications.Extensions", "Dex.Specifications.Extensions\Dex.Specifications.Extensions.csproj", "{42DECE43-1B8C-459D-B719-21142429DE46}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.DynamicQueryExtensions.Test", "Tests\Dex.DynamicQueryExtensions.Test\Dex.DynamicQueryExtensions.Test.csproj", "{A8867D9D-1E47-48CD-80AB-07D93F0336E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Pagination.Test", "Tests\Dex.Pagination.Test\Dex.Pagination.Test.csproj", "{A8867D9D-1E47-48CD-80AB-07D93F0336E5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.TestHelper", "Tests\Dex.TestHelper\Dex.TestHelper.csproj", "{3EE73E2D-92A6-4A7B-BF36-D0BB7518ED84}"
 EndProject
@@ -57,7 +57,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Specifications", "Specifica
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{5A64EE5F-BCD5-404C-BBBB-781844F5790C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.DynamicQueryableExtensions", "Dex.DynamicQueryableExtensions\Dex.DynamicQueryableExtensions.csproj", "{97582421-80B4-42BA-AC7D-5B1195D778EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Pagination", "Dex.Pagination\Dex.Pagination.csproj", "{97582421-80B4-42BA-AC7D-5B1195D778EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

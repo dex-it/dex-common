@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Dex.DynamicQueryableExtensions\Dex.DynamicQueryableExtensions.csproj" />
+    <ProjectReference Include="..\..\Dex.Pagination\Dex.Pagination.csproj" />
     <ProjectReference Include="..\Dex.TestDomain\Dex.TestDomain.csproj" />
     <ProjectReference Include="..\Dex.TestHelper\Dex.TestHelper.csproj" />
   </ItemGroup>

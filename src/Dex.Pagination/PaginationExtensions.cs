@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using Dex.DynamicQueryableExtensions.Data;
+using Dex.Pagination.Conditions;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Dex.DynamicQueryableExtensions
+namespace Dex.Pagination
 {
     public static class PaginationExtensions
     {
@@ -33,16 +33,16 @@ namespace Dex.DynamicQueryableExtensions
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
-        /// <param name="pageFilter">this interface with page number and page size</param>
+        /// <param name="pageCondition">this interface with page number and page size</param>
         /// <returns></returns>
-        public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, IPageFilter pageFilter)
+        public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, IPageCondition pageCondition)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (pageFilter == null)
-                throw new ArgumentNullException(nameof(pageFilter));
+            if (pageCondition == null)
+                throw new ArgumentNullException(nameof(pageCondition));
 
-            return source.FilterPage(pageFilter.Page, pageFilter.PageSize);
+            return source.FilterPage(pageCondition.Page, pageCondition.PageSize);
         }
     }
 }
