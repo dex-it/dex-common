@@ -34,15 +34,19 @@ namespace Dex.Pagination
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
         /// <param name="pageCondition">this interface with page number and page size</param>
+        /// <param name="maxPageSize">limit PageSize parameter</param>
         /// <returns></returns>
-        public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, IPageCondition pageCondition)
+        public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, IPageCondition pageCondition, int? maxPageSize = null)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
             if (pageCondition == null)
                 throw new ArgumentNullException(nameof(pageCondition));
+            if (maxPageSize is < 0)
+                throw new ArgumentOutOfRangeException(nameof(maxPageSize), "can't be bellow zero");
 
-            return source.FilterPage(pageCondition.Page, pageCondition.PageSize);
+            var pageSize = maxPageSize.HasValue ? Math.Min(maxPageSize.Value, pageCondition.PageSize) : pageCondition.PageSize;
+            return source.FilterPage(pageCondition.Page, pageSize);
         }
     }
 }
