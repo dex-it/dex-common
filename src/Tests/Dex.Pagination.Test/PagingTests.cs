@@ -1,6 +1,7 @@
 ﻿using Dex.Pagination;
 using NUnit.Framework;
 using System.Linq;
+using Dex.Pagination.Conditions;
 
 namespace Dex.Pagination.Test
 {
@@ -42,6 +43,15 @@ namespace Dex.Pagination.Test
         public void NotFirstPage()
         {
             var a1 = _data.FilterPage(2, 2).ToList();
+            var a2 = _data.Skip(2).Take(2);
+
+            Assert.True(a1.SequenceEqual(a2));
+        }
+
+        [Test]
+        public void LimitMaxPageSizeTest()
+        {
+            var a1 = _data.FilterPage(new PageCondition() {Page = 2, PageSize = 100}, 2).ToList();
             var a2 = _data.Skip(2).Take(2);
 
             Assert.True(a1.SequenceEqual(a2));
