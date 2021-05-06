@@ -60,9 +60,9 @@ namespace Dex.Extensions
             }
         }
 
-        public static void NullSafeForEach<T>(this IEnumerable<T> source, Action<T> action)
+        public static void NullSafeForEach<T>(this IEnumerable<T>? source, Action<T> action)
         {
-            ForEach(source, action);
+            if (source != null) ForEach(source, action);
         }
 
         public static void For<T>(this IEnumerable<T> source, Action<int, T> action)
@@ -81,16 +81,16 @@ namespace Dex.Extensions
             }
         }
 
-        public static bool NullSafeAny<T>(this IEnumerable<T> source, Func<T, bool>? predicate = null)
+        public static bool NullSafeAny<T>(this IEnumerable<T>? source, Func<T, bool>? predicate = null)
         {
             return predicate == null
-                ? source.Any()
-                : source.Any(predicate);
+                ? source != null && source.Any()
+                : source != null && source.Any(predicate);
         }
 
         public static T Random<T>(this IEnumerable<T> source)
         {
-            if (source == null) 
+            if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
             T[] enumerable = source as T[] ?? source.ToArray();
@@ -100,7 +100,7 @@ namespace Dex.Extensions
 
         public static List<T> Append<T>(this IEnumerable<T> source, params T[] elements)
         {
-            if (source == null) 
+            if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
             if (elements == null)
@@ -113,10 +113,10 @@ namespace Dex.Extensions
 
         public static T[] Append<T>(this T[] source, params T[] elements)
         {
-            if (source == null) 
+            if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            return ((IEnumerable<T>)source).Append(elements).ToArray();
+            return ((IEnumerable<T>) source).Append(elements).ToArray();
         }
 
         public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
@@ -126,14 +126,14 @@ namespace Dex.Extensions
 
         public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> instance, int partitionSize)
         {
-            if (instance == null) 
+            if (instance == null)
                 throw new ArgumentNullException(nameof(instance));
 
-            if (partitionSize <= 0) 
+            if (partitionSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(partitionSize));
 
             return instance
-                .Select((value, index) => new { Index = index, Value = value })
+                .Select((value, index) => new {Index = index, Value = value})
                 .GroupBy(item => item.Index / partitionSize)
                 .Select(item => item.Select(x => x.Value));
         }
