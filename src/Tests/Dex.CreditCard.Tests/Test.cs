@@ -62,5 +62,14 @@ namespace Dex.CreditCard.Tests
         {
             Assert.False(LuhnAlgorithm.HasValidCheckDigit(_invalidCard));
         }
+
+        [Test]
+        public void LyhnInvalidStringTest2()
+        {
+            Assert.Catch<ArgumentException>(() =>
+            {
+                Assert.False(LuhnAlgorithm.HasValidCheckDigit("ss"));
+            });
+        }
     }
 }
