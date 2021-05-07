@@ -8,18 +8,18 @@ using Dex.Pagination.Conditions;
 
 namespace Dex.Pagination.Dto
 {
-    public record QueryConditionRequestRequest
+    public record QueryConditionRequest
     {
-        public string EncodedFilter { get; init; } = string.Empty;
+        public string EncodedFilterUriEscaped { get; init; } = string.Empty;
 
         public IQueryCondition DecodeFilter()
         {
-            if (string.IsNullOrWhiteSpace(EncodedFilter))
+            if (string.IsNullOrWhiteSpace(EncodedFilterUriEscaped))
                 return new QueryCondition();
 
             try
             {
-                var data = Encoding.UTF8.GetString(Convert.FromBase64String(Uri.UnescapeDataString(EncodedFilter)));
+                var data = Encoding.UTF8.GetString(Convert.FromBase64String(Uri.UnescapeDataString(EncodedFilterUriEscaped)));
                 return JsonSerializer.Deserialize<QueryCondition>(data, new JsonSerializerOptions
                 {
                     Converters =

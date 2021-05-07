@@ -6,7 +6,7 @@ using Dex.Pagination.Conditions;
 
 namespace Dex.Pagination
 {
-    public static class PaginationExtensions
+    public static class QueryablePaginationExtensions
     {
         /// <summary>
         /// Paging filter for IQueryable

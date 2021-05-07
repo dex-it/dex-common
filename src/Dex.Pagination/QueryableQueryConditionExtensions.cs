@@ -5,7 +5,7 @@ using Dex.Pagination.Conditions;
 
 namespace Dex.Pagination
 {
-    public static class QueryConditionExtensions
+    public static class QueryableQueryConditionExtensions
     {
         public static IQueryable<T> ApplyCondition<T>(this IQueryable<T> source, IQueryCondition condition)
         {

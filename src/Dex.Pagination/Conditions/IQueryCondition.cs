@@ -6,7 +6,7 @@
     /// </summary>
     public interface IQueryCondition
     {
-        public IOrderCondition[] SortCondition { get; }
-        public IPageCondition PageCondition { get; }
+        IOrderCondition[] SortCondition { get; }
+        IPageCondition PageCondition { get; }
     }
 }

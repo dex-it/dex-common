@@ -7,7 +7,7 @@ using Dex.Pagination.Conditions;
 
 namespace Dex.Pagination
 {
-    public static class OrderConditionExtensions
+    public static class QueryableOrderConditionExtensions
     {
         /// <summary>
         /// Sorting for IQueryable
