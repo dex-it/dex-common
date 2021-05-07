@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 // ReSharper disable UnusedType.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -53,7 +55,7 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>the list of ints</returns>
         private static IList<int> ToDigitList(string digits)
         {
-            CreditCardTypeDetector.CardFormatCheck(digits);
+            CheckCorrectStringPan(digits);
             return digits.Select(d => d - 48).ToList();
         }
 
@@ -64,7 +66,7 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>the check digit</returns>
         public static string ComputeCheckDigit(string digits)
         {
-            CreditCardTypeDetector.CardFormatCheck(digits);
+            CheckCorrectStringPan(digits);
             return ComputeCheckDigit(ToDigitList(digits)).ToString(CultureInfo.InvariantCulture);
         }
 
@@ -85,8 +87,19 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>true/false depending on valid checkdigit</returns>
         public static bool HasValidCheckDigit(string digits)
         {
-            CreditCardTypeDetector.CardFormatCheck(digits);
+            CheckCorrectStringPan(digits);
             return HasValidCheckDigit(ToDigitList(digits));
+        }
+
+        public static void CheckCorrectStringPan(string digits)
+        {
+            if (!Regex.IsMatch(digits, "\\d{13,16}"))
+            {
+                throw new ArgumentException("must be 13-16 digits only", nameof(digits))
+                {
+                    Data = {{"PAN", digits}}
+                };
+            }
         }
 
         /// <summary>

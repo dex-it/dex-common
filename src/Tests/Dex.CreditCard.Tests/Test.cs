@@ -113,5 +113,14 @@ namespace Dex.CreditCard.Tests
         {
             Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardFormatDash));
         }
+
+        [Test]
+        public void LyhnInvalidStringTest2()
+        {
+            Assert.Catch<ArgumentException>(() =>
+            {
+                Assert.False(LuhnAlgorithm.HasValidCheckDigit("ss"));
+            });
+        }
     }
 }
