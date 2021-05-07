@@ -91,9 +91,9 @@ namespace Dex.CreditCardType.Resolver
 
         private static void CheckCorrectStringPan(string digits)
         {
-            if (!Regex.IsMatch(digits, "\\d{13,16}"))
+            if (!Regex.IsMatch(digits, "^\\d{13,19}$"))
             {
-                throw new ArgumentException("must be 13-16 digits only", nameof(digits))
+                throw new ArgumentException("must be 13-19 digits only", nameof(digits))
                 {
                     Data = {{"PAN", digits}}
                 };

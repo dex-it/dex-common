@@ -64,12 +64,16 @@ namespace Dex.CreditCard.Tests
         }
 
         [Test]
-        public void LyhnInvalidStringTest2()
+        [TestCase("ss")]
+        [TestCase("512512 6124652 36551243512451242341234421341234")]
+        [TestCase("512512 6124652 3655124351232152")]
+        [TestCase("51251261 246523634263214123411")]
+        public void LyhnInvalidStringTest2(string arg)
         {
             Assert.Catch<ArgumentException>(() =>
             {
-                Assert.False(LuhnAlgorithm.HasValidCheckDigit("ss"));
+                Assert.False(LuhnAlgorithm.HasValidCheckDigit(arg));
             });
-        }
+        }     
     }
 }
