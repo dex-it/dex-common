@@ -53,6 +53,7 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>the list of ints</returns>
         private static IList<int> ToDigitList(string digits)
         {
+            CreditCardTypeDetector.CardFormatCheck(digits);
             return digits.Select(d => d - 48).ToList();
         }
 
@@ -63,6 +64,7 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>the check digit</returns>
         public static string ComputeCheckDigit(string digits)
         {
+            CreditCardTypeDetector.CardFormatCheck(digits);
             return ComputeCheckDigit(ToDigitList(digits)).ToString(CultureInfo.InvariantCulture);
         }
 
@@ -83,6 +85,7 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>true/false depending on valid checkdigit</returns>
         public static bool HasValidCheckDigit(string digits)
         {
+            CreditCardTypeDetector.CardFormatCheck(digits);
             return HasValidCheckDigit(ToDigitList(digits));
         }
 

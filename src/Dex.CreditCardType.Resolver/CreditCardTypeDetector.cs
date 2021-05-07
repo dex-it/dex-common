@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text.RegularExpressions;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -10,6 +11,8 @@ namespace Dex.CreditCardType.Resolver
     {
         public static CardType FindType(string cardNumber)
         {
+            CardFormatCheck(cardNumber);
+
             //https://www.regular-expressions.info/creditcard.html
             if (Regex.Match(cardNumber, @"^2\d{15}$").Success)
             {
@@ -60,6 +63,18 @@ namespace Dex.CreditCardType.Resolver
             {
                 Data = {{"number", cardNumber}}
             };
+        }
+
+        internal static void CardFormatCheck(string cardNumber)
+        {
+            if (cardNumber.Length < 7 || cardNumber.Length > 19)
+                throw new ArgumentException("Card number must be 7-19 digits");
+
+            foreach(var c in cardNumber)
+            {
+                if(!char.IsDigit(c))
+                    throw new ArgumentException("The card number must contain only digits");
+            }
         }
     }
 }
