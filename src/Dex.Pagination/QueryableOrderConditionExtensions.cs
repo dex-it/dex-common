@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Dex.Pagination.Conditions;
@@ -31,15 +32,16 @@ namespace Dex.Pagination
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
-        /// <param name="orderConditions">array interface with properties FieldName and IsDescending</param>
+        /// <param name="conditions">array interface with properties FieldName and IsDescending</param>
         /// <returns></returns>
-        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, IOrderCondition[] orderConditions)
+        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, IEnumerable<IOrderCondition> conditions)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (orderConditions == null)
-                throw new ArgumentNullException(nameof(orderConditions));
+            if (conditions == null)
+                throw new ArgumentNullException(nameof(conditions));
 
+            var orderConditions = conditions.ToArray();
             if (!orderConditions.Any()) return source;
 
             var selector = BuildSelector<T>(orderConditions[0].FieldName);

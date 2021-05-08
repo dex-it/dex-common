@@ -1,4 +1,6 @@
-﻿namespace Dex.Pagination.Conditions
+﻿using System.Collections.Generic;
+
+namespace Dex.Pagination.Conditions
 {
     /// <summary>
     /// Conditions for filtering, sorting and paging
@@ -6,7 +8,7 @@
     /// </summary>
     public interface IQueryCondition
     {
-        IOrderCondition[] SortCondition { get; }
+        IEnumerable<IOrderCondition> SortCondition { get; }
         IPageCondition PageCondition { get; }
     }
 }
