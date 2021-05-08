@@ -8,7 +8,7 @@ namespace Dex.Pagination.Conditions
     /// </summary>
     public interface IQueryCondition
     {
-        IEnumerable<IOrderCondition> SortCondition { get; }
+        IEnumerable<IOrderCondition> OrderConditions { get; }
         IPageCondition PageCondition { get; }
     }
 }

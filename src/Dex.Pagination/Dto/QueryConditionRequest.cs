@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dex.Pagination.Conditions;
+
 // ReSharper disable UnusedType.Global
 
 namespace Dex.Pagination.Dto
@@ -41,7 +42,7 @@ namespace Dex.Pagination.Dto
         {
             public override IOrderCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {
-                return JsonSerializer.Deserialize<OrderCondition>(ref reader, options) ?? new OrderCondition();
+                return JsonSerializer.Deserialize<OrderCondition>(ref reader, options) ?? throw new InvalidOperationException();
             }
 
             public override void Write(Utf8JsonWriter writer, IOrderCondition value, JsonSerializerOptions options)

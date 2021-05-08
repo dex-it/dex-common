@@ -1,5 +1,4 @@
 using System.Linq;
-using Dex.Pagination;
 using Dex.Pagination.Conditions;
 using Dex.TestDomain;
 using Dex.TestHelper;
@@ -17,11 +16,7 @@ namespace Dex.Pagination.Test
             var queryActual = dbContext.Employees.OrderBy(x => x.Company.CreatedUtc);
             var sqlActual = queryActual.ToSql();
 
-            var expectedQuery = dbContext.Employees.OrderByParams(new OrderCondition
-            {
-                FieldName = "Company.CreatedUtc",
-                IsDesc = false
-            });
+            var expectedQuery = dbContext.Employees.OrderByParams(new OrderCondition("Company.CreatedUtc"));
             var expectedSql = expectedQuery.ToSql();
 
             Assert.AreEqual(expectedSql, sqlActual);
@@ -38,7 +33,7 @@ namespace Dex.Pagination.Test
                 new SortTestData {Name = "Max4", Number = 4},
             };
 
-            var a1 = array.AsQueryable().OrderByParams(new OrderCondition {FieldName = nameof(SortTestData.Number), IsDesc = true});
+            var a1 = array.AsQueryable().OrderByParams(new OrderCondition(nameof(SortTestData.Number), true));
             var a2 = array.OrderByDescending(x => x.Number);
 
             Assert.True(a1.SequenceEqual(a2));

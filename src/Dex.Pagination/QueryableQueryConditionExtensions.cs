@@ -12,8 +12,8 @@ namespace Dex.Pagination
             if (condition == null)
                 return source;
 
-            if (condition.SortCondition is not null)
-                source = source.OrderByParams(condition.SortCondition);
+            if (condition.OrderConditions is not null)
+                source = source.OrderByParams(condition.OrderConditions);
 
             if (condition.PageCondition is not null)
                 source = source.FilterPage(condition.PageCondition);

@@ -51,7 +51,7 @@ namespace Dex.Pagination.Test
         [Test]
         public void LimitMaxPageSizeTest()
         {
-            var a1 = _data.FilterPage(new PageCondition() {Page = 2, PageSize = 100}, 2).ToList();
+            var a1 = _data.FilterPage(new PageCondition(2, 100), 2).ToList();
             var a2 = _data.Skip(2).Take(2);
 
             Assert.True(a1.SequenceEqual(a2));
