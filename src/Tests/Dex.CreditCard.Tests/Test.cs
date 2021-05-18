@@ -26,7 +26,7 @@ namespace Dex.CreditCard.Tests
             {"3569239206830557", CardType.JCB},
             {"3589295535870728", CardType.JCB},
             {"6759649826438453", CardType.Maestro},
-            {"6799990100000000019", CardType.Maestro},
+            {"6763990100000000019", CardType.Maestro},
             {"36700102000000", CardType.DinersClub},
             {"36148900647913", CardType.DinersClub},
         };
@@ -57,6 +57,12 @@ namespace Dex.CreditCard.Tests
             }
         }
 
+        [TestCase("2787667766469764633")] // номер карты не валидный!
+        public void LyhnCardTypeTest2(string cardNumber)
+        {
+            Assert.True(LuhnAlgorithm.HasValidCheckDigit(cardNumber));
+        }
+
         [Test]
         public void LyhnCardTypeInvalidTest1()
         {
@@ -70,10 +76,7 @@ namespace Dex.CreditCard.Tests
         [TestCase("51251261 246523634263214123411")]
         public void LyhnInvalidStringTest2(string arg)
         {
-            Assert.Catch<ArgumentException>(() =>
-            {
-                Assert.False(LuhnAlgorithm.HasValidCheckDigit(arg));
-            });
-        }     
+            Assert.Catch<ArgumentException>(() => { Assert.False(LuhnAlgorithm.HasValidCheckDigit(arg)); });
+        }
     }
 }

@@ -11,6 +11,6 @@
         JCB,
         DinersClub,
         Maestro,
-        ChinaUnionPay
+        UnionPay
     }
 }
