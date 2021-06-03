@@ -46,7 +46,7 @@ namespace Dex.CreditCardType.Resolver
                 return CardType.DinersClub;
             }
 
-            if (Regex.Match(cardNumber, @"^(50|56|57|58|63|67)(\d{14}|\d{17})$").Success)
+            if (Regex.Match(cardNumber, @"^(50|56|57|58|63|67)(\d{14}|\d{16,17})$").Success)
             {
                 return CardType.Maestro;
             }

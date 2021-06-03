@@ -27,6 +27,7 @@ namespace Dex.CreditCard.Tests
             {"3589295535870728", CardType.JCB},
             {"6759649826438453", CardType.Maestro},
             {"6799990100000000019", CardType.Maestro},
+            {"639002389084992585", CardType.Maestro},
             {"36700102000000", CardType.DinersClub},
             {"36148900647913", CardType.DinersClub},
         };
