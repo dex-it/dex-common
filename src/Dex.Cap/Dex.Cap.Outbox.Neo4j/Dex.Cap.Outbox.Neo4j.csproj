@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Neo4jClient" Version="4.1.6" />
+    </ItemGroup>
+
+</Project>
