@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.5" />
+      <PackageReference Include="Neo4jClient" Version="4.1.6" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="BaseGraphFTIndexProvider.cs">
+        <DependentUpon>IGraphFTIndexProvider.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+</Project>

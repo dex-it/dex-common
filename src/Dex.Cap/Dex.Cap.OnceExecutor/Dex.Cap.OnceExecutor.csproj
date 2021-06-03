@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.6" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Neo4j\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Neo4j\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Neo4j\**" />
+    </ItemGroup>
+
+</Project>

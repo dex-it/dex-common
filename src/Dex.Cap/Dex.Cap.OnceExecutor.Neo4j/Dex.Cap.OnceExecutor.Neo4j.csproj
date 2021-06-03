@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dex.Neo4J" Version="1.0.1" />
+      <PackageReference Include="Neo4jClient" Version="4.1.6" />
+    </ItemGroup>
+
+</Project>

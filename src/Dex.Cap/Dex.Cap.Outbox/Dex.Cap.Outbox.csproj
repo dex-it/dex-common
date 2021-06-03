@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="Outbox\Neo4j\**" />
+      <Compile Update="OutboxProcessor.cs">
+        <DependentUpon>IOutboxProcessor.cs</DependentUpon>
+      </Compile>
+      <Compile Update="OutboxService.cs">
+        <DependentUpon>IOutboxService.cs</DependentUpon>
+      </Compile>
+      <Compile Update="BaseOutboxDataProvider.cs">
+        <DependentUpon>IOutboxDataProvider.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Outbox\Neo4j\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Outbox\Neo4j\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+    </ItemGroup>
+
+</Project>
