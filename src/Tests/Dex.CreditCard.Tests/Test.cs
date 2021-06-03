@@ -28,7 +28,6 @@ namespace Dex.CreditCard.Tests
             {"6759649826438453", CardType.Maestro},
             {"6799990100000000019", CardType.Maestro},
             {"639002389084992585", CardType.Maestro},
-            {"6763990100000000019", CardType.Maestro},
             {"36700102000000", CardType.DinersClub},
             {"36148900647913", CardType.DinersClub},
         };
@@ -55,7 +54,10 @@ namespace Dex.CreditCard.Tests
         {
             foreach (var card in _validCards)
             {
-                Assert.True(LuhnAlgorithm.HasValidCheckDigit(card.Key));
+                var hasValidCheckDigit = LuhnAlgorithm.HasValidCheckDigit(card.Key);
+                if(!hasValidCheckDigit)
+                    TestContext.WriteLine(card.Key);
+                Assert.True(hasValidCheckDigit);
             }
         }
 
