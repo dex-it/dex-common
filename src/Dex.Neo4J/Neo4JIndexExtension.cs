@@ -1,7 +1,8 @@
 using System;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+using Dex.Extensions;
 using Neo4jClient;
 using Neo4jClient.Transactions;
 
@@ -14,7 +15,7 @@ namespace Dex.Neo4J
             if (graphClient == null) throw new ArgumentNullException(nameof(graphClient));
             if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-            return CreateIndexFromProps<T>(graphClient, selector.GetPropertyAccess().Name);
+            return CreateIndexFromProps<T>(graphClient, selector.GetPropertyInfo().Name);
         }
 
         public static Task CreateIndex<T, TU, TU1>(this ITransactionalGraphClient graphClient,
@@ -26,8 +27,8 @@ namespace Dex.Neo4J
 
             var propList = new[]
             {
-                selector.GetPropertyAccess().Name, 
-                selector2.GetPropertyAccess().Name
+                selector.GetPropertyInfo().Name, 
+                selector2.GetPropertyInfo().Name
             };
             return CreateIndexFromProps<T>(graphClient, propList);
         }
@@ -40,5 +41,7 @@ namespace Dex.Neo4J
             var text = "INDEX ON :" + typeof(T).Name + "(" + string.Join(",", propList) + ")"; 
             return graphClient.Cypher.Create(text).ExecuteWithoutResultsAsync();
         }
+        
+
     }
 }

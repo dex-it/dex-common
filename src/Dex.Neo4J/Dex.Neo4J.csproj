@@ -5,7 +5,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.5" />
       <PackageReference Include="Neo4jClient" Version="4.1.6" />
     </ItemGroup>
 
@@ -13,6 +12,10 @@
       <Compile Update="BaseGraphFTIndexProvider.cs">
         <DependentUpon>IGraphFTIndexProvider.cs</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
     </ItemGroup>
 
 </Project>
