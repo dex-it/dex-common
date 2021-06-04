@@ -9,7 +9,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Dex.Neo4J" Version="1.0.1" />
+      <PackageReference Include="Dex.Neo4J" Version="1.0.2" />
       <PackageReference Include="Neo4jClient" Version="4.1.6" />
     </ItemGroup>
 
