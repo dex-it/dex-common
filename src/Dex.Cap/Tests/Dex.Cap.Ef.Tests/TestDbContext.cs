@@ -1,6 +1,7 @@
 using System;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor.Ef;
+using Dex.Cap.Outbox.Ef;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Ef.Tests
@@ -29,8 +30,9 @@ namespace Dex.Cap.Ef.Tests
             var userEntity = modelBuilder.Entity<User>();
             userEntity.HasKey(x => x.Id);
             userEntity.HasIndex(x => x.Name).IsUnique();
-            
+
             modelBuilder.OnceExecutorModelCreating();
+            modelBuilder.OutboxModelCreating();
         }
     }
 }

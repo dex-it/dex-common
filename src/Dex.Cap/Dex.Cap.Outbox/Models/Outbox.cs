@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dex.Cap.Outbox.Models
 {
-    [Table("_Outbox")]
+    [Table("_outbox")]
     public class Outbox
     {
         public Outbox()

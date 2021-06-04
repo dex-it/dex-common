@@ -54,6 +54,57 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.ToTable("_last_operation");
                 });
+
+            modelBuilder.Entity("Dex.Cap.Outbox.Models.Outbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CorrelationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("uuid_generate_v4()");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<int>("OutboxMessageType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Retries")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("Updated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Created");
+
+                    b.HasIndex("OutboxMessageType");
+
+                    b.HasIndex("Retries");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("_outbox");
+                });
 #pragma warning restore 612, 618
         }
     }
