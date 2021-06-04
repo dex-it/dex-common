@@ -7,24 +7,26 @@ namespace Dex.Cap.OnceExecutor
     {
         protected abstract TContext Context { get; }
 
-        public async Task<TResult> Execute(Guid stepId, Func<TContext, Task> modificator, Func<TContext, Task<TResult>> selector = null)
+        public async Task<TResult> Execute(Guid idempotentKey, Func<TContext, Task> modificator, Func<TContext, Task<TResult>> selector = null)
         {
             if (modificator == null) throw new ArgumentNullException(nameof(modificator));
 
-            using var scope = BeginTransaction();
-            if (!await IsAlreadyExecuted(stepId))
+            using (BeginTransaction())
             {
-                await SaveIdempotentKey(stepId);
-                await modificator(Context);
-                await OnModificationComplete();
+                if (!await IsAlreadyExecuted(idempotentKey))
+                {
+                    await SaveIdempotentKey(idempotentKey);
+                    await modificator(Context);
+                    await OnModificationComplete();
+                }
+
+                var result = selector != null
+                    ? await selector(Context)
+                    : default;
+
+                await CommitTransaction();
+                return result;
             }
-
-            var result = selector != null
-                ? await selector(Context)
-                : default;
-
-            await CommitTransaction();
-            return result;
         }
 
         protected abstract Task OnModificationComplete();

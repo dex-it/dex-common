@@ -5,6 +5,6 @@ namespace Dex.Cap.OnceExecutor
 {
     public interface IOnceExecutor<out TContext, TResult>
     {
-        Task<TResult> Execute(Guid stepId, Func<TContext, Task> modificator, Func<TContext, Task<TResult>> selector = null);
+        Task<TResult> Execute(Guid idempotentKey, Func<TContext, Task> modificator, Func<TContext, Task<TResult>> selector = null);
     }
 }

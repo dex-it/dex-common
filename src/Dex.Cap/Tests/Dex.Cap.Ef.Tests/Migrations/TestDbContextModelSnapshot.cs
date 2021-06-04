@@ -39,20 +39,20 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("MC.Core.Consistent.OnceExecutor.LastTransaction", b =>
+            modelBuilder.Entity("Dex.Cap.OnceExecutor.LastTransaction", b =>
                 {
-                    b.Property<Guid>("Last")
+                    b.Property<Guid>("IdempotentKey")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp without time zone");
 
-                    b.HasKey("Last");
+                    b.HasKey("IdempotentKey");
 
                     b.HasIndex("Created");
 
-                    b.ToTable("_Last");
+                    b.ToTable("_last_operation");
                 });
 #pragma warning restore 612, 618
         }

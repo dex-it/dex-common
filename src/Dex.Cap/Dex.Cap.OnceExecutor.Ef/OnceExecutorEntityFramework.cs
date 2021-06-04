@@ -2,13 +2,14 @@ using System;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
     public class OnceExecutorEntityFramework<TDbContext, TResult> : BaseOnceExecutor<TDbContext, TResult>, IOnceExecutorEntityFramework<TDbContext, TResult>
         where TDbContext : DbContext
     {
-        private TransactionScope _current;
+        private IDbContextTransaction _current;
         protected override TDbContext Context { get; }
 
         public OnceExecutorEntityFramework(TDbContext context)
@@ -24,13 +25,14 @@ namespace Dex.Cap.OnceExecutor.Ef
 
         protected override IDisposable BeginTransaction()
         {
-            return _current = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            if (Context.Database.CurrentTransaction == null)
+                return _current = Context.Database.BeginTransaction();
+            return new EmptyDisposable();
         }
 
         protected override Task CommitTransaction()
         {
-            _current.Complete();
-            return Task.CompletedTask;
+            return _current?.CommitAsync() ?? Task.CompletedTask;
         }
 
         protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey)
@@ -41,6 +43,13 @@ namespace Dex.Cap.OnceExecutor.Ef
         protected override Task SaveIdempotentKey(Guid idempotentKey)
         {
             return Context.AddAsync(new LastTransaction {IdempotentKey = idempotentKey}).AsTask();
+        }
+
+        private class EmptyDisposable : IDisposable
+        {
+            public void Dispose()
+            {
+            }
         }
     }
 }

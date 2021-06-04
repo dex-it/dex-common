@@ -8,15 +8,15 @@ namespace Dex.Cap.Ef.Tests.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "_Last",
+                name: "_last_operation",
                 columns: table => new
                 {
-                    Last = table.Column<Guid>(type: "uuid", nullable: false),
+                    IdempotentKey = table.Column<Guid>(type: "uuid", nullable: false),
                     Created = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Last", x => x.Last);
+                    table.PrimaryKey("PK__last_operation", x => x.IdempotentKey);
                 });
 
             migrationBuilder.CreateTable(
@@ -33,8 +33,8 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX__Last_Created",
-                table: "_Last",
+                name: "IX__last_operation_Created",
+                table: "_last_operation",
                 column: "Created");
 
             migrationBuilder.CreateIndex(
@@ -47,7 +47,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "_Last");
+                name: "_last_operation");
 
             migrationBuilder.DropTable(
                 name: "Users");

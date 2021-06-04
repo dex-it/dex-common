@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dex.Cap.Ef.Tests.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20210604212455_Init")]
+    [Migration("20210604221956_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -41,20 +41,20 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("MC.Core.Consistent.OnceExecutor.LastTransaction", b =>
+            modelBuilder.Entity("Dex.Cap.OnceExecutor.LastTransaction", b =>
                 {
-                    b.Property<Guid>("Last")
+                    b.Property<Guid>("IdempotentKey")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp without time zone");
 
-                    b.HasKey("Last");
+                    b.HasKey("IdempotentKey");
 
                     b.HasIndex("Created");
 
-                    b.ToTable("_Last");
+                    b.ToTable("_last_operation");
                 });
 #pragma warning restore 612, 618
         }
