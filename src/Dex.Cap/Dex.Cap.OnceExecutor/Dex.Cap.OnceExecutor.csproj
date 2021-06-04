@@ -10,6 +10,9 @@
 
     <ItemGroup>
       <Compile Remove="Neo4j\**" />
+      <Compile Update="BaseOnceExecutor.cs">
+        <DependentUpon>IOnceExecutor.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

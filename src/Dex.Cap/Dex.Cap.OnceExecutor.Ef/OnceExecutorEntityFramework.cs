@@ -1,12 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using System.Transactions;
-using MC.Core.Consistent.OnceExecutor;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public class OnceExecutorEntityFramework<TDbContext, T> : BaseOnceExecutor<TDbContext, T>, IOnceExecutorEntityFramework<TDbContext, T> where TDbContext : DbContext
+    public class OnceExecutorEntityFramework<TDbContext, TResult> : BaseOnceExecutor<TDbContext, TResult>, IOnceExecutorEntityFramework<TDbContext, TResult>
+        where TDbContext : DbContext
     {
         private TransactionScope _current;
         protected override TDbContext Context { get; }
@@ -33,14 +33,14 @@ namespace Dex.Cap.OnceExecutor.Ef
             return Task.CompletedTask;
         }
 
-        protected override async Task<bool> ExistStepId(Guid stepId)
+        protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey)
         {
-            return await Context.FindAsync<LastTransaction>(stepId) != null;
+            return await Context.FindAsync<LastTransaction>(idempotentKey) != null;
         }
 
-        protected override Task SaveStepId(Guid stepId)
+        protected override Task SaveIdempotentKey(Guid idempotentKey)
         {
-            return Context.AddAsync(new LastTransaction {Last = stepId}).AsTask();
+            return Context.AddAsync(new LastTransaction {IdempotentKey = idempotentKey}).AsTask();
         }
     }
 }

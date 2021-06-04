@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using MC.Core.Consistent.OnceExecutor;
 using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
@@ -31,22 +30,22 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return _transaction.CommitAsync();
         }
 
-        protected override async Task<bool> ExistStepId(Guid stepId)
+        protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey)
         {
             var lastTransaction = await Context.Cypher
                 .Match($"(t:{nameof(LastTransaction)})")
-                .Where((LastTransaction t) => t.Last == stepId)
+                .Where((LastTransaction t) => t.IdempotentKey == idempotentKey)
                 .Return(t => t.As<LastTransaction>())
                 .ResultsAsync;
 
             return lastTransaction.Any();
         }
 
-        protected override async Task SaveStepId(Guid stepId)
+        protected override async Task SaveIdempotentKey(Guid idempotentKey)
         {
             await Context.Cypher
                 .Create($"(last:{nameof(LastTransaction)}" + " {lt})")
-                .WithParam("lt", new LastTransaction {Last = stepId})
+                .WithParam("lt", new LastTransaction {IdempotentKey = idempotentKey})
                 .ExecuteWithoutResultsAsync();
         }
     }

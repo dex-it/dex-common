@@ -8,4 +8,10 @@
       <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="OnceExecutorEntityFramework.cs">
+        <DependentUpon>IOnceExecutorEntityFramework.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

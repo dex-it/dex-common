@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace MC.Core.Consistent.OnceExecutor
+namespace Dex.Cap.OnceExecutor
 {
     public interface IOnceExecutor<out TContext, TResult>
     {

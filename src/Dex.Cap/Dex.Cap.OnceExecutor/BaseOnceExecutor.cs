@@ -1,8 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 
-namespace MC.Core.Consistent.OnceExecutor
+namespace Dex.Cap.OnceExecutor
 {
     public abstract class BaseOnceExecutor<TContext, TResult> : IOnceExecutor<TContext, TResult>
     {
@@ -13,9 +12,9 @@ namespace MC.Core.Consistent.OnceExecutor
             if (modificator == null) throw new ArgumentNullException(nameof(modificator));
 
             using var scope = BeginTransaction();
-            if (!await ExistStepId(stepId))
+            if (!await IsAlreadyExecuted(stepId))
             {
-                await SaveStepId(stepId);
+                await SaveIdempotentKey(stepId);
                 await modificator(Context);
                 await OnModificationComplete();
             }
@@ -33,7 +32,7 @@ namespace MC.Core.Consistent.OnceExecutor
         protected abstract IDisposable BeginTransaction();
         protected abstract Task CommitTransaction();
 
-        protected abstract Task<bool> ExistStepId(Guid stepId);
-        protected abstract Task SaveStepId(Guid stepId);
+        protected abstract Task<bool> IsAlreadyExecuted(Guid idempotentKey);
+        protected abstract Task SaveIdempotentKey(Guid idempotentKey);
     }
 }
