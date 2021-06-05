@@ -13,7 +13,7 @@ namespace Dex.Cap.Outbox.Ef
             return serviceProvider.AddScoped<IOutboxService, OutboxService>()
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
-                .AddScoped<IOutboxDataProvider, EfOutboxDataProvider<TDbContext>>()
+                .AddScoped<IOutboxDataProvider, OutboxDataProviderEf<TDbContext>>()
                 .AddScoped<IOutboxMessageHandlerFactory, OutboxMessageHandlerFactory>();
         }
     }

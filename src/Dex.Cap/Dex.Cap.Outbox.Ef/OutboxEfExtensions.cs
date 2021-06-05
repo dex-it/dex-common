@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Outbox.Ef
 {
-    public static class EntityFrameworkOutboxExtensions
+    public static class OutboxEfExtensions
     {
         /// <summary>
         /// Регистрируем в контексте EF объект Outbox 
