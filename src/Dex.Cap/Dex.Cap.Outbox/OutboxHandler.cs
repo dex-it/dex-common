@@ -45,7 +45,16 @@ namespace Dex.Cap.Outbox
                     if (msg is IOutboxMessage outboxMessage)
                     {
                         var handler = _handlerFactory.GetMessageHandler(outboxMessage);
-                        await handler.ProcessMessage(outboxMessage);
+                        try
+                        {
+                            await handler.ProcessMessage(outboxMessage);
+                        }
+                        finally
+                        {
+                            // ReSharper disable once SuspiciousTypeConversion.Global
+                            (handler as IDisposable)?.Dispose();
+                        }
+
                         await _dataProvider.Succeed(message);
                     }
                     else

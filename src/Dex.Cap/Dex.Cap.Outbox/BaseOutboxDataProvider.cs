@@ -12,6 +12,8 @@ namespace Dex.Cap.Outbox
 
         public virtual async Task Fail(Models.Outbox outbox, string errorMessage = null, Exception exception = null)
         {
+            if (outbox == null) throw new ArgumentNullException(nameof(outbox));
+            
             outbox.Status = OutboxMessageStatus.Failed;
             outbox.Updated = DateTime.UtcNow;
             outbox.Retries++;
@@ -23,6 +25,8 @@ namespace Dex.Cap.Outbox
 
         public virtual async Task Succeed(Models.Outbox outbox)
         {
+            if (outbox == null) throw new ArgumentNullException(nameof(outbox));
+            
             outbox.Status = OutboxMessageStatus.Succeeded;
             outbox.Updated = DateTime.UtcNow;
             outbox.Retries++;

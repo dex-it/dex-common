@@ -13,20 +13,79 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         [Test]
         public async Task SimpleRunTest()
         {
-            var sp = new ServiceCollection()
-                .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext>()
-                // handlers
+            var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
-                .AddLogging()
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
             await client.Enqueue(new TestOutboxCommand() {Args = "hello world"}, Guid.NewGuid());
             await client.Enqueue(new TestOutboxCommand() {Args = "hello world2"}, Guid.NewGuid());
 
+            var count = 0;
+            TestCommandHandler.OnProcess += (sender, args) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.Process();
+
+            Assert.AreEqual(2, count);
+        }
+
+        [Test]
+        public async Task ErrorCommandRunTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
+                .BuildServiceProvider();
+
+            var client = sp.GetRequiredService<IOutboxService>();
+            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 3}, Guid.NewGuid());
+
+            var count = 0;
+            TestErrorCommandHandler.OnProcess += (sender, args) => { count++; };
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.Process();
+                await Task.Delay(50);
+            }
+
+            Assert.AreEqual(1, count);
+        }
+
+        [Test]
+        public async Task NormalAndErrorCommandRunTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
+                .BuildServiceProvider();
+
+            var client = sp.GetRequiredService<IOutboxService>();
+            await client.Enqueue(new TestOutboxCommand() {Args = "hello"}, Guid.NewGuid());
+            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 1}, Guid.NewGuid());
+
+            var count = 0;
+            TestCommandHandler.OnProcess += (sender, args) => { count++; };
+            TestErrorCommandHandler.OnProcess += (sender, args) => { count++; };
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.Process();
+                await Task.Delay(50);
+            }
+
+            Assert.AreEqual(2, count);
+        }
+
+        private IServiceCollection InitServiceCollection()
+        {
+            return new ServiceCollection()
+                .AddLogging()
+                .AddScoped(_ => new TestDbContext(DbName))
+                .AddOutbox<TestDbContext>();
         }
     }
 }

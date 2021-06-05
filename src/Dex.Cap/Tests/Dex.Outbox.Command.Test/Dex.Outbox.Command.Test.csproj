@@ -9,4 +9,13 @@
       <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="TestErrorOutboxCommand.cs">
+        <DependentUpon>TestErrorCommandHandler.cs</DependentUpon>
+      </Compile>
+      <Compile Update="TestOutboxCommand.cs">
+        <DependentUpon>TestCommandHandler.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>
