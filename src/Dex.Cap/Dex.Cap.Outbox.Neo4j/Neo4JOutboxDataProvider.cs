@@ -8,7 +8,7 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Cap.Outbox.Neo4j
 {
-    public class Neo4JOutboxDataProvider<TDbContext> : BaseOutboxDataProvider<TDbContext>
+    public class Neo4JOutboxDataProvider : BaseOutboxDataProvider
     {
         private readonly ITransactionalGraphClient _graphClient;
         private readonly OutboxOptions _outboxOptions;

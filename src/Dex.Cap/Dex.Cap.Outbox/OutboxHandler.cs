@@ -6,12 +6,12 @@ namespace Dex.Cap.Outbox
 {
     public class OutboxHandler<TDbContext> : IOutboxHandler
     {
-        private readonly IOutboxDataProvider<TDbContext> _dataProvider;
+        private readonly IOutboxDataProvider _dataProvider;
         private readonly IOutboxMessageHandlerFactory _handlerFactory;
         private readonly IOutboxSerializer _serializer;
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
 
-        public OutboxHandler(IOutboxDataProvider<TDbContext> dataProvider, IOutboxMessageHandlerFactory messageHandlerFactory,
+        public OutboxHandler(IOutboxDataProvider dataProvider, IOutboxMessageHandlerFactory messageHandlerFactory,
             IOutboxSerializer serializer, ILogger<OutboxHandler<TDbContext>> logger)
         {
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));

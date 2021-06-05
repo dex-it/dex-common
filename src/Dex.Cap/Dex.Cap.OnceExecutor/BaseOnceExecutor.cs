@@ -7,7 +7,7 @@ namespace Dex.Cap.OnceExecutor
     {
         protected abstract TContext Context { get; }
 
-        public async Task<TResult> Execute(Guid idempotentKey, Func<TContext, Task> modificator, Func<TContext, Task<TResult>> selector = null)
+        public async Task<TResult?> Execute(Guid idempotentKey, Func<TContext, Task> modificator, Func<TContext, Task<TResult>>? selector = null)
         {
             if (modificator == null) throw new ArgumentNullException(nameof(modificator));
 

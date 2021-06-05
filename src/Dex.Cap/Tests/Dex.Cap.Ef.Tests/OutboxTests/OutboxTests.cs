@@ -22,7 +22,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await client.Enqueue(new TestOutboxCommand() {Args = "hello world2"}, Guid.NewGuid());
 
             var count = 0;
-            TestCommandHandler.OnProcess += (sender, args) => { count++; };
+            TestCommandHandler.OnProcess += (_, _) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.Process();
 
@@ -40,7 +40,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await client.Enqueue(new TestErrorOutboxCommand {CountDown = 3}, Guid.NewGuid());
 
             var count = 0;
-            TestErrorCommandHandler.OnProcess += (sender, args) => { count++; };
+            TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
 
             var repeat = 5;
@@ -66,8 +66,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await client.Enqueue(new TestErrorOutboxCommand {CountDown = 1}, Guid.NewGuid());
 
             var count = 0;
-            TestCommandHandler.OnProcess += (sender, args) => { count++; };
-            TestErrorCommandHandler.OnProcess += (sender, args) => { count++; };
+            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
 
             var repeat = 5;

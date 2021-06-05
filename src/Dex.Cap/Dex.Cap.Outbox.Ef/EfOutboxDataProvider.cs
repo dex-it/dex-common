@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Ef
 {
-    public class EfOutboxDataProvider<TDbContext> : BaseOutboxDataProvider<TDbContext> where TDbContext : DbContext
+    public class EfOutboxDataProvider<TDbContext> : BaseOutboxDataProvider where TDbContext : DbContext
     {
         private readonly TDbContext _dbContext;
         private readonly OutboxOptions _outboxOptions;

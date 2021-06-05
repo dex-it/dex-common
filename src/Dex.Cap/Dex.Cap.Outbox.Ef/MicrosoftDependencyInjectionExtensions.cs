@@ -10,10 +10,10 @@ namespace Dex.Cap.Outbox.Ef
         {
             if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
             
-            return serviceProvider.AddScoped<IOutboxService, OutboxService<TDbContext>>()
+            return serviceProvider.AddScoped<IOutboxService, OutboxService>()
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
-                .AddScoped<IOutboxDataProvider<TDbContext>, EfOutboxDataProvider<TDbContext>>()
+                .AddScoped<IOutboxDataProvider, EfOutboxDataProvider<TDbContext>>()
                 .AddScoped<IOutboxMessageHandlerFactory, OutboxMessageHandlerFactory>();
         }
     }

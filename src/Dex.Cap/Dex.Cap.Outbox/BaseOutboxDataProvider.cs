@@ -4,7 +4,7 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    public abstract class BaseOutboxDataProvider<TDbContext> : IOutboxDataProvider<TDbContext>
+    public abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
         public abstract Task<Models.Outbox> Save(Models.Outbox outbox);
 

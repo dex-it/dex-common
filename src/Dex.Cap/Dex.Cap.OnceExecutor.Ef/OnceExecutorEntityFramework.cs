@@ -8,7 +8,7 @@ namespace Dex.Cap.OnceExecutor.Ef
     public class OnceExecutorEntityFramework<TDbContext, TResult> : BaseOnceExecutor<TDbContext, TResult>, IOnceExecutorEntityFramework<TDbContext, TResult>
         where TDbContext : DbContext
     {
-        private IDbContextTransaction _current;
+        private IDbContextTransaction? _current;
         protected override TDbContext Context { get; }
 
         public OnceExecutorEntityFramework(TDbContext context)
