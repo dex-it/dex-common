@@ -5,12 +5,13 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
-    public class OnceExecutorNeo4J<TResult> : BaseOnceExecutor<ITransactionalGraphClient, TResult>, IOnceExecutorNeo4j<TResult>
+    // ReSharper disable once InconsistentNaming
+    public class OnceExecutorNeo4j<TResult> : BaseOnceExecutor<ITransactionalGraphClient, TResult>, IOnceExecutorNeo4j<TResult>
     {
         private ITransaction _transaction;
         protected override ITransactionalGraphClient Context { get; }
 
-        public OnceExecutorNeo4J(ITransactionalGraphClient graphClient)
+        public OnceExecutorNeo4j(ITransactionalGraphClient graphClient)
         {
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }

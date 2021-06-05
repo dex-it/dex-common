@@ -5,6 +5,7 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
+    // ReSharper disable once InconsistentNaming
     public static class OnceExecutorIndexCreatorNeo4j
     {
         public static Task RegisterStepExecutorIndexes(this ITransactionalGraphClient graphClient)
