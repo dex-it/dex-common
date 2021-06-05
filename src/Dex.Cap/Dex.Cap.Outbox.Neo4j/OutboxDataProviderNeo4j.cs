@@ -20,25 +20,25 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        public override async Task<Models.Outbox> Save(Models.Outbox outbox)
+        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope)
         {
             await _graphClient.Cypher
                 .Create($"(outbox:{nameof(Outbox)})")
-                .Set("outbox = {outbox}").WithParam("outbox", outbox)
+                .Set("outbox = {outbox}").WithParam("outbox", outboxEnvelope)
                 .ExecuteWithoutResultsAsync();
 
-            return outbox;
+            return outboxEnvelope;
         }
 
-        public override async Task<Models.Outbox[]> GetWaitingMessages()
+        public override async Task<OutboxEnvelope[]> GetWaitingMessages()
         {
             const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
             const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
 
             var outboxes = await _graphClient.Cypher.Match($"(o:{nameof(Outbox)})")
-                .Where((Models.Outbox o) => o.Retries < _outboxOptions.Retries)
-                .AndWhere((Models.Outbox o) => o.Status == failedStatus || o.Status == newStatus)
-                .Return<Models.Outbox>("o")
+                .Where((OutboxEnvelope o) => o.Retries < _outboxOptions.Retries)
+                .AndWhere((OutboxEnvelope o) => o.Status == failedStatus || o.Status == newStatus)
+                .Return<OutboxEnvelope>("o")
                 .OrderBy("o.Created")
                 .Limit(_outboxOptions.MessagesToProcess)
                 .ResultsAsync;
@@ -46,11 +46,11 @@ namespace Dex.Cap.Outbox.Neo4j
             return outboxes.ToArray();
         }
 
-        protected override async Task UpdateOutbox(Models.Outbox outbox)
+        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope)
         {
             await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
-                .WithParam("id", outbox.Id)
-                .Set("o = {outbox}").WithParam("outbox", outbox)
+                .WithParam("id", outboxEnvelope.Id)
+                .Set("o = {outbox}").WithParam("outbox", outboxEnvelope)
                 .ExecuteWithoutResultsAsync();
         }
     }

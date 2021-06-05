@@ -5,9 +5,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Dex.Cap.Outbox.Models
 {
     [Table("outbox", Schema = "cap")]
-    public class Outbox
+    public class OutboxEnvelope
     {
-        public Outbox(Guid correlationId, string messageType, OutboxMessageStatus status, string content)
+        public OutboxEnvelope(Guid correlationId, string messageType, OutboxMessageStatus status, string content)
         {
             Id = Guid.NewGuid();
             CorrelationId = correlationId;

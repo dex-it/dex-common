@@ -19,19 +19,19 @@ namespace Dex.Cap.Outbox.Ef
             _outboxOptions = outboxOptions.Value;
         }
 
-        public override async Task<Models.Outbox> Save(Models.Outbox outbox)
+        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope)
         {
-            if (outbox == null) throw new ArgumentNullException(nameof(outbox));
+            if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
 
-            var entityEntry = _dbContext.Set<Models.Outbox>().Add(outbox);
+            var entityEntry = _dbContext.Set<OutboxEnvelope>().Add(outboxEnvelope);
             await _dbContext.SaveChangesAsync();
 
             return entityEntry.Entity;
         }
 
-        public override async Task<Models.Outbox[]> GetWaitingMessages()
+        public override async Task<OutboxEnvelope[]> GetWaitingMessages()
         {
-            var outboxes = await _dbContext.Set<Models.Outbox>()
+            var outboxes = await _dbContext.Set<OutboxEnvelope>()
                 .Where(o => o.Retries < _outboxOptions.Retries && (o.Status == OutboxMessageStatus.Failed || o.Status == OutboxMessageStatus.New))
                 .OrderBy(o => o.Created)
                 .Take(_outboxOptions.MessagesToProcess)
@@ -40,9 +40,9 @@ namespace Dex.Cap.Outbox.Ef
             return outboxes;
         }
 
-        protected override async Task UpdateOutbox(Models.Outbox outbox)
+        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope)
         {
-            _dbContext.Set<Models.Outbox>().Update(outbox);
+            _dbContext.Set<OutboxEnvelope>().Update(outboxEnvelope);
             await _dbContext.SaveChangesAsync();
         }
     }

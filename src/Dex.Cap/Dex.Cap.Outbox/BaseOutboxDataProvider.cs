@@ -6,34 +6,34 @@ namespace Dex.Cap.Outbox
 {
     public abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
-        public abstract Task<Models.Outbox> Save(Models.Outbox outbox);
+        public abstract Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope);
 
-        public abstract Task<Models.Outbox[]> GetWaitingMessages();
+        public abstract Task<OutboxEnvelope[]> GetWaitingMessages();
 
-        public virtual async Task Fail(Models.Outbox outbox, string? errorMessage = null, Exception? exception = null)
+        public virtual async Task Fail(OutboxEnvelope outboxEnvelope, string? errorMessage = null, Exception? exception = null)
         {
-            if (outbox == null) throw new ArgumentNullException(nameof(outbox));
+            if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
             
-            outbox.Status = OutboxMessageStatus.Failed;
-            outbox.Updated = DateTime.UtcNow;
-            outbox.Retries++;
-            outbox.ErrorMessage = errorMessage;
-            outbox.Error = exception?.ToString();
+            outboxEnvelope.Status = OutboxMessageStatus.Failed;
+            outboxEnvelope.Updated = DateTime.UtcNow;
+            outboxEnvelope.Retries++;
+            outboxEnvelope.ErrorMessage = errorMessage;
+            outboxEnvelope.Error = exception?.ToString();
 
-            await UpdateOutbox(outbox);
+            await UpdateOutbox(outboxEnvelope);
         }
 
-        public virtual async Task Succeed(Models.Outbox outbox)
+        public virtual async Task Succeed(OutboxEnvelope outboxEnvelope)
         {
-            if (outbox == null) throw new ArgumentNullException(nameof(outbox));
+            if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
             
-            outbox.Status = OutboxMessageStatus.Succeeded;
-            outbox.Updated = DateTime.UtcNow;
-            outbox.Retries++;
+            outboxEnvelope.Status = OutboxMessageStatus.Succeeded;
+            outboxEnvelope.Updated = DateTime.UtcNow;
+            outboxEnvelope.Retries++;
 
-            await UpdateOutbox(outbox);
+            await UpdateOutbox(outboxEnvelope);
         }
 
-        protected abstract Task UpdateOutbox(Models.Outbox outbox);
+        protected abstract Task UpdateOutbox(OutboxEnvelope outboxEnvelope);
     }
 }
