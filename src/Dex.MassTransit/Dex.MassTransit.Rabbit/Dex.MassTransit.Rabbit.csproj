@@ -5,12 +5,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Dex.Extensions" Version="1.0.11" />
       <PackageReference Include="MassTransit.AspNetCore" Version="7.1.8" />
       <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.8" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
     </ItemGroup>
 
 </Project>

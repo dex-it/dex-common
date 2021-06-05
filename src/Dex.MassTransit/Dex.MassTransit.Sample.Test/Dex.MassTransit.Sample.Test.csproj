@@ -15,7 +15,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
+      <ProjectReference Include="..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
+      <ProjectReference Include="..\Dex.MassTransit.SQS\Dex.MassTransit.SQS.csproj" />
     </ItemGroup>
 
 </Project>
