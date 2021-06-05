@@ -25,7 +25,7 @@ namespace Dex.Cap.Outbox
         {
             _logger.LogDebug("Outbox processor has been started");
 
-            var messages = await _dataProvider.GetWaitingMessages();
+            var messages = await _dataProvider.GetWaitingMessages(cancellationToken);
             _logger.LogDebug("Messages to process {Count}", messages.Length);
 
             foreach (var message in messages)
@@ -56,7 +56,7 @@ namespace Dex.Cap.Outbox
                             (handler as IDisposable)?.Dispose();
                         }
 
-                        await _dataProvider.Succeed(message);
+                        await _dataProvider.Succeed(message, cancellationToken);
                     }
                     else
                     {
@@ -67,7 +67,7 @@ namespace Dex.Cap.Outbox
                 catch (Exception e)
                 {
                     _logger.LogError(e, "Failed to process {MessageId}", message.Id);
-                    await _dataProvider.Fail(message, e.Message, e);
+                    await _dataProvider.Fail(message, cancellationToken, e.Message, e);
                 }
 
                 _logger.LogDebug("Message {MessageId} has been processed", message.Id);

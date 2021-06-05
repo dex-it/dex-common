@@ -31,7 +31,12 @@ namespace Dex.Cap.Outbox.Neo4j
             return outboxEnvelope;
         }
 
-        public override async Task<OutboxEnvelope[]> GetWaitingMessages()
+        public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override async Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken)
         {
             const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
             const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
@@ -47,7 +52,7 @@ namespace Dex.Cap.Outbox.Neo4j
             return outboxes.ToArray();
         }
 
-        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope)
+        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
                 .WithParam("id", outboxEnvelope.Id)

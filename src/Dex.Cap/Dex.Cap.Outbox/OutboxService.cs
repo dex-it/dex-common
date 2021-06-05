@@ -16,19 +16,25 @@ namespace Dex.Cap.Outbox
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
-        public Task Enqueue<T>(T message, Guid correlationId, CancellationToken cancellationToken) where T : IOutboxMessage
+        public async Task<Guid> Enqueue<T>(T message, Guid correlationId, CancellationToken cancellationToken) where T : IOutboxMessage
         {
             var assemblyQualifiedName = message.GetType().AssemblyQualifiedName;
             if (assemblyQualifiedName == null)
                 throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
 
             var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message));
-            return _outboxDataProvider.Save(outbox, cancellationToken);
+            await _outboxDataProvider.Save(outbox, cancellationToken);
+            return correlationId;
         }
 
-        public Task Enqueue<T>(T message, CancellationToken cancellationToken) where T : IOutboxMessage
+        public Task<Guid> Enqueue<T>(T message, CancellationToken cancellationToken) where T : IOutboxMessage
         {
             return Enqueue(message, Guid.NewGuid(), cancellationToken);
+        }
+
+        public Task<bool> IsOperationExists(Guid correlationId, CancellationToken cancellationToken)
+        {
+            return _outboxDataProvider.IsExists(correlationId, cancellationToken);
         }
     }
 }

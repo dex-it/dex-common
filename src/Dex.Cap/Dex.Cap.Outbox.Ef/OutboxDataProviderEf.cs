@@ -25,26 +25,31 @@ namespace Dex.Cap.Outbox.Ef
             if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
 
             var entityEntry = _dbContext.Set<OutboxEnvelope>().Add(outboxEnvelope);
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
 
             return entityEntry.Entity;
         }
 
-        public override async Task<OutboxEnvelope[]> GetWaitingMessages()
+        public override async Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken)
         {
             var outboxes = await _dbContext.Set<OutboxEnvelope>()
                 .Where(o => o.Retries < _outboxOptions.Retries && (o.Status == OutboxMessageStatus.Failed || o.Status == OutboxMessageStatus.New))
                 .OrderBy(o => o.Created)
                 .Take(_outboxOptions.MessagesToProcess)
-                .ToArrayAsync();
+                .ToArrayAsync(cancellationToken: cancellationToken);
 
             return outboxes;
         }
 
-        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope)
+        public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
+        {
+            return _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == correlationId, cancellationToken: cancellationToken);
+        }
+
+        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             _dbContext.Set<OutboxEnvelope>().Update(outboxEnvelope);
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

@@ -15,9 +15,6 @@ namespace Dex.Cap.Outbox.Ef
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
             builder.Entity<Models.OutboxEnvelope>()
-                .Property(o => o.CorrelationId);
-
-            builder.Entity<Models.OutboxEnvelope>()
                 .HasIndex(o => o.Created);
 
             builder.Entity<Models.OutboxEnvelope>()

@@ -9,16 +9,13 @@ namespace Dex.Cap.Outbox.Models
     {
         public OutboxEnvelope(Guid correlationId, string messageType, OutboxMessageStatus status, string content)
         {
-            Id = Guid.NewGuid();
-            CorrelationId = correlationId;
+            Id = correlationId;
             MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
             Status = status;
             Content = content ?? throw new ArgumentNullException(nameof(content));
         }
 
         [Key] public Guid Id { get; set; }
-
-        public Guid CorrelationId { get; set; }
 
         [Required] public string MessageType { get; set; }
 
