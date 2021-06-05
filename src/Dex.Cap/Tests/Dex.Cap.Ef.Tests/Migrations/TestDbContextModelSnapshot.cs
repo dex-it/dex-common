@@ -52,7 +52,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.HasIndex("Created");
 
-                    b.ToTable("_last_operation");
+                    b.ToTable("last_transaction", "cap");
                 });
 
             modelBuilder.Entity("Dex.Cap.Outbox.Models.Outbox", b =>
@@ -98,7 +98,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.HasIndex("Status");
 
-                    b.ToTable("_outbox");
+                    b.ToTable("outbox", "cap");
                 });
 #pragma warning restore 612, 618
         }

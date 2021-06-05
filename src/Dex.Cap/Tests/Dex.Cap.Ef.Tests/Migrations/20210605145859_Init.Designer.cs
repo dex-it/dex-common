@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dex.Cap.Ef.Tests.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20210605121257_Init")]
+    [Migration("20210605145859_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,7 +54,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.HasIndex("Created");
 
-                    b.ToTable("_last_operation");
+                    b.ToTable("last_transaction", "cap");
                 });
 
             modelBuilder.Entity("Dex.Cap.Outbox.Models.Outbox", b =>
@@ -100,7 +100,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.HasIndex("Status");
 
-                    b.ToTable("_outbox");
+                    b.ToTable("outbox", "cap");
                 });
 #pragma warning restore 612, 618
         }

@@ -7,8 +7,12 @@ namespace Dex.Cap.Ef.Tests.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "cap");
+
             migrationBuilder.CreateTable(
-                name: "_last_operation",
+                name: "last_transaction",
+                schema: "cap",
                 columns: table => new
                 {
                     IdempotentKey = table.Column<Guid>(type: "uuid", nullable: false),
@@ -16,11 +20,12 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__last_operation", x => x.IdempotentKey);
+                    table.PrimaryKey("PK_last_transaction", x => x.IdempotentKey);
                 });
 
             migrationBuilder.CreateTable(
-                name: "_outbox",
+                name: "outbox",
+                schema: "cap",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -36,7 +41,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__outbox", x => x.Id);
+                    table.PrimaryKey("PK_outbox", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -53,23 +58,27 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX__last_operation_Created",
-                table: "_last_operation",
+                name: "IX_last_transaction_Created",
+                schema: "cap",
+                table: "last_transaction",
                 column: "Created");
 
             migrationBuilder.CreateIndex(
-                name: "IX__outbox_Created",
-                table: "_outbox",
+                name: "IX_outbox_Created",
+                schema: "cap",
+                table: "outbox",
                 column: "Created");
 
             migrationBuilder.CreateIndex(
-                name: "IX__outbox_Retries",
-                table: "_outbox",
+                name: "IX_outbox_Retries",
+                schema: "cap",
+                table: "outbox",
                 column: "Retries");
 
             migrationBuilder.CreateIndex(
-                name: "IX__outbox_Status",
-                table: "_outbox",
+                name: "IX_outbox_Status",
+                schema: "cap",
+                table: "outbox",
                 column: "Status");
 
             migrationBuilder.CreateIndex(
@@ -82,10 +91,12 @@ namespace Dex.Cap.Ef.Tests.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "_last_operation");
+                name: "last_transaction",
+                schema: "cap");
 
             migrationBuilder.DropTable(
-                name: "_outbox");
+                name: "outbox",
+                schema: "cap");
 
             migrationBuilder.DropTable(
                 name: "Users");

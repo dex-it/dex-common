@@ -5,7 +5,7 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
-    public static class Neo4JOnceExecutorIndexCreator
+    public static class Neo4jOnceExecutorIndexCreator
     {
         public static Task RegisterStepExecutorIndexes(this ITransactionalGraphClient graphClient)
         {

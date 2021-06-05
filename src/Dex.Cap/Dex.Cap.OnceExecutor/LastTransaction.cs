@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dex.Cap.OnceExecutor
 {
-    [Table("_last_operation")]
+    [Table("last_transaction", Schema = "cap")]
     public class LastTransaction
     {
         [Key] public Guid IdempotentKey { get; set; }

@@ -5,7 +5,7 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
-    public class Neo4JOnceExecutor<TResult> : BaseOnceExecutor<ITransactionalGraphClient, TResult>, INeo4JOnceExecutor<TResult>
+    public class Neo4JOnceExecutor<TResult> : BaseOnceExecutor<ITransactionalGraphClient, TResult>, INeo4jOnceExecutor<TResult>
     {
         private ITransaction _transaction;
         protected override ITransactionalGraphClient Context { get; }

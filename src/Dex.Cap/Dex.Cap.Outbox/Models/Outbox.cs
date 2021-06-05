@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dex.Cap.Outbox.Models
 {
-    [Table("_outbox")]
+    [Table("outbox", Schema = "cap")]
     public class Outbox
     {
         public Outbox(Guid correlationId, string messageType, OutboxMessageStatus status, string content)
