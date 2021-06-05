@@ -10,7 +10,7 @@ namespace Dex.Cap.Outbox
 
         public abstract Task<Models.Outbox[]> GetWaitingMessages();
 
-        public virtual async Task Fail(Models.Outbox outbox, string errorMessage = null, Exception exception = null)
+        public virtual async Task Fail(Models.Outbox outbox, string? errorMessage = null, Exception? exception = null)
         {
             if (outbox == null) throw new ArgumentNullException(nameof(outbox));
             

@@ -17,14 +17,11 @@ namespace Dex.Cap.Outbox
 
         public Task Enqueue<T>(T message, Guid correlationId) where T : IOutboxMessage
         {
-            var outbox = new Models.Outbox
-            {
-                CorrelationId = correlationId,
-                MessageType = message.GetType().AssemblyQualifiedName,
-                Status = OutboxMessageStatus.New,
-                Content = _serializer.Serialize(message)
-            };
+            var assemblyQualifiedName = message.GetType().AssemblyQualifiedName;
+            if (assemblyQualifiedName == null)
+                throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
 
+            var outbox = new Models.Outbox(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message));
             return _outboxDataProvider.Save(outbox);
         }
     }

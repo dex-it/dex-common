@@ -9,9 +9,7 @@ namespace Dex.Cap.Outbox
 
         public DefaultOutboxSerializer()
         {
-            _options = new JsonSerializerOptions()
-            {
-            };
+            _options = new JsonSerializerOptions();
         }
 
         public string Serialize<T>(T message)
@@ -19,12 +17,12 @@ namespace Dex.Cap.Outbox
             return JsonSerializer.Serialize(message, _options);
         }
 
-        public T Deserialize<T>(string message)
+        public T? Deserialize<T>(string message)
         {
             return JsonSerializer.Deserialize<T>(message, _options);
         }
 
-        public object Deserialize(Type type, string message)
+        public object? Deserialize(Type type, string message)
         {
             return JsonSerializer.Deserialize(message, type, _options);
         }
