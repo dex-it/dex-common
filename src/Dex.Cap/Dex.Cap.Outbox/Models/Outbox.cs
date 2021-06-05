@@ -13,27 +13,24 @@ namespace Dex.Cap.Outbox.Models
             CorrelationId = Guid.NewGuid();
         }
 
-        [Key]
-        public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
         public Guid CorrelationId { get; set; }
 
-        public string Name { get; set; }
+        [Required] public string MessageType { get; set; }
 
-        public string Content { get; set; }
+        [Required]public string Content { get; set; }
 
         public int Retries { get; set; }
 
         public DateTime Created { get; set; } = DateTime.UtcNow;
 
-        public OutboxMessageStatus Status { get; set; }
+        [Required]public OutboxMessageStatus Status { get; set; }
 
         public string ErrorMessage { get; set; }
 
         public string Error { get; set; }
 
         public DateTime? Updated { get; set; }
-
-        public OutboxMessageType OutboxMessageType { get; set; }
     }
 }

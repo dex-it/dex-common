@@ -2,7 +2,7 @@
 
 namespace Dex.Cap.Outbox
 {
-    public interface IOutboxProcessor
+    public interface IOutboxHandler
     {
         Task Process();
     }

@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dex.Cap.Ef.Tests.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20210604224057_Init")]
+    [Migration("20210605121257_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,12 +64,11 @@ namespace Dex.Cap.Ef.Tests.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<Guid>("CorrelationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("uuid_generate_v4()");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp without time zone");
@@ -80,11 +79,9 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("MessageType")
+                        .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("OutboxMessageType")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Retries")
                         .HasColumnType("integer");
@@ -98,8 +95,6 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Created");
-
-                    b.HasIndex("OutboxMessageType");
 
                     b.HasIndex("Retries");
 

@@ -15,17 +15,13 @@ namespace Dex.Cap.Outbox.Ef
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
             builder.Entity<Models.Outbox>()
-                .Property(o => o.CorrelationId)
-                .HasDefaultValueSql("uuid_generate_v4()");
+                .Property(o => o.CorrelationId);
 
             builder.Entity<Models.Outbox>()
                 .HasIndex(o => o.Created);
 
             builder.Entity<Models.Outbox>()
                 .HasIndex(o => o.Status);
-
-            builder.Entity<Models.Outbox>()
-                .HasIndex(o => o.OutboxMessageType);
 
             builder.Entity<Models.Outbox>()
                 .HasIndex(o => o.Retries);

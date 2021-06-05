@@ -3,9 +3,8 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.Outbox
 {
-    public interface IOutboxService<TDbContext>
+    public interface IOutboxService
     {
-        Task Publish<T>(T message, Guid correlationId);
-        Task Send<T>(T message, Guid correlationId);
+        Task Enqueue<T>(T message, Guid correlationId) where T : IOutboxMessage;
     }
 }

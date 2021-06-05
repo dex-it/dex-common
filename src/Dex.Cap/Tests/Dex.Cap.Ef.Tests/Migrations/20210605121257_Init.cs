@@ -24,16 +24,15 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "uuid_generate_v4()"),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    Content = table.Column<string>(type: "text", nullable: true),
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MessageType = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
                     Retries = table.Column<int>(type: "integer", nullable: false),
                     Created = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     ErrorMessage = table.Column<string>(type: "text", nullable: true),
                     Error = table.Column<string>(type: "text", nullable: true),
-                    Updated = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    OutboxMessageType = table.Column<int>(type: "integer", nullable: false)
+                    Updated = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -62,11 +61,6 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 name: "IX__outbox_Created",
                 table: "_outbox",
                 column: "Created");
-
-            migrationBuilder.CreateIndex(
-                name: "IX__outbox_OutboxMessageType",
-                table: "_outbox",
-                column: "OutboxMessageType");
 
             migrationBuilder.CreateIndex(
                 name: "IX__outbox_Retries",

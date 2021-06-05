@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
+      <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
+    </ItemGroup>
+
+</Project>
