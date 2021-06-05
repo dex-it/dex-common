@@ -7,7 +7,7 @@
     <ItemGroup>
       <Compile Remove="Outbox\Neo4j\**" />
       <Compile Update="OutboxHandler.cs">
-        <DependentUpon>IOutboxProcessor.cs</DependentUpon>
+        <DependentUpon>IOutboxHandler.cs</DependentUpon>
       </Compile>
       <Compile Update="OutboxService.cs">
         <DependentUpon>IOutboxService.cs</DependentUpon>

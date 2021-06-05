@@ -60,7 +60,7 @@ namespace Dex.Cap.Outbox
                     else
                     {
                         message.Retries = int.MaxValue;
-                        throw new InvalidOperationException("message are not of IOutboxMessage type");
+                        throw new InvalidOperationException("Message are not of IOutboxMessage type");
                     }
                 }
                 catch (Exception e)
