@@ -21,7 +21,7 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher
                 .Create($"(outbox:{nameof(Outbox)})")
@@ -52,7 +52,7 @@ namespace Dex.Cap.Outbox.Neo4j
             return outboxes.ToArray();
         }
 
-        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        protected override async Task SaveChanges(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
                 .WithParam("id", outboxEnvelope.Id)

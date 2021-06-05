@@ -21,6 +21,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await client.Enqueue(new TestOutboxCommand() {Args = "hello world"}, CancellationToken.None);
             await client.Enqueue(new TestOutboxCommand() {Args = "hello world2"}, CancellationToken.None);
 
+            await Save(sp);
+
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
@@ -38,6 +40,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var client = sp.GetRequiredService<IOutboxService>();
             await client.Enqueue(new TestErrorOutboxCommand {CountDown = 3}, CancellationToken.None);
+            await Save(sp);
 
             var count = 0;
             TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
@@ -64,6 +67,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var client = sp.GetRequiredService<IOutboxService>();
             await client.Enqueue(new TestOutboxCommand() {Args = "hello"}, CancellationToken.None);
             await client.Enqueue(new TestErrorOutboxCommand {CountDown = 1}, CancellationToken.None);
+            await Save(sp);
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
@@ -86,6 +90,12 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddLogging()
                 .AddScoped(_ => new TestDbContext(DbName))
                 .AddOutbox<TestDbContext>();
+        }
+
+        private static async Task Save(ServiceProvider sp)
+        {
+            var db = sp.GetRequiredService<TestDbContext>();
+            await db.SaveChangesAsync();
         }
     }
 }

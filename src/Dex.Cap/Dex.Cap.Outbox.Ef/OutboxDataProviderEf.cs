@@ -20,13 +20,11 @@ namespace Dex.Cap.Outbox.Ef
             _outboxOptions = outboxOptions.Value;
         }
 
-        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
 
-            var entityEntry = _dbContext.Set<OutboxEnvelope>().Add(outboxEnvelope);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-
+            var entityEntry = await _dbContext.Set<OutboxEnvelope>().AddAsync(outboxEnvelope, cancellationToken);
             return entityEntry.Entity;
         }
 
@@ -46,7 +44,7 @@ namespace Dex.Cap.Outbox.Ef
             return _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == correlationId, cancellationToken: cancellationToken);
         }
 
-        protected override async Task UpdateOutbox(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        protected override async Task SaveChanges(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             _dbContext.Set<OutboxEnvelope>().Update(outboxEnvelope);
             await _dbContext.SaveChangesAsync(cancellationToken);

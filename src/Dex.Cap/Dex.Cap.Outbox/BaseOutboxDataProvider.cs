@@ -7,7 +7,7 @@ namespace Dex.Cap.Outbox
 {
     public abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
-        public abstract Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
+        public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
         public abstract Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken);
         public abstract Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
         public virtual async Task Fail(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null)
@@ -20,7 +20,7 @@ namespace Dex.Cap.Outbox
             outboxEnvelope.ErrorMessage = errorMessage;
             outboxEnvelope.Error = exception?.ToString();
 
-            await UpdateOutbox(outboxEnvelope, cancellationToken);
+            await SaveChanges(outboxEnvelope, cancellationToken);
         }
         public virtual async Task Succeed(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
@@ -30,9 +30,9 @@ namespace Dex.Cap.Outbox
             outboxEnvelope.Updated = DateTime.UtcNow;
             outboxEnvelope.Retries++;
 
-            await UpdateOutbox(outboxEnvelope, cancellationToken);
+            await SaveChanges(outboxEnvelope, cancellationToken);
         }
 
-        protected abstract Task UpdateOutbox(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
+        protected abstract Task SaveChanges(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
     }
 }

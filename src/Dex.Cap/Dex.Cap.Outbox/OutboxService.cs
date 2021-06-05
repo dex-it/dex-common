@@ -23,7 +23,7 @@ namespace Dex.Cap.Outbox
                 throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
 
             var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message));
-            await _outboxDataProvider.Save(outbox, cancellationToken);
+            await _outboxDataProvider.Add(outbox, cancellationToken);
             return correlationId;
         }
 

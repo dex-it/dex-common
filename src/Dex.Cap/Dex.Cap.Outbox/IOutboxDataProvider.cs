@@ -7,7 +7,7 @@ namespace Dex.Cap.Outbox
 {
     public interface IOutboxDataProvider
     {
-        Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
+        Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
         Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken);
         Task Fail(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null);
         Task Succeed(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
