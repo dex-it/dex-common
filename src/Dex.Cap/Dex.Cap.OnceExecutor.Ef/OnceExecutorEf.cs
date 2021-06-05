@@ -5,13 +5,15 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public class OnceExecutorEntityFramework<TDbContext, TResult> : BaseOnceExecutor<TDbContext, TResult>, IOnceExecutorEntityFramework<TDbContext, TResult>
+    public class OnceExecutorEf<TDbContext, TResult> : BaseOnceExecutor<TDbContext, TResult>, IOnceExecutorEf<TDbContext, TResult>
         where TDbContext : DbContext
     {
+        private static readonly EmptyDisposable Empty = new();
         private IDbContextTransaction? _current;
+
         protected override TDbContext Context { get; }
 
-        public OnceExecutorEntityFramework(TDbContext context)
+        public OnceExecutorEf(TDbContext context)
         {
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
@@ -26,7 +28,7 @@ namespace Dex.Cap.OnceExecutor.Ef
         {
             if (Context.Database.CurrentTransaction == null)
                 return _current = Context.Database.BeginTransaction();
-            return new EmptyDisposable();
+            return Empty;
         }
 
         protected override Task CommitTransaction()

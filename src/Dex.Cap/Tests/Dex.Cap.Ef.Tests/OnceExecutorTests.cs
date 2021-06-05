@@ -37,7 +37,7 @@ namespace Dex.Cap.Ef.Tests
 
             await using (var testDbContext = new TestDbContext(DbName))
             {
-                var ex = new OnceExecutorEntityFramework<TestDbContext, User>(testDbContext);
+                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
 
                 var result = await ex.Execute(stepId,
                     context => context.Users.AddAsync(user).AsTask(),
@@ -49,7 +49,7 @@ namespace Dex.Cap.Ef.Tests
 
             await using (var testDbContext = new TestDbContext(DbName))
             {
-                var ex = new OnceExecutorEntityFramework<TestDbContext, User>(testDbContext);
+                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
 
                 var result = await ex.Execute(stepId,
                     context => context.Users.AddAsync(user).AsTask(),
@@ -69,7 +69,7 @@ namespace Dex.Cap.Ef.Tests
             await using (var testDbContext = new TestDbContext(DbName))
             await using (var t = await testDbContext.Database.BeginTransactionAsync()) // ambient transaction
             {
-                var ex = new OnceExecutorEntityFramework<TestDbContext, User>(testDbContext);
+                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
 
                 var result = await ex.Execute(stepId,
                     context => context.Users.AddAsync(user).AsTask(),
@@ -95,7 +95,7 @@ namespace Dex.Cap.Ef.Tests
 
             await using (var testDbContext = new TestDbContext(DbName))
             {
-                var ex = new OnceExecutorEntityFramework<TestDbContext, User>(testDbContext);
+                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
 
                 // transaction 1
                 var result = await ex.Execute(stepId,

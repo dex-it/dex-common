@@ -10,7 +10,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="OnceExecutorEntityFramework.cs">
+      <Compile Update="OnceExecutorEf.cs">
         <DependentUpon>IOnceExecutorEntityFramework.cs</DependentUpon>
       </Compile>
     </ItemGroup>

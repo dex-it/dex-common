@@ -5,12 +5,12 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
-    public class Neo4JOnceExecutor<TResult> : BaseOnceExecutor<ITransactionalGraphClient, TResult>, INeo4jOnceExecutor<TResult>
+    public class OnceExecutorNeo4J<TResult> : BaseOnceExecutor<ITransactionalGraphClient, TResult>, IOnceExecutorNeo4j<TResult>
     {
         private ITransaction _transaction;
         protected override ITransactionalGraphClient Context { get; }
 
-        public Neo4JOnceExecutor(ITransactionalGraphClient graphClient)
+        public OnceExecutorNeo4J(ITransactionalGraphClient graphClient)
         {
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }

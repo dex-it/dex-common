@@ -8,12 +8,12 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Cap.Outbox.Neo4j
 {
-    public class Neo4jOutboxDataProvider : BaseOutboxDataProvider
+    public class OutboxDataProviderNeo4j : BaseOutboxDataProvider
     {
         private readonly ITransactionalGraphClient _graphClient;
         private readonly OutboxOptions _outboxOptions;
 
-        public Neo4jOutboxDataProvider(ITransactionalGraphClient graphClient, IOptions<OutboxOptions> outboxOptions)
+        public OutboxDataProviderNeo4j(ITransactionalGraphClient graphClient, IOptions<OutboxOptions> outboxOptions)
         {
             _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
