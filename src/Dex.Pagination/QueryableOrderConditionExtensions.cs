@@ -1,29 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Dex.Pagination.Data;
+using Dex.Pagination.Conditions;
 
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace Dex.Pagination
 {
-    public static class OrderByExtensions
+    public static class QueryableOrderConditionExtensions
     {
         /// <summary>
         /// Sorting for IQueryable
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
-        /// <param name="sortParam">interface with properties FieldName and IsDescending</param>
+        /// <param name="orderCondition">interface with properties FieldName and IsDescending</param>
         /// <returns></returns>
-        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, ISortParam sortParam)
+        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, IOrderCondition orderCondition)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (sortParam == null)
-                throw new ArgumentNullException(nameof(sortParam));
+            if (orderCondition == null)
+                throw new ArgumentNullException(nameof(orderCondition));
 
-            return source.OrderByParams(new[] {sortParam});
+            return source.OrderByParams(new[] {orderCondition});
         }
 
         /// <summary>
@@ -31,22 +32,25 @@ namespace Dex.Pagination
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source">source query</param>
-        /// <param name="sortParams">array interface with properties FieldName and IsDescending</param>
+        /// <param name="conditions">array interface with properties FieldName and IsDescending</param>
         /// <returns></returns>
-        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, ISortParam[] sortParams)
+        public static IQueryable<T> OrderByParams<T>(this IQueryable<T> source, IEnumerable<IOrderCondition> conditions)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            if (sortParams == null || !sortParams.Any())
-                throw new ArgumentNullException(nameof(sortParams));
+            if (conditions == null)
+                throw new ArgumentNullException(nameof(conditions));
 
-            var selector = BuildSelector<T>(sortParams[0].FieldName);
-            var result = sortParams[0].IsDesc ? source.OrderByDescending(selector) : source.OrderBy(selector);
+            var orderConditions = conditions.ToArray();
+            if (!orderConditions.Any()) return source;
 
-            for (var i = 1; i < sortParams.Length; i++)
+            var selector = BuildSelector<T>(orderConditions[0].FieldName);
+            var result = orderConditions[0].IsDesc ? source.OrderByDescending(selector) : source.OrderBy(selector);
+
+            for (var i = 1; i < orderConditions.Length; i++)
             {
-                selector = BuildSelector<T>(sortParams[i].FieldName);
-                result = sortParams[i].IsDesc ? result.ThenByDescending(selector) : result.ThenBy(selector);
+                selector = BuildSelector<T>(orderConditions[i].FieldName);
+                result = orderConditions[i].IsDesc ? result.ThenByDescending(selector) : result.ThenBy(selector);
             }
 
             return result;

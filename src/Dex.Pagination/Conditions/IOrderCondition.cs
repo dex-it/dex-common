@@ -1,6 +1,6 @@
-﻿namespace Dex.Pagination.Data
+﻿namespace Dex.Pagination.Conditions
 {
-    public interface ISortParam
+    public interface IOrderCondition
     {
         string FieldName { get; }
         bool IsDesc { get; }
