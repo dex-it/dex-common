@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
@@ -20,7 +21,7 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope)
+        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher
                 .Create($"(outbox:{nameof(Outbox)})")

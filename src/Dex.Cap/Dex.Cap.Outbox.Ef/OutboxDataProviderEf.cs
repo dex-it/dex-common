@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
@@ -19,7 +20,7 @@ namespace Dex.Cap.Outbox.Ef
             _outboxOptions = outboxOptions.Value;
         }
 
-        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope)
+        public override async Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
 

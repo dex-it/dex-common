@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox;
 
@@ -10,7 +11,7 @@ namespace Dex.Outbox.Command.Test
         public static event EventHandler OnProcess;
         private static int _count;
 
-        public Task ProcessMessage(TestErrorOutboxCommand message)
+        public Task ProcessMessage(TestErrorOutboxCommand message, CancellationToken cancellationToken)
         {
             _count++;
 
@@ -24,9 +25,9 @@ namespace Dex.Outbox.Command.Test
             return Task.CompletedTask;
         }
 
-        public Task ProcessMessage(IOutboxMessage outbox)
+        public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
         {
-            return ProcessMessage((TestErrorOutboxCommand) outbox);
+            return ProcessMessage((TestErrorOutboxCommand) outbox, cancellationToken);
         }
     }
 }

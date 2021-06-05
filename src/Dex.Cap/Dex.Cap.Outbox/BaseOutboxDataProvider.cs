@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Models;
 
@@ -6,7 +7,7 @@ namespace Dex.Cap.Outbox
 {
     public abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
-        public abstract Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope);
+        public abstract Task<OutboxEnvelope> Save(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
 
         public abstract Task<OutboxEnvelope[]> GetWaitingMessages();
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +21,7 @@ namespace Dex.Cap.Outbox
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task Process()
+        public async Task Process(CancellationToken cancellationToken)
         {
             _logger.LogDebug("Outbox processor has been started");
 
@@ -47,7 +48,7 @@ namespace Dex.Cap.Outbox
                         var handler = _handlerFactory.GetMessageHandler(outboxMessage);
                         try
                         {
-                            await handler.ProcessMessage(outboxMessage);
+                            await handler.ProcessMessage(outboxMessage, cancellationToken);
                         }
                         finally
                         {

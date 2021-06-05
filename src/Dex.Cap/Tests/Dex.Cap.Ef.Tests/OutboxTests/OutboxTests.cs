@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef;
@@ -18,13 +18,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestOutboxCommand() {Args = "hello world"}, Guid.NewGuid());
-            await client.Enqueue(new TestOutboxCommand() {Args = "hello world2"}, Guid.NewGuid());
+            await client.Enqueue(new TestOutboxCommand() {Args = "hello world"}, CancellationToken.None);
+            await client.Enqueue(new TestOutboxCommand() {Args = "hello world2"}, CancellationToken.None);
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            await handler.Process();
+            await handler.Process(CancellationToken.None);
 
             Assert.AreEqual(2, count);
         }
@@ -37,7 +37,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 3}, Guid.NewGuid());
+            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 3}, CancellationToken.None);
 
             var count = 0;
             TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
@@ -46,7 +46,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var repeat = 5;
             while (repeat-- > 0)
             {
-                await handler.Process();
+                await handler.Process(CancellationToken.None);
                 await Task.Delay(50);
             }
 
@@ -62,8 +62,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestOutboxCommand() {Args = "hello"}, Guid.NewGuid());
-            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 1}, Guid.NewGuid());
+            await client.Enqueue(new TestOutboxCommand() {Args = "hello"}, CancellationToken.None);
+            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 1}, CancellationToken.None);
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
@@ -73,7 +73,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var repeat = 5;
             while (repeat-- > 0)
             {
-                await handler.Process();
+                await handler.Process(CancellationToken.None);
                 await Task.Delay(50);
             }
 
