@@ -11,15 +11,12 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
     public class OutboxTests : BaseTest
     {
         [Test]
-        public async Task Test()
+        public async Task SimpleRunTest()
         {
             var sp = new ServiceCollection()
                 .AddScoped(_ => new TestDbContext(DbName))
-                .AddScoped<IOutboxService, OutboxService<TestDbContext>>()
-                .AddScoped<IOutboxHandler, OutboxHandler<TestDbContext>>()
-                .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
-                .AddScoped<IOutboxDataProvider<TestDbContext>, EfOutboxDataProvider<TestDbContext>>()
-                .AddScoped<IOutboxMessageHandlerFactory, OutboxMessageHandlerFactory>()
+                .AddOutbox<TestDbContext>()
+                // handlers
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .AddLogging()
                 .BuildServiceProvider();
