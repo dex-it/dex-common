@@ -10,11 +10,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
       <ProjectReference Include="..\Dex.Specifications\Dex.Specifications.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Dex.Extensions" Version="1.0.11" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.5" />
     </ItemGroup>
 

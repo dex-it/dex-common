@@ -1,7 +1,6 @@
 using System.Linq;
 using Dex.Pagination.Conditions;
 using Dex.TestDomain;
-using Dex.TestHelper;
 using NUnit.Framework;
 
 namespace Dex.Pagination.Test

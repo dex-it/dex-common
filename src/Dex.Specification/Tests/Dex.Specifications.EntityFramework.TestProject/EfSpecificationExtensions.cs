@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using Dex.Specifications;
-using Dex.Specifications.EntityFramework;
 
-namespace Dex.TestHelper
+namespace Dex.Specifications.EntityFramework.TestProject
 {
     public static class EfSpecificationExtensions
     {

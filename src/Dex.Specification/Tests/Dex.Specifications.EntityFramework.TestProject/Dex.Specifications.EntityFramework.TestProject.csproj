@@ -15,10 +15,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\Tests\Dex.TestDomain\Dex.TestDomain.csproj" />
       <ProjectReference Include="..\..\Dex.Specifications.EntityFramework\Dex.Specifications.EntityFramework.csproj" />
       <ProjectReference Include="..\..\Dex.Specifications.Extensions\Dex.Specifications.Extensions.csproj" />
-      <ProjectReference Include="..\Dex.TestDomain\Dex.TestDomain.csproj" />
-      <ProjectReference Include="..\Dex.TestHelper\Dex.TestHelper.csproj" />
     </ItemGroup>
 
 </Project>
