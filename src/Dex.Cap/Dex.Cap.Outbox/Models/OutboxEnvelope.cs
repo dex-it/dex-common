@@ -7,9 +7,9 @@ namespace Dex.Cap.Outbox.Models
     [Table("outbox", Schema = "cap")]
     public class OutboxEnvelope
     {
-        public OutboxEnvelope(Guid correlationId, string messageType, OutboxMessageStatus status, string content)
+        public OutboxEnvelope(Guid id, string messageType, OutboxMessageStatus status, string content)
         {
-            Id = correlationId;
+            Id = id;
             MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
             Status = status;
             Content = content ?? throw new ArgumentNullException(nameof(content));

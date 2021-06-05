@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dex.Cap.Ef.Tests.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20210605145859_Init")]
+    [Migration("20210605184431_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,7 +57,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.ToTable("last_transaction", "cap");
                 });
 
-            modelBuilder.Entity("Dex.Cap.Outbox.Models.Outbox", b =>
+            modelBuilder.Entity("Dex.Cap.Outbox.Models.OutboxEnvelope", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -66,9 +66,6 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<Guid>("CorrelationId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp without time zone");

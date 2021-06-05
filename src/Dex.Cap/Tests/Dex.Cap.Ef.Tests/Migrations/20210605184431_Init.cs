@@ -29,7 +29,6 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: false),
                     MessageType = table.Column<string>(type: "text", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
                     Retries = table.Column<int>(type: "integer", nullable: false),

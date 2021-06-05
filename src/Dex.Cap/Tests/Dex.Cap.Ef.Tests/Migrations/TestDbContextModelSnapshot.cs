@@ -55,7 +55,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.ToTable("last_transaction", "cap");
                 });
 
-            modelBuilder.Entity("Dex.Cap.Outbox.Models.Outbox", b =>
+            modelBuilder.Entity("Dex.Cap.Outbox.Models.OutboxEnvelope", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -64,9 +64,6 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<Guid>("CorrelationId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp without time zone");
