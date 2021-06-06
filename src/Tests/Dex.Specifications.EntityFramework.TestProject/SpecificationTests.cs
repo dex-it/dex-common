@@ -188,7 +188,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var sp = Sp<Company>
                 .Not(s => s.AndEqual(c => c.Id, companyId));
 
-            Expression<Func<Company, bool>> query = c => c.Id != companyId;
+            Expression<Func<Company, bool>> query = c => !(c.Id == companyId);
 
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
@@ -203,7 +203,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
 
             var sp = new NotSpecification<Company>(new EfEqualSpecification<Company, Guid>(c => c.Id, companyId));
 
-            Expression<Func<Company, bool>> query = c => c.Id != companyId;
+            Expression<Func<Company, bool>> query = c => !(c.Id == companyId);
 
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
@@ -221,7 +221,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
                 .Equal(s => s.Id, companyId)
                 .Or(s => s.Not(s2 => s2.AndEqual(c => c.CountryId, countryId)));
 
-            Expression<Func<Company, bool>> query = c => c.Id == companyId || c.CountryId != countryId;
+            Expression<Func<Company, bool>> query = c => c.Id == companyId || !(c.CountryId == countryId);
 
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
@@ -239,7 +239,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
                 .Equal(s => s.Id, companyId)
                 .And(s => s.Not(s2 => s2.AndEqual(c => c.CountryId, countryId)));
 
-            Expression<Func<Company, bool>> query = c => c.Id == companyId && c.CountryId != countryId;
+            Expression<Func<Company, bool>> query = c => c.Id == companyId && !(c.CountryId == countryId);
 
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);

@@ -9,7 +9,7 @@ namespace Dex.Specifications.Extensions
             if (current == null) throw new ArgumentNullException(nameof(current));
             if (func == null) throw new ArgumentNullException(nameof(func));
 
-            return current & func(new Specification<T>(t => true));
+            return current & func(new Specification<T>());
         }
 
         public static Specification<T> And<T>(this Specification<T> current, Specification<T> specification)
@@ -26,7 +26,7 @@ namespace Dex.Specifications.Extensions
             if (current == null) throw new ArgumentNullException(nameof(current));
             if (func == null) throw new ArgumentNullException(nameof(func));
 
-            return current | func(new Specification<T>(t => true));
+            return current | func(new Specification<T>());
         }
 
         public static Specification<T> Or<T>(this Specification<T> current, Specification<T> specification)
@@ -43,7 +43,7 @@ namespace Dex.Specifications.Extensions
             if (current == null) throw new ArgumentNullException(nameof(current));
             if (func == null) throw new ArgumentNullException(nameof(func));
 
-            return current & new NotSpecification<T>(func(new Specification<T>(t => true)));
+            return current & new NotSpecification<T>(func(new Specification<T>()));
         }
 
         public static Specification<T> Not<T>(this Specification<T> current, Specification<T> specification)

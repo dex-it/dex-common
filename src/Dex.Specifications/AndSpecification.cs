@@ -36,7 +36,17 @@ namespace Dex.Specifications
             get
             {
                 Expression<Func<T, bool>> result = Specifications.First();
-                return Specifications.Skip(1).Aggregate(result, (current, specification) => current.And(specification));
+                return Specifications.Skip(1).Aggregate(result, (current, specification) =>
+                {
+                    if (current == null)
+                    {
+                        return result == null ? specification : result.And(specification);
+                    }
+                    else
+                    {
+                        return current.And(specification);    
+                    }
+                });
             }
         }
     }

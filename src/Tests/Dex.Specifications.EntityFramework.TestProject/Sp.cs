@@ -34,7 +34,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
         {
             if (func == null) throw new ArgumentNullException(nameof(func));
 
-            return new NotSpecification<T>(func(new Specification<T>(t => true)));
+            return new NotSpecification<T>(func(new Specification<T>()));
         }
     }
 }

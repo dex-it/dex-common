@@ -11,7 +11,7 @@ namespace Dex.Specifications
     /// <typeparam name="T">Тип объекта, для которого применяется спецификация</typeparam>
     public class Specification<T>
     {
-        protected Specification()
+        public Specification()
         {
         }
 
