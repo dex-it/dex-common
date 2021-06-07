@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef;
@@ -92,7 +93,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddOutbox<TestDbContext>();
         }
 
-        private static async Task Save(ServiceProvider sp)
+        private static async Task Save(IServiceProvider sp)
         {
             var db = sp.GetRequiredService<TestDbContext>();
             await db.SaveChangesAsync();

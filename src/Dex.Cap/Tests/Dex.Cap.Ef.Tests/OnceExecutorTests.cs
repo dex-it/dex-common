@@ -44,6 +44,7 @@ namespace Dex.Cap.Ef.Tests
                     context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest")
                 );
 
+                Assert.IsNotNull(result);
                 Assert.AreEqual(user.Id, result.Id);
             }
 
@@ -56,6 +57,7 @@ namespace Dex.Cap.Ef.Tests
                     context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest")
                 );
 
+                Assert.IsNotNull(result);
                 Assert.AreEqual(user.Id, result.Id);
             }
         }
@@ -76,6 +78,7 @@ namespace Dex.Cap.Ef.Tests
                     context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteIntoAmbientTransactionTest")
                 );
 
+                Assert.IsNotNull(result);
                 Assert.AreEqual(user.Id, result.Id);
 
                 await testDbContext.Users.AddAsync(new User() {Name = "OnceExecuteIntoAmbientTransactionTest-2"});
@@ -103,6 +106,7 @@ namespace Dex.Cap.Ef.Tests
                     context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest")
                 );
 
+                Assert.IsNotNull(result);
                 Assert.AreEqual(user.Id, result.Id);
 
                 await testDbContext.Users.AddAsync(new User() {Name = "OnceExecuteBeginTransactionTest-2"});
