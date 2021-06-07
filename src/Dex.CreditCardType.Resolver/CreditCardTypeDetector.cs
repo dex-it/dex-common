@@ -10,6 +10,7 @@ namespace Dex.CreditCardType.Resolver
     {
         public static CardType FindType(string cardNumber)
         {
+            // https://ccardgen.com описание типов карт 
             //https://www.regular-expressions.info/creditcard.html
             //https://stackoverflow.com/questions/9315647/regex-credit-card-number-tests
             if (Regex.Match(cardNumber, @"^4[0-9]{12}(?:[0-9]{3})?$").Success)
@@ -47,7 +48,7 @@ namespace Dex.CreditCardType.Resolver
                 return CardType.DinersClub;
             }
 
-            if (Regex.Match(cardNumber, @"^(5018|5020|5038|6304|6390|6759|6761|6763|6799)[0-9]{8,15}$").Success)
+            if (Regex.Match(cardNumber, @"^(50|56|57|58|60|61|62|63|64|65|66|67|68|69)[0-9]{10,17}$").Success)
             {
                 return CardType.Maestro;
             }
