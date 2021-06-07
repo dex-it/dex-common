@@ -1,11 +1,9 @@
 using System;
-using Dex.Ef.Attributes;
 
-namespace Dex.Ef.Contracts.Entities
+namespace Dex.DataProvider.Contracts.Entities
 {
     public interface IDeletable
     {
-        [Index]
         DateTime? DeletedUtc { get; set; }
     }
 }

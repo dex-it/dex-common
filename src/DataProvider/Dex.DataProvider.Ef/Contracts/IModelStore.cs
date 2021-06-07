@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Dex.Ef.Contracts
+namespace Dex.DataProvider.Ef.Contracts
 {
     public interface IModelStore
     {

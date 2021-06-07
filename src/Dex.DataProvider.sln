@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.DataProvider", "DataProvider\Dex.DataProvider\Dex.DataProvider.csproj", "{9EEEFBC8-35A5-419A-9245-BE6A65E19235}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.DataProvider.Ef", "DataProvider\Dex.DataProvider.Ef\Dex.DataProvider.Ef.csproj", "{BA1C84B7-580F-454D-AE48-6F306D1ABFE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.DataProvider.Postgres", "DataProvider\Dex.DataProvider.Postgres\Dex.DataProvider.Postgres.csproj", "{DC79DF0B-F4DA-4721-AE88-4AF85EC34D10}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.DataProvider.Tests", "DataProvider\Dex.DataProvider.Tests\Dex.DataProvider.Tests.csproj", "{15BE45DA-EADD-427D-B64E-66F3112BE443}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9EEEFBC8-35A5-419A-9245-BE6A65E19235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EEEFBC8-35A5-419A-9245-BE6A65E19235}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EEEFBC8-35A5-419A-9245-BE6A65E19235}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EEEFBC8-35A5-419A-9245-BE6A65E19235}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA1C84B7-580F-454D-AE48-6F306D1ABFE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA1C84B7-580F-454D-AE48-6F306D1ABFE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA1C84B7-580F-454D-AE48-6F306D1ABFE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA1C84B7-580F-454D-AE48-6F306D1ABFE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC79DF0B-F4DA-4721-AE88-4AF85EC34D10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC79DF0B-F4DA-4721-AE88-4AF85EC34D10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC79DF0B-F4DA-4721-AE88-4AF85EC34D10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC79DF0B-F4DA-4721-AE88-4AF85EC34D10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15BE45DA-EADD-427D-B64E-66F3112BE443}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15BE45DA-EADD-427D-B64E-66F3112BE443}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15BE45DA-EADD-427D-B64E-66F3112BE443}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15BE45DA-EADD-427D-B64E-66F3112BE443}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal
