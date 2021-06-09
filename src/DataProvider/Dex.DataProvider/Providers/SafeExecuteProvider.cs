@@ -64,7 +64,7 @@ namespace Dex.DataProvider.Providers
                 }
                 catch (Exception exception)
                 {
-                    Reset(provider);
+                    provider.Reset();
 
                     if (_dataExceptionManager.IsRepeatableException(exception) && ++count >= retryCount)
                     {
@@ -78,25 +78,36 @@ namespace Dex.DataProvider.Providers
             return result;
         }
 
-        private static void Reset(IDataProvider provider)
-        {
-            provider.Reset();
-        }
-
         [StructLayout(LayoutKind.Auto)]
         private readonly struct VoidStruct
         {
         }
+        
+        private static readonly Task<VoidStruct> VoidStructTask = Task.FromResult<VoidStruct>(default);
 
-        private static async Task<VoidStruct> WrapperTask(
+        private static Task<VoidStruct> WrapperTask(
             IDataProvider dp,
             Func<IDataProvider, CancellationToken, Task> f,
             CancellationToken t)
         {
-            await f(dp, t).ConfigureAwait(false);
-            return default;
+            var task = f(dp, t);
+            
+            if (task.IsCompletedSuccessfully)
+            {
+                return VoidStructTask;
+            }
+            else
+            {
+                return WaitAsync(task);
+            }
+            
+            static async Task<VoidStruct> WaitAsync(Task task)
+            {
+                await task.ConfigureAwait(false);
+                return default;
+            }
         }
-
+        
         private static Task<T> WrapperTaskT<T>(
             IDataProvider dp,
             Func<IDataProvider, CancellationToken, Task<T>> f,
