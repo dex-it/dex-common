@@ -48,5 +48,11 @@ namespace Dex.DataProvider.Ef.Provider
         {
             return DbContext.Set<T>().AsQueryable().Where(predicate).AsNoTracking();
         }
+        
+        
+        void IRoDataProvider.Reset()
+        {
+            DbContext.ChangeTracker.Clear();
+        }
     }
 }

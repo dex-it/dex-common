@@ -169,20 +169,15 @@ namespace Dex.DataProvider.Ef.Provider
                 (ids, cancellationToken));
         }
 
-        void IDataProvider.Reset()
-        {
-            DbContext.ChangeTracker.Clear();
-        }
-
-        private Task<T> ExecuteCommand<T, TState>(Func<DbContext, TState, Task<T>> func, TState state)
+        private async Task<T> ExecuteCommand<T, TState>(Func<DbContext, TState, Task<T>> func, TState state)
         {
             try
             {
-                return func(DbContext, state);
+                return await func(DbContext, state).ConfigureAwait(false);
             }
             catch (Exception exception)
             {
-                return Task.FromException<T>(_exceptionManager.Normalize(exception));
+                throw _exceptionManager.Normalize(exception);
             }
         }
     }

@@ -83,29 +83,13 @@ namespace Dex.DataProvider.Providers
         {
         }
         
-        private static readonly Task<VoidStruct> VoidStructTask = Task.FromResult<VoidStruct>(default);
-
-        private static Task<VoidStruct> WrapperTask(
+        private static async Task<VoidStruct> WrapperTask(
             IDataProvider dp,
             Func<IDataProvider, CancellationToken, Task> f,
             CancellationToken t)
         {
-            var task = f(dp, t);
-            
-            if (task.IsCompletedSuccessfully)
-            {
-                return VoidStructTask;
-            }
-            else
-            {
-                return WaitAsync(task);
-            }
-            
-            static async Task<VoidStruct> WaitAsync(Task task)
-            {
-                await task.ConfigureAwait(false);
-                return default;
-            }
+            await f(dp, t).ConfigureAwait(false);
+            return default;
         }
         
         private static Task<T> WrapperTaskT<T>(

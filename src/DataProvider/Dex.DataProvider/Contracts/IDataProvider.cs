@@ -41,7 +41,5 @@ namespace Dex.DataProvider.Contracts
         Task BatchSetDelete<T, TKey>(IEnumerable<TKey> ids, CancellationToken cancellationToken = default) 
             where T : class, IDeletable, IEntity<TKey> 
             where TKey : IComparable;
-        
-        internal void Reset();
     }
 }

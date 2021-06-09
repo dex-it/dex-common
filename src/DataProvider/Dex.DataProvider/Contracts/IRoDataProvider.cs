@@ -15,5 +15,7 @@ namespace Dex.DataProvider.Contracts
         
         IQueryable<T> Get<T>(Expression<Func<T, bool>> predicate) 
             where T : class;
+        
+        internal void Reset();
     }
 }
