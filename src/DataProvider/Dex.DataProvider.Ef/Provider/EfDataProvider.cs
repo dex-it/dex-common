@@ -173,7 +173,7 @@ namespace Dex.DataProvider.Ef.Provider
         {
             try
             {
-                return await func(DbContext, state).ConfigureAwait(false);
+                return await func(DbContext, state);//.ConfigureAwait(false);
             }
             catch (Exception exception)
             {

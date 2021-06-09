@@ -66,7 +66,7 @@ namespace Dex.DataProvider.Tests
         [TestCase(typeof(ConcurrentModifyException), true)]
         public void IsRepeatActionTest(Type exceptionType, bool result)
         {
-            var exception = (Exception) Activator.CreateInstance(exceptionType);
+            var exception = (Exception) Activator.CreateInstance(exceptionType)!;
 
             var isRepeatAction = _postgresDataExceptionManager.IsRepeatableException(exception!);
 
