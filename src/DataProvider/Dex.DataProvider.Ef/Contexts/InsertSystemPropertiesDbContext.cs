@@ -1,7 +1,5 @@
 using System;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Dex.DataProvider.Contracts.Entities;
 using Dex.DataProvider.Ef.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -13,40 +11,21 @@ namespace Dex.DataProvider.Ef.Contexts
         protected InsertSystemPropertiesDbContext(IModelStore modelStore)
             : base(modelStore)
         {
+            Init();
         }
 
         protected InsertSystemPropertiesDbContext(IModelStore modelStore, DbContextOptions options)
             : base(modelStore, options)
         {
+            Init();
         }
 
-        public override int SaveChanges()
+        private void Init()
         {
-            InsertSystemProperties();
-            return base.SaveChanges();
+            SavingChanges += OnSavingChanges;
         }
-
-        public override int SaveChanges(bool acceptAllChangesOnSuccess)
-        {
-            InsertSystemProperties();
-            return base.SaveChanges(acceptAllChangesOnSuccess);
-        }
-
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            InsertSystemProperties();
-            return base.SaveChangesAsync(cancellationToken);
-        }
-
-        public override Task<int> SaveChangesAsync(
-            bool acceptAllChangesOnSuccess,
-            CancellationToken cancellationToken = default)
-        {
-            InsertSystemProperties();
-            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        }
-
-        protected virtual void InsertSystemProperties()
+        
+        protected virtual void OnSavingChanges(object sender, SavingChangesEventArgs e)
         {
             var now = DateTime.UtcNow;
             var entries = ChangeTracker.Entries()
