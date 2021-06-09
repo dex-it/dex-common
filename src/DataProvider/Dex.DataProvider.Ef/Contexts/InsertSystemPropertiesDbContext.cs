@@ -46,9 +46,9 @@ namespace Dex.DataProvider.Ef.Contexts
             return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
 
-        private void InsertSystemProperties()
+        protected virtual void InsertSystemProperties()
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var entries = ChangeTracker.Entries()
                 .Where(static e => e.State is EntityState.Modified or EntityState.Added);
 

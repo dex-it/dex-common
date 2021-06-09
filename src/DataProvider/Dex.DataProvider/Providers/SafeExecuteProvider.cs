@@ -66,7 +66,7 @@ namespace Dex.DataProvider.Providers
                 {
                     Reset(provider);
 
-                    if (_dataExceptionManager.IsRepeatAction(exception) && ++count >= retryCount)
+                    if (_dataExceptionManager.IsRepeatableException(exception) && ++count >= retryCount)
                     {
                         throw;
                     }
@@ -93,7 +93,7 @@ namespace Dex.DataProvider.Providers
             Func<IDataProvider, CancellationToken, Task> f,
             CancellationToken t)
         {
-            await f(dp, t);
+            await f(dp, t).ConfigureAwait(false);
             return default;
         }
 

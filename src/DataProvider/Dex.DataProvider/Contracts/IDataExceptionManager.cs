@@ -1,11 +1,12 @@
 using System;
+using Dex.DataProvider.Exceptions;
 
 namespace Dex.DataProvider.Contracts
 {
     public interface IDataExceptionManager
     {
-        Exception Normalize(Exception exception);
+        DataProviderException Normalize(Exception exception);
         
-        bool IsRepeatAction(Exception exception);
+        bool IsRepeatableException(Exception exception);
     }
 }

@@ -55,7 +55,7 @@ namespace Dex.DataProvider.Tests
         [Test]
         public void IsRepeatArgumentNullExceptionTest()
         {
-            Assert.Throws<ArgumentNullException>(() => _postgresDataExceptionManager.IsRepeatAction(null!));
+            Assert.Throws<ArgumentNullException>(() => _postgresDataExceptionManager.IsRepeatableException(null!));
         }
 
         [TestCase(typeof(Exception), false)]
@@ -67,16 +67,10 @@ namespace Dex.DataProvider.Tests
         public void IsRepeatActionTest(Type exceptionType, bool result)
         {
             var exception = (Exception) Activator.CreateInstance(exceptionType);
-            if (exception != null)
-            {
-                var isRepeatAction = _postgresDataExceptionManager.IsRepeatAction(exception);
 
-                isRepeatAction.Should().Be(result);
-            }
-            else
-            {
-                Assert.Fail();
-            }
+            var isRepeatAction = _postgresDataExceptionManager.IsRepeatableException(exception!);
+
+            isRepeatAction.Should().Be(result);
         }
 
         [TestCase(PostgresErrorCodes.ForeignKeyViolation, false)]
@@ -87,7 +81,7 @@ namespace Dex.DataProvider.Tests
             var postgresException = CreatePostgresException(sqlState);
             var exception = new Exception(postgresException.Message, postgresException);
 
-            var isRepeatAction = _postgresDataExceptionManager.IsRepeatAction(exception);
+            var isRepeatAction = _postgresDataExceptionManager.IsRepeatableException(exception);
 
             isRepeatAction.Should().Be(result);
         }

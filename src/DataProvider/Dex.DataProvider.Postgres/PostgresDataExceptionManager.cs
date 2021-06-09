@@ -5,36 +5,45 @@ using Npgsql;
 
 namespace Dex.DataProvider.Postgres
 {
-    public sealed class PostgresDataExceptionManager : IDataExceptionManager
+    public class PostgresDataExceptionManager : IDataExceptionManager
     {
-        public Exception Normalize(Exception exception)
+        public DataProviderException Normalize(Exception exception)
         {
             if (exception == null) throw new ArgumentNullException(nameof(exception));
 
             if (exception.InnerException is PostgresException postgresException)
             {
-                var message = postgresException.Message + postgresException.Detail;
-
-                switch (postgresException.SqlState)
+                var dataProviderException = NormalizePostgresException(postgresException, exception);
+                if (dataProviderException is not null)
                 {
-                    case PostgresErrorCodes.ForeignKeyViolation:
-                        return new ForeignKeyViolationException(message, exception);
-                    case PostgresErrorCodes.UniqueViolation:
-                        return new ObjectAlreadyExistsException(message, exception);
-                    case PostgresErrorCodes.SerializationFailure:
-                        return new ConcurrentModifyException(message, exception);
+                    return dataProviderException;
                 }
             }
 
             return new DataProviderException(exception.Message, exception);
         }
 
-        public bool IsRepeatAction(Exception exception)
+        public virtual bool IsRepeatableException(Exception exception)
         {
             if (exception == null) throw new ArgumentNullException(nameof(exception));
 
             return exception is ConcurrentModifyException
                    || exception.InnerException is PostgresException {SqlState: PostgresErrorCodes.SerializationFailure};
+        }
+
+        protected virtual DataProviderException? NormalizePostgresException(
+            PostgresException postgresException,
+            Exception innerException)
+        {
+            var message = postgresException.Message + postgresException.Detail;
+
+            return postgresException.SqlState switch
+            {
+                PostgresErrorCodes.ForeignKeyViolation => new ForeignKeyViolationException(message, innerException),
+                PostgresErrorCodes.UniqueViolation => new ObjectAlreadyExistsException(message, innerException),
+                PostgresErrorCodes.SerializationFailure => new ConcurrentModifyException(message, innerException),
+                _ => null
+            };
         }
     }
 }
