@@ -1,15 +1,11 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Transactions;
 
 namespace Dex.DataProvider.Contracts
 {
-    public interface IRoDataProvider
+    public interface IRoDataProvider : IDataTransactionProvider
     {
-        TransactionScope Transaction();
-        TransactionScope Transaction(IsolationLevel isolationLevel);
-
         IQueryable<T> Get<T>() 
             where T : class;
         

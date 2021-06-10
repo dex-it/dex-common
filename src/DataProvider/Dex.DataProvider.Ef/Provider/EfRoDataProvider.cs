@@ -1,40 +1,19 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Transactions;
 using Dex.DataProvider.Contracts;
+using Dex.DataProvider.Providers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.DataProvider.Ef.Provider
 {
-    public class EfRoDataProvider : IRoDataProvider
+    public class EfRoDataProvider : DataTransactionScopeProvider, IRoDataProvider
     {
         protected DbContext DbContext { get; }
 
         public EfRoDataProvider(DbContext connection)
         {
             DbContext = connection ?? throw new ArgumentNullException(nameof(connection));
-        }
-
-        public TransactionScope Transaction()
-        {
-            return Transaction(IsolationLevel.ReadCommitted);
-        }
-
-        public TransactionScope Transaction(IsolationLevel isolationLevel)
-        {
-            var ambientLevel = System.Transactions.Transaction.Current?.IsolationLevel;
-            var txOptions = new TransactionOptions
-            {
-                IsolationLevel = ambientLevel == null
-                    ? isolationLevel
-                    : (IsolationLevel) Math.Min((int) ambientLevel, (int) isolationLevel)
-            };
-
-            return new TransactionScope(
-                TransactionScopeOption.Required,
-                txOptions,
-                TransactionScopeAsyncFlowOption.Enabled);
         }
 
         public IQueryable<T> Get<T>() 
@@ -48,7 +27,6 @@ namespace Dex.DataProvider.Ef.Provider
         {
             return DbContext.Set<T>().AsQueryable().Where(predicate).AsNoTracking();
         }
-        
         
         void IRoDataProvider.Reset()
         {
