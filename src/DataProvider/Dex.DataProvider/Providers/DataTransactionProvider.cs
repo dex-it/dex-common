@@ -7,12 +7,12 @@ namespace Dex.DataProvider.Providers
 {
     public class DataTransactionScopeProvider : IDataTransactionProvider
     {
-        public IDataTransaction Transaction()
+        public virtual IDataTransaction Transaction()
         {
             return Transaction(IsolationLevel.ReadCommitted);
         }
 
-        public IDataTransaction Transaction(IsolationLevel isolationLevel)
+        public virtual IDataTransaction Transaction(IsolationLevel isolationLevel)
         {
             var ambientLevel = System.Transactions.Transaction.Current?.IsolationLevel;
             var txOptions = new TransactionOptions

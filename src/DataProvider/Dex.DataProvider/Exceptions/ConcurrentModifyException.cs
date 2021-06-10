@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace Dex.DataProvider.Exceptions
 {
-    public sealed class ConcurrentModifyException : DataProviderException
+    public class ConcurrentModifyException : DataProviderException
     {
         public ConcurrentModifyException()
         {
@@ -19,7 +19,7 @@ namespace Dex.DataProvider.Exceptions
         {
         }
 
-        public ConcurrentModifyException(SerializationInfo info, StreamingContext context)
+        protected ConcurrentModifyException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
