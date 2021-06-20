@@ -169,7 +169,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (ids, cancellationToken));
         }
 
-        protected virtual async Task<T> ExecuteCommand<T, TState>(Func<DbContext, TState, Task<T>> func, TState state)
+        private async Task<T> ExecuteCommand<T, TState>(Func<DbContext, TState, Task<T>> func, TState state)
         {
             try
             {

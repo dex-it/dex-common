@@ -7,6 +7,8 @@ namespace Dex.DataProvider.Tests
 {
     public class DataTransactionScopeProviderTests
     {
+        private readonly DataTransactionScopeProvider _dataTransactionScopeProvider;
+
         public DataTransactionScopeProviderTests()
         {
             _dataTransactionScopeProvider = new DataTransactionScopeProvider();
@@ -22,7 +24,7 @@ namespace Dex.DataProvider.Tests
             currentLevel.Should().NotBeNull();
             currentLevel.Should().Be(IsolationLevel.ReadCommitted);
         }
-        
+
         [TestCase(IsolationLevel.Serializable)]
         [TestCase(IsolationLevel.RepeatableRead)]
         [TestCase(IsolationLevel.ReadCommitted)]
@@ -33,7 +35,7 @@ namespace Dex.DataProvider.Tests
         {
             var startLevel = Transaction.Current?.IsolationLevel;
             startLevel.Should().BeNull();
-            
+
             var dataTransaction = _dataTransactionScopeProvider.Transaction(isolationLevel);
 
             dataTransaction.Should().NotBeNull();
@@ -41,7 +43,5 @@ namespace Dex.DataProvider.Tests
             currentLevel.Should().NotBeNull();
             currentLevel.Should().Be(isolationLevel);
         }
-
-        private readonly DataTransactionScopeProvider _dataTransactionScopeProvider;
     }
 }
