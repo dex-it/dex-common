@@ -15,17 +15,17 @@ namespace Dex.Cap.OnceExecutor
         {
             if (modificator == null) throw new ArgumentNullException(nameof(modificator));
 
-            return ExecuteInTransaction(idempotentKey, async (cancellationToken) =>
+            return ExecuteInTransaction(idempotentKey, async (token) =>
             {
-                if (!await IsAlreadyExecuted(idempotentKey, cancellationToken))
+                if (!await IsAlreadyExecuted(idempotentKey, token))
                 {
-                    await SaveIdempotentKey(idempotentKey, cancellationToken);
-                    await modificator(Context, cancellationToken);
+                    await SaveIdempotentKey(idempotentKey, token);
+                    await modificator(Context, token);
                     await OnModificationComplete();
                 }
 
                 var result = selector != null
-                    ? await selector(Context, cancellationToken)
+                    ? await selector(Context, token)
                     : default;
 
                 return result;
