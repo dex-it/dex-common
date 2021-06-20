@@ -40,8 +40,8 @@ namespace Dex.Cap.Ef.Tests
                 var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
 
                 var result = await ex.Execute(stepId,
-                    context => context.Users.AddAsync(user).AsTask(),
-                    context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest")
+                    (context, c) => context.Users.AddAsync(user, c).AsTask(),
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
                 );
 
                 Assert.IsNotNull(result);
@@ -53,41 +53,13 @@ namespace Dex.Cap.Ef.Tests
                 var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
 
                 var result = await ex.Execute(stepId,
-                    context => context.Users.AddAsync(user).AsTask(),
-                    context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest")
+                    (context, c) => context.Users.AddAsync(user, c).AsTask(),
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
                 );
 
                 Assert.IsNotNull(result);
                 Assert.AreEqual(user.Id, result.Id);
             }
-        }
-
-        [Test]
-        public async Task OnceExecuteIntoAmbientTransactionTest()
-        {
-            var stepId = Guid.NewGuid();
-            var user = new User {Name = "OnceExecuteIntoAmbientTransactionTest", Years = 18};
-
-            await using (var testDbContext = new TestDbContext(DbName))
-            await using (var t = await testDbContext.Database.BeginTransactionAsync()) // ambient transaction
-            {
-                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
-
-                var result = await ex.Execute(stepId,
-                    context => context.Users.AddAsync(user).AsTask(),
-                    context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteIntoAmbientTransactionTest")
-                );
-
-                Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result.Id);
-
-                await testDbContext.Users.AddAsync(new User() {Name = "OnceExecuteIntoAmbientTransactionTest-2"});
-                await testDbContext.SaveChangesAsync();
-
-                await t.CommitAsync();
-            }
-
-            await CheckUsers("OnceExecuteIntoAmbientTransactionTest", "OnceExecuteIntoAmbientTransactionTest-2");
         }
 
         [Test]
@@ -102,8 +74,8 @@ namespace Dex.Cap.Ef.Tests
 
                 // transaction 1
                 var result = await ex.Execute(stepId,
-                    context => context.Users.AddAsync(user).AsTask(),
-                    context => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest")
+                    (context, c) => context.Users.AddAsync(user, c).AsTask(),
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", cancellationToken: c)
                 );
 
                 Assert.IsNotNull(result);

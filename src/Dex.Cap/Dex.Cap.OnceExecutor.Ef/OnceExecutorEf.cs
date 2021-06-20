@@ -1,21 +1,24 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
     public class OnceExecutorEf<TDbContext, TResult> : BaseOnceExecutor<TDbContext, TResult>, IOnceExecutorEf<TDbContext, TResult>
         where TDbContext : DbContext
     {
-        private static readonly EmptyDisposable Empty = new();
-        private IDbContextTransaction? _current;
-
         protected override TDbContext Context { get; }
 
         public OnceExecutorEf(TDbContext context)
         {
             Context = context ?? throw new ArgumentNullException(nameof(context));
+        }
+
+        protected override async Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellationToken)
+        {
+            var strategy = Context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteInTransactionAsync(operation, (c) => IsAlreadyExecuted(idempotentKey, c), cancellationToken);
         }
 
 
@@ -24,33 +27,14 @@ namespace Dex.Cap.OnceExecutor.Ef
             return Context.SaveChangesAsync();
         }
 
-        protected override IDisposable BeginTransaction()
+        protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken)
         {
-            if (Context.Database.CurrentTransaction == null)
-                return _current = Context.Database.BeginTransaction();
-            return Empty;
+            return await Context.Set<LastTransaction>().AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken);
         }
 
-        protected override Task CommitTransaction()
+        protected override Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken)
         {
-            return _current?.CommitAsync() ?? Task.CompletedTask;
-        }
-
-        protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey)
-        {
-            return await Context.FindAsync<LastTransaction>(idempotentKey) != null;
-        }
-
-        protected override Task SaveIdempotentKey(Guid idempotentKey)
-        {
-            return Context.AddAsync(new LastTransaction {IdempotentKey = idempotentKey}).AsTask();
-        }
-
-        private class EmptyDisposable : IDisposable
-        {
-            public void Dispose()
-            {
-            }
+            return Context.AddAsync(new LastTransaction {IdempotentKey = idempotentKey}, cancellationToken).AsTask();
         }
     }
 }
