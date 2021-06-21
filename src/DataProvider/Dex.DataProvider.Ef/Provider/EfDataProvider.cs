@@ -25,7 +25,9 @@ namespace Dex.DataProvider.Ef.Provider
             return ExecuteCommand(
                 async static(dbContext, state) =>
                 {
-                    var entityEntry = dbContext.Set<T>().Add(state.entity);
+                    var entityEntry = await dbContext.Set<T>()
+                        .AddAsync(state.entity, state.cancellationToken)
+                        .ConfigureAwait(false);
                     await dbContext.SaveChangesAsync(state.cancellationToken).ConfigureAwait(false);
                     return entityEntry.Entity;
                 },
@@ -36,14 +38,14 @@ namespace Dex.DataProvider.Ef.Provider
             where T : class
         {
             return ExecuteCommand(
-                static(dbContext, state) =>
+                async static(dbContext, state) =>
                 {
                     foreach (var entity in state.entities)
                     {
-                        dbContext.Set<T>().Add(entity);
+                       await dbContext.Set<T>().AddAsync(entity, state.cancellationToken).ConfigureAwait(false);
                     }
 
-                    return dbContext.SaveChangesAsync(state.cancellationToken);
+                    return await dbContext.SaveChangesAsync(state.cancellationToken).ConfigureAwait(false);
                 },
                 (entities, cancellationToken));
         }
