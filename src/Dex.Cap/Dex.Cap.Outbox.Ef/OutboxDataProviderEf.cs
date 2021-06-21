@@ -20,6 +20,15 @@ namespace Dex.Cap.Outbox.Ef
             _outboxOptions = outboxOptions.Value;
         }
 
+        public override async Task ExecuteInTransaction(Guid correlationId, Action<CancellationToken> operation, CancellationToken cancellationToken)
+        {
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            await strategy.ExecuteInTransactionAsync(() =>
+            {
+                operation(cancellationToken);
+            }, () => IsExists(correlationId, cancellationToken));
+        }
+
         public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));

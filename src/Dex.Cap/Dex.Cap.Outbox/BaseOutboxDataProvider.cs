@@ -7,9 +7,12 @@ namespace Dex.Cap.Outbox
 {
     public abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
+        public abstract Task ExecuteInTransaction(Guid correlationId, Action<CancellationToken> operation, CancellationToken cancellationToken);
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
-        public abstract Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken);
+
         public abstract Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
+        public abstract Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken);
+
         public virtual async Task Fail(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null)
         {
             if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
@@ -22,6 +25,7 @@ namespace Dex.Cap.Outbox
 
             await SaveChanges(outboxEnvelope, cancellationToken);
         }
+
         public virtual async Task Succeed(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));

@@ -16,7 +16,21 @@ namespace Dex.Cap.Outbox
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
-        public async Task<Guid> Enqueue<T>(T message, Guid correlationId, CancellationToken cancellationToken) where T : IOutboxMessage
+        public async Task<Guid> ExecuteOperation<T>(Guid correlationId, Func<CancellationToken, Task> operation, T message, CancellationToken cancellationToken)
+            where T : IOutboxMessage
+        {
+            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            if (message == null) throw new ArgumentNullException(nameof(message));
+
+            await _outboxDataProvider.ExecuteInTransaction(correlationId, async token =>
+            {
+                await operation(token);
+                await Enqueue(correlationId, message, token);
+            }, cancellationToken);
+            return correlationId;
+        }
+
+        public async Task<Guid> Enqueue<T>(Guid correlationId, T message, CancellationToken cancellationToken) where T : IOutboxMessage
         {
             var assemblyQualifiedName = message.GetType().AssemblyQualifiedName;
             if (assemblyQualifiedName == null)
@@ -29,7 +43,7 @@ namespace Dex.Cap.Outbox
 
         public Task<Guid> Enqueue<T>(T message, CancellationToken cancellationToken) where T : IOutboxMessage
         {
-            return Enqueue(message, Guid.NewGuid(), cancellationToken);
+            return Enqueue(Guid.NewGuid(), message, cancellationToken);
         }
 
         public Task<bool> IsOperationExists(Guid correlationId, CancellationToken cancellationToken)
