@@ -100,6 +100,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var client = sp.GetRequiredService<IOutboxService>();
             var correlation = Guid.NewGuid();
             var testDbContext = sp.GetRequiredService<TestDbContext>();
+            
+            // act
             await client.ExecuteOperation(correlation, async token =>
             {
                 await testDbContext.Users.AddAsync(new User {Name = "mmx"}, token);
@@ -108,6 +110,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.Process(CancellationToken.None);
 
+            // check
             Assert.AreEqual(1, count);
             Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == "mmx"));
         }
