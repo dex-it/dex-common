@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef;
 using Dex.Outbox.Command.Test;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
@@ -19,8 +21,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestOutboxCommand() {Args = "hello world"}, CancellationToken.None);
-            await client.Enqueue(new TestOutboxCommand() {Args = "hello world2"}, CancellationToken.None);
+            await client.Enqueue(new TestOutboxCommand {Args = "hello world"}, CancellationToken.None);
+            await client.Enqueue(new TestOutboxCommand {Args = "hello world2"}, CancellationToken.None);
 
             await Save(sp);
 
@@ -66,7 +68,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestOutboxCommand() {Args = "hello"}, CancellationToken.None);
+            await client.Enqueue(new TestOutboxCommand {Args = "hello"}, CancellationToken.None);
             await client.Enqueue(new TestErrorOutboxCommand {CountDown = 1}, CancellationToken.None);
             await Save(sp);
 
@@ -84,6 +86,32 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             Assert.AreEqual(2, count);
         }
+
+        [Test]
+        public async Task SimpleRunExecuteInTransactionTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .BuildServiceProvider();
+
+            var count = 0;
+            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            
+            var client = sp.GetRequiredService<IOutboxService>();
+            var correlation = Guid.NewGuid();
+            var testDbContext = sp.GetRequiredService<TestDbContext>();
+            await client.ExecuteOperation(correlation, async token =>
+            {
+                await testDbContext.Users.AddAsync(new User {Name = "mmx"}, token);
+            }, new TestOutboxCommand {Args = "hello world"}, CancellationToken.None);
+            
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.Process(CancellationToken.None);
+
+            Assert.AreEqual(1, count);
+            Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == "mmx"));
+        }
+
 
         private IServiceCollection InitServiceCollection()
         {

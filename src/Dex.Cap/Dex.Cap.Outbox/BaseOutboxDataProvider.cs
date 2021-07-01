@@ -7,7 +7,7 @@ namespace Dex.Cap.Outbox
 {
     public abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
-        public abstract Task ExecuteInTransaction(Guid correlationId, Action<CancellationToken> operation, CancellationToken cancellationToken);
+        public abstract Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
 
         public abstract Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
