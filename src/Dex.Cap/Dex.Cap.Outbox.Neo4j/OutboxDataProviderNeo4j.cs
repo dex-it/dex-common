@@ -21,6 +21,15 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
+        public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        {
+            using (var transaction = _graphClient.BeginTransaction())
+            {
+                await operation(cancellationToken);
+                await transaction.CommitAsync();
+            }
+        }
+
         public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher
