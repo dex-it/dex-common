@@ -20,7 +20,8 @@ namespace Dex.Cap.Ef.Tests
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-            optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=my-pass~003;");
+            optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=my-pass~003;",
+                builder => { builder.EnableRetryOnFailure(); });
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

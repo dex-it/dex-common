@@ -96,23 +96,96 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
-            
+
             var client = sp.GetRequiredService<IOutboxService>();
             var correlation = Guid.NewGuid();
             var testDbContext = sp.GetRequiredService<TestDbContext>();
-            
+
             // act
+            var name = "mmx_" + Guid.NewGuid();
             await client.ExecuteOperation(correlation, async token =>
             {
-                await testDbContext.Users.AddAsync(new User {Name = "mmx"}, token);
-            }, new TestOutboxCommand {Args = "hello world"}, CancellationToken.None);
-            
+                await testDbContext.Users.AddAsync(new User {Name = name}, token);
+                return new TestOutboxCommand {Args = "hello world"};
+            }, CancellationToken.None);
+
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.Process(CancellationToken.None);
 
             // check
             Assert.AreEqual(1, count);
-            Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == "mmx"));
+            Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == name));
+        }
+        
+        [Test]
+        public async Task SeveralOutboxMessagesInTransactionTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand2>, TestCommand2Handler>()
+                .BuildServiceProvider();
+
+            var count = 0;
+            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            TestCommand2Handler.OnProcess += (_, _) => { count++; };
+
+            var client = sp.GetRequiredService<IOutboxService>();
+            var correlation = Guid.NewGuid();
+            var testDbContext = sp.GetRequiredService<TestDbContext>();
+
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            await client.ExecuteOperation(correlation, async token =>
+            {
+                await testDbContext.Users.AddAsync(new User {Name = name}, token);
+                await client.Enqueue(Guid.NewGuid(), new TestOutboxCommand2(){Args = "Command2"}, CancellationToken.None);
+                return new TestOutboxCommand {Args = "hello world"};
+            }, CancellationToken.None);
+
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.Process(CancellationToken.None);
+
+            // check
+            Assert.AreEqual(2, count);
+            Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == name));
+        }
+
+        [Test]
+        public async Task RetryExecuteInTransactionTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .BuildServiceProvider();
+
+            var count = 0;
+            TestCommandHandler.OnProcess += (_, _) => { count++; };
+
+            var client = sp.GetRequiredService<IOutboxService>();
+            var correlation = Guid.NewGuid();
+            var testDbContext = sp.GetRequiredService<TestDbContext>();
+            var failureCount = 2;
+
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            await client.ExecuteOperation(correlation, async token =>
+            {
+                await testDbContext.Users.AddAsync(new User {Name = name}, token);
+
+                if (failureCount-- > 0)
+                {
+                    TestContext.WriteLine("throw failure...");
+                    throw new TimeoutException();
+                }
+
+                return new TestOutboxCommand {Args = "hello world"};
+            }, CancellationToken.None);
+
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.Process(CancellationToken.None);
+
+            // check
+            Assert.AreEqual(1, count);
+            Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == name));
         }
 
 

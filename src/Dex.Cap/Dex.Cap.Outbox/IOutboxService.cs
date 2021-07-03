@@ -11,11 +11,10 @@ namespace Dex.Cap.Outbox
         /// </summary>
         /// <param name="correlationId"></param>
         /// <param name="operation">database change async action</param>
-        /// <param name="message">outbox message</param>
         /// <param name="cancellationToken"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        Task<Guid> ExecuteOperation<T>(Guid correlationId, Func<CancellationToken, Task> operation, T message, CancellationToken cancellationToken)
+        Task<Guid> ExecuteOperation<T>(Guid correlationId, Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
             where T : IOutboxMessage;
 
         /// <summary>

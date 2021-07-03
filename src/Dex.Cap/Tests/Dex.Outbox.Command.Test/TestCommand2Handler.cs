@@ -5,20 +5,20 @@ using Dex.Cap.Outbox;
 
 namespace Dex.Outbox.Command.Test
 {
-    public class TestCommandHandler : IOutboxMessageHandler<TestOutboxCommand>
+    public class TestCommand2Handler : IOutboxMessageHandler<TestOutboxCommand2>
     {
         public static event EventHandler OnProcess;
 
-        public Task ProcessMessage(TestOutboxCommand message, CancellationToken cancellationToken)
+        public Task ProcessMessage(TestOutboxCommand2 message, CancellationToken cancellationToken)
         {
-            Console.WriteLine($"TestCommandHandler - Processed command at {DateTime.Now}, Args: {message.Args}");
+            Console.WriteLine($"TestCommand2Handler - Processed command at {DateTime.Now}, Args: {message.Args}");
             OnProcess?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         }
 
         public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
         {
-            return ProcessMessage((TestOutboxCommand) outbox, cancellationToken);
+            return ProcessMessage((TestOutboxCommand2) outbox, cancellationToken);
         }
     }
 }
