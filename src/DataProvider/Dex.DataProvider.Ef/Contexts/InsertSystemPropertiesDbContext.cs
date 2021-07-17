@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Security.Permissions;
 using Dex.DataProvider.Contracts.Entities;
 using Dex.DataProvider.Ef.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +25,7 @@ namespace Dex.DataProvider.Ef.Contexts
             SavingChanges += OnSavingChanges;
         }
         
-        protected virtual void OnSavingChanges(object sender, SavingChangesEventArgs e)
+        private void OnSavingChanges(object sender, SavingChangesEventArgs e)
         {
             var now = DateTime.UtcNow;
             var entries = ChangeTracker.Entries()
