@@ -9,7 +9,10 @@ namespace Dex.DataProvider.Postgres
     {
         public DataProviderException Normalize(Exception exception)
         {
-            if (exception == null) throw new ArgumentNullException(nameof(exception));
+            if (exception == null)
+            {
+                throw new ArgumentNullException(nameof(exception));
+            }
 
             if (exception.InnerException is PostgresException postgresException)
             {
@@ -25,7 +28,10 @@ namespace Dex.DataProvider.Postgres
 
         public virtual bool IsRepeatableException(Exception exception)
         {
-            if (exception == null) throw new ArgumentNullException(nameof(exception));
+            if (exception == null)
+            {
+                throw new ArgumentNullException(nameof(exception));
+            }
 
             return exception is ConcurrentModifyException
                    || exception.InnerException is PostgresException {SqlState: PostgresErrorCodes.SerializationFailure};
@@ -35,6 +41,16 @@ namespace Dex.DataProvider.Postgres
             PostgresException postgresException,
             Exception innerException)
         {
+            if (postgresException == null)
+            {
+                throw new ArgumentNullException(nameof(postgresException));
+            }
+
+            if (innerException == null)
+            {
+                throw new ArgumentNullException(nameof(innerException));
+            }
+            
             var message = postgresException.Message + postgresException.Detail;
 
             return postgresException.SqlState switch

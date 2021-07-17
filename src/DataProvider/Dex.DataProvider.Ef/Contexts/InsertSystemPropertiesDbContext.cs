@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Permissions;
 using Dex.DataProvider.Contracts.Entities;
 using Dex.DataProvider.Ef.Contracts;
 using Microsoft.EntityFrameworkCore;

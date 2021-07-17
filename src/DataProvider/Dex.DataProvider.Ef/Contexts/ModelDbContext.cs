@@ -13,25 +13,31 @@ namespace Dex.DataProvider.Ef.Contexts
 
         protected ModelDbContext(IModelStore modelStore)
         {
+            if (modelStore == null) throw new ArgumentNullException(nameof(modelStore));
+            
             ModeTypes = modelStore.GetModels();
         }
 
         protected ModelDbContext(IModelStore modelStore, DbContextOptions options)
             : base(options)
         {
+            if (modelStore == null) throw new ArgumentNullException(nameof(modelStore));
+            
             ModeTypes = modelStore.GetModels();
         }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            if (modelBuilder == null) throw new ArgumentNullException(nameof(modelBuilder));
+            
+            base.OnModelCreating(modelBuilder);
 
             foreach (var modeType in ModeTypes)
             {
-                builder.Entity(modeType);
+                modelBuilder.Entity(modeType);
             }
 
-            UseDateTimeConverter(builder);
+            UseDateTimeConverter(modelBuilder);
         }
         
         private static void UseDateTimeConverter(ModelBuilder modelBuilder)

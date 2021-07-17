@@ -34,6 +34,9 @@ namespace Dex.DataProvider.Ef.Extension
             this ModelBuilder modelBuilder,
             ValueConverter<TModel, TProvider> converter)
         {
+            if (modelBuilder == null) throw new ArgumentNullException(nameof(modelBuilder));
+            if (converter == null) throw new ArgumentNullException(nameof(converter));
+
             return UseValueConverterForType(modelBuilder, typeof(TModel), converter);
         }
         
