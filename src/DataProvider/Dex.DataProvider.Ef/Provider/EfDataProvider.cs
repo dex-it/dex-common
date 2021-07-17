@@ -19,6 +19,7 @@ namespace Dex.DataProvider.Ef.Provider
             _exceptionManager = exceptionManager ?? throw new ArgumentNullException(nameof(exceptionManager));
         }
 
+        /// <inheritdoc />
         public virtual Task<T> Insert<T>(T entity, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -34,6 +35,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (entity, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task BatchInsert<T>(IEnumerable<T> entities, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -50,6 +52,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (entities, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task<T> Update<T>(T entity, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -63,6 +66,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (entity, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task BatchUpdate<T>(IEnumerable<T> entities, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -75,6 +79,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (entities, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task Delete<T>(T entity, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -87,6 +92,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (entity, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task BatchDelete<T>(IEnumerable<T> entities, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -99,6 +105,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (entities, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task DeleteById<T, TKey>(TKey id, CancellationToken cancellationToken = default)
             where T : class, IEntity<TKey>
             where TKey : IComparable
@@ -116,6 +123,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (id, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task BatchDeleteByIds<T, TKey>(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
             where T : class, IEntity<TKey>
             where TKey : IComparable
@@ -133,6 +141,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (ids, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task SetDelete<T, TKey>(TKey id, CancellationToken cancellationToken = default)
             where T : class, IDeletable, IEntity<TKey>
             where TKey : IComparable
@@ -153,6 +162,7 @@ namespace Dex.DataProvider.Ef.Provider
                 (id, cancellationToken));
         }
 
+        /// <inheritdoc />
         public virtual Task BatchSetDelete<T, TKey>(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
             where T : class, IDeletable, IEntity<TKey>
             where TKey : IComparable

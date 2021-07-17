@@ -15,7 +15,8 @@ namespace Dex.DataProvider.Ef.Provider
         {
             DbContext = connection ?? throw new ArgumentNullException(nameof(connection));
         }
-        
+
+        /// <inheritdoc />
         public override IDataTransaction Transaction(IsolationLevel isolationLevel)
         {
             var dataTransaction = base.Transaction(isolationLevel);

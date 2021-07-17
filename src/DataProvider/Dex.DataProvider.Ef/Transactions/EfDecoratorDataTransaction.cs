@@ -15,6 +15,7 @@ namespace Dex.DataProvider.Ef.Transactions
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
+        /// <inheritdoc />
         public void Complete()
         {
             try
@@ -28,6 +29,7 @@ namespace Dex.DataProvider.Ef.Transactions
             }
         }
         
+        /// <inheritdoc />
         public void Dispose()
         {
             _dataTransaction.Dispose();

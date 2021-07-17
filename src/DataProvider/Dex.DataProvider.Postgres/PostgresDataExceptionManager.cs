@@ -7,6 +7,7 @@ namespace Dex.DataProvider.Postgres
 {
     public class PostgresDataExceptionManager : IDataExceptionManager
     {
+        /// <inheritdoc />
         public DataProviderException Normalize(Exception exception)
         {
             if (exception == null)
@@ -26,6 +27,7 @@ namespace Dex.DataProvider.Postgres
             return new DataProviderException(exception.Message, exception);
         }
 
+        /// <inheritdoc />
         public virtual bool IsRepeatableException(Exception exception)
         {
             if (exception == null)
