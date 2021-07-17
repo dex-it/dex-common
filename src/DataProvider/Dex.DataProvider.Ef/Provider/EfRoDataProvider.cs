@@ -13,13 +13,15 @@ namespace Dex.DataProvider.Ef.Provider
         {
         }
 
-        public virtual IQueryable<T> Get<T>() 
+        /// <inheritdoc />
+        public virtual IQueryable<T> GetQueryable<T>() 
             where T : class
         {
             return DbContext.Set<T>().AsQueryable().AsNoTracking();
         }
 
-        public virtual IQueryable<T> Get<T>(Expression<Func<T, bool>> predicate) 
+        /// <inheritdoc />
+        public virtual IQueryable<T> GetQueryable<T>(Expression<Func<T, bool>> predicate) 
             where T : class
         {
             return DbContext.Set<T>().AsQueryable().Where(predicate).AsNoTracking();

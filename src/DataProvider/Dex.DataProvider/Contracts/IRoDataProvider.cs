@@ -6,10 +6,10 @@ namespace Dex.DataProvider.Contracts
 {
     public interface IRoDataProvider : IDataTransactionProvider
     {
-        IQueryable<T> Get<T>() 
+        IQueryable<T> GetQueryable<T>() 
             where T : class;
         
-        IQueryable<T> Get<T>(Expression<Func<T, bool>> predicate) 
+        IQueryable<T> GetQueryable<T>(Expression<Func<T, bool>> predicate) 
             where T : class;
     }
 }
