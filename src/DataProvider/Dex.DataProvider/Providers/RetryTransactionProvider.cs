@@ -11,9 +11,9 @@ namespace Dex.DataProvider.Providers
     public sealed class RetryTransactionProvider : IRetryTransactionProvider
     {
         private readonly IDataExceptionManager _dataExceptionManager;
-        private readonly RetryTransactionSettings _settings;
+        private readonly IRetryTransactionSettings _settings;
 
-        public RetryTransactionProvider(IDataExceptionManager dataExceptionManager, RetryTransactionSettings settings)
+        public RetryTransactionProvider(IDataExceptionManager dataExceptionManager, IRetryTransactionSettings settings)
         {
             _dataExceptionManager = dataExceptionManager
                                     ?? throw new ArgumentNullException(nameof(dataExceptionManager));
@@ -28,8 +28,21 @@ namespace Dex.DataProvider.Providers
             int retryCount = 3,
             CancellationToken cancellationToken = default)
         {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-            if (func == null) throw new ArgumentNullException(nameof(func));
+            if (provider == null)
+            {
+                throw new ArgumentNullException(nameof(provider));
+            }
+
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (retryCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(retryCount));
+            }
+
 
             return InternalExecute(provider, func, arg, level, retryCount, cancellationToken);
         }
@@ -41,8 +54,20 @@ namespace Dex.DataProvider.Providers
             int retryCount = 3,
             CancellationToken cancellationToken = default)
         {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-            if (func == null) throw new ArgumentNullException(nameof(func));
+            if (provider == null)
+            {
+                throw new ArgumentNullException(nameof(provider));
+            }
+
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+            
+            if (retryCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(retryCount));
+            }
 
             return InternalExecute(provider, WrapperTaskT, func, level, retryCount, cancellationToken);
         }
@@ -55,10 +80,22 @@ namespace Dex.DataProvider.Providers
             int retryCount = 3,
             CancellationToken cancellationToken = default)
         {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-            if (func == null) throw new ArgumentNullException(nameof(func));
+            if (provider == null)
+            {
+                throw new ArgumentNullException(nameof(provider));
+            }
 
-            return InternalExecute(provider, WrapperTask, (func, arg), level, retryCount, cancellationToken);
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+            
+            if (retryCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(retryCount));
+            }
+
+            return InternalExecute(provider, WrapperTaskArg, (func, arg), level, retryCount, cancellationToken);
         }
 
         public Task Execute(
@@ -68,8 +105,20 @@ namespace Dex.DataProvider.Providers
             int retryCount = 3,
             CancellationToken cancellationToken = default)
         {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-            if (func == null) throw new ArgumentNullException(nameof(func));
+            if (provider == null)
+            {
+                throw new ArgumentNullException(nameof(provider));
+            }
+
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+            
+            if (retryCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(retryCount));
+            }
 
             return InternalExecute(provider, WrapperTask, func, level, retryCount, cancellationToken);
         }
@@ -83,24 +132,20 @@ namespace Dex.DataProvider.Providers
             CancellationToken cancellationToken)
         {
             var count = 0;
-            while (true)
-            {
-                try
-                {
-                    using var transaction = provider.Transaction(level);
-                    var result = await func(arg, cancellationToken).ConfigureAwait(false);
-                    transaction.Complete();
-                    return result;
-                }
-                catch (Exception exception)
-                {
-                    if (!_dataExceptionManager.IsRepeatableException(exception) || ++count >= retryCount)
-                    {
-                        throw;
-                    }
-                }
+            Repeat:
 
+            try
+            {
+                using var transaction = provider.Transaction(level);
+                var result = await func(arg, cancellationToken).ConfigureAwait(false);
+                transaction.Complete();
+                return result;
+            }
+            catch (Exception exception)
+                when (_dataExceptionManager.IsRepeatableException(exception) && ++count < retryCount)
+            {
                 await Task.Delay(_settings.RetryDelay, cancellationToken).ConfigureAwait(false);
+                goto Repeat;
             }
         }
 
@@ -117,7 +162,7 @@ namespace Dex.DataProvider.Providers
             return default;
         }
 
-        private static async Task<VoidStruct> WrapperTask<TArg>(
+        private static async Task<VoidStruct> WrapperTaskArg<TArg>(
             (Func<TArg, CancellationToken, Task> func, TArg arg) tuple,
             CancellationToken cancellationToken)
         {
