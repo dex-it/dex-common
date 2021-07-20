@@ -13,11 +13,13 @@ namespace Dex.DataProvider.Transactions
             _transactionScope = transactionScope ?? throw new ArgumentNullException(nameof(transactionScope));
         }
 
+        /// <inheritdoc />
         public void Complete()
         {
             _transactionScope.Complete();
         }
-        
+
+        /// <inheritdoc />
         public void Dispose()
         {
             _transactionScope.Dispose();

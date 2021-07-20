@@ -5,7 +5,6 @@ using System.Transactions;
 using AutoFixture;
 using Dex.DataProvider.Contracts;
 using Dex.DataProvider.Providers;
-using Dex.DataProvider.Settings;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -292,13 +291,13 @@ namespace Dex.DataProvider.Tests
         private void VerifyTransaction(Times times)
         {
             _dataTransactionProviderMock
-                .Verify(self => self.Transaction(), times);
+                .Verify(self => self.BeginTransaction(), times);
         }
 
         private void VerifyTransaction(IsolationLevel level, Times times)
         {
             _dataTransactionProviderMock
-                .Verify(self => self.Transaction(level), times);
+                .Verify(self => self.BeginTransaction(level), times);
         }
 
         private Mock<IDataTransaction> SetupTransaction(IsolationLevel level)
@@ -306,7 +305,7 @@ namespace Dex.DataProvider.Tests
             var mock = new Mock<IDataTransaction>(MockBehavior.Strict);
 
             _dataTransactionProviderMock
-                .Setup(self => self.Transaction(level))
+                .Setup(self => self.BeginTransaction(level))
                 .Returns(mock.Object);
 
             return mock;
@@ -315,7 +314,7 @@ namespace Dex.DataProvider.Tests
         private void VerifyTransactionIsolationLevel(Times times)
         {
             _dataTransactionProviderMock
-                .Verify(self => self.Transaction(It.IsAny<IsolationLevel>()), times);
+                .Verify(self => self.BeginTransaction(It.IsAny<IsolationLevel>()), times);
         }
 
         private Task<object> ExecuteFunction(object value, CancellationToken _)

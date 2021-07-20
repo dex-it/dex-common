@@ -17,9 +17,9 @@ namespace Dex.DataProvider.Ef.Provider
         }
 
         /// <inheritdoc />
-        public override IDataTransaction Transaction(IsolationLevel isolationLevel)
+        public override IDataTransaction BeginTransaction(IsolationLevel isolationLevel)
         {
-            var dataTransaction = base.Transaction(isolationLevel);
+            var dataTransaction = base.BeginTransaction(isolationLevel);
             return new EfDecoratorDataTransaction(dataTransaction, DbContext);
         }
     }

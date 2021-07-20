@@ -17,7 +17,7 @@ namespace Dex.DataProvider.Tests
         [Test]
         public void TransactionTest()
         {
-            var dataTransaction = _dataTransactionScopeProvider.Transaction();
+            var dataTransaction = _dataTransactionScopeProvider.BeginTransaction();
 
             dataTransaction.Should().NotBeNull();
             var currentLevel = Transaction.Current?.IsolationLevel;
@@ -36,7 +36,7 @@ namespace Dex.DataProvider.Tests
             var startLevel = Transaction.Current?.IsolationLevel;
             startLevel.Should().BeNull();
 
-            var dataTransaction = _dataTransactionScopeProvider.Transaction(isolationLevel);
+            var dataTransaction = _dataTransactionScopeProvider.BeginTransaction(isolationLevel);
 
             dataTransaction.Should().NotBeNull();
             var currentLevel = Transaction.Current?.IsolationLevel;

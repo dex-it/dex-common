@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dex.DataProvider.Contracts;
-using Dex.DataProvider.Settings;
 
 namespace Dex.DataProvider.Providers
 {
@@ -20,6 +19,7 @@ namespace Dex.DataProvider.Providers
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
 
+        /// <inheritdoc />
         public Task<T> Execute<T, TArg>(
             IDataTransactionProvider provider,
             Func<TArg, CancellationToken, Task<T>> func,
@@ -47,6 +47,7 @@ namespace Dex.DataProvider.Providers
             return InternalExecute(provider, func, arg, level, retryCount, cancellationToken);
         }
 
+        /// <inheritdoc />
         public Task<T> Execute<T>(
             IDataTransactionProvider provider,
             Func<CancellationToken, Task<T>> func,
@@ -72,6 +73,7 @@ namespace Dex.DataProvider.Providers
             return InternalExecute(provider, WrapperTaskT, func, level, retryCount, cancellationToken);
         }
 
+        /// <inheritdoc />
         public Task Execute<TArg>(
             IDataTransactionProvider provider,
             Func<TArg, CancellationToken, Task> func,
@@ -98,6 +100,7 @@ namespace Dex.DataProvider.Providers
             return InternalExecute(provider, WrapperTaskArg, (func, arg), level, retryCount, cancellationToken);
         }
 
+        /// <inheritdoc />
         public Task Execute(
             IDataTransactionProvider provider,
             Func<CancellationToken, Task> func,
@@ -136,7 +139,7 @@ namespace Dex.DataProvider.Providers
 
             try
             {
-                using var transaction = provider.Transaction(level);
+                using var transaction = provider.BeginTransaction(level);
                 var result = await func(arg, cancellationToken).ConfigureAwait(false);
                 transaction.Complete();
                 return result;
