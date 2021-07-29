@@ -32,6 +32,8 @@ namespace Dex.MassTransit.Rabbit
                 mqBusFactoryConfigurator.Host(rabbitMqOptions.Host, rabbitMqOptions.Port, rabbitMqOptions.VHost,
                     $"{Environment.MachineName}:{AppDomain.CurrentDomain.FriendlyName}", configurator =>
                     {
+                        configurator.Username(rabbitMqOptions.Username);
+                        configurator.Password(rabbitMqOptions.Password);
                         if (rabbitMqOptions.IsSecure && rabbitMqOptions.CertificatePath != null)
                         {
                             configurator.UseSsl(ssl => ssl.CertificatePath = rabbitMqOptions.CertificatePath);
