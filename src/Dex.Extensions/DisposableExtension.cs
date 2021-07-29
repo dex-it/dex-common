@@ -10,6 +10,7 @@ namespace Dex.Extensions
         public static void SafeDispose(this IEnumerable<IDisposable> collection, Action<IDisposable, Exception>? exceptionHandler = null)
         {
             if (collection == null) return;
+
             foreach (var disposable in collection.Where(disposable => disposable != null))
             {
                 SafeDispose(disposable, exceptionHandler);

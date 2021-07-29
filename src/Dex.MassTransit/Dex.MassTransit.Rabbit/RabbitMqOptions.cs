@@ -2,7 +2,7 @@
 {
     public class RabbitMqOptions
     {
-        public bool IsSecure { get; set; } = false;
+        public bool IsSecure { get; set; }
         public string Host { get; set; } = "localhost";
         public ushort Port { get; set; } = 5672;
         public string VHost { get; set; } = "/";
