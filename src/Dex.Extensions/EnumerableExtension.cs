@@ -7,7 +7,7 @@ namespace Dex.Extensions
 {
     public static class EnumerableExtension
     {
-        private static readonly Lazy<Random> RndGen = new Lazy<Random>(() => new Random(DateTime.UtcNow.Millisecond));
+        private static readonly Lazy<Random> RndGen = new(() => new Random(DateTime.UtcNow.Millisecond));
 
         public static string JoinToString(this IEnumerable<string> collection, string separator)
         {

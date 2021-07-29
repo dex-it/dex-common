@@ -21,7 +21,7 @@ namespace Dex.MassTransit.Sample.Test
             Console.WriteLine("Press Enter to exit");
             Console.ReadLine();
 
-            void CatchException(Task task)
+            static void CatchException(Task task)
             {
                 if (task.IsFaulted)
                 {
@@ -91,6 +91,4 @@ namespace Dex.MassTransit.Sample.Test
                     services.AddHostedService<MetricTraceExporterHostedService>();
                 });
     }
-
-
 }

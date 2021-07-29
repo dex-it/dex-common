@@ -10,5 +10,6 @@
       <RepositoryType>github</RepositoryType>
       <EnableNETAnalyzers>true</EnableNETAnalyzers>
       <TargetFramework>netstandard2.1</TargetFramework>
+      <AnalysisMode>AllEnabledByDefault</AnalysisMode>
   </PropertyGroup>
 </Project>
