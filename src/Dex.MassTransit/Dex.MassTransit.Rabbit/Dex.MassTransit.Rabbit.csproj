@@ -5,10 +5,12 @@
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.12</Version>
+    <Version>1.0.16</Version>
     <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.MassTransit</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <DocumentationFile>Dex.MassTransit.Rabbit.xml</DocumentationFile>
+    <Authors>dex team</Authors>
   </PropertyGroup>
 
   <!-- Source debugging -->
@@ -17,8 +19,6 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Authors>dex team</Authors>
-    <DocumentationFile>Dex.MassTransit.Rabbit.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
