@@ -1,28 +1,36 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.OnceExecutor", "Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj", "{D64BF6F7-E741-4933-9FCD-542E42847602}"
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31605.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.OnceExecutor", "Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj", "{D64BF6F7-E741-4933-9FCD-542E42847602}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.OnceExecutor.Ef", "Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj", "{209F598E-282B-444F-A9ED-5B14D65D6436}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.OnceExecutor.Ef", "Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj", "{209F598E-282B-444F-A9ED-5B14D65D6436}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.OnceExecutor.Neo4j", "Dex.Cap.OnceExecutor.Neo4j\Dex.Cap.OnceExecutor.Neo4j.csproj", "{29E9734D-C7E3-4ED8-B660-98CF1151D001}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.OnceExecutor.Neo4j", "Dex.Cap.OnceExecutor.Neo4j\Dex.Cap.OnceExecutor.Neo4j.csproj", "{29E9734D-C7E3-4ED8-B660-98CF1151D001}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Outbox", "Dex.Cap.Outbox\Dex.Cap.Outbox.csproj", "{3B0C9982-0FD5-423C-9840-CC2DC0E16EDE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Outbox", "Dex.Cap.Outbox\Dex.Cap.Outbox.csproj", "{3B0C9982-0FD5-423C-9840-CC2DC0E16EDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Outbox.Ef", "Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj", "{822FF794-DBA9-4F31-9A43-0DEF82C870FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Outbox.Ef", "Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj", "{822FF794-DBA9-4F31-9A43-0DEF82C870FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Outbox.Neo4j", "Dex.Cap.Outbox.Neo4j\Dex.Cap.Outbox.Neo4j.csproj", "{F590C9E4-4A1A-4A11-A996-FA9572E71494}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Outbox.Neo4j", "Dex.Cap.Outbox.Neo4j\Dex.Cap.Outbox.Neo4j.csproj", "{F590C9E4-4A1A-4A11-A996-FA9572E71494}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Ef.Tests", "Tests\Dex.Cap.Ef.Tests\Dex.Cap.Ef.Tests.csproj", "{CBF46588-4ABA-4ACB-81E5-27DF4135498E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Ef.Tests", "Tests\Dex.Cap.Ef.Tests\Dex.Cap.Ef.Tests.csproj", "{CBF46588-4ABA-4ACB-81E5-27DF4135498E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Outbox.Command.Test", "Tests\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj", "{D200766A-2301-424F-9230-939D4F9B8126}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Outbox.Command.Test", "Tests\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj", "{D200766A-2301-424F-9230-939D4F9B8126}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Outbox.QuartzHandler", "Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.QuartzHandler.csproj", "{37C2F350-5FF3-4B8A-9455-6DA91D051DC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Outbox.QuartzHandler", "Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.QuartzHandler.csproj", "{37C2F350-5FF3-4B8A-9455-6DA91D051DC7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.OnceExecutor.ClickHouse", "Dex.Cap.OnceExecutor.ClickHouse\Dex.Cap.OnceExecutor.ClickHouse.csproj", "{3863C051-BDF6-4013-8D7C-332A1E12E479}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.OnceExecutor.ClickHouse", "Dex.Cap.OnceExecutor.ClickHouse\Dex.Cap.OnceExecutor.ClickHouse.csproj", "{3863C051-BDF6-4013-8D7C-332A1E12E479}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.ClickHouse.Test", "Tests\Dex.Cap.ClickHouse.Test\Dex.Cap.ClickHouse.Test.csproj", "{4F80AF62-1C1F-4FE2-AB40-C9F4BCFBF36F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.ClickHouse.Test", "Tests\Dex.Cap.ClickHouse.Test\Dex.Cap.ClickHouse.Test.csproj", "{4F80AF62-1C1F-4FE2-AB40-C9F4BCFBF36F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{66F062FC-EE13-4EAE-B5ED-D5528108E6FF}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,9 +83,15 @@ Global
 		{4F80AF62-1C1F-4FE2-AB40-C9F4BCFBF36F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F80AF62-1C1F-4FE2-AB40-C9F4BCFBF36F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{CBF46588-4ABA-4ACB-81E5-27DF4135498E} = {05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}
 		{D200766A-2301-424F-9230-939D4F9B8126} = {05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}
 		{4F80AF62-1C1F-4FE2-AB40-C9F4BCFBF36F} = {05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {61070EF3-9A74-4E42-9835-3DDAAEB94E70}
 	EndGlobalSection
 EndGlobal
