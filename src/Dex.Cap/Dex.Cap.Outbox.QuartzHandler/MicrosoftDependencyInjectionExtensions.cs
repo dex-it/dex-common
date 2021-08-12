@@ -16,15 +16,17 @@ namespace Dex.Cap.Outbox.QuartzHandler
                 q.UseInMemoryStore();
 
                 // job OutboxJob
-                q.AddJob<OutboxHandlerJob>(c =>
-                {
-                    c.StoreDurably();
-                    c.RequestRecovery();
-                });
                 q.ScheduleJob<OutboxHandlerJob>(c =>
                 {
+                    c.WithIdentity("Outbox_scheduler");
+                    c.WithDescription("Outbox scheduler");
+
                     c.StartNow()
-                        .WithSimpleSchedule(b => { b.WithInterval(TimeSpan.FromSeconds(periodSeconds)).RepeatForever(); });
+                        .WithSimpleSchedule(b =>
+                        {
+                            // schedule
+                            b.WithInterval(TimeSpan.FromSeconds(periodSeconds)).RepeatForever();
+                        });
                 });
             });
             services.AddQuartzServer(options =>
