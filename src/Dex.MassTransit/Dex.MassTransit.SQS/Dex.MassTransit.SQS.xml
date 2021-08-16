@@ -4,7 +4,7 @@
         <name>Dex.MassTransit.SQS</name>
     </assembly>
     <members>
-        <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.RegisterBus(MassTransit.ExtensionsDependencyInjectionIntegration.IServiceCollectionBusConfigurator,System.Action{MassTransit.IBusRegistrationContext,MassTransit.AmazonSqsTransport.IAmazonSqsBusFactoryConfigurator})">
+        <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.RegisterBus(MassTransit.ExtensionsDependencyInjectionIntegration.IServiceCollectionBusConfigurator,System.Action{MassTransit.IBusRegistrationContext,MassTransit.AmazonSqsTransport.IAmazonSqsBusFactoryConfigurator},Dex.MassTransit.SQS.AmazonMqOptions)">
             <summary>
             Register bus.
             </summary>
