@@ -20,11 +20,9 @@ namespace Dex.MassTransit.SQS
     public static class MassTransitConfigurator
     {
         /// <summary>
-        /// Register bus
+        /// Register bus.
         /// </summary>
-        /// <param name="collectionConfigurator"></param>
-        /// <param name="registerConsumers"></param>
-        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentNullException"/>
         public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator,
             Action<IBusRegistrationContext, IAmazonSqsBusFactoryConfigurator> registerConsumers)
         {
@@ -51,46 +49,40 @@ namespace Dex.MassTransit.SQS
         }
 
         /// <summary>
-        /// Register receive EndPoint and bind with type T
+        /// Register receive EndPoint and bind with type <typeparamref name="T"/>.
         /// </summary>
-        /// <param name="busRegistrationContext">bus registration contex</param>
-        /// <param name="busFactoryConfigurator">configuration factory</param>
-        /// <param name="endpointConsumerConfigurator">configure consumer delegate</param>
-        /// <param name="isForPublish">true for Publish, false when only Send</param>
-        /// <typeparam name="TD">Consumer message type</typeparam>
-        /// <typeparam name="T">Consumer type</typeparam>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static void RegisterReceiveEndpoint<T, TD>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator> endpointConsumerConfigurator = null, bool isForPublish = false)
-            where T : class, IConsumer<TD>
-            where TD : class, IConsumer, new()
+        /// <param name="busRegistrationContext">Bus registration contex.</param>
+        /// <param name="busFactoryConfigurator">Configuration factory.</param>
+        /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
+        /// <param name="isForPublish">True for Publish, false when only Send.</param>
+        /// <typeparam name="T">Consumer type.</typeparam>
+        /// <typeparam name="TMessage">Consumer message type.</typeparam>
+        /// <exception cref="ArgumentNullException"/>
+        public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
+            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, bool isForPublish = false)
+            where T : class, IConsumer<TMessage>
+            where TMessage : class, IConsumer, new()
         {
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TD>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] {typeof(T)}, isForPublish);
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] {typeof(T)}, isForPublish);
         }
 
         /// <summary>
-        /// Configure recieve endpoint for Fifo queues
+        /// Configure recieve endpoint for Fifo queues.
         /// </summary>
-        /// <param name="busRegistrationContext"></param>
-        /// <param name="busFactoryConfigurator"></param>
-        /// <param name="endpointConsumer"></param>
-        /// <param name="isForPublish"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="TD"></typeparam>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="ConfigurationException"></exception>
-        public static void RegisterReceiveEndpointAsFifo<T, TD>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator> endpointConsumer = null, bool isForPublish = false)
-            where T : class, IConsumer<TD>
-            where TD : class, IConsumer, new()
+        /// <exception cref="ArgumentNullException"/>
+        /// <exception cref="ConfigurationException"/>
+        public static void RegisterReceiveEndpointAsFifo<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
+            Action<IEndpointConfigurator>? endpointConsumer = null, bool isForPublish = false)
+            where T : class, IConsumer<TMessage>
+            where TMessage : class
         {
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TD>(busRegistrationContext, busFactoryConfigurator, configurator =>
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, configurator =>
             {
                 configurator.ConfigureConsumeTopology = false;
                 configurator.QueueAttributes.Add(QueueAttributeName.FifoQueue, true);
@@ -100,31 +92,27 @@ namespace Dex.MassTransit.SQS
         }
 
         /// <summary>
-        /// Register and bind SendEndpoint for type T
+        /// Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
         /// </summary>
-        /// <param name="provider"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static UriBuilder RegisterSendEndPoint<T>(this IServiceProvider provider) where T : class, IConsumer, new()
+        /// <exception cref="ArgumentNullException"/>
+        public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider) 
+            where TMessage : class
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
 
-            var endPoint = CreateQueueNameFromType<T>(provider);
-            if (!EndpointConvention.TryGetDestinationAddress<T>(out _))
+            var endPoint = CreateQueueNameFromType<TMessage>(provider);
+            if (!EndpointConvention.TryGetDestinationAddress<TMessage>(out _))
             {
-                EndpointConvention.Map<T>(endPoint.Uri);
+                EndpointConvention.Map<TMessage>(endPoint.Uri);
             }
 
             return endPoint;
         }
 
         /// <summary>
-        /// Configure send params for FIFO queues
+        /// Configure send params for FIFO queues.
         /// </summary>
-        /// <param name="sendPipeline"></param>
-        /// <param name="types"></param>
-        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentNullException"/>
         public static void ConfigureSendEndpointAsFifoForTypes(this ISendPipelineConfigurator sendPipeline, IEnumerable<Type> types)
         {
             if (sendPipeline == null) throw new ArgumentNullException(nameof(sendPipeline));
@@ -149,18 +137,19 @@ namespace Dex.MassTransit.SQS
 
         // private methods 
 
-        private static UriBuilder CreateQueueNameFromType<T>(this IServiceProvider provider) where T : class, IConsumer, new()
+        private static UriBuilder CreateQueueNameFromType<TMessage>(this IServiceProvider provider) 
+            where TMessage : class
         {
-            var queueName = typeof(T).Name.ToLower().ReplaceRegex("dto$", "");
+            var queueName = typeof(TMessage).Name.ToLowerInvariant().ReplaceRegex("dto$", "");
 
             static AmazonMqOptions ValidateAwsOptions(IOptions<AmazonMqOptions> sqsOptions)
             {
-                if (sqsOptions.Value.Region.IsNullOrEmpty())
+                if (string.IsNullOrEmpty(sqsOptions.Value.Region))
                 {
                     throw new InvalidDataException("sqsOptions.Value.Region can't be empty");
                 }
 
-                if (sqsOptions.Value.OwnerId.IsNullOrEmpty())
+                if (string.IsNullOrEmpty(sqsOptions.Value.OwnerId))
                 {
                     throw new InvalidDataException("sqsOptions.Value.OwnerId can't be empty");
                 }
@@ -168,7 +157,7 @@ namespace Dex.MassTransit.SQS
                 return sqsOptions.Value;
             }
 
-            var sqsOptions = ValidateAwsOptions(provider.GetService<IOptions<AmazonMqOptions>>());
+            var sqsOptions = ValidateAwsOptions(provider.GetRequiredService<IOptions<AmazonMqOptions>>());
             // ReSharper disable once StringLiteralTypo
             var host = $"{AmazonSqsHostAddress.AmazonSqsScheme}://sqs.{sqsOptions.Region}.amazonaws.com";
             var path = $"/{sqsOptions.OwnerId}/{queueName.ReplaceRegex("fifo$", ".fifo")}";
@@ -176,11 +165,12 @@ namespace Dex.MassTransit.SQS
             return new UriBuilder(host + path);
         }
 
-        private static void RegisterConsumersEndpoint<TD>(IRegistration busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IAmazonSqsReceiveEndpointConfigurator> endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) where TD : class, IConsumer, new()
+        private static void RegisterConsumersEndpoint<TMessage>(IRegistration busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
+            Action<IAmazonSqsReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) 
+            where TMessage : class
         {
-            var endPoint = isForPublish ? busRegistrationContext.CreateQueueNameFromType<TD>() : busRegistrationContext.RegisterSendEndPoint<TD>();
-            if (!endPoint.Path.Contains(".fifo"))
+            var endPoint = isForPublish ? busRegistrationContext.CreateQueueNameFromType<TMessage>() : busRegistrationContext.RegisterSendEndPoint<TMessage>();
+            if (!endPoint.Path.Contains(".fifo", StringComparison.Ordinal))
             {
                 throw new ConfigurationException("AWS: DTO for FIFO queue must be end on [<Name>Fifo], example CommandProcessingFifo");
             }
