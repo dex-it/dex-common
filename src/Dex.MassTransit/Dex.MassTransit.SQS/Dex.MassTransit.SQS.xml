@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dex.MassTransit.SQS</name>
+    </assembly>
+    <members>
+        <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.RegisterBus(MassTransit.ExtensionsDependencyInjectionIntegration.IServiceCollectionBusConfigurator,System.Action{MassTransit.IBusRegistrationContext,MassTransit.AmazonSqsTransport.IAmazonSqsBusFactoryConfigurator})">
+            <summary>
+            Register bus.
+            </summary>
+            <exception cref="T:System.ArgumentNullException"/>
+        </member>
+        <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.RegisterReceiveEndpoint``2(MassTransit.IBusRegistrationContext,MassTransit.AmazonSqsTransport.IAmazonSqsBusFactoryConfigurator,System.Action{MassTransit.IEndpointConfigurator},System.Boolean)">
+            <summary>
+            Register receive EndPoint and bind with type <typeparamref name="T"/>.
+            </summary>
+            <param name="busRegistrationContext">Bus registration contex.</param>
+            <param name="busFactoryConfigurator">Configuration factory.</param>
+            <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
+            <param name="isForPublish">True for Publish, false when only Send.</param>
+            <typeparam name="T">Consumer type.</typeparam>
+            <typeparam name="TMessage">Consumer message type.</typeparam>
+            <exception cref="T:System.ArgumentNullException"/>
+        </member>
+        <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.RegisterReceiveEndpointAsFifo``2(MassTransit.IBusRegistrationContext,MassTransit.AmazonSqsTransport.IAmazonSqsBusFactoryConfigurator,System.Action{MassTransit.IEndpointConfigurator},System.Boolean)">
+            <summary>
+            Configure recieve endpoint for Fifo queues.
+            </summary>
+            <exception cref="T:System.ArgumentNullException"/>
+            <exception cref="T:MassTransit.ConfigurationException"/>
+        </member>
+        <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.RegisterSendEndPoint``1(System.IServiceProvider)">
+            <summary>
+            Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
+            </summary>
+            <exception cref="T:System.ArgumentNullException"/>
+        </member>
+        <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.ConfigureSendEndpointAsFifoForTypes(MassTransit.ISendPipelineConfigurator,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Configure send params for FIFO queues.
+            </summary>
+            <exception cref="T:System.ArgumentNullException"/>
+        </member>
+    </members>
+</doc>
