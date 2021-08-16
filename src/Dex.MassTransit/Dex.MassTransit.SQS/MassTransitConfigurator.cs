@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Amazon.SQS;
 using Dex.Extensions;
-using Dex.MassTransit.Extensions.Options;
 using MassTransit;
 using MassTransit.AmazonSqsTransport;
 using MassTransit.ExtensionsDependencyInjectionIntegration;
@@ -24,16 +23,17 @@ namespace Dex.MassTransit.SQS
         /// </summary>
         /// <param name="collectionConfigurator"></param>
         /// <param name="registerConsumers"></param>
+        /// <param name="amazonMqOptions">альтернативная конфигурация очереди</param>
         /// <exception cref="ArgumentNullException"></exception>
         public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator,
-            Action<IBusRegistrationContext, IAmazonSqsBusFactoryConfigurator> registerConsumers)
+            Action<IBusRegistrationContext, IAmazonSqsBusFactoryConfigurator> registerConsumers, AmazonMqOptions? amazonMqOptions = null)
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
             if (registerConsumers == null) throw new ArgumentNullException(nameof(registerConsumers));
 
             collectionConfigurator.UsingAmazonSqs((busRegistrationContext, mqBusFactoryConfigurator) =>
             {
-                var amazonMqOptions = busRegistrationContext.GetRequiredService<IOptions<AmazonMqOptions>>().Value;
+                amazonMqOptions ??= busRegistrationContext.GetRequiredService<IOptions<AmazonMqOptions>>().Value;
                 mqBusFactoryConfigurator.Host(amazonMqOptions.Region, configurator =>
                 {
                     configurator.AccessKey(amazonMqOptions.AccessKey);
@@ -61,7 +61,7 @@ namespace Dex.MassTransit.SQS
         /// <typeparam name="T">Consumer type</typeparam>
         /// <exception cref="ArgumentNullException"></exception>
         public static void RegisterReceiveEndpoint<T, TD>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator> endpointConsumerConfigurator = null, bool isForPublish = false)
+            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, bool isForPublish = false)
             where T : class, IConsumer<TD>
             where TD : class, IConsumer, new()
         {
@@ -83,7 +83,7 @@ namespace Dex.MassTransit.SQS
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ConfigurationException"></exception>
         public static void RegisterReceiveEndpointAsFifo<T, TD>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator> endpointConsumer = null, bool isForPublish = false)
+            Action<IEndpointConfigurator>? endpointConsumer = null, bool isForPublish = false)
             where T : class, IConsumer<TD>
             where TD : class, IConsumer, new()
         {
@@ -168,7 +168,7 @@ namespace Dex.MassTransit.SQS
                 return sqsOptions.Value;
             }
 
-            var sqsOptions = ValidateAwsOptions(provider.GetService<IOptions<AmazonMqOptions>>());
+            var sqsOptions = ValidateAwsOptions(provider.GetRequiredService<IOptions<AmazonMqOptions>>());
             // ReSharper disable once StringLiteralTypo
             var host = $"{AmazonSqsHostAddress.AmazonSqsScheme}://sqs.{sqsOptions.Region}.amazonaws.com";
             var path = $"/{sqsOptions.OwnerId}/{queueName.ReplaceRegex("fifo$", ".fifo")}";
@@ -177,7 +177,7 @@ namespace Dex.MassTransit.SQS
         }
 
         private static void RegisterConsumersEndpoint<TD>(IRegistration busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IAmazonSqsReceiveEndpointConfigurator> endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) where TD : class, IConsumer, new()
+            Action<IAmazonSqsReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) where TD : class, IConsumer, new()
         {
             var endPoint = isForPublish ? busRegistrationContext.CreateQueueNameFromType<TD>() : busRegistrationContext.RegisterSendEndPoint<TD>();
             if (!endPoint.Path.Contains(".fifo"))

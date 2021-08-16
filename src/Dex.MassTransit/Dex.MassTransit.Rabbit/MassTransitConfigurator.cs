@@ -21,14 +21,14 @@ namespace Dex.MassTransit.Rabbit
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator,
-            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers)
+            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, RabbitMqOptions? rabbitMqOptions = null)
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
             if (registerConsumers == null) throw new ArgumentNullException(nameof(registerConsumers));
 
             collectionConfigurator.UsingRabbitMq((registrationContext, mqBusFactoryConfigurator) =>
             {
-                var rabbitMqOptions = registrationContext.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+                rabbitMqOptions ??= registrationContext.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
                 mqBusFactoryConfigurator.Host(rabbitMqOptions.Host, rabbitMqOptions.Port, rabbitMqOptions.VHost,
                     $"{Environment.MachineName}:{AppDomain.CurrentDomain.FriendlyName}", configurator =>
                     {
