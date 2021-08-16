@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Amazon.SQS;
 using Dex.Extensions;
-using Dex.MassTransit.Extensions.Options;
 using MassTransit;
 using MassTransit.AmazonSqsTransport;
 using MassTransit.ExtensionsDependencyInjectionIntegration;
@@ -24,14 +23,14 @@ namespace Dex.MassTransit.SQS
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator,
-            Action<IBusRegistrationContext, IAmazonSqsBusFactoryConfigurator> registerConsumers)
+            Action<IBusRegistrationContext, IAmazonSqsBusFactoryConfigurator> registerConsumers, AmazonMqOptions? amazonMqOptions = null)
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
             if (registerConsumers == null) throw new ArgumentNullException(nameof(registerConsumers));
 
             collectionConfigurator.UsingAmazonSqs((busRegistrationContext, mqBusFactoryConfigurator) =>
             {
-                var amazonMqOptions = busRegistrationContext.GetRequiredService<IOptions<AmazonMqOptions>>().Value;
+                amazonMqOptions ??= busRegistrationContext.GetRequiredService<IOptions<AmazonMqOptions>>().Value;
                 mqBusFactoryConfigurator.Host(amazonMqOptions.Region, configurator =>
                 {
                     configurator.AccessKey(amazonMqOptions.AccessKey);

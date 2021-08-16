@@ -1,4 +1,4 @@
-namespace Dex.MassTransit.Extensions.Options
+namespace Dex.MassTransit.SQS
 {
     public class AmazonMqOptions
     {

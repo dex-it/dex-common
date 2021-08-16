@@ -21,16 +21,24 @@ namespace Dex.MassTransit.Rabbit
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator,
-            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers)
+            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, RabbitMqOptions? rabbitMqOptions = null)
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
             if (registerConsumers == null) throw new ArgumentNullException(nameof(registerConsumers));
 
             collectionConfigurator.UsingRabbitMq((registrationContext, mqBusFactoryConfigurator) =>
             {
-                var rabbitMqOptions = registrationContext.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+                rabbitMqOptions ??= registrationContext.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
                 mqBusFactoryConfigurator.Host(rabbitMqOptions.Host, rabbitMqOptions.Port, rabbitMqOptions.VHost,
-                    $"{Environment.MachineName}:{AppDomain.CurrentDomain.FriendlyName}");
+                    $"{Environment.MachineName}:{AppDomain.CurrentDomain.FriendlyName}", configurator =>
+                    {
+                        configurator.Username(rabbitMqOptions.Username);
+                        configurator.Password(rabbitMqOptions.Password);
+                        if (rabbitMqOptions.IsSecure && rabbitMqOptions.CertificatePath != null)
+                        {
+                            configurator.UseSsl(ssl => ssl.CertificatePath = rabbitMqOptions.CertificatePath);
+                        }
+                    });
 
                 mqBusFactoryConfigurator.AutoDelete = false;
                 mqBusFactoryConfigurator.Durable = true;
@@ -67,7 +75,7 @@ namespace Dex.MassTransit.Rabbit
         /// Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
-        public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider) 
+        public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider)
             where TMessage : class
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
@@ -84,7 +92,7 @@ namespace Dex.MassTransit.Rabbit
 
         // private  
 
-        private static UriBuilder CreateQueueNameFromType<T>(this IServiceProvider provider) 
+        private static UriBuilder CreateQueueNameFromType<T>(this IServiceProvider provider)
             where T : class
         {
             var queueName = typeof(T).Name.ToLowerInvariant().ReplaceRegex("dto$", "");
@@ -93,7 +101,7 @@ namespace Dex.MassTransit.Rabbit
         }
 
         private static void RegisterConsumersEndpoint<TMessage>(IRegistration busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false) 
+            Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false)
             where TMessage : class
         {
             var endPoint = isForPublish ? busRegistrationContext.CreateQueueNameFromType<TMessage>() : busRegistrationContext.RegisterSendEndPoint<TMessage>();

@@ -29,5 +29,11 @@
     <PackageReference Include="MassTransit.AspNetCore" Version="7.2.1" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="7.2.1" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Dex.MassTransit.Rabbit.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   
 </Project>
