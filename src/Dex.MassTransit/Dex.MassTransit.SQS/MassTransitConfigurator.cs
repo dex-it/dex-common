@@ -72,6 +72,11 @@ namespace Dex.MassTransit.SQS
         /// <summary>
         /// Configure recieve endpoint for Fifo queues.
         /// </summary>
+        /// <param name="busRegistrationContext">Bus registration context</param>
+        /// <param name="busFactoryConfigurator">Bus configuration context</param>
+        /// <param name="endpointConsumer">Endpoint configuration context</param>
+        /// <param name="amazonMqOptions">Force connection params</param>
+        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
         /// <exception cref="ArgumentNullException"/>
         /// <exception cref="ConfigurationException"/>
         public static void RegisterReceiveEndpointAsFifo<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
@@ -94,13 +99,15 @@ namespace Dex.MassTransit.SQS
         /// <summary>
         /// Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
         /// </summary>
+        /// <param name="provider"></param>
+        /// <param name="amazonMqOptions">Force connection params</param>
         /// <exception cref="ArgumentNullException"/>
-        public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider, AmazonMqOptions? sqsOptions = null)
+        public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider, AmazonMqOptions? amazonMqOptions = null)
             where TMessage : class
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
 
-            var endPoint = CreateQueueNameFromType<TMessage>(provider, sqsOptions);
+            var endPoint = CreateQueueNameFromType<TMessage>(provider, amazonMqOptions);
             if (!EndpointConvention.TryGetDestinationAddress<TMessage>(out _))
             {
                 EndpointConvention.Map<TMessage>(endPoint.Uri);
@@ -112,6 +119,8 @@ namespace Dex.MassTransit.SQS
         /// <summary>
         /// Configure send params for FIFO queues.
         /// </summary>
+        /// <param name="sendPipeline">Send pipeline configurator</param>
+        /// <param name="types">Types for fifo send approach</param>
         /// <exception cref="ArgumentNullException"/>
         public static void ConfigureSendEndpointAsFifoForTypes(this ISendPipelineConfigurator sendPipeline, IEnumerable<Type> types)
         {
