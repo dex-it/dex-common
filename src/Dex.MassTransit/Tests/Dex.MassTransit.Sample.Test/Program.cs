@@ -78,11 +78,13 @@ namespace Dex.MassTransit.Sample.Test
                     services.AddMassTransit(configurator =>
                     {
                         configurator.AddConsumer<HelloConsumer>();
+                        configurator.AddConsumer<HelloConsumer2>();
 
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
                             // recieve endpoint
-                            context.RegisterReceiveEndpoint<HelloConsumer, HelloMessage>(factoryConfigurator);
+                            context.RegisterReceiveEndpoint<HelloConsumer, HelloMessage>(factoryConfigurator, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessage>(factoryConfigurator, createSeparateQueue: true);
                         });
                     });
 

@@ -13,4 +13,13 @@ namespace Dex.MassTransit.Sample.Test
             return Task.CompletedTask;
         }
     }
+    
+    public class HelloConsumer2 : IConsumer<HelloMessage>
+    {
+        public Task Consume(ConsumeContext<HelloMessage> context)
+        {
+            Console.WriteLine(context.Message.Hi);
+            return Task.CompletedTask;
+        }
+    }
 }
