@@ -26,7 +26,10 @@ namespace Dex.CreditCard.Tests
             {"3569239206830557", CardType.JCB},
             {"3589295535870728", CardType.JCB},
             {"6759649826438453", CardType.Maestro},
+            {"6764546581342560", CardType.Maestro},
             {"6799990100000000019", CardType.Maestro},
+            {"6983169732580618599", CardType.Maestro},
+            {"639002389084992585", CardType.Maestro},
             {"36700102000000", CardType.DinersClub},
             {"36148900647913", CardType.DinersClub},
         };
@@ -56,7 +59,10 @@ namespace Dex.CreditCard.Tests
         {
             foreach (var card in _validCards)
             {
-                Assert.True(LuhnAlgorithm.HasValidCheckDigit(card.Key));
+                var hasValidCheckDigit = LuhnAlgorithm.HasValidCheckDigit(card.Key);
+                if(!hasValidCheckDigit)
+                    TestContext.WriteLine(card.Key);
+                Assert.True(hasValidCheckDigit);
             }
         }
 
@@ -115,12 +121,16 @@ namespace Dex.CreditCard.Tests
         }
 
         [Test]
-        public void LyhnInvalidStringTest2()
+        [TestCase("ss")]
+        [TestCase("512512 6124652 36551243512451242341234421341234")]
+        [TestCase("512512 6124652 3655124351232152")]
+        [TestCase("51251261 246523634263214123411")]
+        public void LyhnInvalidStringTest2(string arg)
         {
             Assert.Catch<ArgumentException>(() =>
             {
-                Assert.False(LuhnAlgorithm.HasValidCheckDigit("ss"));
+                Assert.False(LuhnAlgorithm.HasValidCheckDigit(arg));
             });
-        }
+        }     
     }
 }

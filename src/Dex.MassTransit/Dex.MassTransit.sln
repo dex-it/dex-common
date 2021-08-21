@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Rabbit", "Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj", "{8C8D588C-D032-4134-AA87-4B2A487EB8EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.SQS", "Dex.MassTransit.SQS\Dex.MassTransit.SQS.csproj", "{6D317E7A-A27A-43AD-8A89-8E08B641E74F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Sample.Test", "Tests\Dex.MassTransit.Sample.Test\Dex.MassTransit.Sample.Test.csproj", "{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8C9A546F-195D-4BF1-BAC5-17DD28A29B38}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8C8D588C-D032-4134-AA87-4B2A487EB8EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C8D588C-D032-4134-AA87-4B2A487EB8EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C8D588C-D032-4134-AA87-4B2A487EB8EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C8D588C-D032-4134-AA87-4B2A487EB8EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D317E7A-A27A-43AD-8A89-8E08B641E74F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D317E7A-A27A-43AD-8A89-8E08B641E74F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D317E7A-A27A-43AD-8A89-8E08B641E74F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D317E7A-A27A-43AD-8A89-8E08B641E74F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A} = {8C9A546F-195D-4BF1-BAC5-17DD28A29B38}
+	EndGlobalSection
+EndGlobal

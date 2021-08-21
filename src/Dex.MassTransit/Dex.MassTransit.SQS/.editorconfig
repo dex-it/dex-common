@@ -1,0 +1,11 @@
+# Rules in this file were initially inferred by Visual Studio IntelliCode from the C:\Users\v.danilov.DEX\Source\Repos\dex-common\src\Dex.MassTransit\Dex.MassTransit.SQS\ codebase based on best match to current usage at 30.07.2021
+# You can modify the rules from these initially generated values to suit your own policies
+# You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
+[*.cs]
+
+
+# CS1591: Отсутствует комментарий XML для открытого видимого типа или члена
+dotnet_diagnostic.CS1591.severity = none
+
+# CA1308: Нормализуйте строки до прописных букв
+dotnet_diagnostic.CA1308.severity = silent

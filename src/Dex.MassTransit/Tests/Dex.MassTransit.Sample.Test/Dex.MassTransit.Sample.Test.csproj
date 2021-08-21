@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MassTransit.AspNetCore" Version="7.2.1" />
+      <PackageReference Include="MassTransit.RabbitMQ" Version="7.2.1" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
+      <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
+      <ProjectReference Include="..\..\Dex.MassTransit.SQS\Dex.MassTransit.SQS.csproj" />
+    </ItemGroup>
+
+</Project>
