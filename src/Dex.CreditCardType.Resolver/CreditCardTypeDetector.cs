@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text.RegularExpressions;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -10,6 +11,8 @@ namespace Dex.CreditCardType.Resolver
     {
         public static CardType FindType(string cardNumber)
         {
+            LuhnAlgorithm.CheckCorrectStringPan(cardNumber);
+
             // https://ccardgen.com описание типов карт 
             //https://www.regular-expressions.info/creditcard.html
             //https://stackoverflow.com/questions/9315647/regex-credit-card-number-tests
