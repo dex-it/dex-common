@@ -61,7 +61,7 @@ namespace Dex.MassTransit.SQS
         public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
             Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, AmazonMqOptions? amazonMqOptions = null, bool createSeparateQueue = false)
             where T : class, IConsumer<TMessage>
-            where TMessage : class, IConsumer, new()
+            where TMessage : class, IConsumer
         {
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
@@ -100,7 +100,7 @@ namespace Dex.MassTransit.SQS
         /// Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
         /// </summary>
         /// <param name="provider"></param>
-        /// <param name="amazonMqOptions">Force connection params</param>
+        /// <param name="amazonMqOptions">Force connection params.</param>
         /// <exception cref="ArgumentNullException"/>
         public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider, AmazonMqOptions? amazonMqOptions = null)
             where TMessage : class
@@ -119,8 +119,8 @@ namespace Dex.MassTransit.SQS
         /// <summary>
         /// Configure send params for FIFO queues.
         /// </summary>
-        /// <param name="sendPipeline">Send pipeline configurator</param>
-        /// <param name="types">Types for fifo send approach</param>
+        /// <param name="sendPipeline">Send pipeline configurator.</param>
+        /// <param name="types">Types for fifo send approach.</param>
         /// <exception cref="ArgumentNullException"/>
         public static void ConfigureSendEndpointAsFifoForTypes(this ISendPipelineConfigurator sendPipeline, IEnumerable<Type> types)
         {
@@ -149,8 +149,8 @@ namespace Dex.MassTransit.SQS
         private static UriBuilder CreateQueueNameFromType<TMessage>(this IServiceProvider provider, AmazonMqOptions? sqsOptions = null)
             where TMessage : class
         {
-            var queueName = typeof(TMessage).Name.ToLowerInvariant().ReplaceRegex("dto$", "");
-
+            var queueName = typeof(TMessage).Name.ReplaceRegex("(?i)dto(?-i)$", "");
+            
             static AmazonMqOptions ValidateAwsOptions(AmazonMqOptions sqsOptions)
             {
                 if (string.IsNullOrEmpty(sqsOptions.Region))
@@ -188,10 +188,7 @@ namespace Dex.MassTransit.SQS
                 throw new ConfigurationException("AWS: DTO for FIFO queue must be end on [<Name>Fifo], example CommandProcessingFifo");
             }
 
-            var qName = endPoint.ToString()
-                .TrimEnd('/')
-                .Split('/')
-                .Last();
+            var qName = endPoint.Uri.Segments.Last();
 
             foreach (var consumerType in types)
             {

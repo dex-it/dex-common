@@ -27,6 +27,11 @@
             <summary>
             Configure recieve endpoint for Fifo queues.
             </summary>
+            <param name="busRegistrationContext">Bus registration context</param>
+            <param name="busFactoryConfigurator">Bus configuration context</param>
+            <param name="endpointConsumer">Endpoint configuration context</param>
+            <param name="amazonMqOptions">Force connection params</param>
+            <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
             <exception cref="T:System.ArgumentNullException"/>
             <exception cref="T:MassTransit.ConfigurationException"/>
         </member>
@@ -34,12 +39,16 @@
             <summary>
             Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
             </summary>
+            <param name="provider"></param>
+            <param name="amazonMqOptions">Force connection params.</param>
             <exception cref="T:System.ArgumentNullException"/>
         </member>
         <member name="M:Dex.MassTransit.SQS.MassTransitConfigurator.ConfigureSendEndpointAsFifoForTypes(MassTransit.ISendPipelineConfigurator,System.Collections.Generic.IEnumerable{System.Type})">
             <summary>
             Configure send params for FIFO queues.
             </summary>
+            <param name="sendPipeline">Send pipeline configurator.</param>
+            <param name="types">Types for fifo send approach.</param>
             <exception cref="T:System.ArgumentNullException"/>
         </member>
     </members>

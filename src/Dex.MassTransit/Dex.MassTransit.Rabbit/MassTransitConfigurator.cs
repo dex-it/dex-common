@@ -56,7 +56,7 @@ namespace Dex.MassTransit.Rabbit
         /// <param name="busRegistrationContext">Bus registration contex.</param>
         /// <param name="busFactoryConfigurator">Configuration factory.</param>
         /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
-        /// <param name="rabbitMqOptions">Force connection params</param>
+        /// <param name="rabbitMqOptions">Force connection params.</param>
         /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
         /// <typeparam name="T">Consumer type.</typeparam>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
@@ -92,10 +92,10 @@ namespace Dex.MassTransit.Rabbit
 
         // private  
 
-        private static UriBuilder CreateQueueNameFromType<T>(this IServiceProvider provider, RabbitMqOptions? rabbitMqOptions)
-            where T : class
+        private static UriBuilder CreateQueueNameFromType<TMessage>(this IServiceProvider provider, RabbitMqOptions? rabbitMqOptions)
+            where TMessage : class
         {
-            var queueName = typeof(T).Name.ToLowerInvariant().ReplaceRegex("dto$", "");
+            var queueName = typeof(TMessage).Name.ReplaceRegex("(?i)dto(?-i)$", "");
             var mqOptions = rabbitMqOptions ?? provider.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
             return new UriBuilder(mqOptions + "/" + queueName);
         }
@@ -108,16 +108,13 @@ namespace Dex.MassTransit.Rabbit
                 ? busRegistrationContext.CreateQueueNameFromType<TMessage>(rabbitMqOptions)
                 : busRegistrationContext.RegisterSendEndPoint<TMessage>(rabbitMqOptions);
 
-            var qName = endPoint.ToString()
-                .TrimEnd('/')
-                .Split('/')
-                .Last();
+            var qName = endPoint.Uri.Segments.Last();
 
             foreach (var consumerType in types)
             {
                 var queueName = createSeparateQueue
-                        ? qName + "_" + consumerType.Name 
-                        : qName;
+                    ? qName + "_" + consumerType.Name
+                    : qName;
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
                 {

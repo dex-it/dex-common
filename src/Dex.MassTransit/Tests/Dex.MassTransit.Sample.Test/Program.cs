@@ -53,7 +53,7 @@ namespace Dex.MassTransit.Sample.Test
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
                             // send endpoint 
-                            context.RegisterSendEndPoint<HelloMessage>();
+                            context.RegisterSendEndPoint<HelloMessageDto>();
                         });
                     });
 
@@ -83,8 +83,8 @@ namespace Dex.MassTransit.Sample.Test
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
                             // recieve endpoint
-                            context.RegisterReceiveEndpoint<HelloConsumer, HelloMessage>(factoryConfigurator, createSeparateQueue: true);
-                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessage>(factoryConfigurator, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<HelloConsumer, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
                         });
                     });
 

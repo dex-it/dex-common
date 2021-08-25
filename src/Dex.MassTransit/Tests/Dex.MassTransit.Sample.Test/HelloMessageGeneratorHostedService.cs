@@ -23,7 +23,7 @@ namespace Dex.MassTransit.Sample.Test
             while (!_tokenSource.Token.IsCancellationRequested)
             {
                 // await _sendEndpoint.Send(new HelloMessage() {Hi = "Send, Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
-                await _publishEndpoint.Publish(new HelloMessage() {Hi = "Publish, Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
+                await _publishEndpoint.Publish(new HelloMessageDto() {Hi = "Publish, Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
                 await Task.Delay(1000, cancellationToken);
             }
         }
