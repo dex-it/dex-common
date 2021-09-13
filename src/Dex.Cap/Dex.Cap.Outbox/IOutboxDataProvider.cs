@@ -1,19 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
     public interface IOutboxDataProvider
     {
-        Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
+        Task ExecuteInTransactionAsync(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
 
-        Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
-        Task Fail(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null);
-        Task Succeed(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
+        Task<OutboxEnvelope> AddAsync(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
+        
+        Task FailAsync(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null);
+        
+        Task SucceedAsync(IOutboxLockedJob outboxJob, CancellationToken cancellationToken);
 
-        Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken);
-        Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
+        /// <exception cref="OperationCanceledException"/>
+        IAsyncEnumerable<IOutboxLockedJob> GetWaitingMessages(CancellationToken cancellationToken);
+        
+        Task<bool> IsExistsAsync(Guid correlationId, CancellationToken cancellationToken);
     }
 }

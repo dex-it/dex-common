@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Interfaces;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,15 +22,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestOutboxCommand {Args = "hello world"}, CancellationToken.None);
-            await client.Enqueue(new TestOutboxCommand {Args = "hello world2"}, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand {Args = "hello world"}, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand {Args = "hello world2"}, CancellationToken.None);
 
             await Save(sp);
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            await handler.Process(CancellationToken.None);
+            await handler.ProcessAsync(CancellationToken.None);
 
             Assert.AreEqual(2, count);
         }
@@ -42,7 +43,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 3}, CancellationToken.None);
+            await client.EnqueueAsync(new TestErrorOutboxCommand {CountDown = 3}, CancellationToken.None);
             await Save(sp);
 
             var count = 0;
@@ -52,7 +53,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var repeat = 5;
             while (repeat-- > 0)
             {
-                await handler.Process(CancellationToken.None);
+                await handler.ProcessAsync(CancellationToken.None);
                 await Task.Delay(50);
             }
 
@@ -68,8 +69,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.Enqueue(new TestOutboxCommand {Args = "hello"}, CancellationToken.None);
-            await client.Enqueue(new TestErrorOutboxCommand {CountDown = 1}, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand {Args = "hello"}, CancellationToken.None);
+            await client.EnqueueAsync(new TestErrorOutboxCommand {CountDown = 1}, CancellationToken.None);
             await Save(sp);
 
             var count = 0;
@@ -80,7 +81,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var repeat = 5;
             while (repeat-- > 0)
             {
-                await handler.Process(CancellationToken.None);
+                await handler.ProcessAsync(CancellationToken.None);
                 await Task.Delay(50);
             }
 
@@ -103,14 +104,14 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            await client.ExecuteOperation(correlation, async token =>
+            await client.ExecuteOperationAsync(correlation, async token =>
             {
                 await testDbContext.Users.AddAsync(new User {Name = name}, token);
                 return new TestOutboxCommand {Args = "hello world"};
             }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            await handler.Process(CancellationToken.None);
+            await handler.ProcessAsync(CancellationToken.None);
 
             // check
             Assert.AreEqual(1, count);
@@ -135,15 +136,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            await client.ExecuteOperation(correlation, async token =>
+            await client.ExecuteOperationAsync(correlation, async token =>
             {
                 await testDbContext.Users.AddAsync(new User {Name = name}, token);
-                await client.Enqueue(Guid.NewGuid(), new TestOutboxCommand2(){Args = "Command2"}, CancellationToken.None);
+                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand2(){Args = "Command2"}, CancellationToken.None);
                 return new TestOutboxCommand {Args = "hello world"};
             }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            await handler.Process(CancellationToken.None);
+            await handler.ProcessAsync(CancellationToken.None);
 
             // check
             Assert.AreEqual(2, count);
@@ -167,7 +168,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            await client.ExecuteOperation(correlation, async token =>
+            await client.ExecuteOperationAsync(correlation, async token =>
             {
                 await testDbContext.Users.AddAsync(new User {Name = name}, token);
 
@@ -181,7 +182,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            await handler.Process(CancellationToken.None);
+            await handler.ProcessAsync(CancellationToken.None);
 
             // check
             Assert.AreEqual(1, count);

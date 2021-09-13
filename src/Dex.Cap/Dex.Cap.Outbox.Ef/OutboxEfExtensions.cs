@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Outbox.Ef
@@ -6,22 +7,49 @@ namespace Dex.Cap.Outbox.Ef
     public static class OutboxEfExtensions
     {
         /// <summary>
-        /// Регистрируем в контексте EF объект Outbox 
+        /// Регистрируем в контексте EF объект Outbox.
         /// </summary>
-        /// <param name="builder"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public static void OutboxModelCreating(this ModelBuilder builder)
+        public static void OutboxModelCreating(this ModelBuilder modelBuilder)
         {
-            if (builder == null) throw new ArgumentNullException(nameof(builder));
+            if (modelBuilder == null) throw new ArgumentNullException(nameof(modelBuilder));
 
-            builder.Entity<Models.OutboxEnvelope>()
-                .HasIndex(o => o.Created);
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .HasIndex(o => o.CreatedUtc);
 
-            builder.Entity<Models.OutboxEnvelope>()
+            modelBuilder.Entity<Models.OutboxEnvelope>()
                 .HasIndex(o => o.Status);
 
-            builder.Entity<Models.OutboxEnvelope>()
+            modelBuilder.Entity<Models.OutboxEnvelope>()
                 .HasIndex(o => o.Retries);
+
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .Property(x => x.CreatedUtc)
+                .HasConversion(t => t.ToUniversalTime(), f => DateTime.SpecifyKind(f, DateTimeKind.Utc).ToLocalTime());
+
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .Property(x => x.LockExpirationTimeUtc)
+                .HasConversion<DateTime?>(
+                    t => t == null ? null : t.Value.ToUniversalTime(),
+                    f => f == null ? null : DateTime.SpecifyKind(f.Value, DateTimeKind.Utc).ToLocalTime());
+
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .Property(x => x.Updated)
+                .HasConversion<DateTime?>(
+                    t => t == null ? null : t.Value.ToUniversalTime(), 
+                    f => f == null ? null : DateTime.SpecifyKind(f.Value, DateTimeKind.Utc).ToLocalTime());
+
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .Property(x => x.LockTimeout)
+                .HasComment("Maximum allowable blocking time");
+            
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .Property(x => x.LockId)
+                .HasComment("Idempotency key (unique key of the thread that captured the lock)");
+            
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .Property(x => x.LockExpirationTimeUtc)
+                .HasComment("Preventive timeout (maximum lifetime of actuality 'LockId')");
         }
     }
 }

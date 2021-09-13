@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dex.Cap.Ef.Tests.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20210605184431_Init")]
+    [Migration("20210911134313_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,7 +18,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.6")
+                .HasAnnotation("ProductVersion", "5.0.9")
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             modelBuilder.Entity("Dex.Cap.Ef.Tests.Model.User", b =>
@@ -67,7 +67,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("Created")
+                    b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Error")
@@ -75,6 +75,15 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("LockExpirationTimeUtc")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("LockId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeSpan>("LockTimeout")
+                        .HasColumnType("interval");
 
                     b.Property<string>("MessageType")
                         .IsRequired()
@@ -91,7 +100,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Created");
+                    b.HasIndex("CreatedUtc");
 
                     b.HasIndex("Retries");
 

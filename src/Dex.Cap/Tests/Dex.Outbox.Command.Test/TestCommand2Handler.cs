@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Outbox;
+using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Outbox.Command.Test
 {

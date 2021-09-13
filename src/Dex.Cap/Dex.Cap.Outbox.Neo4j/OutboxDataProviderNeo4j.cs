@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
 using Microsoft.Extensions.Options;
@@ -21,7 +25,7 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        public override async Task ExecuteInTransactionAsync(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
         {
             using (var transaction = _graphClient.BeginTransaction())
             {
@@ -30,7 +34,7 @@ namespace Dex.Cap.Outbox.Neo4j
             }
         }
 
-        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope> AddAsync(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher
                 .Create($"(outbox:{nameof(Outbox)})")
@@ -40,12 +44,12 @@ namespace Dex.Cap.Outbox.Neo4j
             return outboxEnvelope;
         }
 
-        public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
+        public override Task<bool> IsExistsAsync(Guid correlationId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public override async Task<OutboxEnvelope[]> GetWaitingMessages(CancellationToken cancellationToken)
+        public override async IAsyncEnumerable<IOutboxLockedJob> GetWaitingMessages([EnumeratorCancellation] CancellationToken cancellationToken)
         {
             const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
             const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
@@ -58,13 +62,16 @@ namespace Dex.Cap.Outbox.Neo4j
                 .Limit(_outboxOptions.MessagesToProcess)
                 .ResultsAsync;
 
-            return outboxes.ToArray();
+            foreach (var o in outboxes)
+            {
+                yield return new OutboxLockedJob(o, default, cts: null);
+            }
         }
 
-        protected override async Task SaveChanges(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
-                .WithParam("id", outboxEnvelope.Id)
+                .WithParam("id", outboxEnvelope.Envelope.Id)
                 .Set("o = {outbox}").WithParam("outbox", outboxEnvelope)
                 .ExecuteWithoutResultsAsync();
         }

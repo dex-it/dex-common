@@ -21,7 +21,7 @@ namespace Dex.Cap.Outbox.QuartzHandler
         {
             try
             {
-                return _outboxHandler.Process(context.CancellationToken);
+                return _outboxHandler.ProcessAsync(context.CancellationToken);
             }
             catch (Exception e)
             {

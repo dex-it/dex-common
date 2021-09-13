@@ -1,6 +1,6 @@
-using Dex.Cap.Outbox.Interfaces;
+﻿using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Outbox.Command.Test
+namespace Dex.Cap.ConsoleTest
 {
     public class TestOutboxCommand : IOutboxMessage
     {

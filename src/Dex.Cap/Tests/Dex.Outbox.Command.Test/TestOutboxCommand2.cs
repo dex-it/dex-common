@@ -1,4 +1,4 @@
-using Dex.Cap.Outbox;
+using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Outbox.Command.Test
 {

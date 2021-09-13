@@ -9,7 +9,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Neo4jClient" Version="4.1.6" />
+      <PackageReference Include="Neo4jClient" Version="4.1.15" />
     </ItemGroup>
 
 </Project>

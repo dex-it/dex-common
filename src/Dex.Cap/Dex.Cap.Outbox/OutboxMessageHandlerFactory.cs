@@ -1,4 +1,6 @@
 using System;
+using Dex.Cap.Outbox.Exceptions;
+using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox
 {
@@ -13,16 +15,20 @@ namespace Dex.Cap.Outbox
 
         public IOutboxMessageHandler GetMessageHandler(IOutboxMessage outboxMessage)
         {
-            if (outboxMessage == null) throw new ArgumentNullException(nameof(outboxMessage));
-            
+            if (outboxMessage == null)
+            {
+                throw new ArgumentNullException(nameof(outboxMessage));
+            }
+
             var type = outboxMessage.GetType();
             var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(type);
+
             if (_serviceProvider.GetService(handlerType) is IOutboxMessageHandler handler)
             {
                 return handler;
             }
 
-            throw new InvalidOperationException($"Can't resolve message handler for {type}");
+            throw new OutboxException($"Can't resolve message handler for '{handlerType}'");
         }
     }
 }

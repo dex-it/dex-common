@@ -32,11 +32,14 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     MessageType = table.Column<string>(type: "text", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
                     Retries = table.Column<int>(type: "integer", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CreatedUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     ErrorMessage = table.Column<string>(type: "text", nullable: true),
                     Error = table.Column<string>(type: "text", nullable: true),
-                    Updated = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                    Updated = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    LockTimeout = table.Column<TimeSpan>(type: "interval", nullable: false),
+                    LockId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LockExpirationTimeUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -63,10 +66,10 @@ namespace Dex.Cap.Ef.Tests.Migrations
                 column: "Created");
 
             migrationBuilder.CreateIndex(
-                name: "IX_outbox_Created",
+                name: "IX_outbox_CreatedUtc",
                 schema: "cap",
                 table: "outbox",
-                column: "Created");
+                column: "CreatedUtc");
 
             migrationBuilder.CreateIndex(
                 name: "IX_outbox_Retries",

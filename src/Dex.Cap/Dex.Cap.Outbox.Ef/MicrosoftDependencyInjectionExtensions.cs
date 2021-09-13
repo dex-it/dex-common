@@ -8,9 +8,13 @@ namespace Dex.Cap.Outbox.Ef
     {
         public static IServiceCollection AddOutbox<TDbContext>(this IServiceCollection serviceProvider) where TDbContext : DbContext
         {
-            if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
-            
-            return serviceProvider.AddScoped<IOutboxService, OutboxService>()
+            if (serviceProvider == null)
+            {
+                throw new ArgumentNullException(nameof(serviceProvider));
+            }
+
+            return serviceProvider
+                .AddScoped<IOutboxService, OutboxService>()
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
                 .AddScoped<IOutboxDataProvider, OutboxDataProviderEf<TDbContext>>()
