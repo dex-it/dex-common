@@ -20,11 +20,15 @@ namespace Dex.Cap.Outbox
         public async Task<Guid> ExecuteOperationAsync<T>(Guid correlationId, Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
             where T : IOutboxMessage
         {
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            if (operation == null)
+            {
+                throw new ArgumentNullException(nameof(operation));
+            }
 
             await _outboxDataProvider.ExecuteInTransactionAsync(correlationId,
                 async token => await EnqueueAsync(correlationId, await operation(token).ConfigureAwait(false), token).ConfigureAwait(false),
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken)
+                .ConfigureAwait(false);
 
             return correlationId;
         }
@@ -33,21 +37,23 @@ namespace Dex.Cap.Outbox
         {
             var assemblyQualifiedName = message.GetType().AssemblyQualifiedName;
             if (assemblyQualifiedName == null)
+            {
                 throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
+            }
 
             var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message));
             await _outboxDataProvider.AddAsync(outbox, cancellationToken).ConfigureAwait(false);
             return correlationId;
         }
 
-        public Task<Guid> EnqueueAsync<T>(T message, CancellationToken cancellationToken) where T : IOutboxMessage
+        public async Task<Guid> EnqueueAsync<T>(T message, CancellationToken cancellationToken) where T : IOutboxMessage
         {
-            return EnqueueAsync(Guid.NewGuid(), message, cancellationToken);
+            return await EnqueueAsync(Guid.NewGuid(), message, cancellationToken).ConfigureAwait(false);
         }
 
-        public Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken)
+        public async Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken)
         {
-            return _outboxDataProvider.IsExistsAsync(correlationId, cancellationToken);
+            return await _outboxDataProvider.IsExistsAsync(correlationId, cancellationToken).ConfigureAwait(false);
         }
     }
 }

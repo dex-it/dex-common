@@ -49,7 +49,10 @@ namespace Dex.Cap.Outbox.Ef
 
         public override Task<OutboxEnvelope> AddAsync(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
-            if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
+            if (outboxEnvelope == null)
+            {
+                throw new ArgumentNullException(nameof(outboxEnvelope));
+            }
 
             var entityEntry = _dbContext.Set<OutboxEnvelope>().Add(outboxEnvelope);
             return Task.FromResult(entityEntry.Entity);
