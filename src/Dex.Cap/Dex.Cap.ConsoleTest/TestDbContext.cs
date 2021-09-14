@@ -8,9 +8,6 @@ namespace Dex.Cap.ConsoleTest
 {
     public class TestDbContext : DbContext
     {
-        //public DbSet<User> Users { get; set; }
-
-
         private static readonly ILoggerFactory _loggerFactory
             = LoggerFactory.Create(builder => 
             {
@@ -20,27 +17,17 @@ namespace Dex.Cap.ConsoleTest
 
         public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
-
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-
-            //optionsBuilder.UseNpgsql(o => o.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), builder => { builder.EnableRetryOnFailure(); });
-
             optionsBuilder.UseLoggerFactory(_loggerFactory).EnableSensitiveDataLogging();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            //var userEntity = modelBuilder.Entity<User>();
-            //userEntity.HasKey(x => x.Id);
-            //userEntity.HasIndex(x => x.Name).IsUnique();
-
-            //modelBuilder.OnceExecutorModelCreating();
             modelBuilder.OutboxModelCreating();
         }
     }

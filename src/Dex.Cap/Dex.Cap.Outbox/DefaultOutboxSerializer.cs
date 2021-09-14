@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox
 {

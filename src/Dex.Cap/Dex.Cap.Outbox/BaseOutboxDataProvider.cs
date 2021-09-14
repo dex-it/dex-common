@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    public abstract class BaseOutboxDataProvider : IOutboxDataProvider
+    internal abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
         public abstract Task ExecuteInTransactionAsync(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
         public abstract Task<OutboxEnvelope> AddAsync(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
@@ -47,7 +47,7 @@ namespace Dex.Cap.Outbox
             await CompleteJobAsync(outboxJob, cancellationToken).ConfigureAwait(false);
         }
 
-        protected abstract Task CompleteJobAsync(IOutboxLockedJob outboxJob, CancellationToken cancellationToken);
+        protected abstract Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken);
 
         public virtual bool IsDbTransientError(Exception ex)
         {

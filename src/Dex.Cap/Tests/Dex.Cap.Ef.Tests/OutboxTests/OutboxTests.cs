@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
-using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Outbox.Command.Test;

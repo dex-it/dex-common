@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Dex.Cap.ConsoleTest\Dex.Cap.ConsoleTest.csproj" />
     <ProjectReference Include="..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
     <ProjectReference Include="..\Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.Scheduler.csproj" />
   </ItemGroup>

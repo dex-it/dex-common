@@ -18,7 +18,7 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Ef
 {
-    public class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider where TDbContext : DbContext
+    internal class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider where TDbContext : DbContext
     {
         private readonly TDbContext _dbContext;
         private readonly ILogger _logger;
@@ -86,26 +86,26 @@ namespace Dex.Cap.Outbox.Ef
         }
 
         /// <exception cref="RetryLimitExceededException"/>
-        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxJob, CancellationToken cancellationToken)
+        protected override async Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            await strategy.ExecuteInTransactionAsync((_dbContext, outboxJob), static async (state, ct) =>
+            await strategy.ExecuteInTransactionAsync((_dbContext, lockedJob), static async (state, ct) =>
             {
-                var (dbContext, outboxJob) = state;
+                var (dbContext, lockedJob) = state;
 
                 var job = await dbContext.Set<OutboxEnvelope>()
-                    .Where(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId))
+                    .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
                     .FirstOrDefaultAsync(ct)
                     .ConfigureAwait(false);
 
                 if (job != null)
                 {
-                    job.Status = outboxJob.Envelope.Status;
-                    job.Updated = outboxJob.Envelope.Updated;
-                    job.Retries = outboxJob.Envelope.Retries;
-                    job.ErrorMessage = outboxJob.Envelope.ErrorMessage;
-                    job.Error = outboxJob.Envelope.Error;
+                    job.Status = lockedJob.Envelope.Status;
+                    job.Updated = lockedJob.Envelope.Updated;
+                    job.Retries = lockedJob.Envelope.Retries;
+                    job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
+                    job.Error = lockedJob.Envelope.Error;
                     job.LockId = null;
 
                     await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -119,11 +119,11 @@ namespace Dex.Cap.Outbox.Ef
             {
                 var (dbContext, outboxJob) = state;
 
-                bool hasLocked = await dbContext.Set<OutboxEnvelope>()
+                bool existLocked = await dbContext.Set<OutboxEnvelope>()
                     .AnyAsync(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId), ct)
                     .ConfigureAwait(false);
 
-                return !hasLocked;
+                return !existLocked;
             },
             IsolationLevel.RepeatableRead,
             cancellationToken)

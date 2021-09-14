@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Dex.Cap.Outbox
+namespace Dex.Cap.Outbox.Interfaces
 {
     public interface IOutboxSerializer
     {

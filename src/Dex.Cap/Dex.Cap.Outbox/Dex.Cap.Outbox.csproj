@@ -27,16 +27,16 @@
 
   <ItemGroup>
     <Compile Remove="Outbox\Neo4j\**" />
-    <Compile Update="OutboxHandler.cs">
+    <Compile Update="Interfaces\OutboxHandler.cs">
       <DependentUpon>IOutboxHandler.cs</DependentUpon>
     </Compile>
-    <Compile Update="OutboxService.cs">
+    <Compile Update="Interfaces\OutboxService.cs">
       <DependentUpon>IOutboxService.cs</DependentUpon>
     </Compile>
     <Compile Update="BaseOutboxDataProvider.cs">
       <DependentUpon>IOutboxDataProvider.cs</DependentUpon>
     </Compile>
-    <Compile Update="OutboxMessageHandlerFactory.cs">
+    <Compile Update="Interfaces\OutboxMessageHandlerFactory.cs">
       <DependentUpon>IOutboxMessageHandlerFactory.cs</DependentUpon>
     </Compile>
     <Compile Update="DefaultOutboxSerializer.cs">

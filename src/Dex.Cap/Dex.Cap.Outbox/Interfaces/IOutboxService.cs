@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Cap.Outbox
+namespace Dex.Cap.Outbox.Interfaces
 {
     public interface IOutboxService
     {
@@ -17,7 +16,7 @@ namespace Dex.Cap.Outbox
         /// Perform only publish outbox message to queue. This method don't check Transaction, only append outbox message to change context.
         /// </summary>
         Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, CancellationToken cancellationToken) where T : IOutboxMessage;
-        
+
         /// <summary>
         /// Perform only publish outbox message to queue. This method don't check Transaction, only append outbox message to change context.
         /// </summary>

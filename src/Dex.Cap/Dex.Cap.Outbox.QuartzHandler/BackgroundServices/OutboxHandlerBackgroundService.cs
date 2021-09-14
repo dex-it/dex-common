@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Scheduler.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

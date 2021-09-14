@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Dex.Cap.Outbox
+namespace Dex.Cap.Outbox.Interfaces
 {
     public interface IOutboxHandler
     {

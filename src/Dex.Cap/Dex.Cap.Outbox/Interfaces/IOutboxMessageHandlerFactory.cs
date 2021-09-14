@@ -1,6 +1,4 @@
-﻿using Dex.Cap.Outbox.Interfaces;
-
-namespace Dex.Cap.Outbox
+﻿namespace Dex.Cap.Outbox.Interfaces
 {
     public interface IOutboxMessageHandlerFactory
     {

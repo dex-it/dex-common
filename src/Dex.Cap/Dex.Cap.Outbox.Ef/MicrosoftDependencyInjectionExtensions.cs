@@ -1,4 +1,5 @@
 using System;
+using Dex.Cap.Outbox.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

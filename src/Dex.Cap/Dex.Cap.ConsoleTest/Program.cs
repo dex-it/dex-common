@@ -2,7 +2,6 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -30,8 +29,8 @@ namespace Dex.Cap.ConsoleTest
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            //await client.Enqueue(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
-            //await client.Enqueue(new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
 
             await Save(sp);
 

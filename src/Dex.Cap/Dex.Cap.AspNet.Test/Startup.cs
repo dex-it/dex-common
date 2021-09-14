@@ -1,4 +1,6 @@
+using Dex.Cap.ConsoleTest;
 using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Scheduler;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -25,6 +27,7 @@ namespace Dex.Cap.AspNet.Test
             });
 
             services.AddOutbox<TestDbContext>();
+            services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
             services.RegisterOutboxScheduler(periodSeconds: 30, cleanupDays: 30);
         }
 
