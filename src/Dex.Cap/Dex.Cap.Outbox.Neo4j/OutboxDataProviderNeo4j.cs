@@ -14,7 +14,7 @@ using Neo4jClient.Transactions;
 namespace Dex.Cap.Outbox.Neo4j
 {
     // ReSharper disable once InconsistentNaming
-    public class OutboxDataProviderNeo4j : BaseOutboxDataProvider
+    internal class OutboxDataProviderNeo4j : BaseOutboxDataProvider
     {
         private readonly ITransactionalGraphClient _graphClient;
         private readonly OutboxOptions _outboxOptions;
