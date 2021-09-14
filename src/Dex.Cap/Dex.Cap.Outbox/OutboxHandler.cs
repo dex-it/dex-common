@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,7 +35,7 @@ namespace Dex.Cap.Outbox
         {
             _logger.LogTrace("Outbox processor has been started");
 
-            var enumerable = _dataProvider.GetWaitingMessages(cancellationToken);
+            var enumerable = _dataProvider.GetWaitingJobs(cancellationToken);
             var enumerator = enumerable.GetAsyncEnumerator(cancellationToken);
             try
             {
@@ -45,9 +46,9 @@ namespace Dex.Cap.Outbox
                         var job = enumerator.Current;
                         try
                         {
-                            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.CancellationToken, cancellationToken))
+                            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken))
                             {
-                                await ProcessMessage(job, cts.Token).ConfigureAwait(false);
+                                await ProcessJob(job, cts.Token).ConfigureAwait(false);
                             }
                         }
                         finally
@@ -70,22 +71,34 @@ namespace Dex.Cap.Outbox
             }
         }
 
+        [DoesNotReturn]
+        private static void ThrowCantResolve(string messageType)
+        {
+            throw new OutboxException($"Can't resolve type of message '{messageType}'");
+        }
+        
+        [DoesNotReturn]
+        private static void ThrowUnableCast(string messageType)
+        {
+            throw new OutboxException($"Message '{messageType}' are not of '{nameof(IOutboxMessage)}' type");
+        }
+
         /// <exception cref="OperationCanceledException"/>
-        private async Task ProcessMessage(IOutboxLockedJob job, CancellationToken cancellationToken)
+        private async Task ProcessJob(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
             _logger.LogDebug("Message has been started to process {MessageId}", job.Envelope.Id);
 
             try
             {
-                await ProcessMessageCore(job, cancellationToken).ConfigureAwait(false);
+                await ProcessJobCore(job, cancellationToken).ConfigureAwait(false);
                 _logger.LogDebug("Message {MessageId} has been processed", job.Envelope.Id);
             }
-            catch (OperationCanceledException) when (job.CancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (job.LockToken.IsCancellationRequested)
             // Истекло время аренды блокировки.
             {
                 _logger.LogError(LockTimeoutMessage, job.Envelope.Id);
             }
-            catch (OperationCanceledException) when (!job.CancellationToken.IsCancellationRequested && cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested && cancellationToken.IsCancellationRequested)
             // Пользователь запросил отмену.
             {
                 _logger.LogError(UserCanceledMessageWithId, job.Envelope.Id);
@@ -107,14 +120,14 @@ namespace Dex.Cap.Outbox
         private async Task UnlockJobOnUserCancel(IOutboxLockedJob job)
         {
             // Несмотря на запрос отмены пользователем, нам лучше освободить блокировку задачи за разумно малое время.
-            using (var linked = CancellationTokenSource.CreateLinkedTokenSource(job.CancellationToken))
+            using (var linked = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken))
             {
                 linked.CancelAfter(1_000);
                 try
                 {
                     await _dataProvider.FailAsync(job, linked.Token, UserCanceledDbMessage).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (!job.CancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested)
                 {
                     _logger.LogError("Could not release the message for 1 second after the user cancellation request. MessageId: {MessageId}", job.Envelope.Id);
                 }
@@ -126,12 +139,12 @@ namespace Dex.Cap.Outbox
         }
 
         /// <exception cref="OutboxException"/>
-        private async Task ProcessMessageCore(IOutboxLockedJob job, CancellationToken cancellationToken)
+        private async Task ProcessJobCore(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
             var messageType = Type.GetType(job.Envelope.MessageType);
             if (messageType == null)
             {
-                throw new OutboxException($"Can't resolve type of message '{job.Envelope.MessageType}'");
+                ThrowCantResolve(job.Envelope.MessageType);
             }
 
             var msg = _serializer.Deserialize(messageType, job.Envelope.Content);
@@ -145,7 +158,7 @@ namespace Dex.Cap.Outbox
             else
             {
                 job.Envelope.Retries = int.MaxValue;
-                throw new OutboxException($"Message '{job.Envelope.MessageType}' are not of '{nameof(IOutboxMessage)}' type");
+                ThrowUnableCast(job.Envelope.MessageType);
             }
         }
 

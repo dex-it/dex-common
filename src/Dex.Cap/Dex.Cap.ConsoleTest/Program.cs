@@ -10,6 +10,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Quartz.Impl;
+using Quartz;
+using Quartz.Spi;
+using System.Data;
+using System.ComponentModel;
+using Dex.Cap.Outbox.Scheduler;
 
 namespace Dex.Cap.ConsoleTest
 {
@@ -42,34 +48,37 @@ namespace Dex.Cap.ConsoleTest
 
             var cts = new CancellationTokenSource();
 
-            for (int i = 0; i < 2; i++)
-            {
-                _ = Task.Run(async () =>
-                {
-                    ThreadName = new AsyncLocal<string>
-                    {
-                        Value = "Thread_" + i
-                    };
+            //for (int i = 0; i < 2; i++)
+            //{
+            //    _ = Task.Run(async () =>
+            //    {
+            //        ThreadName = new AsyncLocal<string>
+            //        {
+            //            Value = "Thread_" + i
+            //        };
 
-                    //await Task.Yield();
+            //        //await Task.Yield();
 
-                    while (true)
-                    {
-                        using var scope = sp.CreateScope();
-                        var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
+            //        while (true)
+            //        {
+            //            using var scope = sp.CreateScope();
+            //            var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
 
-                        try
-                        {
-                            await handler.ProcessAsync(cts.Token);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                        }
-                        Thread.Sleep(3000);
-                    }
-                });
-                //Thread.Sleep(500);
-            }
+            //            try
+            //            {
+            //                await handler.ProcessAsync(cts.Token);
+            //            }
+            //            catch (OperationCanceledException)
+            //            {
+            //            }
+            //            Thread.Sleep(3000);
+            //        }
+            //    });
+            //    //Thread.Sleep(500);
+            //}
+
+            // Grab the Scheduler instance from the Factory 
+
             Thread.Sleep(-1);
         }
 
@@ -78,7 +87,8 @@ namespace Dex.Cap.ConsoleTest
             return new ServiceCollection()
                 .AddLogging(lb => lb.AddConsole().SetMinimumLevel(LogLevel.Trace))
                 .AddDbContext<TestDbContext>(o => o.UseNpgsql(configuration.GetConnectionString("DefaultConnection")))
-                .AddOutbox<TestDbContext>();
+                .AddOutbox<TestDbContext>()
+                .RegisterOutboxScheduler();
         }
 
         private static async Task Save(IServiceProvider sp)

@@ -1,39 +1,41 @@
 ﻿using System;
+using Dex.Cap.Outbox.Scheduler.BackgroundServices;
+using Dex.Cap.Outbox.Scheduler.Interfaces;
+using Dex.Cap.Outbox.Scheduler.Options;
 using Microsoft.Extensions.DependencyInjection;
-using Quartz;
 
-namespace Dex.Cap.Outbox.QuartzHandler
+namespace Dex.Cap.Outbox.Scheduler
 {
     public static class MicrosoftDependencyInjectionExtensions
     {
-        public static void RegisterOutboxInQuartz(this IServiceCollection services, int periodSeconds = 30)
+        public static IServiceCollection RegisterOutboxScheduler(this IServiceCollection services, int periodSeconds = 30, int cleanupDays = 30)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-
-            services.AddQuartz(q =>
+            if (services == null)
             {
-                q.UseMicrosoftDependencyInjectionJobFactory();
-                q.UseInMemoryStore();
+                throw new ArgumentNullException(nameof(services));
+            }
 
-                // job OutboxJob
-                q.ScheduleJob<OutboxHandlerJob>(c =>
+            if (periodSeconds <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(periodSeconds), periodSeconds, "Should be a positive number");
+            }
+            
+            if (cleanupDays <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(cleanupDays), cleanupDays, "Should be a positive number");
+            }
+
+            services
+                .AddSingleton(new OutboxHandlerOptions() 
                 {
-                    c.WithIdentity("Outbox_scheduler");
-                    c.WithDescription("Outbox scheduler");
+                    Period = TimeSpan.FromSeconds(periodSeconds),
+                    CleanupOlderThan = TimeSpan.FromDays(cleanupDays)
+                })
+                .AddScoped<IOutboxCleanerHandler, OutboxCleanerHandler>()
+                .AddHostedService<OutboxHandlerBackgroundService>()
+                .AddHostedService<OutboxCleanerBackgroundService>();
 
-                    c.StartNow()
-                        .WithSimpleSchedule(b =>
-                        {
-                            // schedule
-                            b.WithInterval(TimeSpan.FromSeconds(periodSeconds)).RepeatForever();
-                        });
-                });
-            });
-            services.AddQuartzServer(options =>
-            {
-                // when shutting down we want jobs to complete gracefully
-                options.WaitForJobsToComplete = true;
-            });
+            return services;
         }
     }
 }

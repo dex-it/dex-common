@@ -13,7 +13,7 @@ namespace Dex.Cap.Outbox
         public abstract Task ExecuteInTransactionAsync(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
         public abstract Task<OutboxEnvelope> AddAsync(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
         public abstract Task<bool> IsExistsAsync(Guid correlationId, CancellationToken cancellationToken);
-        public abstract IAsyncEnumerable<IOutboxLockedJob> GetWaitingMessages(CancellationToken cancellationToken);
+        public abstract IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs(CancellationToken cancellationToken);
 
         public virtual async Task FailAsync(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null)
         {
@@ -52,6 +52,11 @@ namespace Dex.Cap.Outbox
         public virtual bool IsDbTransientError(Exception ex)
         {
             return false;
+        }
+
+        public virtual Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(0);
         }
     }
 }

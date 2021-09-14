@@ -49,7 +49,7 @@ namespace Dex.Cap.Outbox.Neo4j
             throw new NotImplementedException();
         }
 
-        public override async IAsyncEnumerable<IOutboxLockedJob> GetWaitingMessages([EnumeratorCancellation] CancellationToken cancellationToken)
+        public override async IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs([EnumeratorCancellation] CancellationToken cancellationToken)
         {
             const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
             const OutboxMessageStatus newStatus = OutboxMessageStatus.New;

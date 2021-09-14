@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Dex.Cap.Outbox.Helpers;
 using Dex.Cap.Outbox.Models;
 
@@ -28,7 +24,7 @@ namespace Dex.Cap.Outbox.Jobs
 
         public OutboxEnvelope Envelope { get; }
         public Guid LockId { get; }
-        public CancellationToken CancellationToken => _cancellationToken;
+        public CancellationToken LockToken => _cancellationToken;
 
         public void Dispose()
         {
@@ -36,7 +32,6 @@ namespace Dex.Cap.Outbox.Jobs
             {
                 _disposed = true;
                 NullableHelper.SetNull(ref _cts)?.Dispose();
-                //_releaseCallback = null;
             }
         }
 
@@ -48,22 +43,22 @@ namespace Dex.Cap.Outbox.Jobs
         //}
 
         //[MemberNotNull(nameof(_releaseCallback))]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CheckDisposed()
-        {
-            if (!_disposed)
-            {
-                //Debug.Assert(_releaseCallback != null);
-                return;
-            }
-            Throw();
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //private void CheckDisposed()
+        //{
+        //    if (!_disposed)
+        //    {
+        //        //Debug.Assert(_releaseCallback != null);
+        //        return;
+        //    }
+        //    Throw();
+        //}
 
-        [DoesNotReturn]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void Throw()
-        {
-            throw new ObjectDisposedException(GetType().Name);
-        }
+        //[DoesNotReturn]
+        //[MethodImpl(MethodImplOptions.NoInlining)]
+        //private void Throw()
+        //{
+        //    throw new ObjectDisposedException(GetType().Name);
+        //}
     }
 }

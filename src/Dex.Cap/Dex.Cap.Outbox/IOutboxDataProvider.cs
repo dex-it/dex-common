@@ -18,8 +18,12 @@ namespace Dex.Cap.Outbox
         Task SucceedAsync(IOutboxLockedJob outboxJob, CancellationToken cancellationToken);
 
         /// <exception cref="OperationCanceledException"/>
-        IAsyncEnumerable<IOutboxLockedJob> GetWaitingMessages(CancellationToken cancellationToken);
+        IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs(CancellationToken cancellationToken);
         
         Task<bool> IsExistsAsync(Guid correlationId, CancellationToken cancellationToken);
+
+        /// <returns>Число удалённых записей.</returns>
+        /// <exception cref="OperationCanceledException"/>
+        Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken);
     }
 }

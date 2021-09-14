@@ -10,10 +10,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.7" />
+    <PackageReference Include="Quartz" Version="3.3.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
+    <ProjectReference Include="..\Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.Scheduler.csproj" />
     <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
   </ItemGroup>
 

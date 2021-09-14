@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Ef.Tests", "Tests\D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Outbox.Command.Test", "Tests\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj", "{D200766A-2301-424F-9230-939D4F9B8126}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Outbox.QuartzHandler", "Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.QuartzHandler.csproj", "{37C2F350-5FF3-4B8A-9455-6DA91D051DC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.Outbox.Scheduler", "Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.Scheduler.csproj", "{37C2F350-5FF3-4B8A-9455-6DA91D051DC7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.OnceExecutor.ClickHouse", "Dex.Cap.OnceExecutor.ClickHouse\Dex.Cap.OnceExecutor.ClickHouse.csproj", "{3863C051-BDF6-4013-8D7C-332A1E12E479}"
 EndProject
@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.ConsoleTest", "Dex.Cap.ConsoleTest\Dex.Cap.ConsoleTest.csproj", "{7C7253DA-8834-45A3-92EA-B1108575C5DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.AspNet.Test", "Dex.Cap.AspNet.Test\Dex.Cap.AspNet.Test.csproj", "{B4988997-828F-40FE-8DE7-12A03C43FC28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -88,6 +90,10 @@ Global
 		{7C7253DA-8834-45A3-92EA-B1108575C5DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C7253DA-8834-45A3-92EA-B1108575C5DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C7253DA-8834-45A3-92EA-B1108575C5DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4988997-828F-40FE-8DE7-12A03C43FC28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4988997-828F-40FE-8DE7-12A03C43FC28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4988997-828F-40FE-8DE7-12A03C43FC28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4988997-828F-40FE-8DE7-12A03C43FC28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -97,6 +103,7 @@ Global
 		{D200766A-2301-424F-9230-939D4F9B8126} = {05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}
 		{4F80AF62-1C1F-4FE2-AB40-C9F4BCFBF36F} = {05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}
 		{7C7253DA-8834-45A3-92EA-B1108575C5DA} = {05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}
+		{B4988997-828F-40FE-8DE7-12A03C43FC28} = {05DB66E6-8A8E-46F9-B0C6-10BDE760A2DF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61070EF3-9A74-4E42-9835-3DDAAEB94E70}
