@@ -21,7 +21,7 @@ namespace Dex.Cap.Outbox.Ef
             _logger = logger;
         }
 
-        public override async Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken)
+        public override async Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
         {
             int removedCount = 0;
 

@@ -108,12 +108,12 @@ namespace Dex.Cap.Outbox
             catch (OutboxException ex)
             {
                 _logger.LogError(ex, ex.Message, job.Envelope.Id);
-                await _dataProvider.FailAsync(job, cancellationToken, ex.Message).ConfigureAwait(false);
+                await _dataProvider.Fail(job, cancellationToken, ex.Message).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process {MessageId}", job.Envelope.Id);
-                await _dataProvider.FailAsync(job, cancellationToken, ex.Message, ex).ConfigureAwait(false);
+                await _dataProvider.Fail(job, cancellationToken, ex.Message, ex).ConfigureAwait(false);
             }
         }
 
@@ -125,7 +125,7 @@ namespace Dex.Cap.Outbox
                 linked.CancelAfter(1_000);
                 try
                 {
-                    await _dataProvider.FailAsync(job, linked.Token, UserCanceledDbMessage).ConfigureAwait(false);
+                    await _dataProvider.Fail(job, linked.Token, UserCanceledDbMessage).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested)
                 {
@@ -153,7 +153,7 @@ namespace Dex.Cap.Outbox
             if (msg is IOutboxMessage outboxMessage)
             {
                 await ProcessOutboxMessageCore(outboxMessage, cancellationToken).ConfigureAwait(false);
-                await _dataProvider.SucceedAsync(job, cancellationToken).ConfigureAwait(false);
+                await _dataProvider.Succeed(job, cancellationToken).ConfigureAwait(false);
             }
             else
             {

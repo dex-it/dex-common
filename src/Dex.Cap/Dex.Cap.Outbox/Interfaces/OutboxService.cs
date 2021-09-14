@@ -25,7 +25,7 @@ namespace Dex.Cap.Outbox
                 throw new ArgumentNullException(nameof(operation));
             }
 
-            await _outboxDataProvider.ExecuteInTransactionAsync(correlationId,
+            await _outboxDataProvider.ExecuteInTransaction(correlationId,
                 async token => await EnqueueAsync(correlationId, await operation(token).ConfigureAwait(false), token).ConfigureAwait(false),
                 cancellationToken)
                 .ConfigureAwait(false);
@@ -42,7 +42,7 @@ namespace Dex.Cap.Outbox
             }
 
             var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message));
-            await _outboxDataProvider.AddAsync(outbox, cancellationToken).ConfigureAwait(false);
+            await _outboxDataProvider.Add(outbox, cancellationToken).ConfigureAwait(false);
             return correlationId;
         }
 
@@ -53,7 +53,7 @@ namespace Dex.Cap.Outbox
 
         public async Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken)
         {
-            return await _outboxDataProvider.IsExistsAsync(correlationId, cancellationToken).ConfigureAwait(false);
+            return await _outboxDataProvider.IsExists(correlationId, cancellationToken).ConfigureAwait(false);
         }
     }
 }

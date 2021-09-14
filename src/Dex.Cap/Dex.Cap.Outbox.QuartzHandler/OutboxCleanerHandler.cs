@@ -18,11 +18,11 @@ namespace Dex.Cap.Outbox.Scheduler
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task ExecuteAsync(TimeSpan olderThan, CancellationToken cancellationToken)
+        public async Task Execute(TimeSpan olderThan, CancellationToken cancellationToken)
         {
             _logger.LogTrace("Performing cleanup");
 
-            int removedMessages = await _outboxDataProvider.CleanupAsync(olderThan, cancellationToken).ConfigureAwait(false);
+            int removedMessages = await _outboxDataProvider.Cleanup(olderThan, cancellationToken).ConfigureAwait(false);
 
             if (removedMessages > 0)
             {

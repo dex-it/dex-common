@@ -64,7 +64,7 @@ namespace Dex.Cap.Outbox.Scheduler.BackgroundServices
             logger.LogTrace("Executing Outbox cleaner");
             try
             {
-                await service.ExecuteAsync(_options.CleanupOlderThan, cancellationToken);
+                await service.Execute(_options.CleanupOlderThan, cancellationToken);
                 logger.LogTrace("Outbox cleaner finished");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

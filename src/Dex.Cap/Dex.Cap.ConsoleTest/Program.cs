@@ -55,10 +55,10 @@ namespace Dex.Cap.ConsoleTest
                         catch (OperationCanceledException)
                         {
                         }
-                        Thread.Sleep(3000);
+                        Thread.Sleep(10_000);
                     }
                 });
-                //Thread.Sleep(500);
+                Thread.Sleep(500);
             }
 
             Thread.Sleep(-1);

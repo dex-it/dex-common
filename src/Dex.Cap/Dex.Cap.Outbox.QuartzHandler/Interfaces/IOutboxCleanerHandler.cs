@@ -7,6 +7,6 @@ namespace Dex.Cap.Outbox.Scheduler.Interfaces
     internal interface IOutboxCleanerHandler
     {
         /// <exception cref="OperationCanceledException"/>
-        Task ExecuteAsync(TimeSpan olderThan, CancellationToken cancellationToken);
+        Task Execute(TimeSpan olderThan, CancellationToken cancellationToken);
     }
 }

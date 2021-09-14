@@ -25,7 +25,7 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        public override async Task ExecuteInTransactionAsync(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
         {
             using (var transaction = _graphClient.BeginTransaction())
             {
@@ -34,7 +34,7 @@ namespace Dex.Cap.Outbox.Neo4j
             }
         }
 
-        public override async Task<OutboxEnvelope> AddAsync(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             await _graphClient.Cypher
                 .Create($"(outbox:{nameof(Outbox)})")
@@ -44,7 +44,7 @@ namespace Dex.Cap.Outbox.Neo4j
             return outboxEnvelope;
         }
 
-        public override Task<bool> IsExistsAsync(Guid correlationId, CancellationToken cancellationToken)
+        public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

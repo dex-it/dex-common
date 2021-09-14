@@ -8,6 +8,6 @@ namespace Dex.Cap.Outbox.Interfaces
     {
         /// <returns>Число удалённых записей.</returns>
         /// <exception cref="OperationCanceledException"/>
-        Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken);
+        Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken);
     }
 }

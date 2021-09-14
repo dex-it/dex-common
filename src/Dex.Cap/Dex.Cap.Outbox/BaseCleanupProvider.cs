@@ -7,7 +7,7 @@ namespace Dex.Cap.Outbox
 {
     internal abstract class BaseCleanupProvider : IOutboxCleanupDataProvider
     {
-        public virtual Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken)
+        public virtual Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
         {
             return Task.FromResult(0);
         }

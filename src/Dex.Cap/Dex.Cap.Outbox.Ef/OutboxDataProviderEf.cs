@@ -36,7 +36,7 @@ namespace Dex.Cap.Outbox.Ef
             _outboxOptions = outboxOptions.Value;
         }
 
-        public override async Task ExecuteInTransactionAsync(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             await strategy.ExecuteInTransactionAsync(async () =>
@@ -44,10 +44,10 @@ namespace Dex.Cap.Outbox.Ef
                 _dbContext.ChangeTracker.Clear();
                 await operation(cancellationToken).ConfigureAwait(false);
                 await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }, () => IsExistsAsync(correlationId, cancellationToken)).ConfigureAwait(false);
+            }, () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
         }
 
-        public override Task<OutboxEnvelope> AddAsync(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
             if (outboxEnvelope == null)
             {
@@ -83,7 +83,7 @@ namespace Dex.Cap.Outbox.Ef
             }
         }
 
-        public override Task<bool> IsExistsAsync(Guid correlationId, CancellationToken cancellationToken)
+        public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
         {
             return _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == correlationId, cancellationToken);
         }
