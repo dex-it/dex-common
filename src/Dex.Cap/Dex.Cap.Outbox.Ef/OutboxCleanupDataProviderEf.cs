@@ -30,11 +30,11 @@ namespace Dex.Cap.Outbox.Ef
 
             if (finishedMessages.Length == 0)
             {
-                _logger.LogTrace("No messages older than {span}", olderThan);
+                _logger.LogTrace("No messages older than {Span}", olderThan);
                 return removedCount;
             }
 
-            _logger.LogInformation("Found {Count} messages older than {span}", olderThan);
+            _logger.LogInformation("Found {Count} messages older than {Span}", olderThan);
 
             foreach (var messageId in finishedMessages)
             {

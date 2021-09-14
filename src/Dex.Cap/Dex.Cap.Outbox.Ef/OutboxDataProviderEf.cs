@@ -94,42 +94,42 @@ namespace Dex.Cap.Outbox.Ef
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteInTransactionAsync((_dbContext, lockedJob), static async (state, ct) =>
-            {
-                var (dbContext, lockedJob) = state;
+                    {
+                        var (dbContext, lockedJob) = state;
 
-                var job = await dbContext.Set<OutboxEnvelope>()
-                    .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
-                    .FirstOrDefaultAsync(ct)
-                    .ConfigureAwait(false);
+                        var job = await dbContext.Set<OutboxEnvelope>()
+                            .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
+                            .FirstOrDefaultAsync(ct)
+                            .ConfigureAwait(false);
 
-                if (job != null)
-                {
-                    job.Status = lockedJob.Envelope.Status;
-                    job.Updated = lockedJob.Envelope.Updated;
-                    job.Retries = lockedJob.Envelope.Retries;
-                    job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
-                    job.Error = lockedJob.Envelope.Error;
-                    job.LockId = null;
+                        if (job != null)
+                        {
+                            job.Status = lockedJob.Envelope.Status;
+                            job.Updated = lockedJob.Envelope.Updated;
+                            job.Retries = lockedJob.Envelope.Retries;
+                            job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
+                            job.Error = lockedJob.Envelope.Error;
+                            job.LockId = null;
 
-                    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Истекло время блокировки.
-                }
-            },
-            static async (state, ct) =>
-            {
-                var (dbContext, outboxJob) = state;
+                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            // Истекло время блокировки.
+                        }
+                    },
+                    static async (state, ct) =>
+                    {
+                        var (dbContext, outboxJob) = state;
 
-                bool existLocked = await dbContext.Set<OutboxEnvelope>()
-                    .AnyAsync(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId), ct)
-                    .ConfigureAwait(false);
+                        bool existLocked = await dbContext.Set<OutboxEnvelope>()
+                            .AnyAsync(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId), ct)
+                            .ConfigureAwait(false);
 
-                return !existLocked;
-            },
-            IsolationLevel.RepeatableRead,
-            cancellationToken)
+                        return !existLocked;
+                    },
+                    IsolationLevel.RepeatableRead,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId)
@@ -160,8 +160,8 @@ namespace Dex.Cap.Outbox.Ef
             {
                 var lockedMessage = await TryLockMessage(freeMessage.Id, lockId, cts?.Token ?? default, cancellationToken).ConfigureAwait(false);
 
-                return lockedMessage != null 
-                    ? new OutboxLockedJob(lockedMessage, lockId, NullableHelper.SetNull(ref cts)) 
+                return lockedMessage != null
+                    ? new OutboxLockedJob(lockedMessage, lockId, NullableHelper.SetNull(ref cts))
                     : null;
             }
             finally
@@ -169,7 +169,7 @@ namespace Dex.Cap.Outbox.Ef
                 cts?.Dispose();
             }
         }
-        
+
         /// <exception cref="OperationCanceledException"/>
         private async Task<OutboxEnvelope?> TryLockMessage(Guid freeMessageId, Guid lockId, CancellationToken jobTimeout, CancellationToken cancellationToken)
         {
@@ -202,52 +202,56 @@ namespace Dex.Cap.Outbox.Ef
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
             return await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId), static async (state, ct) =>
-            {
-                var (dbContext, freeMessageId, lockId) = state;
-
-                var lockedJob = await dbContext.Set<OutboxEnvelope>()
-                    .Where(WhereFree(freeMessageId))
-                    .Select(x => new
                     {
-                        DbNow = DateTime.Now, // Вытащить текущее время БД что-бы синхронизироваться.
-                        JobDb = x
-                    })
-                    .FirstOrDefaultAsync(ct)
-                    .ConfigureAwait(false);
+                        var (dbContext, freeMessageId, lockId) = state;
 
-                if (lockedJob != null)
-                {
-                    Debug.Assert(lockedJob.DbNow.Kind != DateTimeKind.Unspecified, "Опасно работать с неопределённой датой");
+                        var lockedJob = await dbContext.Set<OutboxEnvelope>()
+                            .Where(WhereFree(freeMessageId))
+                            .Select(x => new
+                            {
+                                DbNow = DateTime.Now, // Вытащить текущее время БД что-бы синхронизироваться.
+                                JobDb = x
+                            })
+                            .FirstOrDefaultAsync(ct)
+                            .ConfigureAwait(false);
 
-                    //_logger.LogTrace("Попытка захватить задачу {MessageId}", potentialFreeJobId);
+                        if (lockedJob != null)
+                        {
+                            Debug.Assert(lockedJob.DbNow.Kind != DateTimeKind.Unspecified, "Опасно работать с неопределённой датой");
 
-                    lockedJob.JobDb.LockId = lockId;
-                    lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
+                            //_logger.LogTrace("Попытка захватить задачу {MessageId}", potentialFreeJobId);
 
-                    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                            lockedJob.JobDb.LockId = lockId;
+                            lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
 
-                    var tstate = dbContext.Entry(lockedJob.JobDb).State;
-                    dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
+                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
 
-                    //_logger.LogTrace("Задача захвачена {MessageId}", potentialFreeJobId);
-                    // Thread.Sleep(2000);
+                            var tstate = dbContext.Entry(lockedJob.JobDb).State;
+                            dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
 
-                    return lockedJob.JobDb;
-                }
-                else
-                {
-                    // Другой поток обогнал и захватил эту задачу.
-                    return null;
-                }
-            },
-            static async (state, ct) =>
-            {
-                var (dbContext, freeMessageId, lockId) = state;
-                bool succeded = await dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == freeMessageId && x.LockId == lockId, ct).ConfigureAwait(false);
-                return succeded;
-            },
-            IsolationLevel.RepeatableRead,
-            cancellationToken)
+                            //_logger.LogTrace("Задача захвачена {MessageId}", potentialFreeJobId);
+                            // Thread.Sleep(2000);
+
+                            return lockedJob.JobDb;
+                        }
+                        else
+                        {
+                            // Другой поток обогнал и захватил эту задачу.
+                            return null;
+                        }
+                    },
+                    static async (state, ct) =>
+                    {
+                        var (dbContext, freeMessageId, lockId) = state;
+
+                        var succeded = await dbContext.Set<OutboxEnvelope>()
+                            .AnyAsync(x => x.Id == freeMessageId && x.LockId == lockId, ct)
+                            .ConfigureAwait(false);
+
+                        return succeded;
+                    },
+                    IsolationLevel.RepeatableRead,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             static Expression<Func<OutboxEnvelope, bool>> WhereFree(Guid messageId)

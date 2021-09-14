@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
-using Dex.Cap.Outbox.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox
