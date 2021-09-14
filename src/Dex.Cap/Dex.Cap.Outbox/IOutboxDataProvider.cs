@@ -7,7 +7,7 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    public interface IOutboxDataProvider
+    internal interface IOutboxDataProvider
     {
         Task ExecuteInTransactionAsync(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
 
@@ -21,9 +21,5 @@ namespace Dex.Cap.Outbox
         IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs(CancellationToken cancellationToken);
         
         Task<bool> IsExistsAsync(Guid correlationId, CancellationToken cancellationToken);
-
-        /// <returns>Число удалённых записей.</returns>
-        /// <exception cref="OperationCanceledException"/>
-        Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken);
     }
 }

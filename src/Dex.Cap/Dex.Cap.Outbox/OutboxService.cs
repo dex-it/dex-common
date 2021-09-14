@@ -6,7 +6,7 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    public class OutboxService : IOutboxService
+    internal sealed class OutboxService : IOutboxService
     {
         private readonly IOutboxDataProvider _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;

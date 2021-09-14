@@ -53,10 +53,5 @@ namespace Dex.Cap.Outbox
         {
             return false;
         }
-
-        public virtual Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(0);
-        }
     }
 }

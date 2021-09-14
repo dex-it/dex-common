@@ -135,27 +135,6 @@ namespace Dex.Cap.Outbox.Ef
             }
         }
 
-        public override async Task<int> CleanupAsync(TimeSpan olderThan, CancellationToken cancellationToken)
-        {
-            int removedCount = 0;
-
-            Repeat:
-            var finishedMessages = await GetFinishedMessages(limit: 1000, olderThan: olderThan, cancellationToken).ConfigureAwait(false);
-
-            if (finishedMessages.Length == 0)
-            {
-                return removedCount;
-            }
-
-            foreach (var message in finishedMessages)
-            {
-                await DeleteMessage(message, cancellationToken).ConfigureAwait(false);
-            }
-
-            removedCount += finishedMessages.Length;
-            goto Repeat;
-        }
-
         /// <summary>
         /// Пытается захватить блокировку над сообщением Outbox и создать задачу с превентивным таймаутом.
         /// </summary>
@@ -287,50 +266,6 @@ namespace Dex.Cap.Outbox.Ef
                 .ConfigureAwait(false);
 
             return potentialFree;
-        }
-
-        private async Task<Guid[]> GetFinishedMessages(int limit, TimeSpan olderThan, CancellationToken cancellationToken)
-        {
-            var finishedMessages = await _dbContext.Set<OutboxEnvelope>()
-                .Where(o => o.Status == OutboxMessageStatus.Succeeded && o.CreatedUtc + olderThan < DateTime.UtcNow)
-                .OrderBy(o => o.CreatedUtc)
-                .Take(limit)
-                .AsNoTracking()
-                .Select(x => x.Id)
-                .ToArrayAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            return finishedMessages;
-        }
-
-        private async Task DeleteMessage(Guid messageId, CancellationToken cancellationToken)
-        {
-            var strategy = _dbContext.Database.CreateExecutionStrategy();
-
-            await strategy.ExecuteInTransactionAsync((_dbContext, messageId), static async (state, ct) =>
-            {
-                var (dbContext, messageId) = state;
-
-                var lockedJob = await dbContext.Set<OutboxEnvelope>()
-                    .Where(x => x.Id == messageId)
-                    .FirstOrDefaultAsync(ct)
-                    .ConfigureAwait(false);
-
-                if (lockedJob != null)
-                {
-                    dbContext.Set<OutboxEnvelope>().Remove(lockedJob);
-                    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                }
-            },
-            static async (state, ct) =>
-            {
-                var (dbContext, messageId) = state;
-                bool exists = await dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == messageId, ct).ConfigureAwait(false);
-                return !exists;
-            },
-            IsolationLevel.RepeatableRead,
-            cancellationToken)
-                .ConfigureAwait(false);
         }
     }
 }

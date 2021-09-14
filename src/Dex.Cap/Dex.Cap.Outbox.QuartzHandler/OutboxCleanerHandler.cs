@@ -8,10 +8,10 @@ namespace Dex.Cap.Outbox.Scheduler
 {
     internal sealed class OutboxCleanerHandler : IOutboxCleanerHandler
     {
-        private readonly IOutboxDataProvider _outboxDataProvider;
+        private readonly IOutboxCleanupDataProvider _outboxDataProvider;
         private readonly ILogger _logger;
 
-        public OutboxCleanerHandler(IOutboxDataProvider outboxDataProvider, ILogger<OutboxCleanerHandler> logger)
+        public OutboxCleanerHandler(IOutboxCleanupDataProvider outboxDataProvider, ILogger<OutboxCleanerHandler> logger)
         {
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -29,7 +29,7 @@ namespace Dex.Cap.Outbox.Scheduler
             }
             else
             {
-                _logger.LogTrace("Cleanup finished. No messages to removed");
+                _logger.LogTrace("Cleanup finished. No messages to remove");
             }
         }
     }

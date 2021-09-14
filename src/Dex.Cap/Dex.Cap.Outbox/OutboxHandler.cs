@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox
 {
-    public class OutboxHandler<TDbContext> : IOutboxHandler
+    internal sealed class OutboxHandler<TDbContext> : IOutboxHandler
     {
         private const string LockTimeoutMessage = "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}";
         private const string UserCanceledDbMessage = "Operation canceled due to user request";

@@ -78,7 +78,7 @@ namespace Dex.Cap.Outbox.Scheduler.BackgroundServices
 
         private async Task InitDelay(CancellationToken cancellationToken)
         {
-            var initDelay = TimeSpan.FromMilliseconds(RandomNumberGenerator.GetInt32(2000, 10000));
+            var initDelay = TimeSpan.FromMilliseconds(RandomNumberGenerator.GetInt32(5000, 15_000));
             _logger.LogDebug("Initial delay for {Seconds} seconds to solve split brain problem", (int)initDelay.TotalSeconds);
             await Task.Delay(initDelay, cancellationToken);
         }
