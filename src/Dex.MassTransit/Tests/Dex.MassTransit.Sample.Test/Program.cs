@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Dex.MassTransit.Rabbit;
@@ -54,7 +53,7 @@ namespace Dex.MassTransit.Sample.Test
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
                             // send endpoint 
-                            context.RegisterSendEndPoint<HelloMessage>();
+                            context.RegisterSendEndPoint<HelloMessageDto>();
                         });
                     });
 
@@ -79,11 +78,13 @@ namespace Dex.MassTransit.Sample.Test
                     services.AddMassTransit(configurator =>
                     {
                         configurator.AddConsumer<HelloConsumer>();
+                        configurator.AddConsumer<HelloConsumer2>();
 
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
                             // recieve endpoint
-                            context.RegisterReceiveEndpoint<HelloConsumer, HelloMessage>(factoryConfigurator);
+                            context.RegisterReceiveEndpoint<HelloConsumer, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
                         });
                     });
 

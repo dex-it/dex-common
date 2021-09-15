@@ -35,7 +35,10 @@ namespace Dex.CreditCard.Tests
         };
 
         private string _invalidCard = "2201382000000010";
-
+        private string _invalidCardLen = "1234";
+        private string _invalidCardFormat = "abcd12345abcd";
+        private string _invalidCardFormatSpace = "3614 8900 647 913";
+        private string _invalidCardFormatDash = "3614-8900-647-913";
 
         [SetUp]
         public void Setup()
@@ -67,6 +70,54 @@ namespace Dex.CreditCard.Tests
         public void LyhnCardTypeInvalidTest1()
         {
             Assert.False(LuhnAlgorithm.HasValidCheckDigit(_invalidCard));
+        }
+
+        [Test]
+        public void LyhnCardTypeFormatCheckLen()
+        {
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardLen));
+        }
+
+        [Test]
+        public void LyhnCardTypeFormatCheckInvalid()
+        {
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardFormat));
+        }
+
+        [Test]
+        public void LyhnCardTypeFormatCheckInvalidSpace()
+        {
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardFormatSpace));
+        }
+
+        [Test]
+        public void LyhnCardTypeFormatCheckInvalidDash()
+        {
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardFormatDash));
+        }
+
+        [Test]
+        public void ResolveCardTypeFormatCheckLen()
+        {
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardLen));
+        }
+
+        [Test]
+        public void ResolveCardTypeFormatCheckInvalid()
+        {
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardFormat));
+        }
+
+        [Test]
+        public void ResolveCardTypeFormatCheckInvalidSpace()
+        {
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardFormatSpace));
+        }
+
+        [Test]
+        public void ResolveCardTypeFormatCheckInvalidDash()
+        {
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardFormatDash));
         }
 
         [Test]

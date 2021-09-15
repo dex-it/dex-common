@@ -66,6 +66,7 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>the check digit</returns>
         public static string ComputeCheckDigit(string digits)
         {
+            CheckCorrectStringPan(digits);
             return ComputeCheckDigit(ToDigitList(digits)).ToString(CultureInfo.InvariantCulture);
         }
 
@@ -86,10 +87,11 @@ namespace Dex.CreditCardType.Resolver
         /// <returns>true/false depending on valid checkdigit</returns>
         public static bool HasValidCheckDigit(string digits)
         {
+            CheckCorrectStringPan(digits);
             return HasValidCheckDigit(ToDigitList(digits));
         }
 
-        private static void CheckCorrectStringPan(string digits)
+        public static void CheckCorrectStringPan(string digits)
         {
             if (!Regex.IsMatch(digits, "^\\d{13,19}$"))
             {

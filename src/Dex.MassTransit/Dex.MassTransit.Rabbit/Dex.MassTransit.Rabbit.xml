@@ -4,25 +4,26 @@
         <name>Dex.MassTransit.Rabbit</name>
     </assembly>
     <members>
-        <member name="M:Dex.MassTransit.Rabbit.MassTransitConfigurator.RegisterBus(MassTransit.ExtensionsDependencyInjectionIntegration.IServiceCollectionBusConfigurator,System.Action{MassTransit.IBusRegistrationContext,MassTransit.RabbitMqTransport.IRabbitMqBusFactoryConfigurator})">
+        <member name="M:Dex.MassTransit.Rabbit.MassTransitConfigurator.RegisterBus(MassTransit.ExtensionsDependencyInjectionIntegration.IServiceCollectionBusConfigurator,System.Action{MassTransit.IBusRegistrationContext,MassTransit.RabbitMqTransport.IRabbitMqBusFactoryConfigurator},Dex.MassTransit.Rabbit.RabbitMqOptions)">
             <summary>
             Register bus.
             </summary>
             <exception cref="T:System.ArgumentNullException"/>
         </member>
-        <member name="M:Dex.MassTransit.Rabbit.MassTransitConfigurator.RegisterReceiveEndpoint``2(MassTransit.IBusRegistrationContext,MassTransit.RabbitMqTransport.IRabbitMqBusFactoryConfigurator,System.Action{MassTransit.IEndpointConfigurator},System.Boolean)">
+        <member name="M:Dex.MassTransit.Rabbit.MassTransitConfigurator.RegisterReceiveEndpoint``2(MassTransit.IBusRegistrationContext,MassTransit.RabbitMqTransport.IRabbitMqBusFactoryConfigurator,System.Action{MassTransit.IEndpointConfigurator},Dex.MassTransit.Rabbit.RabbitMqOptions,System.Boolean)">
             <summary>
             Register receive EndPoint and bind with type <typeparamref name="T"/>.
             </summary>
             <param name="busRegistrationContext">Bus registration contex.</param>
             <param name="busFactoryConfigurator">Configuration factory.</param>
             <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
-            <param name="isForPublish">True for Publish, false when only Send.</param>
+            <param name="rabbitMqOptions">Force connection params.</param>
+            <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
             <typeparam name="T">Consumer type.</typeparam>
             <typeparam name="TMessage">Consumer message type.</typeparam>
             <exception cref="T:System.ArgumentNullException"/>
         </member>
-        <member name="M:Dex.MassTransit.Rabbit.MassTransitConfigurator.RegisterSendEndPoint``1(System.IServiceProvider)">
+        <member name="M:Dex.MassTransit.Rabbit.MassTransitConfigurator.RegisterSendEndPoint``1(System.IServiceProvider,Dex.MassTransit.Rabbit.RabbitMqOptions)">
             <summary>
             Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
             </summary>

@@ -1,4 +1,6 @@
-﻿namespace Dex.MassTransit.Rabbit
+﻿using System;
+
+namespace Dex.MassTransit.Rabbit
 {
     public class RabbitMqOptions
     {
@@ -8,11 +10,17 @@
         public string VHost { get; set; } = "/";
         public string Username { get; set; } = "guest";
         public string Password { get; set; } = "guest";
+        public string? CertificatePath { get; set; }
 
         public override string ToString()
         {
             var schema = IsSecure ? "amqps" : "amqp";
-            return $"{schema}://{Username}:{Password}@{Host}:{Port}{VHost}";
+            var ub = new UriBuilder(schema, Host, Port, VHost)
+            {
+                UserName = Username,
+                Password = Password,
+            };
+            return ub.Uri.ToString();
         }
     }
 }
