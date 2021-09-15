@@ -6,8 +6,8 @@ namespace Dex.Cap.AspNet.Test
 {
     public class TestDbContext : DbContext
     {
-        private static readonly ILoggerFactory _loggerFactory
-            = LoggerFactory.Create(builder =>
+        private static readonly ILoggerFactory LoggerFactory
+            = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
             {
                 builder.ClearProviders();
                 builder.AddConsole();
@@ -15,13 +15,12 @@ namespace Dex.Cap.AspNet.Test
 
         public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
-
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-            optionsBuilder.UseLoggerFactory(_loggerFactory).EnableSensitiveDataLogging();
+            optionsBuilder.UseLoggerFactory(LoggerFactory).EnableSensitiveDataLogging();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
