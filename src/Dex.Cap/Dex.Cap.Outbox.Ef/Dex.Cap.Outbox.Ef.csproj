@@ -4,11 +4,11 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <Version>1.1.10</Version>
   </PropertyGroup>
 
   <!--Для NuGet-->
   <PropertyGroup>
-    <Version>1.0.10</Version>
     <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>dex team</Authors>

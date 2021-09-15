@@ -15,7 +15,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class OutboxTests : BaseTest
     {
-        private static AsyncLocal<string> _asyncLocal = new AsyncLocal<string>();
+        private static readonly AsyncLocal<string> _asyncLocal = new();
 
         [Test]
         public async Task SimpleRunTest()
