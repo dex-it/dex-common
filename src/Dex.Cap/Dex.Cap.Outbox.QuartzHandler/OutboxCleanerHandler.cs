@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Cap.Outbox.Scheduler.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Cap.Outbox.Scheduler
+namespace Dex.Cap.Outbox.AspNetScheduler
 {
     internal sealed class OutboxCleanerHandler : IOutboxCleanerHandler
     {

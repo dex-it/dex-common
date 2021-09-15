@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Dex.Cap.Outbox.Scheduler.Interfaces
+namespace Dex.Cap.Outbox.AspNetScheduler.Interfaces
 {
     internal interface IOutboxCleanerHandler
     {

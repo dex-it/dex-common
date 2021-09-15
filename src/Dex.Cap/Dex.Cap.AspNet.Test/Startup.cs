@@ -1,8 +1,8 @@
 using System.Threading;
 using Dex.Cap.ConsoleTest;
+using Dex.Cap.Outbox.AspNetScheduler;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Cap.Outbox.Scheduler;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;

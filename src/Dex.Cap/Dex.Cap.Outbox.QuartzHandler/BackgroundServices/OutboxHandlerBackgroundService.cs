@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Cap.Outbox.Scheduler.BackgroundServices
+namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
 {
     internal sealed class OutboxHandlerBackgroundService : BackgroundService
     {
@@ -45,7 +45,7 @@ namespace Dex.Cap.Outbox.Scheduler.BackgroundServices
                     {
                         var logger = (ILogger)scope.ServiceProvider.GetRequiredService(typeof(ILogger<OutboxHandlerBackgroundService>));
                         logger.LogTrace("Background service '{ServiceName}' Tick event", GetType());
-                        
+
                         await OnTick(scope.ServiceProvider, logger, stoppingToken);
                     }
 

@@ -24,26 +24,33 @@ namespace Dex.Cap.Outbox.Ef
         public override async Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
         {
             int removedCount = 0;
+            const int limit = 1000;
 
         Repeat:
-            var finishedMessages = await GetFinishedMessages(limit: 1000, olderThan, cancellationToken).ConfigureAwait(false);
+            var finishedMessages = await GetFinishedMessages(limit, olderThan, cancellationToken).ConfigureAwait(false);
 
-            if (finishedMessages.Length == 0)
+            if (finishedMessages.Length > 0)
+            {
+                _logger.LogInformation("Found {Count} messages older than {span}", olderThan);
+
+                foreach (var messageId in finishedMessages)
+                {
+                    await DeleteMessage(messageId, cancellationToken).ConfigureAwait(false);
+                    _logger.LogInformation("Deleted old message {MessageId}", messageId);
+                }
+
+                removedCount += finishedMessages.Length;
+
+                if (finishedMessages.Length == limit)
+                {
+                    goto Repeat;
+                }
+            }
+            else
             {
                 _logger.LogTrace("No messages older than {span}", olderThan);
-                return removedCount;
             }
-
-            _logger.LogInformation("Found {Count} messages older than {span}", olderThan);
-
-            foreach (var messageId in finishedMessages)
-            {
-                await DeleteMessage(messageId, cancellationToken).ConfigureAwait(false);
-                _logger.LogInformation("Deleted old message {MessageId}", messageId);
-            }
-
-            removedCount += finishedMessages.Length;
-            goto Repeat;
+            return removedCount;
         }
 
         private async Task<Guid[]> GetFinishedMessages(int limit, TimeSpan olderThan, CancellationToken cancellationToken)

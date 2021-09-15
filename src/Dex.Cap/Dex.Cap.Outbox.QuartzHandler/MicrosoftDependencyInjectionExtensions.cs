@@ -1,10 +1,10 @@
 ﻿using System;
-using Dex.Cap.Outbox.Scheduler.BackgroundServices;
-using Dex.Cap.Outbox.Scheduler.Interfaces;
+using Dex.Cap.Outbox.AspNetScheduler.BackgroundServices;
+using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
 using Dex.Cap.Outbox.Scheduler.Options;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.Cap.Outbox.Scheduler
+namespace Dex.Cap.Outbox.AspNetScheduler
 {
     public static class MicrosoftDependencyInjectionExtensions
     {
@@ -19,14 +19,14 @@ namespace Dex.Cap.Outbox.Scheduler
             {
                 throw new ArgumentOutOfRangeException(nameof(periodSeconds), periodSeconds, "Should be a positive number");
             }
-            
+
             if (cleanupDays <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(cleanupDays), cleanupDays, "Should be a positive number");
             }
 
             services
-                .AddSingleton(new OutboxHandlerOptions() 
+                .AddSingleton(new OutboxHandlerOptions()
                 {
                     Period = TimeSpan.FromSeconds(periodSeconds),
                     CleanupOlderThan = TimeSpan.FromDays(cleanupDays)

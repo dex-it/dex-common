@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
@@ -13,6 +15,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class OutboxTests : BaseTest
     {
+        private static AsyncLocal<string> _asyncLocal = new AsyncLocal<string>();
+
         [Test]
         public async Task SimpleRunTest()
         {
@@ -188,6 +192,81 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == name));
         }
 
+        [Test]
+        public async Task SimpleRunTestMultiThreaded()
+        {
+            var services = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
+                .BuildServiceProvider();
+
+            var threads = new HashSet<string>();
+            using var ce = new CountdownEvent(3);
+
+            TestDelayCommandHandler.OnProcess += (_, m) => 
+            {
+                lock (threads)
+                {
+                    threads.Add(_asyncLocal.Value);
+                }
+                ce.Signal();
+            };
+
+            const string arg1 = "hello world1";
+            const string arg2 = "hello world2";
+            const string arg3 = "hello world3";
+
+            var client = services.GetRequiredService<IOutboxService>();
+            await client.EnqueueAsync(new TestDelayOutboxCommand { Args = arg1, DelayMsec = 5_000 });
+            await client.EnqueueAsync(new TestDelayOutboxCommand { Args = arg2, DelayMsec = 5_000 });
+            await client.EnqueueAsync(new TestDelayOutboxCommand { Args = arg3, DelayMsec = 5_000 });
+            await Save(services);
+
+            async void ThreadEntry(string arg)
+            {
+                _asyncLocal.Value = arg;
+                using var scope = services.CreateScope();
+                var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
+                await handler.ProcessAsync();
+            }
+
+            var sw = Stopwatch.StartNew();
+            ThreadPool.QueueUserWorkItem(_ => ThreadEntry(arg1));
+            ThreadPool.QueueUserWorkItem(_ => ThreadEntry(arg2));
+            ThreadPool.QueueUserWorkItem(_ => ThreadEntry(arg3));
+            ce.Wait();
+            sw.Stop();
+
+            Assert.AreEqual(5, (int)sw.Elapsed.TotalSeconds);
+            Assert.AreEqual(3, threads.Count);
+        }
+
+        [Test]
+        [TestCase(1_000, 1)]
+        [TestCase(60_000, 0)] // Может быть рассинхронизация времени с БД.
+        public async Task CleanupSuccess(int olderThanMsec, int expectedDeletedMessages)
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .AddScoped<IOutboxCleanupDataProvider, OutboxCleanupDataProviderEf<TestDbContext>>()
+                .BuildServiceProvider();
+
+            var client = sp.GetRequiredService<IOutboxService>();
+            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
+            await Save(sp);
+
+            var count = 0;
+            TestCommandHandler.OnProcess += (_, _) => { count++; };
+
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync();
+
+            Assert.AreEqual(1, count);
+
+            var cleaner = sp.GetRequiredService<IOutboxCleanupDataProvider>();
+            int deletedMessages = await cleaner.Cleanup(TimeSpan.FromMilliseconds(olderThanMsec), CancellationToken.None);
+
+            Assert.AreEqual(expectedDeletedMessages, deletedMessages);
+        }
 
         private IServiceCollection InitServiceCollection()
         {

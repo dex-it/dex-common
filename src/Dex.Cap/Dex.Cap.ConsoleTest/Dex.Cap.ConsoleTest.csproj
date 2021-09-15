@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
-    <ProjectReference Include="..\Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.Scheduler.csproj" />
+    <ProjectReference Include="..\Dex.Cap.Outbox.QuartzHandler\Dex.Cap.Outbox.AspNetScheduler.csproj" />
     <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
   </ItemGroup>
 

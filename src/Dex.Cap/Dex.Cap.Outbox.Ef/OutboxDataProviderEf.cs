@@ -201,7 +201,7 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            return await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId), static async (state, ct) =>
+            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId), static async (state, ct) =>
             {
                 var (dbContext, freeMessageId, lockId) = state;
 
@@ -249,6 +249,8 @@ namespace Dex.Cap.Outbox.Ef
             IsolationLevel.RepeatableRead,
             cancellationToken)
                 .ConfigureAwait(false);
+
+            return message;
 
             static Expression<Func<OutboxEnvelope, bool>> WhereFree(Guid messageId)
             {

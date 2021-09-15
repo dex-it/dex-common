@@ -2,13 +2,13 @@
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Outbox.Scheduler.Interfaces;
+using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
 using Dex.Cap.Outbox.Scheduler.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Cap.Outbox.Scheduler.BackgroundServices
+namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
 {
     internal sealed class OutboxCleanerBackgroundService : BackgroundService
     {
