@@ -23,33 +23,32 @@ namespace Dex.Cap.Outbox.Ef
 
         public override async Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
         {
-            int removedCount = 0;
             const int limit = 1000;
 
-        Repeat:
-            var finishedMessages = await GetFinishedMessages(limit, olderThan, cancellationToken).ConfigureAwait(false);
-
-            if (finishedMessages.Length > 0)
+            int removedCount = 0;
+            Guid[] finishedMessages;
+            do
             {
-                _logger.LogInformation("Found {Count} messages older than {span}", olderThan);
+                finishedMessages = await GetFinishedMessages(limit, olderThan, cancellationToken).ConfigureAwait(false);
 
-                foreach (var messageId in finishedMessages)
+                if (finishedMessages.Length > 0)
                 {
-                    await DeleteMessage(messageId, cancellationToken).ConfigureAwait(false);
-                    _logger.LogInformation("Deleted old message {MessageId}", messageId);
+                    _logger.LogInformation("Found {Count} messages older than {Span}", olderThan);
+
+                    foreach (var messageId in finishedMessages)
+                    {
+                        await DeleteMessage(messageId, cancellationToken).ConfigureAwait(false);
+                        _logger.LogInformation("Deleted old message {MessageId}", messageId);
+                    }
+
+                    removedCount += finishedMessages.Length;
                 }
-
-                removedCount += finishedMessages.Length;
-
-                if (finishedMessages.Length == limit)
+                else
                 {
-                    goto Repeat;
+                    _logger.LogTrace("No messages older than {Span}", olderThan);
                 }
-            }
-            else
-            {
-                _logger.LogTrace("No messages older than {span}", olderThan);
-            }
+            } while (finishedMessages.Length == limit);
+
             return removedCount;
         }
 
