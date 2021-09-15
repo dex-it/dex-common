@@ -203,9 +203,9 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId), static async (state, ct) =>
+            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger), static async (state, ct) =>
             {
-                var (dbContext, freeMessageId, lockId) = state;
+                var (dbContext, freeMessageId, lockId, logger) = state;
 
                 var lockedJob = await dbContext.Set<OutboxEnvelope>()
                     .Where(WhereFree(freeMessageId))
@@ -221,30 +221,27 @@ namespace Dex.Cap.Outbox.Ef
                 {
                     Debug.Assert(lockedJob.DbNow.Kind != DateTimeKind.Unspecified, "Опасно работать с неопределённой датой");
 
-                    //_logger.LogTrace("Попытка захватить задачу {MessageId}", potentialFreeJobId);
+                    logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
 
                     lockedJob.JobDb.LockId = lockId;
                     lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
 
                     await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                    logger.LogTrace("Message is successfully captured {MessageId}", freeMessageId);
 
-                    var tstate = dbContext.Entry(lockedJob.JobDb).State;
                     dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
-
-                    //_logger.LogTrace("Задача захвачена {MessageId}", potentialFreeJobId);
-                    // Thread.Sleep(2000);
 
                     return lockedJob.JobDb;
                 }
                 else
                 {
-                    // Другой поток обогнал и захватил эту задачу.
+                    logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
                     return null;
                 }
             },
             static async (state, ct) =>
             {
-                var (dbContext, freeMessageId, lockId) = state;
+                var (dbContext, freeMessageId, lockId, logger) = state;
 
                 var succeded = await dbContext.Set<OutboxEnvelope>()
                     .AnyAsync(x => x.Id == freeMessageId && x.LockId == lockId, ct)
