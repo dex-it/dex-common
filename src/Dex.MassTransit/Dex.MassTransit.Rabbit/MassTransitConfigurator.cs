@@ -56,32 +56,32 @@ namespace Dex.MassTransit.Rabbit
         /// <param name="busRegistrationContext">Bus registration contex.</param>
         /// <param name="busFactoryConfigurator">Configuration factory.</param>
         /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
-        /// <param name="isForPublish">True for Publish, false when only Send.</param>
+        /// <param name="rabbitMqOptions">Force connection params.</param>
+        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
         /// <typeparam name="T">Consumer type.</typeparam>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, bool isForPublish = false)
+            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, RabbitMqOptions? rabbitMqOptions = null, bool createSeparateQueue = false)
             where T : class, IConsumer<TMessage>
             where TMessage : class
         {
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] {typeof(T)}, isForPublish);
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] {typeof(T)}, rabbitMqOptions, createSeparateQueue);
         }
 
         /// <summary>
         /// Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
-        public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider)
+        public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider, RabbitMqOptions? rabbitMqOptions = null)
             where TMessage : class
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
 
-            var endPoint = CreateQueueNameFromType<TMessage>(provider);
-
+            var endPoint = CreateQueueNameFromType<TMessage>(provider, rabbitMqOptions);
             if (!EndpointConvention.TryGetDestinationAddress<TMessage>(out _))
             {
                 EndpointConvention.Map<TMessage>(endPoint.Uri);
@@ -92,30 +92,29 @@ namespace Dex.MassTransit.Rabbit
 
         // private  
 
-        private static UriBuilder CreateQueueNameFromType<T>(this IServiceProvider provider)
-            where T : class
+        private static UriBuilder CreateQueueNameFromType<TMessage>(this IServiceProvider provider, RabbitMqOptions? rabbitMqOptions)
+            where TMessage : class
         {
-            var queueName = typeof(T).Name.ToLowerInvariant().ReplaceRegex("dto$", "");
-            var mqOptions = provider.GetRequiredService<IOptions<RabbitMqOptions>>();
-            return new UriBuilder("rabbitmq", mqOptions.Value.Host, mqOptions.Value.Port, queueName);
+            var queueName = typeof(TMessage).Name.ReplaceRegex("(?i)dto(?-i)$", "");
+            var mqOptions = rabbitMqOptions ?? provider.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+            return new UriBuilder(mqOptions + "/" + queueName);
         }
 
         private static void RegisterConsumersEndpoint<TMessage>(IRegistration busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, bool isForPublish = false)
+            Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, RabbitMqOptions? rabbitMqOptions, bool createSeparateQueue = false)
             where TMessage : class
         {
-            var endPoint = isForPublish ? busRegistrationContext.CreateQueueNameFromType<TMessage>() : busRegistrationContext.RegisterSendEndPoint<TMessage>();
+            var endPoint = createSeparateQueue
+                ? busRegistrationContext.CreateQueueNameFromType<TMessage>(rabbitMqOptions)
+                : busRegistrationContext.RegisterSendEndPoint<TMessage>(rabbitMqOptions);
 
-            var last = endPoint.ToString()
-                .TrimEnd('/')
-                .Split('/')
-                .Last();
+            var qName = endPoint.Uri.Segments.Last();
 
             foreach (var consumerType in types)
             {
-                var queueName = isForPublish
-                    ? last + "_" + consumerType.Name
-                    : last;
+                var queueName = createSeparateQueue
+                    ? qName + "_" + consumerType.Name
+                    : qName;
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
                 {

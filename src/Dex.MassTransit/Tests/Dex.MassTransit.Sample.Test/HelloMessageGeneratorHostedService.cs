@@ -9,18 +9,21 @@ namespace Dex.MassTransit.Sample.Test
     internal class HelloMessageGeneratorHostedService : IHostedService
     {
         private readonly ISendEndpointProvider _sendEndpoint;
+        private readonly IPublishEndpoint _publishEndpoint;
         private readonly CancellationTokenSource _tokenSource = new();
 
-        public HelloMessageGeneratorHostedService(ISendEndpointProvider sendEndpoint)
+        public HelloMessageGeneratorHostedService(ISendEndpointProvider sendEndpoint, IPublishEndpoint publishEndpoint)
         {
             _sendEndpoint = sendEndpoint ?? throw new ArgumentNullException(nameof(sendEndpoint));
+            _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             while (!_tokenSource.Token.IsCancellationRequested)
             {
-                await _sendEndpoint.Send(new HelloMessage() {Hi = "Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
+                // await _sendEndpoint.Send(new HelloMessage() {Hi = "Send, Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
+                await _publishEndpoint.Publish(new HelloMessageDto() {Hi = "Publish, Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
                 await Task.Delay(1000, cancellationToken);
             }
         }
