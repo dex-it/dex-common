@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.9">
+          <TreatAsUsed>true</TreatAsUsed>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.9">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <TreatAsUsed>true</TreatAsUsed>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.7" />
+        <PackageReference Include="NUnit" Version="3.13.2" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.0.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj" />
+      <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
+      <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
+      <ProjectReference Include="..\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
+</Project>

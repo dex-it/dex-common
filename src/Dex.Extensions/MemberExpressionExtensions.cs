@@ -11,7 +11,7 @@ namespace Dex.Extensions
             if (memberExpression == null) throw new ArgumentNullException(nameof(memberExpression));
 
             var lambdaExpression = (LambdaExpression) memberExpression;
-            
+
             if (!(lambdaExpression.Body is MemberExpression))
             {
                 throw new InvalidOperationException("Expression must be a member expression");
@@ -21,7 +21,7 @@ namespace Dex.Extensions
 
             return expression.Member.Name;
         }
-        
+
         public static Func<T, object> GetValueGetter<T>(this PropertyInfo propertyInfo)
         {
             if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));
@@ -33,13 +33,13 @@ namespace Dex.Extensions
             var instance = Expression.Parameter(propertyInfo.DeclaringType, "i");
             var property = Expression.Property(instance, propertyInfo);
             var convert = Expression.TypeAs(property, typeof(object));
-            return (Func<T, object>)Expression.Lambda(convert, instance).Compile();
+            return (Func<T, object>) Expression.Lambda(convert, instance).Compile();
         }
 
         public static Func<object, object> GetValueGetter(this PropertyInfo propertyInfo)
         {
             if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));
-            
+
             var declaringType = propertyInfo.DeclaringType;
             var propertyName = propertyInfo.Name;
 
@@ -48,9 +48,9 @@ namespace Dex.Extensions
 
         public static Func<object, object> GetValueGetter(this Type declaringType, string propertyName)
         {
-            var instance = Expression.Parameter(typeof (object), "i");
+            var instance = Expression.Parameter(typeof(object), "i");
             var property = Expression.Property(Expression.TypeAs(instance, declaringType), propertyName);
-            var convert = Expression.TypeAs(property, typeof (object));
+            var convert = Expression.TypeAs(property, typeof(object));
             return (Func<object, object>) Expression.Lambda(convert, instance).Compile();
         }
 
@@ -70,7 +70,7 @@ namespace Dex.Extensions
                 setMethod,
                 Expression.Convert(argument, propertyInfo.PropertyType));
 
-            return (Action<object, object>)Expression.Lambda(setterCall, instance, argument).Compile();
+            return (Action<object, object>) Expression.Lambda(setterCall, instance, argument).Compile();
         }
 
         public static Action<T, object> GetValueSetter<T>(this PropertyInfo propertyInfo)
@@ -88,7 +88,7 @@ namespace Dex.Extensions
                 propertyInfo.GetSetMethod(),
                 Expression.Convert(argument, propertyInfo.PropertyType));
 
-            return (Action<T, object>)Expression.Lambda(setterCall, instance, argument).Compile();
+            return (Action<T, object>) Expression.Lambda(setterCall, instance, argument).Compile();
         }
     }
 }

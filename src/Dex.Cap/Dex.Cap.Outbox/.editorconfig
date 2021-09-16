@@ -1,0 +1,4 @@
+[*.cs]
+
+# CA1031: Не перехватывать исключения общих типов
+dotnet_diagnostic.CA1031.severity = none

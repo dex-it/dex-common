@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dex.Cap.Outbox</name>
+    </assembly>
+    <members>
+        <member name="M:Dex.Cap.Outbox.IOutboxService.ExecuteOperation``1(System.Guid,System.Func{System.Threading.CancellationToken,System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)">
+            <summary>
+            Execute operation and publish message to outbox queue into transaction
+            </summary>
+            <param name="correlationId"></param>
+            <param name="operation">database change async action</param>
+            <param name="cancellationToken"></param>
+            <typeparam name="T"></typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Dex.Cap.Outbox.IOutboxService.Enqueue``1(System.Guid,``0,System.Threading.CancellationToken)">
+            <summary>
+            Perform only publish outbox message to queue. This method don't check Transaction, only append outbox message to change context 
+            </summary>
+            <param name="correlationId"></param>
+            <param name="message"></param>
+            <param name="cancellationToken"></param>
+            <typeparam name="T"></typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Dex.Cap.Outbox.IOutboxService.Enqueue``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Perform only publish outbox message to queue. This method don't check Transaction, only append outbox message to change context 
+            </summary>
+            <param name="message"></param>
+            <param name="cancellationToken"></param>
+            <typeparam name="T"></typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Dex.Cap.Outbox.IOutboxService.IsOperationExists(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Check if operation with correlationId already exists
+            </summary>
+            <param name="correlationId"></param>
+            <param name="cancellationToken"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
