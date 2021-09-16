@@ -4,7 +4,7 @@
 		<TargetFramework>net5.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
-		<Version>1.1.10</Version>
+		<Version>1.1.12</Version>
 	</PropertyGroup>
 
 	<!--Для NuGet-->
