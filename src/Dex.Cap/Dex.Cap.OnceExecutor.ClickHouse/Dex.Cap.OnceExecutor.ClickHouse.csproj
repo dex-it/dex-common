@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <Version>1.0.10</Version>
+    <PackageVersion>1.0.11</PackageVersion>
   </PropertyGroup>
 
   <!--Для NuGet-->
