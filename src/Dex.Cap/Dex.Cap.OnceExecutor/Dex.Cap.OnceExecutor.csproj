@@ -6,7 +6,6 @@
     <Version>1.0.10</Version>
   </PropertyGroup>
 
-  
   <!--Для NuGet-->
   <PropertyGroup>
     <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
