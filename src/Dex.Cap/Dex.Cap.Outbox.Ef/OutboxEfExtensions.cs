@@ -41,7 +41,6 @@ namespace Dex.Cap.Outbox.Ef
 
             modelBuilder.Entity<Models.OutboxEnvelope>()
                 .Property(x => x.LockTimeout)
-                .HasDefaultValue(TimeSpan.FromSeconds(30))
                 .HasComment("Maximum allowable blocking time");
             
             modelBuilder.Entity<Models.OutboxEnvelope>()
