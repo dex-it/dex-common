@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace Dex.Cap.Outbox
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
 
         public OutboxHandler(IOutboxDataProvider dataProvider, IOutboxMessageHandlerFactory messageHandlerFactory,
-                             IOutboxSerializer serializer, ILogger<OutboxHandler<TDbContext>> logger)
+            IOutboxSerializer serializer, ILogger<OutboxHandler<TDbContext>> logger)
         {
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
             _handlerFactory = messageHandlerFactory ?? throw new ArgumentNullException(nameof(messageHandlerFactory));
@@ -44,16 +45,28 @@ namespace Dex.Cap.Outbox
                         var job = enumerator.Current;
                         try
                         {
-                            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken))
+                            using (Activity activity = new($"Process outbox message:{job.Envelope.Id}"))
                             {
-                                await ProcessJob(job, cts.Token).ConfigureAwait(false);
+                                activity.AddBaggage("Type", job.Envelope.MessageType);
+                                activity.AddBaggage("MessageId", job.Envelope.Id.ToString());
+
+                                if (job.Envelope.ActivityId != null)
+                                {
+                                    activity.SetParentId(job.Envelope.ActivityId);
+                                }
+
+                                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken))
+                                {
+                                    activity.Start();
+                                    await ProcessJob(job, cts.Token).ConfigureAwait(false);
+                                    activity.Stop();
+                                }
                             }
                         }
                         finally
                         {
                             job.Dispose();
                         }
-
                     } while (await enumerator.MoveNextAsync().ConfigureAwait(false));
 
                     _logger.LogDebug("Outbox processor finished");
@@ -74,7 +87,7 @@ namespace Dex.Cap.Outbox
         {
             throw new OutboxException($"Can't resolve type of message '{messageType}'");
         }
-        
+
         [DoesNotReturn]
         private static void ThrowUnableCast(string messageType)
         {
@@ -92,12 +105,12 @@ namespace Dex.Cap.Outbox
                 _logger.LogDebug("Message {MessageId} has been processed", job.Envelope.Id);
             }
             catch (OperationCanceledException) when (job.LockToken.IsCancellationRequested)
-            // Истекло время аренды блокировки.
+                // Истекло время аренды блокировки.
             {
                 _logger.LogError(LockTimeoutMessage, job.Envelope.Id);
             }
             catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested && cancellationToken.IsCancellationRequested)
-            // Пользователь запросил отмену.
+                // Пользователь запросил отмену.
             {
                 _logger.LogError(UserCanceledMessageWithId, job.Envelope.Id);
                 await UnlockJobOnUserCancel(job).ConfigureAwait(false); // Попытаться освободить блокировку раньше чем истечёт время аренды.

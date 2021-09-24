@@ -31,15 +31,16 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     MessageType = table.Column<string>(type: "text", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
+                    ActivityId = table.Column<string>(type: "text", nullable: true),
                     Retries = table.Column<int>(type: "integer", nullable: false),
-                    CreatedUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     ErrorMessage = table.Column<string>(type: "text", nullable: true),
                     Error = table.Column<string>(type: "text", nullable: true),
+                    CreatedUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Updated = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    LockTimeout = table.Column<TimeSpan>(type: "interval", nullable: false),
-                    LockId = table.Column<Guid>(type: "uuid", nullable: true),
-                    LockExpirationTimeUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                    LockTimeout = table.Column<TimeSpan>(type: "interval", nullable: false, defaultValue: new TimeSpan(0, 0, 0, 30, 0), comment: "Maximum allowable blocking time"),
+                    LockId = table.Column<Guid>(type: "uuid", nullable: true, comment: "Idempotency key (unique key of the thread that captured the lock)"),
+                    LockExpirationTimeUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: true, comment: "Preventive timeout (maximum lifetime of actuality 'LockId')")
                 },
                 constraints: table =>
                 {

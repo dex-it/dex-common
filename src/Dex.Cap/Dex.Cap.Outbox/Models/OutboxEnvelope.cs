@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Dex.Cap.Outbox.Models
 {
@@ -14,28 +15,50 @@ namespace Dex.Cap.Outbox.Models
             MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
             Status = status;
             Content = content ?? throw new ArgumentNullException(nameof(content));
+            ActivityId = Activity.Current?.Id;
         }
 
-        [Key] 
-        public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
-        [Required] 
+        /// <summary>
+        /// Полное имя типа сообщения, AssemblyQualifiedName.
+        /// </summary>
+        [Required]
         public string MessageType { get; set; }
 
-        [Required] 
+        /// <summary>
+        /// Сериализованное тело сообщения
+        /// </summary>
+        [Required]
         public string Content { get; set; }
 
+        /// <summary>
+        /// Идентификатор Activity.Id подсистемы System.Diagnostics.Activity 
+        /// </summary>
+        public string? ActivityId { get; set; }
+
+        /// <summary>
+        /// Кол-во попыток обработать команду
+        /// </summary>
         public int Retries { get; set; }
 
+        /// <summary>
+        /// Статус сообщения 
+        /// </summary>
         [Required]
-        public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
-
-        [Required] 
         public OutboxMessageStatus Status { get; set; }
 
+        /// <summary>
+        /// Сообщение об ошибке
+        /// </summary>
         public string? ErrorMessage { get; set; }
 
+        /// <summary>
+        /// Стэк ошибки
+        /// </summary>
         public string? Error { get; set; }
+
+        [Required] public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 
         public DateTime? Updated { get; set; }
 

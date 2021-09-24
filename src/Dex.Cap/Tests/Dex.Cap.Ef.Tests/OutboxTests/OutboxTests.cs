@@ -31,7 +31,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await Save(sp);
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            TestCommandHandler.OnProcess += (_, _) =>
+            {
+                count++;
+                TestContext.WriteLine(Activity.Current?.Id);
+            };
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
@@ -261,6 +265,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync();
 
             Assert.AreEqual(1, count);
+
+            await Task.Delay(1000);
 
             var cleaner = sp.GetRequiredService<IOutboxCleanupDataProvider>();
             int deletedMessages = await cleaner.Cleanup(TimeSpan.FromMilliseconds(olderThanMsec), CancellationToken.None);
