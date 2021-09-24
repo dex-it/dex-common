@@ -4,6 +4,11 @@
         <name>Dex.MassTransit.Rabbit</name>
     </assembly>
     <members>
+        <member name="P:Dex.MassTransit.Rabbit.MassTransitConfigurator.EnableConsumerTracer">
+            <summary>
+            Enable Activity.TraceId propagation for all Consumers
+            </summary>
+        </member>
         <member name="M:Dex.MassTransit.Rabbit.MassTransitConfigurator.RegisterBus(MassTransit.ExtensionsDependencyInjectionIntegration.IServiceCollectionBusConfigurator,System.Action{MassTransit.IBusRegistrationContext,MassTransit.RabbitMqTransport.IRabbitMqBusFactoryConfigurator},Dex.MassTransit.Rabbit.RabbitMqOptions)">
             <summary>
             Register bus.

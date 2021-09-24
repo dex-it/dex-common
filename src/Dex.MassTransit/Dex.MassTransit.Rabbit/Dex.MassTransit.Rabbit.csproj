@@ -35,5 +35,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj" />
+  </ItemGroup>
   
 </Project>
