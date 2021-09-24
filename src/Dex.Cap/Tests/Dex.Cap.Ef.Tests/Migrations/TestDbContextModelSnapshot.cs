@@ -61,6 +61,9 @@ namespace Dex.Cap.Ef.Tests.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ActivityId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -75,13 +78,18 @@ namespace Dex.Cap.Ef.Tests.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("LockExpirationTimeUtc")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasComment("Preventive timeout (maximum lifetime of actuality 'LockId')");
 
                     b.Property<Guid?>("LockId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasComment("Idempotency key (unique key of the thread that captured the lock)");
 
                     b.Property<TimeSpan>("LockTimeout")
-                        .HasColumnType("interval");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("interval")
+                        .HasDefaultValue(new TimeSpan(0, 0, 0, 30, 0))
+                        .HasComment("Maximum allowable blocking time");
 
                     b.Property<string>("MessageType")
                         .IsRequired()
