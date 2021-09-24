@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
@@ -26,8 +27,8 @@ namespace Dex.Cap.Outbox
             }
 
             await _outboxDataProvider.ExecuteInTransaction(correlationId,
-                async token => await EnqueueAsync(correlationId, await operation(token).ConfigureAwait(false), token).ConfigureAwait(false),
-                cancellationToken)
+                    async token => await EnqueueAsync(correlationId, await operation(token).ConfigureAwait(false), token).ConfigureAwait(false),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return correlationId;
