@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>1.0.1</Version>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.MassTransit</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <DocumentationFile>Dex.MassTransit.ActivityTrace.xml</DocumentationFile>
+        <Authors>dex team</Authors>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MassTransit" Version="7.2.1" />
+    </ItemGroup>
+
+</Project>

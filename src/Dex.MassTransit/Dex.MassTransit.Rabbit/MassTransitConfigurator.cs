@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dex.Extensions;
+using Dex.MassTransit.ActivityTrace;
 using MassTransit;
 using MassTransit.ExtensionsDependencyInjectionIntegration;
 using MassTransit.RabbitMqTransport;
@@ -16,6 +17,12 @@ namespace Dex.MassTransit.Rabbit
 {
     public static class MassTransitConfigurator
     {
+        /// <summary>
+        /// Enable Activity.TraceId propagation for all Consumers
+        /// </summary>
+        public static bool EnableConsumerTracer { get; set; } = true;
+
+
         /// <summary>
         /// Register bus.
         /// </summary>
@@ -43,7 +50,9 @@ namespace Dex.MassTransit.Rabbit
                 mqBusFactoryConfigurator.AutoDelete = false;
                 mqBusFactoryConfigurator.Durable = true;
 
-                // mqBusFactoryConfigurator.ConnectConsumeObserver(busRegistrationContext.GetRequiredService<LogIdMassTransitObserver>()); // TODO
+                // enable activity tracer for all consumers
+                if (EnableConsumerTracer)
+                    mqBusFactoryConfigurator.LinkActivityTracingContext();
 
                 // register consumers here
                 registerConsumers(registrationContext, mqBusFactoryConfigurator);
@@ -69,7 +78,7 @@ namespace Dex.MassTransit.Rabbit
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] {typeof(T)}, rabbitMqOptions, createSeparateQueue);
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] { typeof(T) }, rabbitMqOptions, createSeparateQueue);
         }
 
         /// <summary>

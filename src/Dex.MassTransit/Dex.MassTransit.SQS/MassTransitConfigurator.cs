@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Amazon.SQS;
 using Dex.Extensions;
+using Dex.MassTransit.ActivityTrace;
 using MassTransit;
 using MassTransit.AmazonSqsTransport;
 using MassTransit.ExtensionsDependencyInjectionIntegration;
@@ -18,6 +19,12 @@ namespace Dex.MassTransit.SQS
 {
     public static class MassTransitConfigurator
     {
+        /// <summary>
+        /// Enable Activity.TraceId propagation for all Consumers
+        /// </summary>
+        public static bool EnableConsumerTracer { get; set; } = true;
+
+
         /// <summary>
         /// Register bus.
         /// </summary>
@@ -40,7 +47,9 @@ namespace Dex.MassTransit.SQS
                 mqBusFactoryConfigurator.AutoDelete = false;
                 mqBusFactoryConfigurator.Durable = true;
 
-                // mqBusFactoryConfigurator.ConnectConsumeObserver(busRegistrationContext.GetRequiredService<LogIdMassTransitObserver>()); // TODO
+                // enable activity tracer for all consumers
+                if (EnableConsumerTracer)
+                    mqBusFactoryConfigurator.LinkActivityTracingContext();
 
                 // register consumers here
                 registerConsumers(busRegistrationContext, mqBusFactoryConfigurator);
@@ -66,7 +75,7 @@ namespace Dex.MassTransit.SQS
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] {typeof(T)}, amazonMqOptions, createSeparateQueue);
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue);
         }
 
         /// <summary>
@@ -93,7 +102,7 @@ namespace Dex.MassTransit.SQS
                 configurator.QueueAttributes.Add(QueueAttributeName.FifoQueue, true);
 
                 endpointConsumer?.Invoke(configurator);
-            }, new[] {typeof(T)}, amazonMqOptions, createSeparateQueue);
+            }, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue);
         }
 
         /// <summary>
@@ -150,7 +159,7 @@ namespace Dex.MassTransit.SQS
             where TMessage : class
         {
             var queueName = typeof(TMessage).Name.ReplaceRegex("(?i)dto(?-i)$", "");
-            
+
             static AmazonMqOptions ValidateAwsOptions(AmazonMqOptions sqsOptions)
             {
                 if (string.IsNullOrEmpty(sqsOptions.Region))

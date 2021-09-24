@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dex.MassTransit.ActivityTrace</name>
+    </assembly>
+    <members>
+        <member name="T:Dex.MassTransit.ActivityTrace.ActivityMiddlewareConfiguratorExtensions">
+            <summary>
+            Add midleware to enable Activity tracing on all consumers
+            </summary>
+        </member>
+        <member name="M:Dex.MassTransit.ActivityTrace.ActivityMiddlewareConfiguratorExtensions.LinkActivityTracingContext(MassTransit.IBusFactoryConfigurator)">
+            <summary>
+            Add ActivityTracing specification IPipeSpecification[ConsumeContext]
+            </summary>
+            <param name="value"></param>
+            <exception cref="T:System.ArgumentNullException"></exception>
+        </member>
+    </members>
+</doc>

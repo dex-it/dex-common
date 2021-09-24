@@ -32,4 +32,8 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj" />
+  </ItemGroup>
+
 </Project>

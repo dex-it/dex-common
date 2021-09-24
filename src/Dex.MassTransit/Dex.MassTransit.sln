@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Sample.Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8C9A546F-195D-4BF1-BAC5-17DD28A29B38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.ActivityTrace", "Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj", "{38E1F871-31C5-4088-84E8-8B4CCF06CAD6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38E1F871-31C5-4088-84E8-8B4CCF06CAD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38E1F871-31C5-4088-84E8-8B4CCF06CAD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38E1F871-31C5-4088-84E8-8B4CCF06CAD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38E1F871-31C5-4088-84E8-8B4CCF06CAD6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A} = {8C9A546F-195D-4BF1-BAC5-17DD28A29B38}
