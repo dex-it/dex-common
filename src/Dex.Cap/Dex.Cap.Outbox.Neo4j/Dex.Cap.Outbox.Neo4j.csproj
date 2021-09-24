@@ -2,15 +2,28 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
-        <Version>1.1.12</Version>
+        <Version>1.2.15</Version>
     </PropertyGroup>
-
+    <!--Для NuGet-->
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>dex team</Authors>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
+    </PropertyGroup>
+    <!--Для NuGet-->
+    
     <ItemGroup>
-      <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
+        <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
     </ItemGroup>
-
     <ItemGroup>
-      <PackageReference Include="Neo4jClient" Version="4.1.15" />
+        <PackageReference Include="Neo4jClient" Version="4.1.17"/>
     </ItemGroup>
 
 </Project>
