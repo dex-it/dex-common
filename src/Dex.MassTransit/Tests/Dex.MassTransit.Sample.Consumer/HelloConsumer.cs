@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
+using Dex.MassTransit.Sample.Domain;
 using MassTransit;
 
-namespace Dex.MassTransit.Sample.Test
+namespace Dex.MassTransit.Sample.Consumer
 {
     public class HelloConsumer : IConsumer<HelloMessageDto>
     {

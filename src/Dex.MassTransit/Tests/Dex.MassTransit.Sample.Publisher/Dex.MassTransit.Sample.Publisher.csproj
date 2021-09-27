@@ -18,6 +18,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
       <ProjectReference Include="..\..\Dex.MassTransit.SQS\Dex.MassTransit.SQS.csproj" />
+      <ProjectReference Include="..\Dex.MassTransit.Sample.Domain\Dex.MassTransit.Sample.Domain.csproj" />
     </ItemGroup>
 
 </Project>

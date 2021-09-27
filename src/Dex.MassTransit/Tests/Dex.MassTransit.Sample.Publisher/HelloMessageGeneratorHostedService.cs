@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.MassTransit.Sample.Domain;
 using MassTransit;
 using Microsoft.Extensions.Hosting;
 
-namespace Dex.MassTransit.Sample.Test
+namespace Dex.MassTransit.Sample.Publisher
 {
     internal class HelloMessageGeneratorHostedService : IHostedService
     {

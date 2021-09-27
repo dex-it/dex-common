@@ -1,6 +1,6 @@
 ﻿using MassTransit;
 
-namespace Dex.MassTransit.Sample.Test
+namespace Dex.MassTransit.Sample.Domain
 {
     public class HelloMessageDto : IConsumer
     {
