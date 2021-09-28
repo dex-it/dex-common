@@ -3,18 +3,26 @@
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Version>1.0.1</Version>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.MassTransit</PackageProjectUrl>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-        <DocumentationFile>Dex.MassTransit.ActivityTrace.xml</DocumentationFile>
-        <Authors>dex team</Authors>
     </PropertyGroup>
 
+    <!--Для NuGet-->
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>dex team</Authors>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
+    </PropertyGroup>
+    <!--/Для NuGet-->
+
     <ItemGroup>
-      <PackageReference Include="MassTransit" Version="7.2.1" />
+      <PackageReference Include="MassTransit" Version="7.2.2" />
     </ItemGroup>
 
 </Project>

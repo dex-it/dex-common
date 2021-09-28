@@ -2,19 +2,19 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Dex.MassTransit.Rabbit;
+using Dex.MassTransit.Sample.Domain;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
-namespace Dex.MassTransit.Sample.Test
+namespace Dex.MassTransit.Sample.Consumer
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            Task.Run(() => CreatePublisherHostBuilder(args).Build().Run()).ContinueWith(CatchException);
             Task.Run(() => CreateConsumerHostBuilder(args).Build().Run()).ContinueWith(CatchException);
 
             Console.WriteLine("Press Enter to exit");
@@ -34,32 +34,6 @@ namespace Dex.MassTransit.Sample.Test
         {
             //rabbitMqOptions.Port = 49158;
         }
-
-        private static IHostBuilder CreatePublisherHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.AddLogging(builder =>
-                    {
-                        builder.AddOpenTelemetry(options => options
-                            .AddConsoleExporter());
-                    });
-
-                    // register services
-                    services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
-
-                    services.AddMassTransit(configurator =>
-                    {
-                        configurator.RegisterBus((context, factoryConfigurator) =>
-                        {
-                            // send endpoint 
-                            context.RegisterSendEndPoint<HelloMessageDto>();
-                        });
-                    });
-
-                    services.AddMassTransitHostedService();
-                    services.AddHostedService<HelloMessageGeneratorHostedService>();
-                });
 
         private static IHostBuilder CreateConsumerHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)

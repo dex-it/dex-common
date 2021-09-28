@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 
-namespace Dex.MassTransit.Sample.Test
+namespace Dex.MassTransit.Sample.Consumer
 {
     internal class MetricTraceExporterHostedService : IHostedService
     {

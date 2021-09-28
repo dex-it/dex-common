@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.MassTransit.Sample.Test
+namespace Dex.MassTransit.Sample.Consumer
 {
     internal class MassTransitTelemetryLogger : IObserver<DiagnosticListener>
     {
