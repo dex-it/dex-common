@@ -41,7 +41,7 @@ namespace Dex.Cap.Outbox
 
         public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId,
             Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, TOutboxMessage> createOutboxData,
+            Func<TContext, TOutboxMessage> createOutboxData,
             CancellationToken cancellationToken = default)
             where TOutboxMessage : IOutboxMessage
         {
@@ -51,7 +51,7 @@ namespace Dex.Cap.Outbox
             await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, usefulAction,
                     async (token, context) =>
                     {
-                        var outboxData = createOutboxData(token, context);
+                        var outboxData = createOutboxData(context);
                         await EnqueueAsync(correlationId, outboxData, token).ConfigureAwait(false);
                         return outboxData;
                     },

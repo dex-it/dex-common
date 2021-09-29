@@ -20,7 +20,7 @@ namespace Dex.Cap.Outbox.Interfaces
         /// </summary>
         Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId,
             Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, TOutboxMessage> createOutboxData,
+            Func<TContext, TOutboxMessage> createOutboxData,
             CancellationToken cancellationToken = default)
             where TOutboxMessage : IOutboxMessage;
 
