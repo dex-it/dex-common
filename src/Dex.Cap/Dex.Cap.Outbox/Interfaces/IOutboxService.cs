@@ -13,7 +13,6 @@ namespace Dex.Cap.Outbox.Interfaces
             Func<CancellationToken, Task<TContext>> usefulAction,
             Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken = default)
-            where TContext : class
             where TOutboxMessage : IOutboxMessage;
 
         /// <summary>
@@ -23,7 +22,6 @@ namespace Dex.Cap.Outbox.Interfaces
             Func<CancellationToken, Task<TContext>> usefulAction,
             Func<CancellationToken, TContext, TOutboxMessage> createOutboxData,
             CancellationToken cancellationToken = default)
-            where TContext : class 
             where TOutboxMessage : IOutboxMessage;
 
         /// <summary>

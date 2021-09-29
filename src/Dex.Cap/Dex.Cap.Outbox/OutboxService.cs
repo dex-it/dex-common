@@ -21,7 +21,7 @@ namespace Dex.Cap.Outbox
             Func<CancellationToken, Task<TContext>> usefulAction,
             Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken = default)
-            where TContext : class where TOutboxMessage : IOutboxMessage
+            where TOutboxMessage : IOutboxMessage
         {
             if (usefulAction == null) throw new ArgumentNullException(nameof(usefulAction));
             if (createOutboxData == null) throw new ArgumentNullException(nameof(createOutboxData));
@@ -43,7 +43,7 @@ namespace Dex.Cap.Outbox
             Func<CancellationToken, Task<TContext>> usefulAction,
             Func<CancellationToken, TContext, TOutboxMessage> createOutboxData,
             CancellationToken cancellationToken = default)
-            where TContext : class where TOutboxMessage : IOutboxMessage
+            where TOutboxMessage : IOutboxMessage
         {
             if (usefulAction == null) throw new ArgumentNullException(nameof(usefulAction));
             if (createOutboxData == null) throw new ArgumentNullException(nameof(createOutboxData));

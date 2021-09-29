@@ -15,7 +15,6 @@ namespace Dex.Cap.Outbox.Interfaces
             Func<CancellationToken, Task<TContext>> usefulAction,
             Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken)
-            where TContext : class
             where TOutboxMessage : IOutboxMessage;
 
         Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
