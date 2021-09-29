@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <Version>1.2.15</Version>
+    <PackageVersion>1.3.16</PackageVersion>
   </PropertyGroup>
 
   <!--Для NuGet-->
