@@ -17,33 +17,23 @@ namespace Dex.Cap.Outbox
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
-        public async Task<Guid> ExecuteOperationAsync2<TContext, TOutboxMessage>(Guid correlationId, Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData, CancellationToken cancellationToken = default)
+        public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId, 
+            Func<CancellationToken, Task<TContext>> usefulAction,
+            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData, 
+            CancellationToken cancellationToken = default)
             where TContext : class where TOutboxMessage : IOutboxMessage
         {
             if (usefulAction == null) throw new ArgumentNullException(nameof(usefulAction));
             if (createOutboxData == null) throw new ArgumentNullException(nameof(createOutboxData));
 
-            await _outboxDataProvider.ExecuteInTransaction(correlationId, async token =>
+            await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, usefulAction,
+                    async (token, context) =>
                     {
-                        var dataContext = await usefulAction(token).ConfigureAwait(false);
-                        var outboxData = await createOutboxData(token, dataContext).ConfigureAwait(false);
+                        var outboxData = await createOutboxData(token, context).ConfigureAwait(false);
                         await EnqueueAsync(correlationId, outboxData, token).ConfigureAwait(false);
+                        return outboxData;
                     },
                     cancellationToken)
-                .ConfigureAwait(false);
-
-            return correlationId;
-        }      
-        
-        public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId, Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData, CancellationToken cancellationToken = default)
-            where TContext : class where TOutboxMessage : IOutboxMessage
-        {
-            if (usefulAction == null) throw new ArgumentNullException(nameof(usefulAction));
-            if (createOutboxData == null) throw new ArgumentNullException(nameof(createOutboxData));
-
-            await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, usefulAction, createOutboxData, cancellationToken)
                 .ConfigureAwait(false);
 
             return correlationId;

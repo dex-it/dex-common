@@ -36,14 +36,19 @@ namespace Dex.Cap.Outbox.Ef
             _outboxOptions = outboxOptions.Value;
         }
 
-        public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
+            Func<CancellationToken, Task<TContext>> usefulAction,
+            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
+            CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
-
-            await strategy.ExecuteInTransactionAsync(async () =>
+            await strategy.ExecuteInTransactionAsync(
+                async () =>
                 {
                     _dbContext.ChangeTracker.Clear();
-                    await operation(cancellationToken).ConfigureAwait(false);
+                    var context = await usefulAction(cancellationToken).ConfigureAwait(false);
+                    await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    await createOutboxData(cancellationToken, context).ConfigureAwait(false);
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
                 () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
@@ -135,11 +140,8 @@ namespace Dex.Cap.Outbox.Ef
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId)
-            {
-                return (OutboxEnvelope x) =>
-                    x.Id == messageId && x.LockId == lockId && (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
-            }
+            static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
+                x => x.Id == messageId && x.LockId == lockId && (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
         }
 
         /// <summary>
@@ -205,7 +207,8 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger), static async (state, ct) =>
+            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger),
+                    static async (state, ct) =>
                     {
                         var (dbContext, freeMessageId, lockId, logger) = state;
 
