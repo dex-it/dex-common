@@ -17,9 +17,9 @@ namespace Dex.Cap.Outbox
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
-        public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId, 
+        public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId,
             Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData, 
+            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken = default)
             where TContext : class where TOutboxMessage : IOutboxMessage
         {
@@ -30,6 +30,28 @@ namespace Dex.Cap.Outbox
                     async (token, context) =>
                     {
                         var outboxData = await createOutboxData(token, context).ConfigureAwait(false);
+                        await EnqueueAsync(correlationId, outboxData, token).ConfigureAwait(false);
+                        return outboxData;
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return correlationId;
+        }
+
+        public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId,
+            Func<CancellationToken, Task<TContext>> usefulAction,
+            Func<CancellationToken, TContext, TOutboxMessage> createOutboxData,
+            CancellationToken cancellationToken = default)
+            where TContext : class where TOutboxMessage : IOutboxMessage
+        {
+            if (usefulAction == null) throw new ArgumentNullException(nameof(usefulAction));
+            if (createOutboxData == null) throw new ArgumentNullException(nameof(createOutboxData));
+
+            await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, usefulAction,
+                    async (token, context) =>
+                    {
+                        var outboxData = createOutboxData(token, context);
                         await EnqueueAsync(correlationId, outboxData, token).ConfigureAwait(false);
                         return outboxData;
                     },

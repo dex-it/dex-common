@@ -17,6 +17,16 @@ namespace Dex.Cap.Outbox.Interfaces
             where TOutboxMessage : IOutboxMessage;
 
         /// <summary>
+        /// Execute operation and publish message to outbox queue into transaction.
+        /// </summary>
+        Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId,
+            Func<CancellationToken, Task<TContext>> usefulAction,
+            Func<CancellationToken, TContext, TOutboxMessage> createOutboxData,
+            CancellationToken cancellationToken = default)
+            where TContext : class 
+            where TOutboxMessage : IOutboxMessage;
+
+        /// <summary>
         /// Perform only publish outbox message to queue. This method don't check Transaction, only append outbox message to change context.
         /// </summary>
         Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, CancellationToken cancellationToken = default) where T : IOutboxMessage;
