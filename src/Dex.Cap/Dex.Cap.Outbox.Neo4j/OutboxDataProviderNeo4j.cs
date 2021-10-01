@@ -25,13 +25,21 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        // public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        // {
+        //     using (var transaction = _graphClient.BeginTransaction())
+        //     {
+        //         await operation(cancellationToken);
+        //         await transaction.CommitAsync();
+        //     }
+        // }
+
+        public override Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId, 
+            Func<CancellationToken, Task<TContext>> usefulAction, 
+            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
+            CancellationToken cancellationToken)
         {
-            using (var transaction = _graphClient.BeginTransaction())
-            {
-                await operation(cancellationToken);
-                await transaction.CommitAsync();
-            }
+            throw new NotImplementedException();
         }
 
         public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)

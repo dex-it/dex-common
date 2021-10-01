@@ -25,13 +25,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.EnqueueAsync(new TestOutboxCommand {Args = "hello world"}, CancellationToken.None);
-            await client.EnqueueAsync(new TestOutboxCommand {Args = "hello world2"}, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
 
             await Save(sp);
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) =>
+            TestCommandHandler.OnProcess += (_, c) =>
             {
                 count++;
                 TestContext.WriteLine(Activity.Current?.Id);
@@ -50,7 +50,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.EnqueueAsync(new TestErrorOutboxCommand {CountDown = 3}, CancellationToken.None);
+            await client.EnqueueAsync(new TestErrorOutboxCommand { CountDown = 3 }, CancellationToken.None);
             await Save(sp);
 
             var count = 0;
@@ -76,8 +76,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var client = sp.GetRequiredService<IOutboxService>();
-            await client.EnqueueAsync(new TestOutboxCommand {Args = "hello"}, CancellationToken.None);
-            await client.EnqueueAsync(new TestErrorOutboxCommand {CountDown = 1}, CancellationToken.None);
+            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello" }, CancellationToken.None);
+            await client.EnqueueAsync(new TestErrorOutboxCommand { CountDown = 1 }, CancellationToken.None);
             await Save(sp);
 
             var count = 0;
@@ -103,7 +103,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            TestCommandHandler.OnProcess += (_, c) =>
+            {
+                count++;
+            };
 
             var client = sp.GetRequiredService<IOutboxService>();
             var correlation = Guid.NewGuid();
@@ -111,11 +114,14 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            await client.ExecuteOperationAsync(correlation, async token =>
-            {
-                await testDbContext.Users.AddAsync(new User {Name = name}, token);
-                return new TestOutboxCommand {Args = "hello world"};
-            }, CancellationToken.None);
+            await client.ExecuteOperationAsync(correlation,
+                async token =>
+                {
+                    await testDbContext.Users.AddAsync(new User { Name = name }, token);
+                    return new TestOutboxCommand { Args = "hello world" };
+                },
+                (token, command) => Task.FromResult(command),
+                CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -124,7 +130,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             Assert.AreEqual(1, count);
             Assert.IsTrue(await testDbContext.Users.AnyAsync(x => x.Name == name));
         }
-        
+
         [Test]
         public async Task SeveralOutboxMessagesInTransactionTest()
         {
@@ -144,11 +150,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // act
             var name = "mmx_" + Guid.NewGuid();
             await client.ExecuteOperationAsync(correlation, async token =>
-            {
-                await testDbContext.Users.AddAsync(new User {Name = name}, token);
-                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand2(){Args = "Command2"}, CancellationToken.None);
-                return new TestOutboxCommand {Args = "hello world"};
-            }, CancellationToken.None);
+                {
+                    await testDbContext.Users.AddAsync(new User { Name = name }, token);
+                    await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand2() { Args = "Command2" }, CancellationToken.None);
+                    return new TestOutboxCommand { Args = "hello world" };
+                },
+                (token, command) => Task.FromResult(command),
+                CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -176,17 +184,19 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // act
             var name = "mmx_" + Guid.NewGuid();
             await client.ExecuteOperationAsync(correlation, async token =>
-            {
-                await testDbContext.Users.AddAsync(new User {Name = name}, token);
-
-                if (failureCount-- > 0)
                 {
-                    TestContext.WriteLine("throw failure...");
-                    throw new TimeoutException();
-                }
+                    await testDbContext.Users.AddAsync(new User { Name = name }, token);
 
-                return new TestOutboxCommand {Args = "hello world"};
-            }, CancellationToken.None);
+                    if (failureCount-- > 0)
+                    {
+                        TestContext.WriteLine("throw failure...");
+                        throw new TimeoutException();
+                    }
+
+                    return new TestOutboxCommand { Args = "hello world" };
+                },
+                (token, command) => Task.FromResult(command),
+                CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -206,12 +216,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var threads = new HashSet<string>();
             using var ce = new CountdownEvent(3);
 
-            TestDelayCommandHandler.OnProcess += (_, m) => 
+            TestDelayCommandHandler.OnProcess += (_, m) =>
             {
                 lock (threads)
                 {
                     threads.Add(_asyncLocal.Value);
                 }
+
                 ce.Signal();
             };
 

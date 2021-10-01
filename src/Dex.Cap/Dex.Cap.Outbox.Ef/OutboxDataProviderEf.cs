@@ -36,17 +36,22 @@ namespace Dex.Cap.Outbox.Ef
             _outboxOptions = outboxOptions.Value;
         }
 
-        public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+        public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
+            Func<CancellationToken, Task<TContext>> usefulAction,
+            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
+            CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
-
-            await strategy.ExecuteInTransactionAsync(async () =>
-            {
-                _dbContext.ChangeTracker.Clear();
-                await operation(cancellationToken).ConfigureAwait(false);
-                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }, 
-            () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
+            await strategy.ExecuteInTransactionAsync(
+                async () =>
+                {
+                    _dbContext.ChangeTracker.Clear();
+                    var context = await usefulAction(cancellationToken).ConfigureAwait(false);
+                    await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    await createOutboxData(cancellationToken, context).ConfigureAwait(false);
+                    await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                },
+                () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
         }
 
         public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
@@ -89,6 +94,7 @@ namespace Dex.Cap.Outbox.Ef
         {
             return await _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == correlationId, cancellationToken).ConfigureAwait(false);
         }
+
 
         /// <exception cref="RetryLimitExceededException"/>
         protected override async Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)
@@ -134,10 +140,8 @@ namespace Dex.Cap.Outbox.Ef
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId)
-            {
-                return (OutboxEnvelope x) => x.Id == messageId && x.LockId == lockId && (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
-            }
+            static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
+                x => x.Id == messageId && x.LockId == lockId && (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
         }
 
         /// <summary>
@@ -203,61 +207,63 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger), static async (state, ct) =>
-            {
-                var (dbContext, freeMessageId, lockId, logger) = state;
-
-                var lockedJob = await dbContext.Set<OutboxEnvelope>()
-                    .Where(WhereFree(freeMessageId))
-                    .Select(x => new
+            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger),
+                    static async (state, ct) =>
                     {
-                        DbNow = DateTime.Now, // Вытащить текущее время БД что-бы синхронизироваться.
-                        JobDb = x
-                    })
-                    .FirstOrDefaultAsync(ct)
-                    .ConfigureAwait(false);
+                        var (dbContext, freeMessageId, lockId, logger) = state;
 
-                if (lockedJob != null)
-                {
-                    Debug.Assert(lockedJob.DbNow.Kind != DateTimeKind.Unspecified, "Опасно работать с неопределённой датой");
+                        var lockedJob = await dbContext.Set<OutboxEnvelope>()
+                            .Where(WhereFree(freeMessageId))
+                            .Select(x => new
+                            {
+                                DbNow = DateTime.Now, // Вытащить текущее время БД что-бы синхронизироваться.
+                                JobDb = x
+                            })
+                            .FirstOrDefaultAsync(ct)
+                            .ConfigureAwait(false);
 
-                    logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
+                        if (lockedJob != null)
+                        {
+                            Debug.Assert(lockedJob.DbNow.Kind != DateTimeKind.Unspecified, "Опасно работать с неопределённой датой");
 
-                    lockedJob.JobDb.LockId = lockId;
-                    lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
+                            logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
 
-                    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                    logger.LogTrace("Message is successfully captured {MessageId}", freeMessageId);
+                            lockedJob.JobDb.LockId = lockId;
+                            lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
 
-                    dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
+                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                            logger.LogTrace("Message is successfully captured {MessageId}", freeMessageId);
 
-                    return lockedJob.JobDb;
-                }
-                else
-                {
-                    logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
-                    return null;
-                }
-            },
-            static async (state, ct) =>
-            {
-                var (dbContext, freeMessageId, lockId, logger) = state;
+                            dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
 
-                var succeded = await dbContext.Set<OutboxEnvelope>()
-                    .AnyAsync(x => x.Id == freeMessageId && x.LockId == lockId, ct)
-                    .ConfigureAwait(false);
+                            return lockedJob.JobDb;
+                        }
+                        else
+                        {
+                            logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
+                            return null;
+                        }
+                    },
+                    static async (state, ct) =>
+                    {
+                        var (dbContext, freeMessageId, lockId, logger) = state;
 
-                return succeded;
-            },
-            IsolationLevel.RepeatableRead,
-            cancellationToken)
+                        var succeded = await dbContext.Set<OutboxEnvelope>()
+                            .AnyAsync(x => x.Id == freeMessageId && x.LockId == lockId, ct)
+                            .ConfigureAwait(false);
+
+                        return succeded;
+                    },
+                    IsolationLevel.RepeatableRead,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return message;
 
             static Expression<Func<OutboxEnvelope, bool>> WhereFree(Guid messageId)
             {
-                return (OutboxEnvelope x) => x.Id == messageId && (x.LockId == null || x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc < DateTime.UtcNow);
+                return (OutboxEnvelope x) =>
+                    x.Id == messageId && (x.LockId == null || x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc < DateTime.UtcNow);
             }
         }
 

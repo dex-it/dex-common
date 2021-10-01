@@ -10,12 +10,21 @@ namespace Dex.Cap.Outbox
 {
     internal abstract class BaseOutboxDataProvider : IOutboxDataProvider
     {
-        public abstract Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
+        public abstract Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
+            Func<CancellationToken, Task<TContext>> usefulAction,
+            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
+            CancellationToken cancellationToken)
+            where TOutboxMessage : IOutboxMessage;
+
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
         public abstract Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
+
+        // Job management
+
         public abstract IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs(CancellationToken cancellationToken);
 
-        public virtual async Task Fail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null)
+        public virtual async Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null,
+            Exception? exception = null)
         {
             if (outboxJob == null)
             {
@@ -31,7 +40,7 @@ namespace Dex.Cap.Outbox
             await CompleteJobAsync(outboxJob, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task Succeed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken)
+        public virtual async Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken)
         {
             if (outboxJob == null)
             {
