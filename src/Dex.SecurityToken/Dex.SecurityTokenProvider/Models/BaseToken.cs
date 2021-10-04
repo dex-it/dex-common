@@ -19,7 +19,7 @@ namespace Dex.SecurityTokenProvider.Models
         /// <summary>
         /// - когда выдан
         /// </summary>
-        public DateTimeOffset Created   { get; init; }
+        public DateTimeOffset Created   { get; init; } = DateTimeOffset.UtcNow; 
         /// <summary>
         /// -  истечет
         /// </summary>
