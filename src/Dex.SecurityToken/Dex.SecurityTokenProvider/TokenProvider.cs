@@ -28,7 +28,7 @@ namespace Dex.SecurityTokenProvider
         public async Task<string> CreateTokenAsync<T>(T tokenModel) where T : BaseToken
         {
             if (tokenModel == null) throw new ArgumentNullException(nameof(tokenModel));
-            if (tokenModel.Expired <= DateTimeOffset.Now) throw new ArgumentException("Expired date must be greater then current date ");
+            if (tokenModel.Expired <= DateTimeOffset.UtcNow) throw new ArgumentException("Expired date must be greater then current date ");
 
             var serializedToken = JsonSerializer.Serialize(tokenModel);
 
@@ -57,11 +57,11 @@ namespace Dex.SecurityTokenProvider
 
             var tokenData = JsonSerializer.Deserialize<T>(decryptedToken);
 
-            var tokenInfo = await _tokenInfoStorage.GetTokenInfoAsync(tokenData.Id);
+            var tokenInfo = await _tokenInfoStorage.GetTokenInfoAsync(tokenData!.Id);
 
             var result = throwIfInvalid switch
             {
-                true when tokenInfo.Expired <= DateTimeOffset.Now => throw new TokenExpiredException($"Id = {tokenInfo.Id}"),
+                true when tokenInfo.Expired <= DateTimeOffset.UtcNow => throw new TokenExpiredException($"Id = {tokenInfo.Id}"),
                 true when tokenInfo.Activated => throw new TokenAlreadyActivatedException($"Id = {tokenInfo.Id}"),
                 true when _tokenProviderOptions.ApiResource != tokenData.Audience => throw new InvalidAudienceException(),
                 _ => tokenData

@@ -8,8 +8,8 @@ namespace Dex.SecurityTokenProviderTests.TestData
             new()
             {
                 Audience = "TestAudience",
-                Created = DateTimeOffset.Now,
-                Expired = DateTimeOffset.Now.AddDays(1),
+                Created = DateTimeOffset.UtcNow,
+                Expired = DateTimeOffset.UtcNow.AddDays(1),
                 Id = Guid.NewGuid(),
                 Reason = "testReason",
                 UserId = Guid.NewGuid()

@@ -118,7 +118,7 @@ namespace Dex.SecurityTokenProviderTests
                 .AddDataProtection()
                 .PersistKeysToDbContext<DataProtectionKeyContext>();
 
-            services.AddDexSecurityTokenProvider<TestTokenInfoStorage>(config.GetSection(nameof(TokenProviderOptions)));
+            services.AddSecurityTokenProvider<TestTokenInfoStorage>(config.GetSection(nameof(TokenProviderOptions)));
             return services.BuildServiceProvider();
         }
     }
