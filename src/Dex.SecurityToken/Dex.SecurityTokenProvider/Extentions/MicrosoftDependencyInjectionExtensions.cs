@@ -22,8 +22,8 @@ namespace Dex.SecurityTokenProvider.Extentions
                 .ValidateDataAnnotations();
 
 
-            services.AddScoped<ITokenInfoStorage, TokenStorage>();
-            services.AddScoped<ITokenProvider, TokenProvider>();
+            services.AddSingleton<ITokenInfoStorage, TokenStorage>();  
+            services.AddSingleton<ITokenProvider, TokenProvider>();
             return services;
         }
     }
