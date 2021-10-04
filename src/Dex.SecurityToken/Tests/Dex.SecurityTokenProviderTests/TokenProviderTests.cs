@@ -18,21 +18,27 @@ namespace Dex.SecurityTokenProviderTests
 {
     public class TokenProviderTests
     {
+        private readonly IServiceProvider _serviceProvider;
+
+        public TokenProviderTests()
+        {
+            _serviceProvider = BuildServiceProvider();
+        }
+
         [Fact]
         public async Task TokenProviderSmokeTest()
         {
             //Arrange
-            var tokenProvider = GetRequiredService<ITokenProvider>();
+            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
             var userToken = UserTokensData.ValidUserToken;
 
             userToken.Expired = Now.AddSeconds(10);
 
             //Act
             var token = await tokenProvider.CreateTokenUrlEscapedAsync(userToken);
-
-            //Assert
             var tokenData = await tokenProvider.GetTokenDataAsync<TestUserToken>(token);
 
+            //Assert
             Assert.Equal(tokenData.UserId, userToken.UserId);
             Assert.Equal(tokenData.Audience, userToken.Audience);
             Assert.Equal(tokenData.Created, userToken.Created);
@@ -43,7 +49,7 @@ namespace Dex.SecurityTokenProviderTests
         public async Task TokenExpiredTest()
         {
             //Arrange
-            var tokenProvider = GetRequiredService<ITokenProvider>();
+            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
             var userToken = UserTokensData.ValidUserToken;
             userToken.Expired = Now.AddSeconds(1);
 
@@ -60,7 +66,7 @@ namespace Dex.SecurityTokenProviderTests
         public async Task InvalidAudienceTest()
         {
             //Arrange
-            var tokenProvider = GetRequiredService<ITokenProvider>();
+            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
             var userToken = UserTokensData.ValidUserToken;
             userToken.Audience = "Invalid Audience" + Guid.NewGuid();
             //Act
@@ -76,7 +82,7 @@ namespace Dex.SecurityTokenProviderTests
         public async Task TokenAlreadyActivatedTest()
         {
             //Arrange
-            var tokenProvider = GetRequiredService<ITokenProvider>();
+            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
             var userToken = UserTokensData.ValidUserToken;
 
             //Act
@@ -89,7 +95,7 @@ namespace Dex.SecurityTokenProviderTests
         }
 
 
-        private T GetRequiredService<T>() where T : class
+        private ServiceProvider BuildServiceProvider()
         {
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(
@@ -113,8 +119,7 @@ namespace Dex.SecurityTokenProviderTests
                 .PersistKeysToDbContext<DataProtectionKeyContext>();
 
             services.AddDexSecurityTokenProvider<TestTokenInfoStorage>(config.GetSection(nameof(TokenProviderOptions)));
-
-            return services.BuildServiceProvider().GetRequiredService<T>();
+            return services.BuildServiceProvider();
         }
     }
 }

@@ -25,12 +25,10 @@ namespace Dex.SecurityTokenProvider
         }
 
 
-        public async Task<string> CreateToken<T>(T tokenModel) where T : BaseToken
+        public async Task<string> CreateTokenAsync<T>(T tokenModel) where T : BaseToken
         {
             if (tokenModel == null) throw new ArgumentNullException(nameof(tokenModel));
-            //проверим, что нам не передали экземпляр базового класса
-            if (tokenModel.GetType() == typeof(BaseToken))
-                throw new ArgumentException(@$"{nameof(tokenModel)} T must inherit {nameof(BaseToken)} and contains unique user data");
+            if (tokenModel.Expired <= DateTimeOffset.Now) throw new ArgumentException("Expired date must be greater then current date ");
 
             var serializedToken = JsonSerializer.Serialize(tokenModel);
 
@@ -47,7 +45,7 @@ namespace Dex.SecurityTokenProvider
 
         public async Task<string> CreateTokenUrlEscapedAsync<T>(T token) where T : BaseToken
         {
-            return Uri.EscapeUriString(await CreateToken(token));
+            return Uri.EscapeUriString(await CreateTokenAsync(token));
         }
 
 
@@ -58,19 +56,17 @@ namespace Dex.SecurityTokenProvider
             var decryptedToken = provider.CreateProtector(nameof(T)).Unprotect(encryptedToken);
 
             var tokenData = JsonSerializer.Deserialize<T>(decryptedToken);
-            if (tokenData == null) throw new ArgumentException(nameof(encryptedToken));
 
             var tokenInfo = await _tokenInfoStorage.GetTokenInfoAsync(tokenData.Id);
 
             var result = throwIfInvalid switch
             {
-                true when tokenData.Expired <= DateTimeOffset.Now => throw new TokenExpiredException($"Id = {tokenInfo.Id}"),
                 true when tokenInfo.Expired <= DateTimeOffset.Now => throw new TokenExpiredException($"Id = {tokenInfo.Id}"),
                 true when tokenInfo.Activated => throw new TokenAlreadyActivatedException($"Id = {tokenInfo.Id}"),
                 true when _tokenProviderOptions.ApiResource != tokenData.Audience => throw new InvalidAudienceException(),
                 _ => tokenData
             };
-            await _tokenInfoStorage.SetActivated(tokenData.Id);
+            await _tokenInfoStorage.SetActivatedAsync(tokenData.Id);
             return result;
         }
     }

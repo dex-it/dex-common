@@ -5,7 +5,7 @@ namespace Dex.SecurityTokenProvider.Interfaces
 {
     public interface ITokenProvider 
     {
-        Task<string> CreateToken<T>(T tokenModel) where T : BaseToken;
+        Task<string> CreateTokenAsync<T>(T tokenModel) where T : BaseToken;
 
         Task<string> CreateTokenUrlEscapedAsync<T>(T token) where T : BaseToken;
 
