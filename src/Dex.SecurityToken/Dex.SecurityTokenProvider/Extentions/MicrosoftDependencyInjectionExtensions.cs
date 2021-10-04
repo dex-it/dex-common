@@ -9,6 +9,7 @@ namespace Dex.SecurityTokenProvider.Extentions
     {
         /// <summary>
         /// </summary>
+        /// <param name="services"></param>
         /// <param name="config">
         ///     Must contains section with name "TokenProviderOptions". "ApplicationName" and "ApiResource" is
         ///     required
