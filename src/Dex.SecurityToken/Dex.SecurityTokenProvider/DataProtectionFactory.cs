@@ -21,11 +21,9 @@ namespace Dex.SecurityTokenProvider
         public IDataProtector GetDataProtector(string purpose)
         {
             if (string.IsNullOrEmpty(purpose)) throw new ArgumentNullException(nameof(purpose));
-            if (_protectors.ContainsKey(purpose)) return _protectors[purpose];
 
-            var protector = _dataProtectionProvider.CreateProtector(purpose);
-            _protectors.TryAdd(purpose, protector);
-            return protector;
+            // ReSharper disable once HeapView.CanAvoidClosure
+            return _protectors.GetOrAdd(purpose,  s => _dataProtectionProvider.CreateProtector(s));
         }
     }
 }

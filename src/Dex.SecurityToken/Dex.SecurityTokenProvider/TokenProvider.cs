@@ -16,15 +16,15 @@ namespace Dex.SecurityTokenProvider
         private readonly ITokenInfoStorage _tokenInfoStorage;
         private readonly TokenProviderOptions _tokenProviderOptions;
 
-        
+
         private readonly IDataProtectionFactory _dataProtectionFactory;
 
-        public TokenProvider(ITokenInfoStorage tokenInfoStorage, IOptions<TokenProviderOptions> tokenProviderOptions,
-            IDataProtectionFactory dataProtectionFactory)
+        public TokenProvider(ITokenInfoStorage tokenInfoStorage,
+            IDataProtectionFactory dataProtectionFactory, IOptions<TokenProviderOptions> tokenProviderOptions)
         {
             _tokenInfoStorage = tokenInfoStorage ?? throw new ArgumentNullException(nameof(tokenInfoStorage));
-            _dataProtectionFactory = dataProtectionFactory;
-            _tokenProviderOptions = tokenProviderOptions.Value;
+            _dataProtectionFactory = dataProtectionFactory ?? throw new ArgumentNullException(nameof(dataProtectionFactory));
+            _tokenProviderOptions = tokenProviderOptions.Value ?? throw new ArgumentNullException(nameof(tokenProviderOptions));
         }
 
 

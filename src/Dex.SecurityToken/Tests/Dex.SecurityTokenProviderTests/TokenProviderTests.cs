@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Extentions;
@@ -60,6 +61,28 @@ namespace Dex.SecurityTokenProviderTests
             await Assert.ThrowsAsync<TokenExpiredException>(async () => { await tokenProvider.GetTokenDataAsync<TestUserToken>(token); });
         }
 
+        
+        [Fact]
+        public void NegativeConcurrencyTest()
+        {
+            //Arrange
+            var protector1 = DataProtectionProvider.Create("Provider").CreateProtector("Protector");
+            var protector2 = DataProtectionProvider.Create("Provider").CreateProtector("Protector");
+
+            var testString = "testString";
+            
+            //Act
+            var encryptedToken1 = protector1.Protect(testString);
+            var encryptedToken2 = protector2.Protect(testString);
+            
+                            
+            var decryptedToken1 = protector1.Unprotect(encryptedToken2);
+            var decryptedToken2 = protector2.Unprotect(encryptedToken1);
+            
+            //Arrange
+            Assert.NotEqual(encryptedToken1, encryptedToken2);
+            Assert.Equal(decryptedToken1, decryptedToken2);
+        }
 
         private ServiceProvider BuildServiceProvider()
         {
