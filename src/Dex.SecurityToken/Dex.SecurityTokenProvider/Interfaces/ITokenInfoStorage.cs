@@ -8,6 +8,5 @@ namespace Dex.SecurityTokenProvider.Interfaces
     {
         Task<TokenInfo> GetTokenInfoAsync(Guid tokenInfoId);
         Task SaveTokenInfoAsync(TokenInfo tokenInfo);
-        Task SetActivatedAsync(Guid tokenInfoId);
     }
 }

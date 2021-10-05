@@ -27,14 +27,5 @@ namespace Dex.SecurityTokenProviderTests
             _tokenInfos.Add(tokenInfo.Id, tokenInfo);
             return Task.CompletedTask;
         }
-
-        public Task SetActivatedAsync(Guid tokenInfoId)
-        {
-            if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
-            if (!_tokenInfos.ContainsKey(tokenInfoId)) throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
-
-            _tokenInfos[tokenInfoId].Activated = true;
-            return Task.CompletedTask;
-        }
     }
 }

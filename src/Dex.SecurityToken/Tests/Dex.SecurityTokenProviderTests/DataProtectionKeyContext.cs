@@ -11,6 +11,7 @@ namespace Dex.SecurityTokenProviderTests
         {
         }
 
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     }
 }
