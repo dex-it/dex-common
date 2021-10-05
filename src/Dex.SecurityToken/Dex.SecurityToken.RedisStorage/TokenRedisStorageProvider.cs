@@ -6,7 +6,7 @@ using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Models;
 using ServiceStack.Redis;
 
-namespace TokenInfoRedisStorageProvider
+namespace Dex.SecurityToken.RedisStorage
 {
     // ReSharper disable once UnusedType.Global
     /// <summary>
