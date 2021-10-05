@@ -21,14 +21,6 @@ namespace Dex.SecurityToken.RedisStorage
             _redisClientsManager = redisClientsManager ?? throw new ArgumentNullException(nameof(redisClientsManager));
         }
 
-        /// <summary>
-        /// Get token info from storage
-        /// </summary>
-        /// <param name="tokenInfoId">id, identity key of Token</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="TokenInfoNotFoundException"></exception>
         public async Task<TokenInfo> GetTokenInfoAsync(Guid tokenInfoId, CancellationToken cancellationToken = default)
         {
             if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
@@ -39,27 +31,15 @@ namespace Dex.SecurityToken.RedisStorage
                    throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
         }
 
-        /// <summary>
-        /// Save token info into storage
-        /// </summary>
-        /// <param name="token"></param>
-        /// <param name="cancellationToken"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public async Task SaveTokenInfoAsync(TokenInfo token, CancellationToken cancellationToken = default)
+        public async Task SaveTokenInfoAsync(TokenInfo tokenInfo, CancellationToken cancellationToken = default)
         {
-            if (token == null) throw new ArgumentNullException(nameof(token));
+            if (tokenInfo == null) throw new ArgumentNullException(nameof(tokenInfo));
 
             await using var redis = await _redisClientsManager.GetClientAsync(cancellationToken);
             await redis.As<TokenInfo>()
-                .StoreAsync(token, TimeSpan.FromTicks(token.Expired.Ticks), cancellationToken);
+                .StoreAsync(tokenInfo, TimeSpan.FromTicks(tokenInfo.Expired.Ticks), cancellationToken);
         }
 
-        /// <summary>
-        /// Mark token as used
-        /// </summary>
-        /// <param name="tokenInfoId">identity key of token</param>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="TokenInfoNotFoundException"></exception>
         public async Task SetActivatedAsync(Guid tokenInfoId)
         {
             if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
