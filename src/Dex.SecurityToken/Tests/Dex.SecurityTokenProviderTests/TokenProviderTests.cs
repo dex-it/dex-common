@@ -6,13 +6,13 @@ using Dex.SecurityTokenProvider.Extentions;
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Options;
 using Dex.SecurityTokenProviderTests.TestData;
+using Dex.SecurityTokenProviderTests.TestData.Models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using static System.DateTimeOffset;
 
 namespace Dex.SecurityTokenProviderTests
 {
@@ -32,18 +32,17 @@ namespace Dex.SecurityTokenProviderTests
             var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
             var userToken = UserTokensData.ValidUserToken;
 
-            userToken.Expired = Now.AddSeconds(10);
-
             //Act
-            var token = await tokenProvider.CreateTokenUrlEscapedAsync(userToken);
+            var token = await tokenProvider.CreateTokenUrlEscapedAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
+                TimeSpan.FromSeconds(-50));
+
             var tokenData = await tokenProvider.GetTokenDataAsync<TestUserToken>(token);
 
             //Assert
             Assert.Equal(tokenData.UserId, userToken.UserId);
             Assert.Equal(tokenData.Audience, userToken.Audience);
-            Assert.Equal(tokenData.Created, userToken.Created);
-            Assert.Equal(tokenData.Expired, userToken.Expired);
         }
+
 
         [Fact]
         public async Task TokenExpiredTest()
@@ -51,47 +50,14 @@ namespace Dex.SecurityTokenProviderTests
             //Arrange
             var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
             var userToken = UserTokensData.ValidUserToken;
-            userToken.Expired = Now.AddSeconds(1);
 
             //Act
-            var token = await tokenProvider.CreateTokenUrlEscapedAsync(userToken);
+            var token = await tokenProvider.CreateTokenUrlEscapedAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
+                TimeSpan.FromSeconds(1));
 
             await Task.Delay(TimeSpan.FromSeconds(2));
             //Assert
             await Assert.ThrowsAsync<TokenExpiredException>(async () => { await tokenProvider.GetTokenDataAsync<TestUserToken>(token); });
-        }
-
-
-        [Fact]
-        public async Task InvalidAudienceTest()
-        {
-            //Arrange
-            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
-            var userToken = UserTokensData.ValidUserToken;
-            userToken.Audience = "Invalid Audience" + Guid.NewGuid();
-            //Act
-            var token = await tokenProvider.CreateTokenUrlEscapedAsync(userToken);
-
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            //Assert
-            await Assert.ThrowsAsync<InvalidAudienceException>(async () => { await tokenProvider.GetTokenDataAsync<TestUserToken>(token); });
-        }
-
-
-        [Fact]
-        public async Task TokenAlreadyActivatedTest()
-        {
-            //Arrange
-            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
-            var userToken = UserTokensData.ValidUserToken;
-
-            //Act
-            var token = await tokenProvider.CreateTokenUrlEscapedAsync(userToken);
-
-            await tokenProvider.GetTokenDataAsync<TestUserToken>(token);
-
-            //Assert
-            await Assert.ThrowsAsync<TokenAlreadyActivatedException>(async () => { await tokenProvider.GetTokenDataAsync<TestUserToken>(token); });
         }
 
 

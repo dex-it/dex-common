@@ -1,19 +1,27 @@
-﻿using Dex.SecurityTokenProvider.Interfaces;
+﻿using System;
+using Dex.SecurityTokenProvider.Interfaces;
+using Dex.SecurityTokenProvider.Options;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace Dex.SecurityTokenProvider
 {
     public class DataProtectionFactory : IDataProtectionFactory
     {
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, IDataProtectionProvider> _providers = new();
-
-        public IDataProtectionProvider GetDataProtection(string appName)
+        private readonly TokenProviderOptions _tokenProviderOptions;
+        public DataProtectionFactory(TokenProviderOptions tokenProviderOptions)
         {
-            if (_providers.ContainsKey(appName)) return _providers[appName];
+            _tokenProviderOptions = tokenProviderOptions;
+        }
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, IDataProtector> _providers = new();
 
-            var provider = DataProtectionProvider.Create(appName);
-            _providers.TryAdd(appName, provider);
-            return provider;
+        public IDataProtector GetDataProtector(string purpose)
+        {
+            if (string.IsNullOrEmpty(purpose)) throw new ArgumentNullException(nameof(purpose));
+            if (_providers.ContainsKey(purpose)) return _providers[purpose];
+
+            var protector = DataProtectionProvider.Create(_tokenProviderOptions.ApplicationName).CreateProtector(purpose);
+            _providers.TryAdd(purpose, protector);
+            return protector;
         }
     }
 }

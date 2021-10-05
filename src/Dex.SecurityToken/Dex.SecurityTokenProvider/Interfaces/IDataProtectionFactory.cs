@@ -4,6 +4,6 @@ namespace Dex.SecurityTokenProvider.Interfaces
 {
     public interface IDataProtectionFactory
     {   
-        IDataProtectionProvider GetDataProtection(string appName);
+        IDataProtector GetDataProtector(string purpose);
     }
 }

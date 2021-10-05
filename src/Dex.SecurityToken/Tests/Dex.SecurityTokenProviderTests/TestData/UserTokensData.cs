@@ -1,4 +1,5 @@
 ﻿using System;
+using Dex.SecurityTokenProviderTests.TestData.Models;
 
 namespace Dex.SecurityTokenProviderTests.TestData
 {
@@ -10,8 +11,6 @@ namespace Dex.SecurityTokenProviderTests.TestData
                 Audience = "TestAudience",
                 Created = DateTimeOffset.UtcNow,
                 Expired = DateTimeOffset.UtcNow.AddDays(1),
-                Id = Guid.NewGuid(),
-                Reason = "testReason",
                 UserId = Guid.NewGuid()
             };
     }

@@ -16,91 +16,72 @@ namespace Dex.SecurityTokenProvider
         private readonly ITokenInfoStorage _tokenInfoStorage;
         private readonly TokenProviderOptions _tokenProviderOptions;
 
-        private readonly IDataProtectionProvider provider;
+        
+        private readonly IDataProtectionFactory _dataProtectionFactory;
 
         public TokenProvider(ITokenInfoStorage tokenInfoStorage, IOptions<TokenProviderOptions> tokenProviderOptions,
             IDataProtectionFactory dataProtectionFactory)
         {
             _tokenInfoStorage = tokenInfoStorage ?? throw new ArgumentNullException(nameof(tokenInfoStorage));
+            _dataProtectionFactory = dataProtectionFactory;
             _tokenProviderOptions = tokenProviderOptions.Value;
-            provider = dataProtectionFactory.GetDataProtection(_tokenProviderOptions.ApplicationName);
         }
 
 
-        public async Task<string> CreateTokenAsync<T>(T tokenModel, int timeoutSeconds = 1, CancellationToken cancellationToken = default) where T : BaseToken
+        public async Task<string> CreateTokenAsync<T>(Action<T>? action, TimeSpan timeout, CancellationToken cancellationToken = default)
+            where T : BaseToken, new()
         {
-            if (tokenModel == null) throw new ArgumentNullException(nameof(tokenModel));
-            if (tokenModel.Expired <= DateTimeOffset.UtcNow) throw new ArgumentException("Expired date must be greater then current date ");
+            if (timeout <= TimeSpan.FromSeconds(0)) throw new ArgumentException("Timeout date must be greater then zero");
 
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-            cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
-
-            try
+            var token = new T
             {
-                return await Task.Run(async () =>
-                {
-                    tokenModel.Audience ??= _tokenProviderOptions.ApiResource;
-                    tokenModel.Id = tokenModel.Id != default ? tokenModel.Id : Guid.NewGuid();
+                Audience = _tokenProviderOptions.ApiResource,
+                Expired = DateTimeOffset.UtcNow.Add(timeout)
+            };
 
-                    var serializedToken = JsonSerializer.Serialize(tokenModel);
+            action?.Invoke(token);
 
-                    var encryptedToken = provider.CreateProtector(nameof(T)).Protect(serializedToken);
+            var serializedToken = JsonSerializer.Serialize(token);
 
-                    await _tokenInfoStorage.SaveTokenInfoAsync(new TokenInfo
-                    {
-                        Expired = tokenModel.Expired,
-                        Id = tokenModel.Id
-                    });
-                    return encryptedToken;
-                }, cts.Token);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            await _tokenInfoStorage.SaveTokenInfoAsync(new TokenInfo
             {
-                throw new TimeoutException($"Timeout exceeded {timeoutSeconds} sec");
-            }
+                Expired = token.Expired,
+                Id = token.Id
+            }, cancellationToken);
+
+            return _dataProtectionFactory.GetDataProtector(nameof(T)).Protect(serializedToken);
         }
 
 
-        public async Task<string> CreateTokenUrlEscapedAsync<T>(T token) where T : BaseToken
+        public async Task<string> CreateTokenUrlEscapedAsync<T>(Action<T>? action, TimeSpan timeout, CancellationToken cancellationToken = default)
+            where T : BaseToken, new()
         {
-            return Uri.EscapeUriString(await CreateTokenAsync(token));
+            return Uri.EscapeUriString(await CreateTokenAsync(action, timeout, cancellationToken));
         }
 
 
-        public async Task<T> GetTokenDataAsync<T>(string encryptedToken, int timeoutSeconds = 1, bool throwIfInvalid = true,
+        public async Task<T> GetTokenDataAsync<T>(string encryptedToken, bool throwIfInvalid = true,
             CancellationToken cancellationToken = default) where T : BaseToken
         {
             if (string.IsNullOrEmpty(encryptedToken)) throw new ArgumentNullException(nameof(encryptedToken));
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-            cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
-            try
-            {
-                return await Task.Run(async () => await GetTokenData<T>(throwIfInvalid, encryptedToken), cts.Token);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                throw new TimeoutException($"Timeout exceeded {timeoutSeconds} sec");
-            }
+            return await GetTokenData<T>(throwIfInvalid, encryptedToken, cancellationToken);
         }
 
-        public async Task<T> GetUnescapedTokenDataAsync<T>(string encryptedToken, int timeoutSeconds = 1, bool throwIfInvalid = true,
+        public async Task<T> GetUnescapedTokenDataAsync<T>(string encryptedToken, bool throwIfInvalid = true,
             CancellationToken cancellationToken = default) where T : BaseToken
         {
             var unescapedToken = Uri.EscapeUriString(encryptedToken);
-            return await GetTokenDataAsync<T>(unescapedToken, timeoutSeconds, throwIfInvalid, cancellationToken);
+            return await GetTokenDataAsync<T>(unescapedToken, throwIfInvalid, cancellationToken);
         }
 
 
-        private async Task<T> GetTokenData<T>(bool throwIfInvalid, string encryptedToken) where T : BaseToken
+        private async Task<T> GetTokenData<T>(bool throwIfInvalid, string encryptedToken, CancellationToken cancellationToken = default) where T : BaseToken
         {
-            var decryptedToken = provider.CreateProtector(nameof(T)).Unprotect(encryptedToken);
+            var decryptedToken = _dataProtectionFactory.GetDataProtector(nameof(T)).Unprotect(encryptedToken);
 
             var tokenData = JsonSerializer.Deserialize<T>(decryptedToken);
 
-            var tokenInfo = await _tokenInfoStorage.GetTokenInfoAsync(tokenData!.Id);
+            var tokenInfo = await _tokenInfoStorage.GetTokenInfoAsync(tokenData!.Id, cancellationToken);
 
             var result = throwIfInvalid switch
             {

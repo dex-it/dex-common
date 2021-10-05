@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Interfaces;
@@ -12,7 +13,7 @@ namespace Dex.SecurityTokenProviderTests
     {
         private readonly Dictionary<Guid, TokenInfo> _tokenInfos = new();
 
-        public Task<TokenInfo> GetTokenInfoAsync(Guid tokenInfoId)
+        public Task<TokenInfo> GetTokenInfoAsync(Guid tokenInfoId, CancellationToken cancellationToken = default)
         {
             if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
             if (!_tokenInfos.ContainsKey(tokenInfoId)) throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
@@ -21,10 +22,19 @@ namespace Dex.SecurityTokenProviderTests
             return Task.FromResult(tokenInfo);
         }
 
-        public Task SaveTokenInfoAsync(TokenInfo tokenInfo)
+        public Task SaveTokenInfoAsync(TokenInfo tokenInfo, CancellationToken cancellationToken = default)
         {
             if (tokenInfo == null) throw new ArgumentNullException(nameof(tokenInfo));
             _tokenInfos.Add(tokenInfo.Id, tokenInfo);
+            return Task.CompletedTask;
+        }
+
+        public Task SetActivatedAsync(Guid tokenInfoId)
+        {
+            if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
+            if (!_tokenInfos.ContainsKey(tokenInfoId)) throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
+
+            _tokenInfos[tokenInfoId].Activated = true;
             return Task.CompletedTask;
         }
     }
