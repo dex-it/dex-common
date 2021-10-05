@@ -2,15 +2,16 @@
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Options;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Options;
 
 namespace Dex.SecurityTokenProvider
 {
     public class DataProtectionFactory : IDataProtectionFactory
     {
         private readonly TokenProviderOptions _tokenProviderOptions;
-        public DataProtectionFactory(TokenProviderOptions tokenProviderOptions)
+        public DataProtectionFactory(IOptions<TokenProviderOptions> tokenProviderOptions)
         {
-            _tokenProviderOptions = tokenProviderOptions;
+            _tokenProviderOptions = tokenProviderOptions.Value;
         }
         private readonly System.Collections.Concurrent.ConcurrentDictionary<string, IDataProtector> _providers = new();
 

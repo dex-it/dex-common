@@ -34,7 +34,7 @@ namespace Dex.SecurityTokenProviderTests
 
             //Act
             var token = await tokenProvider.CreateTokenUrlEscapedAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
-                TimeSpan.FromSeconds(-50));
+                TimeSpan.FromSeconds(50));
 
             var tokenData = await tokenProvider.GetTokenDataAsync<TestUserToken>(token);
 
