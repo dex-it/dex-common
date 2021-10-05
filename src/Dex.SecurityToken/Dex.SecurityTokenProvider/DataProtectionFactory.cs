@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Options;
 using Microsoft.AspNetCore.DataProtection;
@@ -8,20 +9,22 @@ namespace Dex.SecurityTokenProvider
 {
     public class DataProtectionFactory : IDataProtectionFactory
     {
-        private readonly TokenProviderOptions _tokenProviderOptions;
+        private readonly IDataProtectionProvider _dataProtectionProvider;
+        private readonly ConcurrentDictionary<string, IDataProtector> _protectors = new();
+
         public DataProtectionFactory(IOptions<TokenProviderOptions> tokenProviderOptions)
         {
-            _tokenProviderOptions = tokenProviderOptions.Value;
+            if (tokenProviderOptions.Value == null) throw new ArgumentNullException(nameof(tokenProviderOptions));
+            _dataProtectionProvider = DataProtectionProvider.Create(tokenProviderOptions.Value.ApplicationName);
         }
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, IDataProtector> _providers = new();
 
         public IDataProtector GetDataProtector(string purpose)
         {
             if (string.IsNullOrEmpty(purpose)) throw new ArgumentNullException(nameof(purpose));
-            if (_providers.ContainsKey(purpose)) return _providers[purpose];
+            if (_protectors.ContainsKey(purpose)) return _protectors[purpose];
 
-            var protector = DataProtectionProvider.Create(_tokenProviderOptions.ApplicationName).CreateProtector(purpose);
-            _providers.TryAdd(purpose, protector);
+            var protector = _dataProtectionProvider.CreateProtector(purpose);
+            _protectors.TryAdd(purpose, protector);
             return protector;
         }
     }
