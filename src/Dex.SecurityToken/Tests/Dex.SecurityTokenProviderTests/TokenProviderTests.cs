@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Extentions;
@@ -34,7 +33,7 @@ namespace Dex.SecurityTokenProviderTests
             var userToken = UserTokensData.ValidUserToken;
 
             //Act
-            var token = await tokenProvider.CreateTokenUrlEscapedAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
+            var token = await tokenProvider.CreateTokenAsUrlAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
                 TimeSpan.FromSeconds(50));
 
             var tokenData = await tokenProvider.GetTokenDataAsync<TestUserToken>(token);
@@ -53,7 +52,7 @@ namespace Dex.SecurityTokenProviderTests
             var userToken = UserTokensData.ValidUserToken;
 
             //Act
-            var token = await tokenProvider.CreateTokenUrlEscapedAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
+            var token = await tokenProvider.CreateTokenAsUrlAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
                 TimeSpan.FromSeconds(1));
 
             await Task.Delay(TimeSpan.FromSeconds(2));
@@ -84,7 +83,7 @@ namespace Dex.SecurityTokenProviderTests
             Assert.Equal(decryptedToken1, decryptedToken2);
         }
 
-        private ServiceProvider BuildServiceProvider()
+        private static ServiceProvider BuildServiceProvider()
         {
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(

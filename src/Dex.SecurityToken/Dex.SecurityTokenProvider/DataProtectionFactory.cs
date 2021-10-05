@@ -7,6 +7,10 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.SecurityTokenProvider
 {
+    /// <summary>
+    /// Allow to create and cache IDataProtector.
+    /// Can be singltone.
+    /// </summary>
     public class DataProtectionFactory : IDataProtectionFactory
     {
         private readonly IDataProtectionProvider _dataProtectionProvider;
@@ -23,7 +27,7 @@ namespace Dex.SecurityTokenProvider
             if (string.IsNullOrEmpty(purpose)) throw new ArgumentNullException(nameof(purpose));
 
             // ReSharper disable once HeapView.CanAvoidClosure
-            return _protectors.GetOrAdd(purpose,  s => _dataProtectionProvider.CreateProtector(s));
+            return _protectors.GetOrAdd(purpose, s => _dataProtectionProvider.CreateProtector(s));
         }
     }
 }

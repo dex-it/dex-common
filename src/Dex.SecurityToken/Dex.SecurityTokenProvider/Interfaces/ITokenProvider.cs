@@ -9,13 +9,13 @@ namespace Dex.SecurityTokenProvider.Interfaces
     {
         Task<string> CreateTokenAsync<T>(Action<T> action, TimeSpan timeout, CancellationToken cancellationToken = default) where T : BaseToken, new();
 
-        Task<string> CreateTokenUrlEscapedAsync<T>(Action<T> action, TimeSpan timeout, CancellationToken cancellationToken = default)
+        Task<string> CreateTokenAsUrlAsync<T>(Action<T> action, TimeSpan timeout, CancellationToken cancellationToken = default)
             where T : BaseToken, new();
 
         Task<T> GetTokenDataAsync<T>(string encryptedToken, bool throwIfInvalid = true, CancellationToken cancellationToken = default)
             where T : BaseToken;
 
-        Task<T> GetUnescapedTokenDataAsync<T>(string encryptedToken, bool throwIfInvalid = true,
+        Task<T> GetTokenDataFromUrlAsync<T>(string encryptedToken, bool throwIfInvalid = true,
             CancellationToken cancellationToken = default)
             where T : BaseToken;
     }

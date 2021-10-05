@@ -4,7 +4,7 @@
         <TargetFramework>net5.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>10</LangVersion>
+        <LangVersion>default</LangVersion>
         <RootNamespace>TokenInfoRedisStorageProvider</RootNamespace>
         <PackageVersion>1.0.3</PackageVersion>
     </PropertyGroup>
