@@ -14,7 +14,7 @@ namespace Dex.SecurityTokenProvider
     public class DataProtectionFactory : IDataProtectionFactory
     {
         private readonly IDataProtectionProvider _dataProtectionProvider;
-        private readonly ConcurrentDictionary<string, IDataProtector> _protectors = new();
+        private readonly ConcurrentDictionary<string, Lazy<IDataProtector>> _protectors = new();
 
         public DataProtectionFactory(IOptions<TokenProviderOptions> tokenProviderOptions)
         {
@@ -27,7 +27,7 @@ namespace Dex.SecurityTokenProvider
             if (string.IsNullOrEmpty(purpose)) throw new ArgumentNullException(nameof(purpose));
 
             // ReSharper disable once HeapView.CanAvoidClosure
-            return _protectors.GetOrAdd(purpose, s => new Lazy<IDataProtector>(() => _dataProtectionProvider.CreateProtector(s)).Value);
+            return _protectors.GetOrAdd(purpose, s => new Lazy<IDataProtector>(() => _dataProtectionProvider.CreateProtector(s))).Value;
         }
     }
 }
