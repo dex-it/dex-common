@@ -27,7 +27,7 @@ namespace Dex.SecurityTokenProvider
             if (string.IsNullOrEmpty(purpose)) throw new ArgumentNullException(nameof(purpose));
 
             // ReSharper disable once HeapView.CanAvoidClosure
-            return _protectors.GetOrAdd(purpose, s => _dataProtectionProvider.CreateProtector(s));
+            return _protectors.GetOrAdd(purpose, s => new Lazy<IDataProtector>(() => _dataProtectionProvider.CreateProtector(s)).Value);
         }
     }
 }
