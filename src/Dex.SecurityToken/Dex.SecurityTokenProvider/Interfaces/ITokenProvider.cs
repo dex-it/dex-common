@@ -54,5 +54,12 @@ namespace Dex.SecurityTokenProvider.Interfaces
         Task<T> GetTokenDataFromUrlAsync<T>(string encryptedToken, bool throwIfInvalid = true,
             CancellationToken cancellationToken = default)
             where T : BaseToken;
+
+        /// <summary>
+        /// Marks the token used
+        /// </summary>
+        /// <param name="tokenInfoId"></param>
+        /// <returns></returns>
+        Task MarkTokenAsUsed(Guid tokenInfoId);
     }
 }

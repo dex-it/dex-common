@@ -73,6 +73,11 @@ namespace Dex.SecurityTokenProvider
             return await GetTokenDataAsync<T>(unescapedToken, throwIfInvalid, cancellationToken);
         }
 
+        public Task MarkTokenAsUsed(Guid tokenInfoId)
+        {
+            return _tokenInfoStorage.SetActivatedAsync(tokenInfoId);
+        }
+
 
         private async Task<T> GetTokenData<T>(bool throwIfInvalid, string encryptedToken, CancellationToken cancellationToken = default)
             where T : BaseToken

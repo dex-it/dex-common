@@ -82,6 +82,25 @@ namespace Dex.SecurityTokenProviderTests
             Assert.NotEqual(encryptedToken1, encryptedToken2);
             Assert.Equal(decryptedToken1, decryptedToken2);
         }
+        
+        [Fact]
+        public async Task TokenAlreadyActivatedTest()
+        {
+            //Arrange
+            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
+            var userToken = UserTokensData.ValidUserToken;
+
+            //Act
+            var token = await tokenProvider.CreateTokenAsUrlAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
+                TimeSpan.FromSeconds(10));
+            
+            var tokenData = await tokenProvider.GetTokenDataFromUrlAsync<TestUserToken>(token);
+            await tokenProvider.MarkTokenAsUsed(tokenData.Id);
+
+            //Assert
+            await Assert.ThrowsAsync<TokenAlreadyActivatedException>(async () => { await tokenProvider.GetTokenDataFromUrlAsync<TestUserToken>(token); });
+        }
+
 
         private static ServiceProvider BuildServiceProvider()
         {
