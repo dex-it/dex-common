@@ -123,9 +123,9 @@ namespace Dex.Cap.Outbox.Ef
                             {
                                 await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
                             }
-                            catch(DbUpdateException e)
+                            catch (DbUpdateException e)
                             {
-                                logger.LogWarning(e,$"Job {job.Id} can not complete outbox action");
+                                logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
                                 // очищаем все что было в конетексте
                                 dbContext.ChangeTracker.Clear();
                                 dbContext.Update(job);
