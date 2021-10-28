@@ -101,9 +101,9 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            await strategy.ExecuteInTransactionAsync((_dbContext, lockedJob), static async (state, ct) =>
+            await strategy.ExecuteInTransactionAsync((_dbContext, lockedJob, _logger), static async (state, ct) =>
                     {
-                        var (dbContext, lockedJob) = state;
+                        var (dbContext, lockedJob, logger) = state;
 
                         var job = await dbContext.Set<OutboxEnvelope>()
                             .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
@@ -119,7 +119,18 @@ namespace Dex.Cap.Outbox.Ef
                             job.Error = lockedJob.Envelope.Error;
                             job.LockId = null;
 
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                            try
+                            {
+                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                            }
+                            catch (DbUpdateException e)
+                            {
+                                logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
+                                // очищаем все что было в конетексте
+                                dbContext.ChangeTracker.Clear();
+                                dbContext.Update(job);
+                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                            }
                         }
                         else
                         {
@@ -128,7 +139,7 @@ namespace Dex.Cap.Outbox.Ef
                     },
                     static async (state, ct) =>
                     {
-                        var (dbContext, outboxJob) = state;
+                        var (dbContext, outboxJob, _) = state;
 
                         bool existLocked = await dbContext.Set<OutboxEnvelope>()
                             .AnyAsync(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId), ct)

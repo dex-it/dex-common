@@ -30,4 +30,6 @@ namespace Dex.Outbox.Command.Test
             return ProcessMessage((TestErrorOutboxCommand) outbox, cancellationToken);
         }
     }
+
+
 }

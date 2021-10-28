@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Models;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,6 +70,37 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
+        public async Task DatabaseErrorCommandFromHandlerRunTest()
+        {
+            // ошибка в БД в обработчике, по идее должна быть компенсация, но мы пока ничего не делаем
+
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, TestCreateUserCommandHandler>()
+                .BuildServiceProvider();
+
+            var client = sp.GetRequiredService<IOutboxService>();
+            var id = Guid.NewGuid();
+            var oid1 = await client.EnqueueAsync(new TestUserCreatorCommand { Id = id }, CancellationToken.None);
+            var oid2 = await client.EnqueueAsync(new TestUserCreatorCommand { Id = id }, CancellationToken.None);
+            await Save(sp);
+
+            // act
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.ProcessAsync(CancellationToken.None);
+                await Task.Delay(20);
+            }
+
+            // assert
+            var db = sp.GetRequiredService<TestDbContext>();
+            var envelope = await db.Set<OutboxEnvelope>().Where(x => x.Id == oid2).FirstAsync();
+            Assert.AreEqual(envelope.Status, OutboxMessageStatus.Failed);
+            Assert.AreEqual(envelope.Retries, 3);
+        }
+
+        [Test]
         public async Task NormalAndErrorCommandRunTest()
         {
             var sp = InitServiceCollection()
@@ -103,10 +136,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, c) =>
-            {
-                count++;
-            };
+            TestCommandHandler.OnProcess += (_, c) => { count++; };
 
             var client = sp.GetRequiredService<IOutboxService>();
             var correlation = Guid.NewGuid();

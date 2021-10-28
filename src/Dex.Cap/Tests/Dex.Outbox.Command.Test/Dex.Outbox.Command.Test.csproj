@@ -19,6 +19,9 @@
       <Compile Update="TestOutboxCommand2.cs">
         <DependentUpon>TestCommand2Handler.cs</DependentUpon>
       </Compile>
+      <Compile Update="TestDelayOutboxCommand.cs">
+        <DependentUpon>TestDelayCommandHandler.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>
