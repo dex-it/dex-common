@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,16 +58,7 @@ namespace Dex.Cap.Outbox.Neo4j
 
         public override async IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs([EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
-            const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
-
-            var outboxes = await _graphClient.Cypher.Match($"(o:{nameof(Outbox)})")
-                .Where((OutboxEnvelope o) => o.Retries < _outboxOptions.Retries)
-                .AndWhere((OutboxEnvelope o) => o.Status == failedStatus || o.Status == newStatus)
-                .Return<OutboxEnvelope>("o")
-                .OrderBy("o.Created")
-                .Limit(_outboxOptions.MessagesToProcess)
-                .ResultsAsync;
+            var outboxes = await GetFreeMessages(_outboxOptions.MessagesToProcess, cancellationToken);
 
             foreach (var o in outboxes)
             {
@@ -82,6 +72,23 @@ namespace Dex.Cap.Outbox.Neo4j
                 .WithParam("id", outboxEnvelope.Envelope.Id)
                 .Set("o = {outbox}").WithParam("outbox", outboxEnvelope)
                 .ExecuteWithoutResultsAsync();
+        }
+
+        /// <exception cref="OperationCanceledException"/>
+        public override async Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
+        {
+            const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
+            const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
+
+            var potentialFree = await _graphClient.Cypher.Match($"(o:{nameof(Outbox)})")
+                .Where((OutboxEnvelope o) => o.Retries < _outboxOptions.Retries)
+                .AndWhere((OutboxEnvelope o) => o.Status == failedStatus || o.Status == newStatus)
+                .Return<OutboxEnvelope>("o")
+                .OrderBy("o.Created")
+                .Limit(limit)
+                .ResultsAsync;
+
+            return potentialFree.ToArray();
         }
     }
 }

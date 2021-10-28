@@ -14,6 +14,9 @@ namespace Dex.Cap.Outbox.Ef
                 throw new ArgumentNullException(nameof(serviceProvider));
             }
 
+            serviceProvider.AddHealthChecks()
+                .AddCheck<OutboxHealthCheck>("outbox-scheduler");
+
             return serviceProvider
                 .AddScoped<IOutboxService, OutboxService>()
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
