@@ -268,7 +268,7 @@ namespace Dex.Cap.Outbox.Ef
         }
 
         /// <exception cref="OperationCanceledException"/>
-        private async Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
+        public override async Task<IEnumerable<OutboxEnvelope>> GetFreeMessages(int limit, CancellationToken cancellationToken)
         {
             var potentialFree = await _dbContext.Set<OutboxEnvelope>()
                 .Where(o => o.Retries < _outboxOptions.Retries && (o.Status == OutboxMessageStatus.New || o.Status == OutboxMessageStatus.Failed))
