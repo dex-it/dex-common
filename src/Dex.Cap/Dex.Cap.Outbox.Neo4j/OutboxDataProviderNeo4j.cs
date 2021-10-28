@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,7 +75,7 @@ namespace Dex.Cap.Outbox.Neo4j
         }
 
         /// <exception cref="OperationCanceledException"/>
-        public override async Task<IEnumerable<OutboxEnvelope>> GetFreeMessages(int limit, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
         {
             const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
             const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
@@ -87,7 +88,7 @@ namespace Dex.Cap.Outbox.Neo4j
                 .Limit(limit)
                 .ResultsAsync;
 
-            return potentialFree;
+            return potentialFree.ToArray();
         }
     }
 }

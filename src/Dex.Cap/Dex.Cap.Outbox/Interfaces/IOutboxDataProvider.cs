@@ -26,6 +26,6 @@ namespace Dex.Cap.Outbox.Interfaces
 
         Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken);
 
-        Task<IEnumerable<OutboxEnvelope>> GetFreeMessages(int limit, CancellationToken cancellationToken);
+        Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken);
     }
 }
