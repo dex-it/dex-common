@@ -13,7 +13,6 @@ using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -24,10 +23,8 @@ namespace Dex.Cap.Outbox.Ef
         private readonly TDbContext _dbContext;
         private readonly ILogger _logger;
         private readonly OutboxOptions _outboxOptions;
-        private readonly IServiceScopeFactory _scopeFactory;
 
-        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger,
-            IServiceScopeFactory scopeFactory)
+        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger)
         {
             if (outboxOptions is null)
             {
@@ -37,7 +34,6 @@ namespace Dex.Cap.Outbox.Ef
             _dbContext = dbContext;
             _logger = logger;
             _outboxOptions = outboxOptions.Value;
-            _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         }
 
         public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
@@ -106,41 +102,41 @@ namespace Dex.Cap.Outbox.Ef
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteInTransactionAsync((_dbContext, lockedJob, _logger), static async (state, ct) =>
+            {
+                var (dbContext, lockedJob, logger) = state;
+
+                var job = await dbContext.Set<OutboxEnvelope>()
+                    .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
+                    .FirstOrDefaultAsync(ct)
+                    .ConfigureAwait(false);
+
+                if (job != null)
+                {
+                    job.Status = lockedJob.Envelope.Status;
+                    job.Updated = lockedJob.Envelope.Updated;
+                    job.Retries = lockedJob.Envelope.Retries;
+                    job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
+                    job.Error = lockedJob.Envelope.Error;
+                    job.LockId = null;
+
+                    try
                     {
-                        var (dbContext, lockedJob, logger) = state;
-
-                        var job = await dbContext.Set<OutboxEnvelope>()
-                            .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
-                            .FirstOrDefaultAsync(ct)
-                            .ConfigureAwait(false);
-
-                        if (job != null)
-                        {
-                            job.Status = lockedJob.Envelope.Status;
-                            job.Updated = lockedJob.Envelope.Updated;
-                            job.Retries = lockedJob.Envelope.Retries;
-                            job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
-                            job.Error = lockedJob.Envelope.Error;
-                            job.LockId = null;
-
-                            try
-                            {
-                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                            }
-                            catch (DbUpdateException e)
-                            {
-                                logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
-                                // очищаем все что было в конетексте
-                                dbContext.ChangeTracker.Clear();
-                                dbContext.Update(job);
-                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                            }
-                        }
-                        else
-                        {
-                            // Истекло время блокировки.
-                        }
-                    },
+                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+                    catch (DbUpdateException e)
+                    {
+                        logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
+                        // очищаем все что было в конетексте
+                        dbContext.ChangeTracker.Clear();
+                        dbContext.Update(job);
+                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    // Истекло время блокировки.
+                }
+            },
                     static async (state, ct) =>
                     {
                         var (dbContext, outboxJob, _) = state;
@@ -285,27 +281,7 @@ namespace Dex.Cap.Outbox.Ef
         /// <exception cref="OperationCanceledException"/>
         public override async Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
         {
-            return await GetFreeMessagesInternal(limit, null, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        public override async Task<OutboxEnvelope?> GetOldestMessage(CancellationToken cancellationToken)
-        {
-            // must use own scoped DbContext because another healthchecks may use _dbContext instance 
-            // in another thread if it configured at Scope lifetime service
-            using var scope = _scopeFactory.CreateScope();
-            var localDbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
-
-            return (await GetFreeMessagesInternal(1, localDbContext, cancellationToken)
-                .ConfigureAwait(false))
-                .FirstOrDefault();
-        }
-
-        private async Task<OutboxEnvelope[]> GetFreeMessagesInternal(int limit, TDbContext? localContext, CancellationToken cancellationToken)
-        {
-            localContext ??= _dbContext;
-
-            return await localContext.Set<OutboxEnvelope>()
+            var potentialFree = await _dbContext.Set<OutboxEnvelope>()
                 .Where(o => o.Retries < _outboxOptions.Retries && (o.Status == OutboxMessageStatus.New || o.Status == OutboxMessageStatus.Failed))
                 .Where(x => x.LockId == null || x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc < DateTime.UtcNow)
                 .OrderBy(o => o.CreatedUtc)
@@ -313,6 +289,8 @@ namespace Dex.Cap.Outbox.Ef
                 .AsNoTracking()
                 .ToArrayAsync(cancellationToken)
                 .ConfigureAwait(false);
+
+            return potentialFree;
         }
     }
 }

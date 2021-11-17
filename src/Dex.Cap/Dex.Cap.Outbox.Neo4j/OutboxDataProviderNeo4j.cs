@@ -90,10 +90,5 @@ namespace Dex.Cap.Outbox.Neo4j
 
             return potentialFree.ToArray();
         }
-
-        public override async Task<OutboxEnvelope?> GetOldestMessage(CancellationToken cancellationToken)
-        {
-            return (await GetFreeMessages(1, cancellationToken).ConfigureAwait(false)).FirstOrDefault();
-        }
     }
 }

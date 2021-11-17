@@ -1,4 +1,5 @@
 ﻿using Dex.Cap.Outbox.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.Linq;
@@ -9,22 +10,29 @@ namespace Dex.Cap.Outbox
 {
     internal class OutboxHealthCheck : IHealthCheck
     {
-        private readonly IOutboxDataProvider _dataProvider;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly TimeSpan _processTimeout = TimeSpan.FromMinutes(5);
 
-        public OutboxHealthCheck(IOutboxDataProvider dataProvider)
+        public OutboxHealthCheck(IServiceScopeFactory scopeFactory)
         {
-            _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
+            _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         }
 
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
-            var oldestRecord = await _dataProvider.GetOldestMessage(cancellationToken)
-                .ConfigureAwait(false);
+            // must use own scoped DbContext because another healthchecks may use _dbContext instance 
+            // in another thread if it configured at Scope lifetime service
+            using var scope = _scopeFactory.CreateScope();
+            var dataProvider = scope.ServiceProvider.GetRequiredService<IOutboxDataProvider>();
 
-            if (oldestRecord == null)
+            // get oldest record if exists
+            var recordAsArray = (await dataProvider.GetFreeMessages(1, cancellationToken)
+                .ConfigureAwait(false)).ToArray();
+
+            if (!recordAsArray.Any())
                 return await Task.FromResult(HealthCheckResult.Healthy("A healthy result.")).ConfigureAwait(false);
 
+            var oldestRecord = recordAsArray.First();
             var isHealthy = (DateTime.Now - oldestRecord.CreatedUtc) < _processTimeout;
 
             if (isHealthy)
