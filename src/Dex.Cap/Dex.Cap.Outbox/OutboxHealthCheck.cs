@@ -19,14 +19,12 @@ namespace Dex.Cap.Outbox
 
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
-            // get oldest record if exists
-            var recordAsArray = (await _dataProvider.GetFreeMessages(1, cancellationToken)
-                .ConfigureAwait(false)).ToArray();
+            var oldestRecord = await _dataProvider.GetOldestMessage(cancellationToken)
+                .ConfigureAwait(false);
 
-            if (!recordAsArray.Any())
+            if (oldestRecord == null)
                 return await Task.FromResult(HealthCheckResult.Healthy("A healthy result.")).ConfigureAwait(false);
 
-            var oldestRecord = recordAsArray.First();
             var isHealthy = (DateTime.Now - oldestRecord.CreatedUtc) < _processTimeout;
 
             if (isHealthy)

@@ -64,5 +64,7 @@ namespace Dex.Cap.Outbox
         }
 
         public abstract Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken);
+
+        public abstract Task<OutboxEnvelope?> GetOldestMessage(CancellationToken cancellationToken);
     }
 }

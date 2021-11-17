@@ -13,6 +13,7 @@ using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -23,8 +24,10 @@ namespace Dex.Cap.Outbox.Ef
         private readonly TDbContext _dbContext;
         private readonly ILogger _logger;
         private readonly OutboxOptions _outboxOptions;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger)
+        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger,
+            IServiceScopeFactory scopeFactory)
         {
             if (outboxOptions is null)
             {
@@ -34,6 +37,7 @@ namespace Dex.Cap.Outbox.Ef
             _dbContext = dbContext;
             _logger = logger;
             _outboxOptions = outboxOptions.Value;
+            _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         }
 
         public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
@@ -281,7 +285,27 @@ namespace Dex.Cap.Outbox.Ef
         /// <exception cref="OperationCanceledException"/>
         public override async Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
         {
-            var potentialFree = await _dbContext.Set<OutboxEnvelope>()
+            return await GetFreeMessagesInternal(limit, null, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public override async Task<OutboxEnvelope?> GetOldestMessage(CancellationToken cancellationToken)
+        {
+            // must use own scoped DbContext because another healthchecks may use _dbContext instance 
+            // in another thread if it configured at Scope lifetime service
+            using var scope = _scopeFactory.CreateScope();
+            var localDbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
+
+            return (await GetFreeMessagesInternal(1, localDbContext, cancellationToken)
+                .ConfigureAwait(false))
+                .FirstOrDefault();
+        }
+
+        private async Task<OutboxEnvelope[]> GetFreeMessagesInternal(int limit, TDbContext? localContext, CancellationToken cancellationToken)
+        {
+            localContext ??= _dbContext;
+
+            return await localContext.Set<OutboxEnvelope>()
                 .Where(o => o.Retries < _outboxOptions.Retries && (o.Status == OutboxMessageStatus.New || o.Status == OutboxMessageStatus.Failed))
                 .Where(x => x.LockId == null || x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc < DateTime.UtcNow)
                 .OrderBy(o => o.CreatedUtc)
@@ -289,8 +313,6 @@ namespace Dex.Cap.Outbox.Ef
                 .AsNoTracking()
                 .ToArrayAsync(cancellationToken)
                 .ConfigureAwait(false);
-
-            return potentialFree;
         }
     }
 }
