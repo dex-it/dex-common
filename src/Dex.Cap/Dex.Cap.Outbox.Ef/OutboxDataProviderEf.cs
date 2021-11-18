@@ -102,41 +102,41 @@ namespace Dex.Cap.Outbox.Ef
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteInTransactionAsync((_dbContext, lockedJob, _logger), static async (state, ct) =>
+            {
+                var (dbContext, lockedJob, logger) = state;
+
+                var job = await dbContext.Set<OutboxEnvelope>()
+                    .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
+                    .FirstOrDefaultAsync(ct)
+                    .ConfigureAwait(false);
+
+                if (job != null)
+                {
+                    job.Status = lockedJob.Envelope.Status;
+                    job.Updated = lockedJob.Envelope.Updated;
+                    job.Retries = lockedJob.Envelope.Retries;
+                    job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
+                    job.Error = lockedJob.Envelope.Error;
+                    job.LockId = null;
+
+                    try
                     {
-                        var (dbContext, lockedJob, logger) = state;
-
-                        var job = await dbContext.Set<OutboxEnvelope>()
-                            .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
-                            .FirstOrDefaultAsync(ct)
-                            .ConfigureAwait(false);
-
-                        if (job != null)
-                        {
-                            job.Status = lockedJob.Envelope.Status;
-                            job.Updated = lockedJob.Envelope.Updated;
-                            job.Retries = lockedJob.Envelope.Retries;
-                            job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
-                            job.Error = lockedJob.Envelope.Error;
-                            job.LockId = null;
-
-                            try
-                            {
-                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                            }
-                            catch (DbUpdateException e)
-                            {
-                                logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
-                                // очищаем все что было в конетексте
-                                dbContext.ChangeTracker.Clear();
-                                dbContext.Update(job);
-                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                            }
-                        }
-                        else
-                        {
-                            // Истекло время блокировки.
-                        }
-                    },
+                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+                    catch (DbUpdateException e)
+                    {
+                        logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
+                        // очищаем все что было в конетексте
+                        dbContext.ChangeTracker.Clear();
+                        dbContext.Update(job);
+                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    // Истекло время блокировки.
+                }
+            },
                     static async (state, ct) =>
                     {
                         var (dbContext, outboxJob, _) = state;
