@@ -12,9 +12,9 @@ namespace Dex.Cap.Outbox.Options
                 return ValidateOptionsResult.Fail("Configuration object is null.");
             }
 
-            if (options.Retries is <= 0 or > 100)
+            if (options.Retries is <= 0 or > 10_000)
             {
-                return ValidateOptionsResult.Fail("Retries should be greater than 0 and less than 100");
+                return ValidateOptionsResult.Fail("Retries should be greater than 0 and less than 10000");
             }
 
             if (options.ProcessorDelay < TimeSpan.FromSeconds(1) || options.ProcessorDelay > TimeSpan.FromHours(1))
