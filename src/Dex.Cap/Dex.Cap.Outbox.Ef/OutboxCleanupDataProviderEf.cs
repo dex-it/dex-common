@@ -33,7 +33,7 @@ namespace Dex.Cap.Outbox.Ef
 
                 if (finishedMessages.Length > 0)
                 {
-                    _logger.LogInformation("Found {Count} messages older than {Span}", olderThan);
+                    _logger.LogInformation("Found {Count} messages older than {OlderThan}", finishedMessages.Length, olderThan);
 
                     foreach (var messageId in finishedMessages)
                     {
@@ -45,7 +45,7 @@ namespace Dex.Cap.Outbox.Ef
                 }
                 else
                 {
-                    _logger.LogTrace("No messages older than {Span}", olderThan);
+                    _logger.LogTrace("No messages older than {OlderThan}", olderThan);
                 }
             } while (finishedMessages.Length == limit);
 
@@ -71,28 +71,28 @@ namespace Dex.Cap.Outbox.Ef
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteInTransactionAsync((_dbContext, messageId), static async (state, ct) =>
-            {
-                var (dbContext, messageId) = state;
+                    {
+                        var (dbContext, messageId) = state;
 
-                var lockedJob = await dbContext.Set<OutboxEnvelope>()
-                    .Where(x => x.Id == messageId)
-                    .FirstOrDefaultAsync(ct)
-                    .ConfigureAwait(false);
+                        var lockedJob = await dbContext.Set<OutboxEnvelope>()
+                            .Where(x => x.Id == messageId)
+                            .FirstOrDefaultAsync(ct)
+                            .ConfigureAwait(false);
 
-                if (lockedJob != null)
-                {
-                    dbContext.Set<OutboxEnvelope>().Remove(lockedJob);
-                    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                }
-            },
-            static async (state, ct) =>
-            {
-                var (dbContext, messageId) = state;
-                bool exists = await dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == messageId, ct).ConfigureAwait(false);
-                return !exists;
-            },
-            IsolationLevel.RepeatableRead,
-            cancellationToken)
+                        if (lockedJob != null)
+                        {
+                            dbContext.Set<OutboxEnvelope>().Remove(lockedJob);
+                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                        }
+                    },
+                    static async (state, ct) =>
+                    {
+                        var (dbContext, messageId) = state;
+                        bool exists = await dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == messageId, ct).ConfigureAwait(false);
+                        return !exists;
+                    },
+                    IsolationLevel.RepeatableRead,
+                    cancellationToken)
                 .ConfigureAwait(false);
         }
     }

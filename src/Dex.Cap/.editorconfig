@@ -3,5 +3,5 @@
 # You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 [*.cs]
 
-# CS1591: Отсутствует комментарий XML для открытого видимого типа или члена
+# CS1591: СњС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РєРѕРјРјРµРЅС‚Р°СЂРёР№ XML РґР»В¤ РѕС‚РєСЂС‹С‚РѕРіРѕ РІРёРґРёРјРѕРіРѕ С‚РёРїР° РёР»Рё С‡Р»РµРЅР°
 dotnet_diagnostic.CS1591.severity = none
