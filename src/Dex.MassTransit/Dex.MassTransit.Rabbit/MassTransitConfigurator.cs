@@ -4,8 +4,7 @@ using System.Linq;
 using Dex.Extensions;
 using Dex.MassTransit.ActivityTrace;
 using MassTransit;
-using MassTransit.ExtensionsDependencyInjectionIntegration;
-using MassTransit.RabbitMqTransport;
+using MassTransit.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -27,7 +26,7 @@ namespace Dex.MassTransit.Rabbit
         /// Register bus.
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
-        public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator,
+        public static void RegisterBus(this IBusRegistrationConfigurator collectionConfigurator,
             Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, RabbitMqOptions? rabbitMqOptions = null)
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
@@ -109,7 +108,7 @@ namespace Dex.MassTransit.Rabbit
             return new UriBuilder(mqOptions + "/" + queueName);
         }
 
-        private static void RegisterConsumersEndpoint<TMessage>(IRegistration busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
+        private static void RegisterConsumersEndpoint<TMessage>(IRegistrationContext busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
             Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, RabbitMqOptions? rabbitMqOptions, bool createSeparateQueue = false)
             where TMessage : class
         {
