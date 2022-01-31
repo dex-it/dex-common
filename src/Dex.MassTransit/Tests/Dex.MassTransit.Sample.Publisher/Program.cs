@@ -57,7 +57,6 @@ namespace Dex.MassTransit.Sample.Publisher
                         });
                     });
 
-                    services.AddMassTransitHostedService();
                     services.AddHostedService<HelloMessageGeneratorHostedService>();
                 });
     }

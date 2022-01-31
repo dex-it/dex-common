@@ -16,4 +16,10 @@
       <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.1.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="TestPasswordService.cs">
+        <DependentUpon>ITestService.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

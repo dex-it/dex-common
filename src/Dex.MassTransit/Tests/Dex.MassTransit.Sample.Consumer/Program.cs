@@ -33,6 +33,7 @@ namespace Dex.MassTransit.Sample.Consumer
         private static void ConfigureRabbitMqOptions(RabbitMqOptions rabbitMqOptions)
         {
             //rabbitMqOptions.Port = 49158;
+            rabbitMqOptions.Password = "incorrect"; // умышленно ломаем пароль
         }
 
         private static IHostBuilder CreateConsumerHostBuilder(string[] args) =>
@@ -49,6 +50,8 @@ namespace Dex.MassTransit.Sample.Consumer
                     services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
                     services.AddSingleton<MassTransitTelemetryLogger>();
 
+                    services.AddSingleton<ITestPasswordService, TestPasswordService>();
+
                     services.AddMassTransit(configurator =>
                     {
                         configurator.AddConsumer<HelloConsumer>();
@@ -59,10 +62,13 @@ namespace Dex.MassTransit.Sample.Consumer
                             // recieve endpoint
                             context.RegisterReceiveEndpoint<HelloConsumer, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
                             context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
+                        }, refreshConnectCallback: context =>
+                        {
+                            var testPasswordService = context.GetRequiredService<ITestPasswordService>();
+                            return async factory => factory.Password = await testPasswordService.GetAccessToken();
                         });
                     });
 
-                    services.AddMassTransitHostedService();
                     services.AddHostedService<MetricTraceExporterHostedService>();
                 });
     }

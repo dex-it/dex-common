@@ -4,7 +4,6 @@ using System.Linq;
 using Dex.Extensions;
 using Dex.MassTransit.ActivityTrace;
 using MassTransit;
-using MassTransit.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -21,23 +20,35 @@ namespace Dex.MassTransit.Rabbit
         /// </summary>
         public static bool EnableConsumerTracer { get; set; } = true;
 
-
         /// <summary>
         /// Register bus.
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterBus(this IBusRegistrationConfigurator collectionConfigurator,
-            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, RabbitMqOptions? rabbitMqOptions = null)
+            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, RabbitMqOptions? rabbitMqOptions = null,
+            Func<IBusRegistrationContext, RefreshConnectionFactoryCallback>? refreshConnectCallback = null)
+        {
+            RegisterBus<RabbitMqOptions>(collectionConfigurator, registerConsumers, rabbitMqOptions, refreshConnectCallback);
+        }
+
+        /// <summary>
+        /// Register bus.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"/>
+        public static void RegisterBus<TMqOptions>(this IBusRegistrationConfigurator collectionConfigurator,
+            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, TMqOptions? rabbitMqOptions = null,
+            Func<IBusRegistrationContext, RefreshConnectionFactoryCallback>? refreshConnectCallback = null) where TMqOptions : RabbitMqOptions, new()
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
             if (registerConsumers == null) throw new ArgumentNullException(nameof(registerConsumers));
 
             collectionConfigurator.UsingRabbitMq((registrationContext, mqBusFactoryConfigurator) =>
             {
-                rabbitMqOptions ??= registrationContext.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+                rabbitMqOptions ??= registrationContext.GetRequiredService<IOptions<TMqOptions>>().Value;
                 mqBusFactoryConfigurator.Host(rabbitMqOptions.Host, rabbitMqOptions.Port, rabbitMqOptions.VHost,
                     $"{Environment.MachineName}:{AppDomain.CurrentDomain.FriendlyName}", configurator =>
                     {
+                        configurator.OnRefreshConnectionFactory = refreshConnectCallback?.Invoke(registrationContext);
                         configurator.Username(rabbitMqOptions.Username);
                         configurator.Password(rabbitMqOptions.Password);
                         if (rabbitMqOptions.IsSecure && rabbitMqOptions.CertificatePath != null)
@@ -69,7 +80,8 @@ namespace Dex.MassTransit.Rabbit
         /// <typeparam name="T">Consumer type.</typeparam>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
         /// <exception cref="ArgumentNullException"/>
-        public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
+        public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext,
+            IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
             Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, RabbitMqOptions? rabbitMqOptions = null, bool createSeparateQueue = false)
             where T : class, IConsumer<TMessage>
             where TMessage : class
@@ -77,7 +89,8 @@ namespace Dex.MassTransit.Rabbit
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] { typeof(T) }, rabbitMqOptions, createSeparateQueue);
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] { typeof(T) },
+                rabbitMqOptions, createSeparateQueue);
         }
 
         /// <summary>
@@ -108,8 +121,10 @@ namespace Dex.MassTransit.Rabbit
             return new UriBuilder(mqOptions + "/" + queueName);
         }
 
-        private static void RegisterConsumersEndpoint<TMessage>(IRegistrationContext busRegistrationContext, IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, RabbitMqOptions? rabbitMqOptions, bool createSeparateQueue = false)
+        private static void RegisterConsumersEndpoint<TMessage>(IRegistrationContext busRegistrationContext,
+            IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
+            Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, RabbitMqOptions? rabbitMqOptions,
+            bool createSeparateQueue = false)
             where TMessage : class
         {
             var endPoint = createSeparateQueue
