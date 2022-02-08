@@ -6,8 +6,6 @@ using Amazon.SQS;
 using Dex.Extensions;
 using Dex.MassTransit.ActivityTrace;
 using MassTransit;
-using MassTransit.AmazonSqsTransport;
-using MassTransit.ExtensionsDependencyInjectionIntegration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -29,7 +27,7 @@ namespace Dex.MassTransit.SQS
         /// Register bus.
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
-        public static void RegisterBus(this IServiceCollectionBusConfigurator collectionConfigurator,
+        public static void RegisterBus(this IBusRegistrationConfigurator collectionConfigurator,
             Action<IBusRegistrationContext, IAmazonSqsBusFactoryConfigurator> registerConsumers, AmazonMqOptions? amazonMqOptions = null)
         {
             if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
@@ -183,7 +181,7 @@ namespace Dex.MassTransit.SQS
             return new UriBuilder(host + path);
         }
 
-        private static void RegisterConsumersEndpoint<TMessage>(IRegistration busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
+        private static void RegisterConsumersEndpoint<TMessage>(IRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
             Action<IAmazonSqsReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types,
             AmazonMqOptions? amazonMqOptions = null, bool createSeparateQueue = false)
             where TMessage : class
