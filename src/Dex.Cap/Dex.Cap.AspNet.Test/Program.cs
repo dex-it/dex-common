@@ -1,3 +1,4 @@
+using Dex.Cap.Outbox.Ef;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
@@ -7,7 +8,10 @@ namespace Dex.Cap.AspNet.Test
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            CreateHostBuilder(args)
+                .AddOutboxMetrics(metrics => { metrics.WhereContext("Application"); })
+                .Build()
+                .Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using App.Metrics;
 using Dex.Cap.Outbox.Helpers;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
@@ -23,8 +24,10 @@ namespace Dex.Cap.Outbox.Ef
         private readonly TDbContext _dbContext;
         private readonly ILogger _logger;
         private readonly OutboxOptions _outboxOptions;
+        private readonly IMetrics _metrics;
 
-        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger)
+        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions,
+            ILogger<OutboxDataProviderEf<TDbContext>> logger, IMetrics metrics)
         {
             if (outboxOptions is null)
             {
@@ -34,6 +37,7 @@ namespace Dex.Cap.Outbox.Ef
             _dbContext = dbContext;
             _logger = logger;
             _outboxOptions = outboxOptions.Value;
+            _metrics = metrics;
         }
 
         public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
@@ -70,6 +74,9 @@ namespace Dex.Cap.Outbox.Ef
         public override async IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs([EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var freeMessages = await GetFreeMessages(_outboxOptions.MessagesToProcess, cancellationToken).ConfigureAwait(false);
+
+            // записываем данные для прометеус метрики
+            _metrics.Measure.Gauge.SetValue(MetricsRegistry.UnprocessedMessages, freeMessages.Length);
 
             // Будем пытаться захватить блокировку по одному сообщению.
             foreach (var freeMessage in freeMessages)

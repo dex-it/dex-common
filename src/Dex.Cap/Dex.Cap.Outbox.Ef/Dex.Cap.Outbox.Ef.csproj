@@ -22,6 +22,8 @@
     <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="App.Metrics.AspNetCore.All" Version="4.3.0" />
+    <PackageReference Include="App.Metrics.Prometheus" Version="4.3.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
   <!--/Для NuGet-->
