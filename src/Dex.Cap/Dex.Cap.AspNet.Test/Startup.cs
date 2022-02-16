@@ -34,7 +34,7 @@ namespace Dex.Cap.AspNet.Test
             {
                 builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
             });
-
+            
             services.AddOutbox<TestDbContext>();
             services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
             services.RegisterOutboxScheduler(periodSeconds: 30, cleanupDays: 30);
