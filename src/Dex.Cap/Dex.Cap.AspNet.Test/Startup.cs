@@ -34,7 +34,7 @@ namespace Dex.Cap.AspNet.Test
             {
                 builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
             });
-            
+
             services.AddOutbox<TestDbContext>();
             services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
             services.RegisterOutboxScheduler(periodSeconds: 30, cleanupDays: 30);
@@ -54,7 +54,7 @@ namespace Dex.Cap.AspNet.Test
             });
 
 
-            lifetime.ApplicationStarted.Register(async () => 
+            lifetime.ApplicationStarted.Register(async () =>
             {
                 using var scope = app.ApplicationServices.CreateScope();
                 var client = scope.ServiceProvider.GetRequiredService<IOutboxService>();
@@ -70,15 +70,15 @@ namespace Dex.Cap.AspNet.Test
         {
             var jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
             await context.Response.WriteAsync(JsonSerializer.Serialize(new
+            {
+                report.Status,
+                report.TotalDuration.TotalSeconds,
+                Entities = report.Entries.Select(x => new
                 {
-                    report.Status,
-                    report.TotalDuration.TotalSeconds,
-                    Entities = report.Entries.Select(x => new
-                    {
-                        x.Key,
-                        x.Value.Status
-                    })
-                },
+                    x.Key,
+                    x.Value.Status
+                })
+            },
                 jsonSerializerOptions));
         }
     }

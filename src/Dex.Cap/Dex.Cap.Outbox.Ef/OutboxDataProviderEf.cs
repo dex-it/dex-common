@@ -27,17 +27,17 @@ namespace Dex.Cap.Outbox.Ef
         private readonly IMetrics _metrics;
 
         public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions,
-            ILogger<OutboxDataProviderEf<TDbContext>> logger, IMetrics metrics)
+            IMetrics metrics, ILogger<OutboxDataProviderEf<TDbContext>> logger)
         {
             if (outboxOptions is null)
             {
                 throw new ArgumentNullException(nameof(outboxOptions));
             }
 
-            _dbContext = dbContext;
-            _logger = logger;
+            _dbContext = dbContext;            
             _outboxOptions = outboxOptions.Value;
             _metrics = metrics;
+            _logger = logger;
         }
 
         public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
