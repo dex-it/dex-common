@@ -33,6 +33,10 @@ namespace Dex.Cap.Outbox.Ef
 
         public static IHostBuilder AddOutboxMetrics(this IHostBuilder hostBuilder, IMetricsRoot metricsRoot, Action<MetricsWebHostOptions> optionsDelegate)
         {
+            if (hostBuilder == null) throw new ArgumentNullException(nameof(hostBuilder));
+            if (metricsRoot == null) throw new ArgumentNullException(nameof(metricsRoot));
+            if (optionsDelegate == null) throw new ArgumentNullException(nameof(optionsDelegate));
+
             metricsRoot.Measure.Gauge.SetValue(MetricsRegistry.UnprocessedMessages, 0);
 
             return hostBuilder
