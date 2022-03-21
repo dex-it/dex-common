@@ -91,7 +91,7 @@ namespace Dex.MassTransit.Rabbit
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            serviceName = serviceName.IsNullOrWhiteSpace()
+            serviceName = string.IsNullOrWhiteSpace(serviceName)
                 ? Assembly.GetCallingAssembly().GetName().Name
                 : serviceName;
 
