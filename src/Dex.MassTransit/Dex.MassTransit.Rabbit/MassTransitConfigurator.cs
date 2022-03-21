@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Dex.Extensions;
 using Dex.MassTransit.ActivityTrace;
 using MassTransit;
@@ -77,20 +78,25 @@ namespace Dex.MassTransit.Rabbit
         /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
         /// <param name="rabbitMqOptions">Force connection params.</param>
         /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
+        /// <param name="serviceName">The name of the service in which the method was called. This is part of the queue name. Queue names must have different names.</param>
         /// <typeparam name="T">Consumer type.</typeparam>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext,
-            IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, RabbitMqOptions? rabbitMqOptions = null, bool createSeparateQueue = false)
+            IRabbitMqBusFactoryConfigurator busFactoryConfigurator, Action<IEndpointConfigurator>? endpointConsumerConfigurator = null,
+            RabbitMqOptions? rabbitMqOptions = null, bool createSeparateQueue = false, string? serviceName = null)
             where T : class, IConsumer<TMessage>
             where TMessage : class
         {
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] { typeof(T) },
-                rabbitMqOptions, createSeparateQueue);
+            serviceName = serviceName.IsNullOrWhiteSpace()
+                ? Assembly.GetCallingAssembly().GetName().Name
+                : serviceName;
+
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] {typeof(T)},
+                rabbitMqOptions, serviceName, createSeparateQueue);
         }
 
         /// <summary>
@@ -124,7 +130,7 @@ namespace Dex.MassTransit.Rabbit
         private static void RegisterConsumersEndpoint<TMessage>(IRegistrationContext busRegistrationContext,
             IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
             Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, RabbitMqOptions? rabbitMqOptions,
-            bool createSeparateQueue = false)
+            string? serviceName, bool createSeparateQueue = false)
             where TMessage : class
         {
             var endPoint = createSeparateQueue
@@ -136,7 +142,7 @@ namespace Dex.MassTransit.Rabbit
             foreach (var consumerType in types)
             {
                 var queueName = createSeparateQueue
-                    ? qName + "_" + consumerType.Name.Replace("`", string.Empty)
+                    ? serviceName + "_" + qName + "_" + consumerType.Name.Replace("`", string.Empty)
                     : qName;
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
