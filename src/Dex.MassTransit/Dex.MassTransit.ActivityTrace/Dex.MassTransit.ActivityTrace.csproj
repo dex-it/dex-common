@@ -22,7 +22,7 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
-      <PackageReference Include="MassTransit" Version="8.0.0-develop.358" />
+      <PackageReference Include="MassTransit" Version="8.0.2-develop.424" />
     </ItemGroup>
 
 </Project>

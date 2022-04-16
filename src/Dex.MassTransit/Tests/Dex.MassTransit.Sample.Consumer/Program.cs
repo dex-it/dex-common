@@ -34,6 +34,7 @@ namespace Dex.MassTransit.Sample.Consumer
         {
             //rabbitMqOptions.Port = 49158;
             rabbitMqOptions.Password = "incorrect"; // умышленно ломаем пароль
+            //rabbitMqOptions.VHost = "incorrect";
         }
 
         private static IHostBuilder CreateConsumerHostBuilder(string[] args) =>
@@ -54,18 +55,30 @@ namespace Dex.MassTransit.Sample.Consumer
 
                     services.AddMassTransit(configurator =>
                     {
-                        configurator.AddConsumer<HelloConsumer>();
+                        
+                        //configurator.AddConsumer<HelloConsumer>();
                         configurator.AddConsumer<HelloConsumer2>();
 
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
+                            factoryConfigurator.ConfigureJsonSerializerOptions(options => 
+                            {
+                                // var optionsConverter = options.Converters.Where(c=> c is SystemTextJsonUriConverter).SingleOrDefault();
+                                // options.Converters.Remove(optionsConverter);
+
+                                return options;
+                            });
                             // recieve endpoint
-                            context.RegisterReceiveEndpoint<HelloConsumer, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
+                            //context.RegisterReceiveEndpoint<HelloConsumer, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
                             context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
                         }, refreshConnectCallback: context =>
                         {
                             var testPasswordService = context.GetRequiredService<ITestPasswordService>();
-                            return async factory => factory.Password = await testPasswordService.GetAccessToken();
+                            return async factory =>
+                            {
+                                //factory.VirtualHost = "winlineClub";
+                                factory.Password = await testPasswordService.GetAccessToken();
+                            };
                         });
                     });
 
