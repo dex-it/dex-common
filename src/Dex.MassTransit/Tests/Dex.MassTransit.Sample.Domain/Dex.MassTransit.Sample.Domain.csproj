@@ -8,4 +8,8 @@
       <PackageReference Include="MassTransit" Version="8.0.2-develop.424" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
+    </ItemGroup>
+
 </Project>

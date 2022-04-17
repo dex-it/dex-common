@@ -2,7 +2,9 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Dex.MassTransit.Rabbit;
+using Dex.MassTransit.Sample.Consumer.Consumers;
 using Dex.MassTransit.Sample.Domain;
+using Dex.MassTransit.Sample.Domain.Bus;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,10 +38,17 @@ namespace Dex.MassTransit.Sample.Consumer
             rabbitMqOptions.Password = "incorrect"; // умышленно ломаем пароль
             //rabbitMqOptions.VHost = "incorrect";
         }
+        
+        private static void ConfigureOtherRabbitMqOptions(OtherRabbitMqOptions otherRabbitMqOptions)
+        {
+            otherRabbitMqOptions.Host = "localhost";
+            otherRabbitMqOptions.Port = 5673;
+            otherRabbitMqOptions.VHost = "winlineClub";
+        }
 
         private static IHostBuilder CreateConsumerHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
+                .ConfigureServices((_, services) =>
                 {
                     services.AddLogging(builder =>
                     {
@@ -49,25 +58,18 @@ namespace Dex.MassTransit.Sample.Consumer
 
                     // register services
                     services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
+                    services.Configure<OtherRabbitMqOptions>(ConfigureOtherRabbitMqOptions);
                     services.AddSingleton<MassTransitTelemetryLogger>();
 
                     services.AddSingleton<ITestPasswordService, TestPasswordService>();
 
                     services.AddMassTransit(configurator =>
                     {
-                        
                         //configurator.AddConsumer<HelloConsumer>();
                         configurator.AddConsumer<HelloConsumer2>();
 
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
-                            factoryConfigurator.ConfigureJsonSerializerOptions(options => 
-                            {
-                                // var optionsConverter = options.Converters.Where(c=> c is SystemTextJsonUriConverter).SingleOrDefault();
-                                // options.Converters.Remove(optionsConverter);
-
-                                return options;
-                            });
                             // recieve endpoint
                             //context.RegisterReceiveEndpoint<HelloConsumer, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
                             context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
@@ -79,6 +81,16 @@ namespace Dex.MassTransit.Sample.Consumer
                                 //factory.VirtualHost = "winlineClub";
                                 factory.Password = await testPasswordService.GetAccessToken();
                             };
+                        });
+                    });
+                    
+                    services.AddMassTransit<IOtherRabbitMqBus>(configurator =>
+                    {
+                        configurator.AddConsumer<OtherConsumer>();
+                        
+                        configurator.RegisterBus<OtherRabbitMqOptions>((context, factoryConfig) =>
+                        {
+                            context.RegisterReceiveEndpoint<OtherConsumer, OtherMessageDto, OtherRabbitMqOptions>(factoryConfig, createSeparateQueue: true);
                         });
                     });
 
