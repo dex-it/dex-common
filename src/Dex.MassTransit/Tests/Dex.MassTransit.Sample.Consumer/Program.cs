@@ -57,7 +57,7 @@ namespace Dex.MassTransit.Sample.Consumer
                     });
 
                     // register services
-                    services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
+                    //services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
                     services.Configure<OtherRabbitMqOptions>(ConfigureOtherRabbitMqOptions);
                     services.AddSingleton<MassTransitTelemetryLogger>();
 
@@ -67,12 +67,12 @@ namespace Dex.MassTransit.Sample.Consumer
                     {
                         //configurator.AddConsumer<HelloConsumer>();
                         configurator.AddConsumer<HelloConsumer2>();
-
+                    
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
                             // recieve endpoint
                             //context.RegisterReceiveEndpoint<HelloConsumer, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
-                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator);
                         }, refreshConnectCallback: context =>
                         {
                             var testPasswordService = context.GetRequiredService<ITestPasswordService>();
@@ -90,7 +90,7 @@ namespace Dex.MassTransit.Sample.Consumer
                         
                         configurator.RegisterBus<OtherRabbitMqOptions>((context, factoryConfig) =>
                         {
-                            context.RegisterReceiveEndpoint<OtherConsumer, OtherMessageDto, OtherRabbitMqOptions>(factoryConfig, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<OtherConsumer, OtherMessageDto, OtherRabbitMqOptions>(factoryConfig);
                         });
                     });
 
