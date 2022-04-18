@@ -5,7 +5,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MassTransit" Version="8.0.0-develop.358" />
+      <PackageReference Include="MassTransit" Version="8.0.2-develop.430" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
     </ItemGroup>
 
 </Project>

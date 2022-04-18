@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Dex.MassTransit.Rabbit;
 using Dex.MassTransit.Sample.Domain;
+using Dex.MassTransit.Sample.Domain.Bus;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -35,9 +36,16 @@ namespace Dex.MassTransit.Sample.Publisher
             //rabbitMqOptions.Port = 49158;
         }
 
+        private static void ConfigureOtherRabbitMqOptions(OtherRabbitMqOptions otherRabbitMqOptions)
+        {
+            otherRabbitMqOptions.Host = "localhost";
+            otherRabbitMqOptions.Port = 5673;
+            otherRabbitMqOptions.VHost = "winlineClub";
+        }
+
         private static IHostBuilder CreatePublisherHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
+                .ConfigureServices((_, services) =>
                 {
                     services.AddLogging(builder =>
                     {
@@ -47,13 +55,23 @@ namespace Dex.MassTransit.Sample.Publisher
 
                     // register services
                     services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
+                    
+                    services.Configure<OtherRabbitMqOptions>(ConfigureOtherRabbitMqOptions);
 
                     services.AddMassTransit(configurator =>
                     {
-                        configurator.RegisterBus((context, factoryConfigurator) =>
+                        configurator.RegisterBus((context, _) =>
                         {
                             // send endpoint 
                             context.RegisterSendEndPoint<HelloMessageDto>();
+                        });
+                    });
+
+                    services.AddMassTransit<IOtherRabbitMqBus>(configurator =>
+                    {
+                        configurator.RegisterBus<OtherRabbitMqOptions>((context, _) =>
+                        {
+                            context.RegisterSendEndPoint<OtherMessageDto, OtherRabbitMqOptions>();
                         });
                     });
 
