@@ -27,21 +27,22 @@ namespace Dex.MassTransit.Sample.Publisher
             while (!_tokenSource.Token.IsCancellationRequested)
             {
                  //await _sendEndpoint.Send(new HelloMessageDto() {Hi = "Send, Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
-                 // await _sendEndpoint.Send(
-                 //     new HelloMessageDto
-                 //     {
-                 //         Hi = "Publish, Hi there, " + DateTime.UtcNow.ToString("T"), 
-                 //         TestUri = new Uri($"test/url/{Guid.NewGuid()}", UriKind.RelativeOrAbsolute),
-                 //         Devices = new []
-                 //         {
-                 //             new MobileDevice(MobilePlatform.Android, Guid.NewGuid().ToString()),
-                 //             new MobileDevice(MobilePlatform.IOS, Guid.NewGuid().ToString())
-                 //         },
-                 //         SingleDevice = new MobileDevice(MobilePlatform.Huawei, "huawei")
-                 //     }, cancellationToken);
-                 //
-                 // await Task.Delay(1000, cancellationToken);
+                 await _sendEndpoint.Send(
+                     new HelloMessageDto
+                     {
+                         Hi = "Publish, Hi there, " + DateTime.UtcNow.ToString("T"), 
+                         TestUri = new Uri($"test/url/{Guid.NewGuid()}", UriKind.RelativeOrAbsolute),
+                         Devices = new []
+                         {
+                             new MobileDevice(MobilePlatform.Android, Guid.NewGuid().ToString()),
+                             new MobileDevice(MobilePlatform.IOS, Guid.NewGuid().ToString())
+                         },
+                         SingleDevice = new MobileDevice(MobilePlatform.Huawei, "huawei")
+                     }, cancellationToken);
+                 
+                 await Task.Delay(1000, cancellationToken);
 
+                // ISendEndpointProvider not works here
                 await _otherRabbitMqBus.Send(new OtherMessageDto
                 {
                     Hi = "Send Hello other message",

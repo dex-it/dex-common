@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>1.1.18</Version>
+    <Version>1.1.19</Version>
   </PropertyGroup>
   
   <!--Для NuGet-->
@@ -23,13 +23,13 @@
 
   <!-- Source debugging -->
   <ItemGroup>
-    <PackageReference Include="MassTransit" Version="8.0.2-develop.424" />
+    <PackageReference Include="MassTransit" Version="8.0.2-develop.430" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dex.Extensions" Version="1.0.11" />
-    <PackageReference Include="MassTransit.AmazonSQS" Version="8.0.2-develop.424" />
+    <PackageReference Include="MassTransit.AmazonSQS" Version="8.0.2-develop.430" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
   </ItemGroup>
 
