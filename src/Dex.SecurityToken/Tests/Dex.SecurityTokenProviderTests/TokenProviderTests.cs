@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dex.SecurityTokenProvider.Exceptions;
-using Dex.SecurityTokenProvider.Extentions;
+using Dex.SecurityTokenProvider.Extensions;
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Options;
 using Dex.SecurityTokenProviderTests.TestData;
@@ -65,8 +65,9 @@ namespace Dex.SecurityTokenProviderTests
         public void NegativeConcurrencyTest()
         {
             //Arrange
-            var protector1 = DataProtectionProvider.Create("Provider").CreateProtector("Protector");
-            var protector2 = DataProtectionProvider.Create("Provider").CreateProtector("Protector");
+            var dataProtectionProvider = _serviceProvider.GetRequiredService<IDataProtectionProvider>();
+            var protector1 = dataProtectionProvider.CreateProtector("Protector");
+            var protector2 = dataProtectionProvider.CreateProtector("Protector");
 
             var testString = "testString";
             
@@ -108,8 +109,7 @@ namespace Dex.SecurityTokenProviderTests
                 .AddInMemoryCollection(
                     new Dictionary<string, string?>
                     {
-                        { $"{nameof(TokenProviderOptions)}:{nameof(TokenProviderOptions.ApiResource)}", "TestAudience" },
-                        { $"{nameof(TokenProviderOptions)}:{nameof(TokenProviderOptions.ApplicationName)}", "ApplicationName" }
+                        { $"{nameof(TokenProviderOptions)}:{nameof(TokenProviderOptions.ApiResource)}", "TestAudience" }
                     }).Build();
 
 
@@ -123,7 +123,8 @@ namespace Dex.SecurityTokenProviderTests
                     o.EnableSensitiveDataLogging();
                 })
                 .AddDataProtection()
-                .PersistKeysToDbContext<DataProtectionKeyContext>();
+                .PersistKeysToDbContext<DataProtectionKeyContext>()
+                .SetApplicationName("TestApp");
 
             services.AddSecurityTokenProvider<TestTokenInfoStorage>(config.GetSection(nameof(TokenProviderOptions)));
             return services.BuildServiceProvider();

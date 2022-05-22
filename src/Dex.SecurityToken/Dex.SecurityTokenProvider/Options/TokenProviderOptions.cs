@@ -6,8 +6,5 @@ namespace Dex.SecurityTokenProvider.Options
     {
         [Required(AllowEmptyStrings = false)] 
         public string ApiResource { get; set; } = null!;
-
-        [Required(AllowEmptyStrings = false)]
-        public string ApplicationName { get; set; } = null!;
     }
 }

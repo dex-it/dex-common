@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Models;
-using ServiceStack.Redis;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Dex.SecurityToken.RedisStorage
 {
@@ -14,20 +14,18 @@ namespace Dex.SecurityToken.RedisStorage
     /// </summary>
     public class TokenRedisStorageProvider : ITokenInfoStorage
     {
-        private readonly IRedisClientsManagerAsync _redisClientsManager;
+        private readonly IDistributedCacheTypedClient _cacheTypedClient;
 
-        public TokenRedisStorageProvider(IRedisClientsManagerAsync redisClientsManager)
+        public TokenRedisStorageProvider(IDistributedCacheTypedClient cacheTypedClient)
         {
-            _redisClientsManager = redisClientsManager ?? throw new ArgumentNullException(nameof(redisClientsManager));
+            _cacheTypedClient = cacheTypedClient ?? throw new ArgumentNullException(nameof(cacheTypedClient));
         }
 
         public async Task<TokenInfo> GetTokenInfoAsync(Guid tokenInfoId, CancellationToken cancellationToken = default)
         {
             if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
 
-            await using var redis = await _redisClientsManager.GetClientAsync(cancellationToken);
-
-            return await redis.As<TokenInfo>().GetByIdAsync(tokenInfoId, cancellationToken) ??
+            return await _cacheTypedClient.GetAsync<TokenInfo>(tokenInfoId.ToString(), cancellationToken) ??
                    throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
         }
 
@@ -35,24 +33,21 @@ namespace Dex.SecurityToken.RedisStorage
         {
             if (tokenInfo == null) throw new ArgumentNullException(nameof(tokenInfo));
 
-            await using var redis = await _redisClientsManager.GetClientAsync(cancellationToken);
-            await redis.As<TokenInfo>()
-                .StoreAsync(tokenInfo, TimeSpan.FromTicks(tokenInfo.Expired.Ticks), cancellationToken);
+            await _cacheTypedClient.SetAsync(tokenInfo.Id.ToString(), tokenInfo,
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromTicks(tokenInfo.Expired.Ticks) }, cancellationToken);
         }
 
-        public async Task SetActivatedAsync(Guid tokenInfoId)
+        public async Task SetActivatedAsync(Guid tokenInfoId, CancellationToken cancellationToken = default)
         {
             if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
 
-            await using var redis = await _redisClientsManager.GetClientAsync();
-
-            var tokenInfo = await redis.As<TokenInfo>().GetByIdAsync(tokenInfoId);
+            var tokenInfo = await _cacheTypedClient.GetAsync<TokenInfo>(tokenInfoId.ToString(), cancellationToken);
             if (tokenInfo == null) throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
 
             tokenInfo.Activated = true;
 
-            await redis.As<TokenInfo>()
-                .StoreAsync(tokenInfo, TimeSpan.FromTicks(tokenInfo.Expired.Ticks));
+            await _cacheTypedClient.SetAsync(tokenInfo.Id.ToString(), tokenInfo,
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromTicks(tokenInfo.Expired.Ticks) }, cancellationToken);
         }
     }
 }

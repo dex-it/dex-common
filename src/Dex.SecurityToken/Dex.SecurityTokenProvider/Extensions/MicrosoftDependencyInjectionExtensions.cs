@@ -3,7 +3,7 @@ using Dex.SecurityTokenProvider.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.SecurityTokenProvider.Extentions
+namespace Dex.SecurityTokenProvider.Extensions
 {
     public static class MicrosoftDependencyInjectionExtensions
     {
@@ -14,9 +14,9 @@ namespace Dex.SecurityTokenProvider.Extentions
         ///     Must contains section with name "TokenProviderOptions". "ApplicationName" and "ApiResource" is
         ///     required
         /// </param>
-        /// <typeparam name="TokenStorage">implementation if "ITokenInfoStorage"</typeparam>
-        public static IServiceCollection AddSecurityTokenProvider<TokenStorage>(this IServiceCollection services, IConfigurationSection config)
-            where TokenStorage : class, ITokenInfoStorage
+        /// <typeparam name="TTokenStorage">implementation if "ITokenInfoStorage"</typeparam>
+        public static IServiceCollection AddSecurityTokenProvider<TTokenStorage>(this IServiceCollection services, IConfigurationSection config)
+            where TTokenStorage : class, ITokenInfoStorage
         {
             services.AddOptions<TokenProviderOptions>()
                 .Bind(config)
@@ -25,7 +25,7 @@ namespace Dex.SecurityTokenProvider.Extentions
 
             services.AddSingleton<IDataProtectionFactory, DataProtectionFactory>();
             
-            services.AddScoped<ITokenInfoStorage, TokenStorage>();  
+            services.AddScoped<ITokenInfoStorage, TTokenStorage>();  
             services.AddScoped<ITokenProvider, TokenProvider>();
             return services;
         }

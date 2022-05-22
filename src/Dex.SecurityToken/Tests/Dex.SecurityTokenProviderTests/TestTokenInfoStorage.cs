@@ -29,7 +29,7 @@ namespace Dex.SecurityTokenProviderTests
             return Task.CompletedTask;
         }
 
-        public Task SetActivatedAsync(Guid tokenInfoId)
+        public Task SetActivatedAsync(Guid tokenInfoId, CancellationToken cancellationToken = default)
         {
             if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
             if (!_tokenInfos.ContainsKey(tokenInfoId)) throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
