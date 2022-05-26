@@ -30,8 +30,9 @@ namespace Dex.SecurityTokenProvider.Interfaces
         /// Mark token as used
         /// </summary>
         /// <param name="tokenInfoId">identity key of token</param>
+        /// <param name="cancellationToken"></param>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="TokenInfoNotFoundException"></exception>
-        Task SetActivatedAsync(Guid tokenInfoId);
+        Task SetActivatedAsync(Guid tokenInfoId, CancellationToken cancellationToken = default);
     }
 }

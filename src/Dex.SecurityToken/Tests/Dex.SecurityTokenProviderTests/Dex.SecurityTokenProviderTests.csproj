@@ -29,6 +29,7 @@
 
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Dex.SecurityToken.RedisStorage\Dex.SecurityToken.RedisStorage.csproj" />
       <ProjectReference Include="..\..\Dex.SecurityTokenProvider\Dex.SecurityTokenProvider.csproj" />
     </ItemGroup>
 
