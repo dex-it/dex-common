@@ -29,8 +29,13 @@ namespace Dex.SecurityToken.RedisStorage
             return Deserialize<T>(utf8Bytes);
         }
 
-        private T? Deserialize<T>(byte[] jsonUtf8Bytes)
+        private T? Deserialize<T>(byte[]? jsonUtf8Bytes)
         {
+            if (jsonUtf8Bytes == null || jsonUtf8Bytes.Length == 0)
+            {
+                return default;
+            }
+            
             var readOnlySpan = new ReadOnlySpan<byte>(jsonUtf8Bytes);
             var deserializedEntity = JsonSerializer.Deserialize<T>(readOnlySpan);
             return deserializedEntity;
