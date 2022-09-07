@@ -5,3 +5,6 @@
 
 # CS1591: ќтсутствует комментарий XML дл¤ открытого видимого типа или члена
 dotnet_diagnostic.CS1591.severity = none
+
+#[CA1848] For improved performance, use the LoggerMessage delegates instead of calling 'LoggerExtensions.LogTrace(ILogger, string, params object[])'
+dotnet_diagnostic.CA1848.severity = none
