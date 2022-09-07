@@ -118,7 +118,7 @@ namespace Dex.Cap.Outbox
             }
             catch (OutboxException ex)
             {
-                _logger.LogError(ex, ex.Message, job.Envelope.Id);
+                _logger.LogError(ex, "EnvelopeID: {Envelope} ", job.Envelope.Id);
                 await _dataProvider.JobFail(job, cancellationToken, ex.Message).ConfigureAwait(false);
             }
             catch (Exception ex)
