@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Dex.Cap.Outbox.Scheduler.Options
+namespace Dex.Cap.Outbox.AspNetScheduler.Options
 {
     internal sealed class OutboxHandlerOptions
     {

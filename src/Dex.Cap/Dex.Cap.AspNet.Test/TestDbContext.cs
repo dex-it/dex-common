@@ -1,6 +1,5 @@
 using Dex.Cap.Outbox.Ef;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.AspNet.Test
 {

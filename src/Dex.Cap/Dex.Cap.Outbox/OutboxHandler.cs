@@ -186,6 +186,7 @@ namespace Dex.Cap.Outbox
             }
             finally
             {
+                // ReSharper disable once SuspiciousTypeConversion.Global
                 if (handler is IDisposable disposable)
                 {
                     disposable.Dispose();
