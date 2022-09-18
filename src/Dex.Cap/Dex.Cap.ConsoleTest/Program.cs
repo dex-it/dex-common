@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dex.Cap.Outbox.AspNetScheduler;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Console;
 
 namespace Dex.Cap.ConsoleTest
 {
@@ -29,12 +31,16 @@ namespace Dex.Cap.ConsoleTest
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
+            var logger = sp.GetService<ILogger<Program>>();
+            logger.LogDebug("DEBUG...");
+            logger.LogInformation("INFO...");
+
             var client = sp.GetRequiredService<IOutboxService>();
             await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
             await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
             await Save(sp);
 
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 5; i++)
             {
                 _ = Task.Run(async () =>
                 {
@@ -48,13 +54,16 @@ namespace Dex.Cap.ConsoleTest
                         {
                             await handler.ProcessAsync();
                         }
-                        catch (OperationCanceledException)
+                        catch (Exception exception)
                         {
+                            logger.LogError(exception, "Can't process message");
                         }
+
                         Thread.Sleep(10_000);
                     }
                 });
-                //Thread.Sleep(500);
+
+                Thread.Sleep(50);
             }
 
             Thread.Sleep(-1);
@@ -63,8 +72,19 @@ namespace Dex.Cap.ConsoleTest
         private static IServiceCollection InitServiceCollection(IConfigurationRoot configuration)
         {
             return new ServiceCollection()
-                .AddLogging(lb => lb.AddConsole().SetMinimumLevel(LogLevel.Trace))
-                .AddDbContext<TestDbContext>(o => o.UseNpgsql(configuration.GetConnectionString("DefaultConnection")))
+                .AddLogging(lb =>
+                {
+                    lb.ClearProviders();
+                    lb.AddConsole();
+                    lb.AddConfiguration(configuration.GetSection("Logging"));
+                    // lb.SetMinimumLevel(LogLevel.Debug);
+                    // lb.AddFilter("Microsoft", LogLevel.None);
+                })
+                .AddDbContext<TestDbContext>(o =>
+                {
+                    //
+                    o.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+                })
                 .AddOutbox<TestDbContext>()
                 .RegisterOutboxScheduler();
         }

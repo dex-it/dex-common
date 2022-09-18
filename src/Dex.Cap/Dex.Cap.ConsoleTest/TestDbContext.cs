@@ -8,13 +8,6 @@ namespace Dex.Cap.ConsoleTest
 {
     public class TestDbContext : DbContext
     {
-        private static readonly ILoggerFactory _loggerFactory
-            = LoggerFactory.Create(builder => 
-            {
-                builder.ClearProviders();
-                builder.AddConsole(); 
-            });
-
         public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
         }
@@ -22,7 +15,6 @@ namespace Dex.Cap.ConsoleTest
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-            optionsBuilder.UseLoggerFactory(_loggerFactory).EnableSensitiveDataLogging();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
