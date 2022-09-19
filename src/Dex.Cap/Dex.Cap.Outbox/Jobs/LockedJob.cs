@@ -8,7 +8,7 @@ namespace Dex.Cap.Outbox.Jobs
     /// <summary>
     /// Задача Outbox с захваченной пессимистичной блокировкой.
     /// </summary>
-    internal sealed class OutboxLockedJob : IOutboxLockedJob, IDisposable
+    internal sealed class OutboxLockedJob : IOutboxLockedJob
     {
         private readonly CancellationToken _cancellationToken;
         private CancellationTokenSource? _cts;

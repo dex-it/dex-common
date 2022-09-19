@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>default</LangVersion>
-        <PackageVersion>1.0.3</PackageVersion>
+        <PackageVersion>1.0.5</PackageVersion>
         <PackageTags>security token management, dataprotection</PackageTags>
     </PropertyGroup>
     
@@ -24,7 +24,7 @@
     <!--/Для NuGet-->
     
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="5.0.10" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="5.0.17" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />

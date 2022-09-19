@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
-using Dex.Cap.Outbox.Scheduler.Options;
+using Dex.Cap.Outbox.AspNetScheduler.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,29 +15,26 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _logger;
         private readonly OutboxHandlerOptions _options;
+        private const string ServiceNameIsStatus = "Background service '{ServiceName}' is {Status}";
+        private const string TypeName = nameof(OutboxCleanerBackgroundService);
 
         // Инжектим только синглтоны.
         public OutboxCleanerBackgroundService(IServiceScopeFactory scopeFactory, OutboxHandlerOptions options,
-                                              ILogger<OutboxCleanerBackgroundService> logger)
+            ILogger<OutboxCleanerBackgroundService> logger)
         {
-            if (options is null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-
             _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options;
+            _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogDebug("Background service '{ServiceName}' is starting", GetType().Name);
+            _logger.LogInformation(ServiceNameIsStatus, TypeName, "starting");
 
             // Решаем проблему "расщеплённого мозга".
             await InitDelay(stoppingToken);
 
-            using (stoppingToken.Register(static s => ((ILogger)s!).LogDebug("Background service is stopping"), _logger))
+            await using (stoppingToken.Register(static s => ((ILogger)s!).LogInformation(ServiceNameIsStatus, TypeName, "stopping"), _logger))
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -69,7 +66,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                logger.LogInformation("Outbox cleaner was interrupted by stopping of host process");
+                logger.LogTrace("Outbox cleaner was interrupted by stopping of host process");
                 throw;
             }
             catch (Exception ex)

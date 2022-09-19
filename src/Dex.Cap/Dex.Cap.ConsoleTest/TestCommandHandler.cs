@@ -12,8 +12,6 @@ namespace Dex.Cap.ConsoleTest
 
         public async Task ProcessMessage(TestOutboxCommand message, CancellationToken cancellationToken)
         {
-            //Console.WriteLine($"TestCommandHandler - Processing command at {DateTime.Now}, Args: {message.Args}");
-
             await Task.Delay(2_000, cancellationToken);
 
             Console.WriteLine($"TestCommandHandler - Processed command at {DateTime.Now}, Args: {message.Args}");

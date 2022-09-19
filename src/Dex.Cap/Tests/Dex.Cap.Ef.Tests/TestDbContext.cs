@@ -9,15 +9,10 @@ namespace Dex.Cap.Ef.Tests
 {
     public class TestDbContext : DbContext
     {
+        private static readonly ILoggerFactory LogFactory = LoggerFactory.Create(builder => { builder.AddDebug(); });
         private readonly string _dbName;
 
-        private static readonly ILoggerFactory _loggerFactory
-           = LoggerFactory.Create(builder =>
-           {
-               builder.AddDebug();
-           });
-
-        public DbSet<User> Users { get; set; }
+        public DbSet<User> Users { get; internal set; }
 
         public TestDbContext(string dbName)
         {
@@ -27,10 +22,11 @@ namespace Dex.Cap.Ef.Tests
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
+            
             optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=my-pass~003;",
                 builder => { builder.EnableRetryOnFailure(); });
 
-            optionsBuilder.UseLoggerFactory(_loggerFactory).EnableSensitiveDataLogging();
+            optionsBuilder.UseLoggerFactory(LogFactory).EnableSensitiveDataLogging();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

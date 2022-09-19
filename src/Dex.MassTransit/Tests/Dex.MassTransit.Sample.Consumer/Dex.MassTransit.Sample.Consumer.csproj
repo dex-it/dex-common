@@ -18,7 +18,7 @@
 
     <ItemGroup>
       <Compile Update="TestPasswordService.cs">
-        <DependentUpon>ITestService.cs</DependentUpon>
+        <DependentUpon>ITestPasswordService.cs</DependentUpon>
       </Compile>
     </ItemGroup>
 

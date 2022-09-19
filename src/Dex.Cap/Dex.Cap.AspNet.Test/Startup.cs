@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.AspNet.Test
 {
@@ -30,10 +31,14 @@ namespace Dex.Cap.AspNet.Test
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<TestDbContext>(builder =>
+            services.AddLogging(lb =>
             {
-                builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
+                lb.ClearProviders();
+                lb.AddConsole();
+                lb.AddConfiguration(Configuration.GetSection("Logging"));
             });
+
+            services.AddDbContext<TestDbContext>(builder => { builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")); });
 
             services.AddOutbox<TestDbContext>();
             services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
@@ -61,7 +66,7 @@ namespace Dex.Cap.AspNet.Test
                 await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
 
                 var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-                db.Database.EnsureCreated();
+                await db.Database.EnsureCreatedAsync();
                 await db.SaveChangesAsync();
             });
         }

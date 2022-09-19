@@ -4,7 +4,7 @@
         <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.1.13</PackageVersion>
+        <PackageVersion>1.1.25</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="Dex.Neo4J" Version="1.0.2" />
-      <PackageReference Include="Neo4jClient" Version="4.1.17" />
+      <PackageReference Include="Neo4jClient" Version="4.1.26" />
     </ItemGroup>
 
 </Project>
