@@ -34,10 +34,10 @@ namespace Dex.Cap.Outbox.Ef
                 throw new ArgumentNullException(nameof(outboxOptions));
             }
 
-            _dbContext = dbContext;            
-            _outboxOptions = outboxOptions.Value;
-            _metrics = metrics;
-            _logger = logger;
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));            
+            _outboxOptions = outboxOptions.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
+            _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
