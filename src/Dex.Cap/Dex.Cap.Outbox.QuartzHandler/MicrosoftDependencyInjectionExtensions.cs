@@ -1,7 +1,7 @@
 ﻿using System;
 using Dex.Cap.Outbox.AspNetScheduler.BackgroundServices;
 using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
-using Dex.Cap.Outbox.Scheduler.Options;
+using Dex.Cap.Outbox.AspNetScheduler.Options;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.Cap.Outbox.AspNetScheduler

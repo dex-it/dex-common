@@ -43,6 +43,7 @@ namespace Dex.Cap.Outbox
                     do
                     {
                         var job = enumerator.Current;
+                        var isSuccess = false;
                         try
                         {
                             using (Activity activity = new($"Process outbox message:{job.Envelope.Id}"))
@@ -58,7 +59,10 @@ namespace Dex.Cap.Outbox
                                 using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken))
                                 {
                                     activity.Start();
+                                    _logger.LogTrace("Processing message - {Job}", job.Envelope.Id);
                                     await ProcessJob(job, cts.Token).ConfigureAwait(false);
+                                    isSuccess = true;
+                                    _logger.LogTrace("Completed message - {Job}", job.Envelope.Id);
                                     activity.Stop();
                                 }
                             }
@@ -66,10 +70,9 @@ namespace Dex.Cap.Outbox
                         finally
                         {
                             job.Dispose();
+                            _logger.LogDebug("Completed message - {Job}, Success - {Success}", job.Envelope.Id, isSuccess);
                         }
                     } while (await enumerator.MoveNextAsync().ConfigureAwait(false));
-
-                    _logger.LogDebug("Outbox processor finished");
                 }
                 else
                 {
@@ -79,6 +82,7 @@ namespace Dex.Cap.Outbox
             finally
             {
                 await enumerator.DisposeAsync().ConfigureAwait(false);
+                _logger.LogTrace("Outbox processor completed");
             }
         }
 
@@ -97,7 +101,7 @@ namespace Dex.Cap.Outbox
         /// <exception cref="OperationCanceledException"/>
         private async Task ProcessJob(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
-            _logger.LogDebug("Message has been started to process {MessageId}", job.Envelope.Id);
+            _logger.LogTrace("Message has been started to process {MessageId}", job.Envelope.Id);
 
             try
             {
@@ -182,6 +186,7 @@ namespace Dex.Cap.Outbox
             }
             finally
             {
+                // ReSharper disable once SuspiciousTypeConversion.Global
                 if (handler is IDisposable disposable)
                 {
                     disposable.Dispose();
