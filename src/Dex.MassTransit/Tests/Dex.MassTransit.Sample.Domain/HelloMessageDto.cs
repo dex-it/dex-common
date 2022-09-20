@@ -5,9 +5,9 @@ namespace Dex.MassTransit.Sample.Domain
 {
     public class HelloMessageDto : IConsumer
     {
-        public string Hi { get; set; }
+        public string? Hi { get; set; }
         
-        public Uri TestUri { get; set; }
+        public Uri? TestUri { get; set; }
         
         public MobileDevice[]? Devices {get; set; }
         
