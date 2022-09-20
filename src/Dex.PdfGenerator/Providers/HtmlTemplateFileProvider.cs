@@ -22,7 +22,7 @@ namespace Dex.PdfGenerator.Providers
         public async Task<string> GetHtml()
         {
             var engine = new RazorLightEngineBuilder()
-                .UseFilesystemProject(_templateDirectoryPath)
+                .UseFileSystemProject(_templateDirectoryPath)
                 .UseMemoryCachingProvider()
                 .Build();
 

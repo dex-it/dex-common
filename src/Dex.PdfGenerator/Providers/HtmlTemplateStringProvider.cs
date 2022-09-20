@@ -1,4 +1,5 @@
 using System;
+using System.Dynamic;
 using System.Threading.Tasks;
 using RazorLight;
 
@@ -8,10 +9,10 @@ namespace Dex.PdfGenerator.Providers
     {
         private readonly string _templateString;
         private readonly string _templateKey;
-        private readonly object _model;
+        private readonly ExpandoObject _model;
         private readonly IStaticPathProvider _staticPathProvider;
 
-        public HtmlTemplateStringProvider(string templateString, string templateKey, object model, IStaticPathProvider staticPathProvider = null)
+        public HtmlTemplateStringProvider(string templateString, string templateKey, ExpandoObject model, IStaticPathProvider staticPathProvider = null)
         {
             _templateString = templateString;
             _templateKey = templateKey;

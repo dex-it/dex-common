@@ -3,7 +3,7 @@ using System;
 namespace Dex.Ef.Attributes
 {
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-    public class IndexAttribute : Attribute
+    public sealed class IndexAttribute : Attribute
     {
         public string? IndexName { get; }
 
