@@ -75,17 +75,15 @@ namespace Dex.Cap.Outbox.Ef
             foreach (var freeMessage in freeMessages)
             {
                 var lockedJob = await TryCreateJob(freeMessage, cancellationToken).ConfigureAwait(false);
+                if (lockedJob == null) continue;
 
-                if (lockedJob != null)
+                if (!lockedJob.LockToken.IsCancellationRequested)
                 {
-                    if (!lockedJob.LockToken.IsCancellationRequested)
-                    {
-                        yield return lockedJob;
-                    }
-                    else
-                    {
-                        lockedJob.Dispose();
-                    }
+                    yield return lockedJob;
+                }
+                else
+                {
+                    lockedJob.Dispose();
                 }
             }
         }
@@ -177,7 +175,7 @@ namespace Dex.Cap.Outbox.Ef
             {
                 var lockedMessage = await TryLockMessage(freeMessage.Id, lockId, cts?.Token ?? default, cancellationToken).ConfigureAwait(false);
 
-                return lockedMessage != null
+                return lockedMessage is { Status: OutboxMessageStatus.New }
                     ? new OutboxLockedJob(lockedMessage, lockId, NullableHelper.SetNull(ref cts))
                     : null;
             }

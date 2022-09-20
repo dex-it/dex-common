@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.3.25</PackageVersion>
+    <PackageVersion>1.3.26</PackageVersion>
     <PackageTags>outbox business-transaction consistency</PackageTags>
   </PropertyGroup>
 

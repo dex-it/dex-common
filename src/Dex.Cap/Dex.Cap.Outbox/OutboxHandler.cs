@@ -43,26 +43,26 @@ namespace Dex.Cap.Outbox
                     do
                     {
                         var job = enumerator.Current;
-                        var isSuccess = false;
                         try
                         {
-                            using (Activity activity = new($"Process outbox message:{job.Envelope.Id}"))
+                            using (var activity = new Activity($"Process outbox message: {job.Envelope.Id}"))
                             {
                                 activity.AddBaggage("Type", job.Envelope.MessageType);
                                 activity.AddBaggage("MessageId", job.Envelope.Id.ToString());
 
-                                if (job.Envelope.ActivityId != null)
+                                if (!string.IsNullOrEmpty(job.Envelope.ActivityId))
                                 {
-                                    activity.SetParentId(job.Envelope.ActivityId);
+                                    activity.SetParentId(job.Envelope.ActivityId!);
                                 }
 
                                 using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken))
                                 {
                                     activity.Start();
-                                    _logger.LogTrace("Processing message - {Job}", job.Envelope.Id);
+                                    _logger.LogTrace("Processing job - {Job}", job.Envelope.Id);
+
                                     await ProcessJob(job, cts.Token).ConfigureAwait(false);
-                                    isSuccess = true;
-                                    _logger.LogTrace("Completed message - {Job}", job.Envelope.Id);
+
+                                    _logger.LogTrace("Job process completed - {Job}", job.Envelope.Id);
                                     activity.Stop();
                                 }
                             }
@@ -70,7 +70,6 @@ namespace Dex.Cap.Outbox
                         finally
                         {
                             job.Dispose();
-                            _logger.LogDebug("Completed message - {Job}, Success - {Success}", job.Envelope.Id, isSuccess);
                         }
                     } while (await enumerator.MoveNextAsync().ConfigureAwait(false));
                 }
