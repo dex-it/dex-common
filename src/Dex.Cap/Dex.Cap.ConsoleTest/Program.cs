@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,12 +10,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dex.Cap.Outbox.AspNetScheduler;
+using Npgsql;
 
 namespace Dex.Cap.ConsoleTest
 {
     class Program
     {
-        static readonly AsyncLocal<string> _asyncLocal = new();
+        private static readonly AsyncLocal<string> AsyncLocal = new();
 
         static async Task Main()
         {
@@ -29,20 +31,44 @@ namespace Dex.Cap.ConsoleTest
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
+            var count = 5;
+            TestCommandHandler.OnProcess += (sender, args) =>
+            {
+                if (Interlocked.Decrement(ref count) < 0)
+                {
+                    throw new InvalidOperationException("Multiple execution detected!");
+                }
+            };
+
+            // prepare DB
+            var db = sp.GetRequiredService<TestDbContext>();
+            await db.Database.EnsureDeletedAsync();
+            await db.Database.EnsureCreatedAsync();
+
             var logger = sp.GetService<ILogger<Program>>();
+            var client = sp.GetRequiredService<IOutboxService>();
+            var activity = new Activity("TestActivity-1");
+            activity.Start();
             logger.LogDebug("DEBUG...");
             logger.LogInformation("INFO...");
 
-            var client = sp.GetRequiredService<IOutboxService>();
-            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
-            await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
-            await Save(sp);
+            for (int i = 0; i < count; i++)
+            {
+                var a = new Activity("TestActivity-2");
+                a.SetParentId(activity.Id);
+                a.Start();
+                await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world " + i }, CancellationToken.None);
+                await db.SaveChangesAsync();
+                a.Stop();
+            }
 
-            for (var i = 0; i < 5; i++)
+            activity.Stop();
+
+            for (var i = 0; i < 20; i++)
             {
                 _ = Task.Run(async () =>
                 {
-                    _asyncLocal.Value = "Thread_" + i;
+                    AsyncLocal.Value = "Thread_" + i;
 
                     while (true)
                     {
@@ -51,6 +77,10 @@ namespace Dex.Cap.ConsoleTest
                         try
                         {
                             await handler.ProcessAsync();
+                        }
+                        catch (InvalidOperationException ex) when (ex.InnerException?.InnerException is PostgresException { SqlState: "40001" })
+                        {
+                            logger.LogDebug("...");
                         }
                         catch (Exception exception)
                         {
@@ -73,8 +103,10 @@ namespace Dex.Cap.ConsoleTest
                 .AddLogging(lb =>
                 {
                     lb.ClearProviders();
-                    lb.AddConsole();
                     lb.AddConfiguration(configuration.GetSection("Logging"));
+                    lb.Configure(options => options.ActivityTrackingOptions = ActivityTrackingOptions.TraceId | ActivityTrackingOptions.SpanId);
+                    lb.AddConsole(options => options.IncludeScopes = true);
+
                     // lb.SetMinimumLevel(LogLevel.Debug);
                     // lb.AddFilter("Microsoft", LogLevel.None);
                 })
@@ -85,13 +117,6 @@ namespace Dex.Cap.ConsoleTest
                 })
                 .AddOutbox<TestDbContext>()
                 .RegisterOutboxScheduler();
-        }
-
-        private static async Task Save(IServiceProvider sp)
-        {
-            var db = sp.GetRequiredService<TestDbContext>();
-            db.Database.EnsureCreated();
-            await db.SaveChangesAsync();
         }
     }
 }
