@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Dex.Extensions;
 using Dex.MassTransit.ActivityTrace;
 using MassTransit;
@@ -23,11 +24,10 @@ namespace Dex.MassTransit.Rabbit
         /// <summary>
         /// Register bus.
         /// </summary>
-        /// <param name="registerConsumers"></param>
-        /// <param name="rabbitMqOptions">Параметры подключения к очереди. Если пустой, то по умолчанию будут получены опции типа RabbitMqOptions из DI</param>
         /// <param name="collectionConfigurator"></param>
-        /// <param name="refreshConnectCallback"></param>
-        /// <remarks>По умолчанию берет опции типа RabbitMqOptions, если пустой параметр RabbitMqOptions</remarks>
+        /// <param name="registerConsumers">Register consumers action</param>
+        /// <param name="rabbitMqOptions">By default options RabbitMqOptions, will be injected from DI</param>
+        /// <param name="refreshConnectCallback">Call before reconnect action will be performed</param>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterBus(this IBusRegistrationConfigurator collectionConfigurator,
             Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, RabbitMqOptions? rabbitMqOptions = null,
@@ -39,11 +39,11 @@ namespace Dex.MassTransit.Rabbit
         /// <summary>
         /// Register bus.
         /// </summary>
-        /// <param name="registerConsumers"></param>
-        /// <param name="rabbitMqOptions">Параметры подключения к очереди. Если пустой, то по умолчанию будут получены опции типа TMqOptions из DI</param>
         /// <param name="collectionConfigurator"></param>
-        /// <param name="refreshConnectCallback"></param>
-        /// <typeparam name="TMqOptions">Тип опций, которые будут получены из DI, если пустой параметр rabbitMqOptions</typeparam>
+        /// <param name="registerConsumers">Register consumers action</param>
+        /// <param name="rabbitMqOptions">By default options RabbitMqOptions, will be injected from DI</param>
+        /// <param name="refreshConnectCallback">Call before reconnect action will be performed</param>
+        /// <typeparam name="TMqOptions">Configuration options type</typeparam>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterBus<TMqOptions>(this IBusRegistrationConfigurator collectionConfigurator,
             Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> registerConsumers, TMqOptions? rabbitMqOptions = null,
@@ -82,41 +82,45 @@ namespace Dex.MassTransit.Rabbit
         /// <summary>
         /// Register receive EndPoint and bind with type <typeparamref name="T"/>.
         /// </summary>
-        /// <remarks>По умолчанию берет опции типа RabbitMqOptions, если пустой параметр RabbitMqOptions</remarks>
+        /// <remarks>By default options RabbitMqOptions, will be injected from DI</remarks>
         /// <param name="busRegistrationContext">Bus registration contex.</param>
         /// <param name="busFactoryConfigurator">Configuration factory.</param>
         /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
-        /// <param name="rabbitMqOptions">Параметры подключения к очереди. Влияют только на маппинг для SendEndpoint. Если пустой, то по умолчанию будут получены опции типа RabbitMqOptions из DI</param>
-        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
+        /// <param name="rabbitMqOptions">Connection parameters. Affected only mapping SendEndpoint, if empty, then injected from DI.</param>
+        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is pub-sub pattern.</param>
+        /// <param name="serviceName">Extra service name, queue prefix</param>
         /// <typeparam name="T">Consumer type.</typeparam>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext,
             IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, RabbitMqOptions? rabbitMqOptions = null, bool createSeparateQueue = false)
+            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, RabbitMqOptions? rabbitMqOptions = null,
+            bool createSeparateQueue = false, string? serviceName = null)
             where T : class, IConsumer<TMessage>
             where TMessage : class
         {
-            RegisterReceiveEndpoint<T, TMessage, RabbitMqOptions>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, rabbitMqOptions,
-                createSeparateQueue);
+            RegisterReceiveEndpoint<T, TMessage, RabbitMqOptions>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator,
+                rabbitMqOptions, createSeparateQueue, serviceName);
         }
 
         /// <summary>
         /// Register receive EndPoint and bind with type <typeparamref name="T"/>.
         /// </summary>
-        /// <remarks>Если createSeparateQueue = false, то вызывает RegisterSendEndPoint, что позволяет отправлять сообщения типа TMessage методом Send</remarks>
+        /// <remarks>If createSeparateQueue = false, then call RegisterSendEndPoint, to allow sending messages TMessage by call Send</remarks>
         /// <param name="busRegistrationContext">Bus registration contex.</param>
         /// <param name="busFactoryConfigurator">Configuration factory.</param>
         /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
-        /// <param name="rabbitMqOptions">Параметры подключения к очереди. Влияют только на маппинг для SendEndpoint. Если пустой, то по умолчанию будут получены опции типа TMqOptions из DI</param>
-        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
+        /// <param name="rabbitMqOptions">By default options RabbitMqOptions, will be injected from DI</param>
+        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is pub-sub pattern.</param>
+        /// <param name="serviceName">Extra service name, queue prefix</param>
         /// <typeparam name="T">Consumer type.</typeparam>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
-        /// <typeparam name="TMqOptions">Тип опций, которые будут получены из DI, если пустой параметр rabbitMqOptions. Влияют только на маппинг для SendEndpoint</typeparam>
+        /// <typeparam name="TMqOptions">Options type. Affetced only mapping SendEndpoint</typeparam>
         /// <exception cref="ArgumentNullException"/>
         public static void RegisterReceiveEndpoint<T, TMessage, TMqOptions>(this IBusRegistrationContext busRegistrationContext,
             IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, TMqOptions? rabbitMqOptions = null, bool createSeparateQueue = false)
+            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, TMqOptions? rabbitMqOptions = null,
+            bool createSeparateQueue = false, string? serviceName = null)
             where T : class, IConsumer<TMessage>
             where TMessage : class
             where TMqOptions : RabbitMqOptions, new()
@@ -124,15 +128,15 @@ namespace Dex.MassTransit.Rabbit
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TMessage, TMqOptions>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] { typeof(T) },
-                rabbitMqOptions, createSeparateQueue);
+            RegisterConsumersEndpoint<TMessage, TMqOptions>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator,
+                new[] { typeof(T) }, rabbitMqOptions, createSeparateQueue, serviceName);
         }
 
         /// <summary>
         /// Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
-        /// <remarks>Необходимо правильно заполнить опции, т.к. выполняется маппинг типа сообщения к полному адресу эндпоинта</remarks>
-        /// <param name="rabbitMqOptions">Параметры подключения к очереди. Если пустой, то по умолчанию будут получены опции типа RabbitMqOptions из DI</param>
-        /// <param name="provider"></param>
+        /// <remarks>You need correct to fill options, mapping will be performed between message type and full endpoint address</remarks>
+        /// <param name="rabbitMqOptions">By default options RabbitMqOptions, will be injected from DI</param>
+        /// <param name="provider">IServiceProvider</param>
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
         public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider, RabbitMqOptions? rabbitMqOptions = null)
@@ -144,11 +148,11 @@ namespace Dex.MassTransit.Rabbit
         /// <summary>
         /// Register and bind SendEndpoint for type <typeparamref name="TMessage"/>.
         /// </summary>
-        /// <remarks>Необходимо заполнить правильный тип опций, т.к. выполняется маппинг типа сообщения к полному адресу эндпоинта</remarks>
-        /// <param name="provider"></param>
-        /// <param name="rabbitMqOptions">Параметры подключения к очереди. Если пустой, то по умолчанию будут получены опции типа TMqOptions из DI</param>
+        /// <remarks>You need correct to fill options, mapping will be performed between message type and full endpoint address</remarks>
+        /// <param name="provider">IServiceProvider</param>
+        /// <param name="rabbitMqOptions">By default options RabbitMqOptions, will be injected from DI</param>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
-        /// <typeparam name="TMqOptions">Тип опций, которые будут получены из DI, если пустой параметр rabbitMqOptions</typeparam>
+        /// <typeparam name="TMqOptions">Options type. Affetced only mapping SendEndpoint</typeparam>
         /// <exception cref="ArgumentNullException"/>
         public static UriBuilder RegisterSendEndPoint<TMessage, TMqOptions>(this IServiceProvider provider, TMqOptions? rabbitMqOptions = null)
             where TMessage : class
@@ -178,7 +182,7 @@ namespace Dex.MassTransit.Rabbit
         private static void RegisterConsumersEndpoint<TMessage, TMqOptions>(IRegistrationContext busRegistrationContext,
             IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
             Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types, TMqOptions? rabbitMqOptions,
-            bool createSeparateQueue = false)
+            bool createSeparateQueue = false, string? serviceName = null)
             where TMessage : class where TMqOptions : RabbitMqOptions, new()
         {
             var endPoint = createSeparateQueue
@@ -187,10 +191,15 @@ namespace Dex.MassTransit.Rabbit
 
             var qName = endPoint.Uri.Segments.Last();
 
+            // extra service name, for interprocess unifications
+            serviceName = string.IsNullOrWhiteSpace(serviceName)
+                ? Assembly.GetCallingAssembly().GetName().Name
+                : serviceName;
+
             foreach (var consumerType in types)
             {
                 var queueName = createSeparateQueue
-                    ? qName + "_" + consumerType.Name
+                    ? serviceName + "_" + qName + "_" + consumerType.Name.Replace("`", string.Empty)
                     : qName;
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
