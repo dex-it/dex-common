@@ -2,10 +2,11 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MassTransit" Version="8.0.2-develop.430" />
+      <PackageReference Include="MassTransit" Version="8.0.6" />
     </ItemGroup>
 
     <ItemGroup>

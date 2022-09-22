@@ -39,8 +39,7 @@ namespace Dex.MassTransit.Sample.Publisher
         private static void ConfigureOtherRabbitMqOptions(OtherRabbitMqOptions otherRabbitMqOptions)
         {
             otherRabbitMqOptions.Host = "localhost";
-            otherRabbitMqOptions.Port = 5673;
-            otherRabbitMqOptions.VHost = "winlineClub";
+            otherRabbitMqOptions.Port = 5672;
         }
 
         private static IHostBuilder CreatePublisherHostBuilder(string[] args) =>
