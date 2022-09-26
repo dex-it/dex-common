@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.Outbox
 {
-    internal class OutboxHealthCheck : IHealthCheck
+    internal class OutboxHealthCheck<TDbContext> : IHealthCheck
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly TimeSpan _processTimeout = TimeSpan.FromMinutes(5);
@@ -23,7 +23,7 @@ namespace Dex.Cap.Outbox
             // must use own scoped DbContext because another healthchecks may use _dbContext instance 
             // in another thread if it configured at Scope lifetime service
             using var scope = _scopeFactory.CreateScope();
-            var dataProvider = scope.ServiceProvider.GetRequiredService<IOutboxDataProvider>();
+            var dataProvider = scope.ServiceProvider.GetRequiredService<IOutboxDataProvider<TDbContext>>();
 
             // get oldest record if exists
             var recordAsArray = (await dataProvider.GetFreeMessages(1, cancellationToken)

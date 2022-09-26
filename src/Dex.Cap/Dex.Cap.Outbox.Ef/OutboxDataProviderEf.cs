@@ -19,7 +19,7 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Ef
 {
-    internal class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider where TDbContext : DbContext
+    internal class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<TDbContext> where TDbContext : DbContext
     {
         private readonly TDbContext _dbContext;
         private readonly ILogger<OutboxDataProviderEf<TDbContext>> _logger;
@@ -35,7 +35,8 @@ namespace Dex.Cap.Outbox.Ef
         }
 
         public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
-            IOutboxService outboxService, TState state, Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            IOutboxService<TDbContext> outboxService, TState state,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
             Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
@@ -43,8 +44,11 @@ namespace Dex.Cap.Outbox.Ef
                 async () =>
                 {
                     _dbContext.ChangeTracker.Clear();
-                    var dataContext = await usefulAction(cancellationToken, new OutboxContext<TState>(outboxService, state)).ConfigureAwait(false);
+
+                    var outboxContext = new OutboxContext<TDbContext, TState>(outboxService, _dbContext, state);
+                    var dataContext = await usefulAction(cancellationToken, outboxContext).ConfigureAwait(false);
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
                     await createOutboxData(cancellationToken, dataContext).ConfigureAwait(false);
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
@@ -171,7 +175,7 @@ namespace Dex.Cap.Outbox.Ef
             {
                 var lockedMessage = await TryLockMessage(freeMessage.Id, lockId, cts?.Token ?? default, cancellationToken).ConfigureAwait(false);
 
-                return lockedMessage is { Status: OutboxMessageStatus.New }
+                return lockedMessage is { Status: OutboxMessageStatus.New or OutboxMessageStatus.Failed }
                     ? new OutboxLockedJob(lockedMessage, lockId, NullableHelper.SetNull(ref cts))
                     : null;
             }

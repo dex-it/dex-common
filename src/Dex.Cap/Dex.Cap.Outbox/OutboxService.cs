@@ -6,19 +6,19 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    internal sealed class OutboxService : IOutboxService
+    internal sealed class OutboxService<TDbContext> : IOutboxService<TDbContext>
     {
-        private readonly IOutboxDataProvider _outboxDataProvider;
+        private readonly IOutboxDataProvider<TDbContext> _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;
 
-        public OutboxService(IOutboxDataProvider outboxDataProvider, IOutboxSerializer serializer)
+        public OutboxService(IOutboxDataProvider<TDbContext> outboxDataProvider, IOutboxSerializer serializer)
         {
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
         public async Task<Guid> ExecuteOperationAsync<TState, TDataContext, TOutboxMessage>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
             Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken = default)
             where TOutboxMessage : IOutboxMessage
@@ -40,7 +40,7 @@ namespace Dex.Cap.Outbox
         }
 
         public async Task<Guid> ExecuteOperationAsync<TState, TDataContext, TOutboxMessage>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
             Func<TDataContext, TOutboxMessage> createOutboxData,
             CancellationToken cancellationToken = default)
             where TOutboxMessage : IOutboxMessage

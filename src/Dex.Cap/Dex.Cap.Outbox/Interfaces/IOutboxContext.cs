@@ -3,8 +3,13 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
-    public interface IOutboxContext<out TState>
+    public interface IOutboxContext<out TDbContext, out TState>
     {
+        /// <summary>
+        /// DbContext
+        /// </summary>
+        TDbContext DbContext { get; }
+
         /// <summary>
         /// Outbox state context
         /// </summary>

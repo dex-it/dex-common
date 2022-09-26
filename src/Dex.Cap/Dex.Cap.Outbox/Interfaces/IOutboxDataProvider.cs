@@ -7,13 +7,13 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
-    internal interface IOutboxDataProvider
+    internal interface IOutboxDataProvider<TDbContext>
     {
         Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
 
         Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
-            IOutboxService outboxService, TState state,
-            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            IOutboxService<TDbContext> outboxService, TState state,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
             Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken)
             where TOutboxMessage : IOutboxMessage;

@@ -14,7 +14,7 @@ using Neo4jClient.Transactions;
 namespace Dex.Cap.Outbox.Neo4j
 {
     // ReSharper disable once InconsistentNaming
-    internal class OutboxDataProviderNeo4j : BaseOutboxDataProvider
+    internal class OutboxDataProviderNeo4j : BaseOutboxDataProvider<ITransactionalGraphClient>
     {
         private readonly ITransactionalGraphClient _graphClient;
         private readonly OutboxOptions _outboxOptions;
@@ -26,8 +26,8 @@ namespace Dex.Cap.Outbox.Neo4j
         }
 
         public override Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
-            IOutboxService outboxService, TState state,
-            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            IOutboxService<ITransactionalGraphClient> outboxService, TState state,
+            Func<CancellationToken, IOutboxContext<ITransactionalGraphClient, TState>, Task<TDataContext>> usefulAction,
             Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();

@@ -62,7 +62,7 @@ namespace Dex.Cap.AspNet.Test
             lifetime.ApplicationStarted.Register(async () =>
             {
                 using var scope = app.ApplicationServices.CreateScope();
-                var client = scope.ServiceProvider.GetRequiredService<IOutboxService>();
+                var client = scope.ServiceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
                 await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
 
                 var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();

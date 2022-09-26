@@ -15,13 +15,13 @@ namespace Dex.Cap.Outbox.Ef
             }
 
             serviceProvider.AddHealthChecks()
-                .AddCheck<OutboxHealthCheck>("outbox-scheduler");
+                .AddCheck<OutboxHealthCheck<TDbContext>>("outbox-scheduler");
 
             return serviceProvider
-                .AddScoped<IOutboxService, OutboxService>()
+                .AddScoped<IOutboxService<TDbContext>, OutboxService<TDbContext>>()
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
-                .AddScoped<IOutboxDataProvider, OutboxDataProviderEf<TDbContext>>()
+                .AddScoped<IOutboxDataProvider<TDbContext>, OutboxDataProviderEf<TDbContext>>()
                 .AddScoped<IOutboxCleanupDataProvider, OutboxCleanupDataProviderEf<TDbContext>>()
                 .AddScoped<IOutboxMessageHandlerFactory, OutboxMessageHandlerFactory>();
         }

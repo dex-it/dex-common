@@ -16,12 +16,12 @@ namespace Dex.Cap.Outbox
         private const string UserCanceledDbMessage = "Operation canceled due to user request";
         private const string UserCanceledMessageWithId = "Operation canceled due to user request. MessageId: {MessageId}";
         private const string NoMessagesToProcess = "No messages to process";
-        private readonly IOutboxDataProvider _dataProvider;
+        private readonly IOutboxDataProvider<TDbContext> _dataProvider;
         private readonly IOutboxMessageHandlerFactory _handlerFactory;
         private readonly IOutboxSerializer _serializer;
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
 
-        public OutboxHandler(IOutboxDataProvider dataProvider, IOutboxMessageHandlerFactory messageHandlerFactory,
+        public OutboxHandler(IOutboxDataProvider<TDbContext> dataProvider, IOutboxMessageHandlerFactory messageHandlerFactory,
             IOutboxSerializer serializer, ILogger<OutboxHandler<TDbContext>> logger)
         {
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));

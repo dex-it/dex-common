@@ -4,25 +4,26 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
-    public interface IOutboxService
+    public interface IOutboxService<out TDbContext>
     {
         /// <summary>
         /// Execute operation and publish message to outbox queue into transaction.
         /// </summary>
         /// <param name="correlationId">CorrelationId</param>
-        /// <param name="state">The state that will be passed to the usefulAction.</param>
         /// <param name="usefulAction">A delegate representing an executable operation that returns the result of type <typeparamref name="TDataContext" />.</param>
         /// <param name="createOutboxData">A delegate representing an executable operation that returns the result of type <typeparamref name="TOutboxMessage" />.</param>
         /// <param name="cancellationToken">CancellationToken</param>
-        /// <typeparam name="TState">The type of the state.</typeparam>
         /// <typeparam name="TDataContext">The return type of <paramref name="usefulAction" />.</typeparam>
         /// <typeparam name="TOutboxMessage">The return type of <paramref name="createOutboxData" />.</typeparam>
         /// <returns>CorrelationId</returns>
-        Task<Guid> ExecuteOperationAsync<TState, TDataContext, TOutboxMessage>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+        Task<Guid> ExecuteOperationAsync<TDataContext, TOutboxMessage>(Guid correlationId,
+            Func<CancellationToken, IOutboxContext<TDbContext, object?>, Task<TDataContext>> usefulAction,
             Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken = default)
-            where TOutboxMessage : IOutboxMessage;
+            where TOutboxMessage : IOutboxMessage
+        {
+            return ExecuteOperationAsync(correlationId, default, usefulAction, createOutboxData, cancellationToken);
+        }
 
         /// <summary>
         /// Execute operation and publish message to outbox queue into transaction.
@@ -37,7 +38,44 @@ namespace Dex.Cap.Outbox.Interfaces
         /// <typeparam name="TOutboxMessage">The return type of <paramref name="createOutboxData" />.</typeparam>
         /// <returns>CorrelationId</returns>
         Task<Guid> ExecuteOperationAsync<TState, TDataContext, TOutboxMessage>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData,
+            CancellationToken cancellationToken = default)
+            where TOutboxMessage : IOutboxMessage;
+
+        /// <summary>
+        /// Execute operation and publish message to outbox queue into transaction.
+        /// </summary>
+        /// <param name="correlationId">CorrelationId</param>
+        /// <param name="usefulAction">A delegate representing an executable operation that returns the result of type <typeparamref name="TDataContext" />.</param>
+        /// <param name="createOutboxData">A delegate representing an executable operation that returns the result of type <typeparamref name="TOutboxMessage" />.</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <typeparam name="TDataContext">The return type of <paramref name="usefulAction" />.</typeparam>
+        /// <typeparam name="TOutboxMessage">The return type of <paramref name="createOutboxData" />.</typeparam>
+        /// <returns>CorrelationId</returns>
+        Task<Guid> ExecuteOperationAsync<TDataContext, TOutboxMessage>(Guid correlationId,
+            Func<CancellationToken, IOutboxContext<TDbContext, object?>, Task<TDataContext>> usefulAction,
+            Func<TDataContext, TOutboxMessage> createOutboxData,
+            CancellationToken cancellationToken = default)
+            where TOutboxMessage : IOutboxMessage
+        {
+            return ExecuteOperationAsync(correlationId, default, usefulAction, createOutboxData, cancellationToken);
+        }
+
+        /// <summary>
+        /// Execute operation and publish message to outbox queue into transaction.
+        /// </summary>
+        /// <param name="correlationId">CorrelationId</param>
+        /// <param name="state">The state that will be passed to the usefulAction.</param>
+        /// <param name="usefulAction">A delegate representing an executable operation that returns the result of type <typeparamref name="TDataContext" />.</param>
+        /// <param name="createOutboxData">A delegate representing an executable operation that returns the result of type <typeparamref name="TOutboxMessage" />.</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <typeparam name="TState">The type of the state.</typeparam>
+        /// <typeparam name="TDataContext">The return type of <paramref name="usefulAction" />.</typeparam>
+        /// <typeparam name="TOutboxMessage">The return type of <paramref name="createOutboxData" />.</typeparam>
+        /// <returns>CorrelationId</returns>
+        Task<Guid> ExecuteOperationAsync<TState, TDataContext, TOutboxMessage>(Guid correlationId, TState state,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
             Func<TDataContext, TOutboxMessage> createOutboxData,
             CancellationToken cancellationToken = default)
             where TOutboxMessage : IOutboxMessage;
