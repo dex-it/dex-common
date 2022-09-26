@@ -17,19 +17,19 @@ namespace Dex.Cap.Outbox
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
-        public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId,
-            Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
+        public async Task<Guid> ExecuteOperationAsync<TState, TDataContext, TOutboxMessage>(Guid correlationId, TState state,
+            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken = default)
             where TOutboxMessage : IOutboxMessage
         {
             if (usefulAction == null) throw new ArgumentNullException(nameof(usefulAction));
             if (createOutboxData == null) throw new ArgumentNullException(nameof(createOutboxData));
 
-            await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, usefulAction,
-                    async (token, context) =>
+            await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, this, state, usefulAction,
+                    async (token, dataContext) =>
                     {
-                        var outboxData = await createOutboxData(token, context).ConfigureAwait(false);
+                        var outboxData = await createOutboxData(token, dataContext).ConfigureAwait(false);
                         await EnqueueAsync(correlationId, outboxData, token).ConfigureAwait(false);
                         return outboxData;
                     },
@@ -39,19 +39,19 @@ namespace Dex.Cap.Outbox
             return correlationId;
         }
 
-        public async Task<Guid> ExecuteOperationAsync<TContext, TOutboxMessage>(Guid correlationId,
-            Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<TContext, TOutboxMessage> createOutboxData,
+        public async Task<Guid> ExecuteOperationAsync<TState, TDataContext, TOutboxMessage>(Guid correlationId, TState state,
+            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<TDataContext, TOutboxMessage> createOutboxData,
             CancellationToken cancellationToken = default)
             where TOutboxMessage : IOutboxMessage
         {
             if (usefulAction == null) throw new ArgumentNullException(nameof(usefulAction));
             if (createOutboxData == null) throw new ArgumentNullException(nameof(createOutboxData));
 
-            await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, usefulAction,
-                    async (token, context) =>
+            await _outboxDataProvider.ExecuteUsefulAndSaveOutboxActionIntoTransaction(correlationId, this, state, usefulAction,
+                    async (token, dataContext) =>
                     {
-                        var outboxData = createOutboxData(context);
+                        var outboxData = createOutboxData(dataContext);
                         await EnqueueAsync(correlationId, outboxData, token).ConfigureAwait(false);
                         return outboxData;
                     },
@@ -63,13 +63,11 @@ namespace Dex.Cap.Outbox
 
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, CancellationToken cancellationToken) where T : IOutboxMessage
         {
-            var assemblyQualifiedName = message.GetType().AssemblyQualifiedName;
-            if (assemblyQualifiedName == null)
-            {
-                throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
-            }
+            var messageType = message.GetType();
+            var assemblyQualifiedName = messageType.AssemblyQualifiedName;
+            if (assemblyQualifiedName == null) throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
 
-            var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message));
+            var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message, messageType));
             await _outboxDataProvider.Add(outbox, cancellationToken).ConfigureAwait(false);
             return correlationId;
         }

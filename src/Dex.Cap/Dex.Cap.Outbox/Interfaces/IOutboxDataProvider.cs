@@ -11,9 +11,10 @@ namespace Dex.Cap.Outbox.Interfaces
     {
         Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
 
-        Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
-            Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
+        Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
+            IOutboxService outboxService, TState state,
+            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData,
             CancellationToken cancellationToken)
             where TOutboxMessage : IOutboxMessage;
 

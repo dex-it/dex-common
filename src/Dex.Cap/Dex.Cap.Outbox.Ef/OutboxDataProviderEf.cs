@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Helpers;
+using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
@@ -21,34 +22,30 @@ namespace Dex.Cap.Outbox.Ef
     internal class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider where TDbContext : DbContext
     {
         private readonly TDbContext _dbContext;
-        private readonly ILogger _logger;
+        private readonly ILogger<OutboxDataProviderEf<TDbContext>> _logger;
         private readonly OutboxOptions _outboxOptions;
 
         public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger)
         {
-            if (outboxOptions is null)
-            {
-                throw new ArgumentNullException(nameof(outboxOptions));
-            }
+            if (outboxOptions is null) throw new ArgumentNullException(nameof(outboxOptions));
 
             _dbContext = dbContext;
             _logger = logger;
             _outboxOptions = outboxOptions.Value;
         }
 
-        public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId,
-            Func<CancellationToken, Task<TContext>> usefulAction,
-            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
-            CancellationToken cancellationToken)
+        public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
+            IOutboxService outboxService, TState state, Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             await strategy.ExecuteInTransactionAsync(
                 async () =>
                 {
                     _dbContext.ChangeTracker.Clear();
-                    var context = await usefulAction(cancellationToken).ConfigureAwait(false);
+                    var dataContext = await usefulAction(cancellationToken, new OutboxContext<TState>(outboxService, state)).ConfigureAwait(false);
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                    await createOutboxData(cancellationToken, context).ConfigureAwait(false);
+                    await createOutboxData(cancellationToken, dataContext).ConfigureAwait(false);
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
                 () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
@@ -92,7 +89,6 @@ namespace Dex.Cap.Outbox.Ef
         {
             return await _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == correlationId, cancellationToken).ConfigureAwait(false);
         }
-
 
         /// <exception cref="RetryLimitExceededException"/>
         protected override async Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)

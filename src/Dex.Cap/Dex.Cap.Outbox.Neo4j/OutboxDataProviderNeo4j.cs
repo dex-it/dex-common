@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
@@ -24,19 +25,10 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        // public override async Task ExecuteInTransaction(Guid correlationId, Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
-        // {
-        //     using (var transaction = _graphClient.BeginTransaction())
-        //     {
-        //         await operation(cancellationToken);
-        //         await transaction.CommitAsync();
-        //     }
-        // }
-
-        public override Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TContext, TOutboxMessage>(Guid correlationId, 
-            Func<CancellationToken, Task<TContext>> usefulAction, 
-            Func<CancellationToken, TContext, Task<TOutboxMessage>> createOutboxData,
-            CancellationToken cancellationToken)
+        public override Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
+            IOutboxService outboxService, TState state,
+            Func<CancellationToken, IOutboxContext<TState>, Task<TDataContext>> usefulAction,
+            Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
