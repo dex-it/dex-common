@@ -18,7 +18,7 @@ namespace Dex.Cap.Outbox
             return JsonSerializer.Serialize(message, _options);
         }
 
-        public string Serialize<T>(T message, Type type)
+        public string Serialize(Type type, object message)
         {
             return JsonSerializer.Serialize(message, type, _options);
         }

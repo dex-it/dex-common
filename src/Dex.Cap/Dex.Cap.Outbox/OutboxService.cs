@@ -67,7 +67,7 @@ namespace Dex.Cap.Outbox
             var assemblyQualifiedName = messageType.AssemblyQualifiedName;
             if (assemblyQualifiedName == null) throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
 
-            var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(message, messageType));
+            var outbox = new OutboxEnvelope(correlationId, assemblyQualifiedName, OutboxMessageStatus.New, _serializer.Serialize(messageType, message));
             await _outboxDataProvider.Add(outbox, cancellationToken).ConfigureAwait(false);
             return correlationId;
         }
