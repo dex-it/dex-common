@@ -27,8 +27,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Dex.Events.DistributedEvents\Dex.Events.DistributedEvents.csproj" />
-      <ProjectReference Include="..\..\Dex.Events.OutboxDistributedEvents\Dex.Events.OutboxDistributedEvents.csproj" />
+      <ProjectReference Include="..\..\Dex.Events.Distributed\Dex.Events.Distributed.csproj" />
+      <ProjectReference Include="..\..\Dex.Events.Distributed.OutboxExtensions\Dex.Events.Distributed.OutboxExtensions.csproj" />
     </ItemGroup>
 
 </Project>

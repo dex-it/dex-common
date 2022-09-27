@@ -1,10 +1,10 @@
 using System;
 using Dex.Cap.Outbox.Ef;
-using Dex.Events.DistributedEvents.Tests.Models;
+using Dex.Events.Distributed.Tests.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Events.DistributedEvents.Tests
+namespace Dex.Events.Distributed.Tests
 {
     public class TestDbContext : DbContext
     {

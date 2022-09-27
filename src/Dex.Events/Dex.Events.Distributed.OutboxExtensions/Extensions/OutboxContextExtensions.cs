@@ -6,15 +6,15 @@ using Dex.Cap.Outbox.Interfaces;
 using DistributedEvents;
 using MassTransit;
 
-namespace Dex.Events.OutboxDistributedEvents.Extensions
+#pragma warning disable CA1030
+
+namespace Dex.Events.Distributed.OutboxExtensions.Extensions
 {
     public static class OutboxContextExtensions
     {
         public static async Task RaiseDistributedEventAsync(this IOutboxContext<object?, object?> outboxContext,
             DistributedBaseEventParams outboxMessage, CancellationToken cancellationToken = default)
-        {
-            await outboxContext.RaiseDistributedEventAsync<IBus>(outboxMessage, cancellationToken).ConfigureAwait(false);
-        }
+            => await outboxContext.RaiseDistributedEventAsync<IBus>(outboxMessage, cancellationToken).ConfigureAwait(false);
 
         public static async Task RaiseDistributedEventAsync<TBus>(this IOutboxContext<object?, object?> outboxContext,
             DistributedBaseEventParams outboxMessage, CancellationToken cancellationToken = default)
@@ -25,9 +25,9 @@ namespace Dex.Events.OutboxDistributedEvents.Extensions
 
             var messageType = outboxMessage.GetType();
 
-            await outboxContext.EnqueueMessageAsync(
-                new OutboxDistributedEventMessage<TBus>(JsonSerializer.Serialize(outboxMessage, messageType), messageType.AssemblyQualifiedName!),
-                cancellationToken).ConfigureAwait(false);
+            var eventParams = JsonSerializer.Serialize(outboxMessage, messageType);
+            var eventMessage = new OutboxDistributedEventMessage<TBus>(eventParams, messageType.AssemblyQualifiedName!);
+            await outboxContext.EnqueueMessageAsync(eventMessage, cancellationToken).ConfigureAwait(false);
         }
     }
 }

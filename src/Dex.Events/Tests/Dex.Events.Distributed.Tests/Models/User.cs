@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Dex.Events.DistributedEvents.Tests.Models
+namespace Dex.Events.Distributed.Tests.Models
 {
     public class User
     {

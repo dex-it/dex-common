@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Dex.Events.DistributedEvents.Tests
+namespace Dex.Events.Distributed.Tests
 {
     public class TestDbContextFactory : IDesignTimeDbContextFactory<TestDbContext>
     {

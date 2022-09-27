@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Dex.Events.DistributedEvents.Tests.Migrations
+namespace Dex.Events.Distributed.Tests.Migrations
 {
     public partial class Init : Migration
     {

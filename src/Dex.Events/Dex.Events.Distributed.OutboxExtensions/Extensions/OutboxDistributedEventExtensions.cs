@@ -2,7 +2,7 @@
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.Events.OutboxDistributedEvents.Extensions
+namespace Dex.Events.Distributed.OutboxExtensions.Extensions
 {
     public static class OutboxDistributedEventExtensions
     {

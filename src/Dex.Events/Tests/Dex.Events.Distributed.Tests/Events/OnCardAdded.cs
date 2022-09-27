@@ -1,7 +1,7 @@
 ﻿using System;
 using DistributedEvents;
 
-namespace Dex.Events.DistributedEvents.Tests.Events
+namespace Dex.Events.Distributed.Tests.Events
 {
     public class OnCardAdded : DistributedBaseEventParams
     {

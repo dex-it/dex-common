@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 using MassTransit;
 
-namespace Dex.Events.OutboxDistributedEvents
+namespace Dex.Events.Distributed.OutboxExtensions
 {
     public sealed class OutboxDistributedEventHandler<TBus> : IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>> where TBus : IBus
     {

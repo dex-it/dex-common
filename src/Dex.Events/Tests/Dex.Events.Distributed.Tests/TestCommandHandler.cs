@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Events.DistributedEvents.Tests
+namespace Dex.Events.Distributed.Tests
 {
     public class TestCommandHandler : IOutboxMessageHandler<TestOutboxCommand>
     {

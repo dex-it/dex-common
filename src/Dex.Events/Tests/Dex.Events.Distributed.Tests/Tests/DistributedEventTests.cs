@@ -2,14 +2,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Events.DistributedEvents.Tests.Events;
-using Dex.Events.DistributedEvents.Tests.Models;
-using Dex.Events.OutboxDistributedEvents.Extensions;
+using Dex.Events.Distributed.OutboxExtensions.Extensions;
+using Dex.Events.Distributed.Tests.Events;
+using Dex.Events.Distributed.Tests.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Dex.Events.DistributedEvents.Tests.Tests
+namespace Dex.Events.Distributed.Tests.Tests
 {
     public class DistributedEventTests : BaseTest
     {

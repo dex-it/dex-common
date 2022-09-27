@@ -1,6 +1,6 @@
 ﻿using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Events.DistributedEvents.Tests
+namespace Dex.Events.Distributed.Tests
 {
     public class TestOutboxCommand : IOutboxMessage
     {
