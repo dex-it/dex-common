@@ -20,7 +20,7 @@ namespace DistributedEvents
             // - in the first method, the type is defined by typeof(T)
             // - in the second method, the type is defined by GetType()
 
-            await _bus.Publish(args as object, cancellationToken);
+            await _bus.Publish(args as object, cancellationToken).ConfigureAwait(false);
         }
     }
 }

@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageVersion>1.0.0</PackageVersion>
-        <PackageTags>distributed events</PackageTags>
+        <PackageTags>outbox distributed events</PackageTags>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -22,21 +22,14 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
+      <PackageReference Include="Dex.Cap.Outbox" Version="2.0.0" />
       <PackageReference Include="Dex.MassTransit.Rabbit" Version="1.1.25" />
       <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     </ItemGroup>
     <!--/Для NuGet-->
 
     <ItemGroup>
-      <Compile Update="DistributedEventHandler.cs">
-        <DependentUpon>IDistributedEventHandler.cs</DependentUpon>
-      </Compile>
-      <Compile Update="DistributedEventRaiser.cs">
-        <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
-      </Compile>
-      <Compile Update="FakeDistributedEventRaiser.cs">
-        <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
-      </Compile>
+      <ProjectReference Include="..\Dex.Events.DistributedEvents\Dex.Events.DistributedEvents.csproj" />
     </ItemGroup>
 
 </Project>

@@ -30,7 +30,7 @@ namespace DistributedEvents
             {
                 try
                 {
-                    await eventHandler.ProcessAsync(context.Message, context.CancellationToken);
+                    await eventHandler.ProcessAsync(context.Message, context.CancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

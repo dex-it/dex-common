@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Events.DistributedEvents", "Dex.Events.DistributedEvents\Dex.Events.DistributedEvents.csproj", "{74723E39-AA52-4D80-AB65-C2CE79CEDAFA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Events.OutboxDistributedEvents", "Dex.Events.OutboxDistributedEvents\Dex.Events.OutboxDistributedEvents.csproj", "{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{74723E39-AA52-4D80-AB65-C2CE79CEDAFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74723E39-AA52-4D80-AB65-C2CE79CEDAFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74723E39-AA52-4D80-AB65-C2CE79CEDAFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
