@@ -17,7 +17,7 @@ namespace Dex.Cap.Outbox
             State = state;
         }
 
-        public async Task AddCommandAsync(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
+        public async Task EnqueueMessageAsync(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
             await OutboxService.EnqueueAsync(outboxMessage, cancellationToken).ConfigureAwait(false);
         }

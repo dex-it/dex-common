@@ -109,13 +109,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            await outboxService.ExecuteOperationAsync(correlation, (dbContext, logger),
+            await outboxService.ExecuteOperationAsync(correlation, new { Logger = logger },
                 async (token, outboxContext) =>
                 {
-                    outboxContext.State.logger.LogDebug("DEBUG...");
+                    outboxContext.State.Logger.LogDebug("DEBUG...");
 
-                    await outboxContext.State.dbContext.Users.AddAsync(new User { Name = name }, token);
-                    await outboxContext.AddCommandAsync(new TestOutboxCommand2 { Args = "Command2" }, token);
+                    await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
+                    await outboxContext.EnqueueMessageAsync(new TestOutboxCommand2 { Args = "Command2" }, token);
 
                     return new TestOutboxCommand { Args = "hello world" };
                 },
@@ -147,10 +147,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            await outboxService.ExecuteOperationAsync(correlation, testDbContext,
+            await outboxService.ExecuteOperationAsync(correlation,
                 async (token, outboxContext) =>
                 {
-                    await outboxContext.State.Users.AddAsync(new User { Name = name }, token);
+                    await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
 
                     if (failureCount-- > 0)
                     {

@@ -18,6 +18,6 @@ namespace Dex.Cap.Outbox.Interfaces
         /// <summary>
         /// Publish outbox message to queue. This method don't check Transaction, only append outbox message to change context.
         /// </summary>
-        Task AddCommandAsync(IOutboxMessage outboxMessage, CancellationToken cancellationToken);
+        Task EnqueueMessageAsync(IOutboxMessage outboxMessage, CancellationToken cancellationToken);
     }
 }
