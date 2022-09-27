@@ -5,8 +5,6 @@ using Dex.Cap.Outbox.Interfaces;
 using Dex.Events.DistributedEvents.Tests.Events;
 using Dex.Events.DistributedEvents.Tests.Models;
 using Dex.Events.OutboxDistributedEvents.Extensions;
-using DistributedEvents;
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -37,8 +35,10 @@ namespace Dex.Events.DistributedEvents.Tests.Tests
                     var entity = new User { Name = outboxContext.State.Name, Years = outboxContext.State.Age };
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.RaiseDistributedEventAsync<TestDbContext, object, IBus, DistributedBaseEventParams>(
-                        new OnCardAdded { CustomerId = Guid.NewGuid() }, cancellationToken: token);
+                    await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() },
+                        cancellationToken: token);
+                    await outboxContext.RaiseDistributedEventAsync<IExternalBus>(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() },
+                        cancellationToken: token);
 
                     return new TestOutboxCommand { Args = "hello world" };
                 },

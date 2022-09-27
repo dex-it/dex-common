@@ -11,7 +11,7 @@ namespace Dex.Events.DistributedEvents.Tests
 {
     public abstract class BaseTest
     {
-        protected string DbName { get; } = "db_test_" + "juk_outbox"; //Guid.NewGuid().ToString("N");
+        protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -23,8 +23,8 @@ namespace Dex.Events.DistributedEvents.Tests
         [OneTimeTearDown]
         public async Task TearDown()
         {
-            /*var db = new TestDbContext(DbName);
-            await db.Database.EnsureDeletedAsync();*/
+            var db = new TestDbContext(DbName);
+            await db.Database.EnsureDeletedAsync();
         }
 
         protected IServiceCollection InitServiceCollection()
