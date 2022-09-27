@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 
@@ -14,6 +15,8 @@ namespace DistributedEvents
         public static void RegisterDistributedEventConsumer<T>(this IBusRegistrationConfigurator configurator)
             where T : DistributedBaseEventParams
         {
+            if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+
             configurator.AddConsumer<DistributedEventConsumer<T>>();
         }
 

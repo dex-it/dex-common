@@ -9,11 +9,11 @@ namespace Dex.Events.OutboxDistributedEvents
 {
     public sealed class OutboxDistributedEventHandler<TBus> : IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>> where TBus : IBus
     {
-        private readonly TBus _bus;
+        //private readonly TBus _bus;
 
-        public OutboxDistributedEventHandler(TBus bus)
+        public OutboxDistributedEventHandler(/*TBus bus*/)
         {
-            _bus = bus;
+            //_bus = bus;
         }
 
         public async Task ProcessMessage(OutboxDistributedEventMessage<TBus> message, CancellationToken cancellationToken)
@@ -21,7 +21,9 @@ namespace Dex.Events.OutboxDistributedEvents
             if (message == null) throw new ArgumentNullException(nameof(message));
 
             var eventParams = JsonSerializer.Deserialize(message.EventParams, Type.GetType(message.EventParamsType)!);
-            await _bus.Publish(eventParams!, cancellationToken).ConfigureAwait(false);
+            // todo вернуть
+            //await _bus.Publish(eventParams!, cancellationToken).ConfigureAwait(false);
+            Console.WriteLine($"OutboxDistributedEventHandler - Processed command at {DateTime.Now}, Args: {message.EventParams}");
         }
 
         public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)

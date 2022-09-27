@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Events.DistributedEvent
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Events.OutboxDistributedEvents", "Dex.Events.OutboxDistributedEvents\Dex.Events.OutboxDistributedEvents.csproj", "{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{D93CC96D-D0BB-458F-847E-7999BE3B9847}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Events.DistributedEvents.Tests", "Tests\Dex.Events.DistributedEvents.Tests\Dex.Events.DistributedEvents.Tests.csproj", "{7D9AD53D-037E-4F6C-B60C-3F3DB8EFC5A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,12 @@ Global
 		{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2AF1FCA-F487-4196-A6BB-34D2D74AE788}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D9AD53D-037E-4F6C-B60C-3F3DB8EFC5A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D9AD53D-037E-4F6C-B60C-3F3DB8EFC5A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D9AD53D-037E-4F6C-B60C-3F3DB8EFC5A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D9AD53D-037E-4F6C-B60C-3F3DB8EFC5A4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7D9AD53D-037E-4F6C-B60C-3F3DB8EFC5A4} = {D93CC96D-D0BB-458F-847E-7999BE3B9847}
 	EndGlobalSection
 EndGlobal

@@ -11,7 +11,7 @@ namespace Dex.Events.OutboxDistributedEvents.Extensions
     public static class OutboxContextExtensions
     {
         public static async Task RaiseDistributedEventAsync<TDbContext, TState, TBus, TMessage>(this IOutboxContext<TDbContext, TState> outboxContext,
-            TMessage outboxMessage, CancellationToken cancellationToken)
+            TMessage outboxMessage, CancellationToken cancellationToken = default)
             where TBus : IBus
             where TMessage : DistributedBaseEventParams
         {
