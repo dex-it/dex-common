@@ -46,7 +46,7 @@ namespace Dex.Cap.ConsoleTest
             await db.Database.EnsureCreatedAsync();
 
             var logger = sp.GetService<ILogger<Program>>();
-            var client = sp.GetRequiredService<IOutboxService>();
+            var client = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var activity = new Activity("TestActivity-1");
             activity.Start();
             logger.LogDebug("DEBUG...");

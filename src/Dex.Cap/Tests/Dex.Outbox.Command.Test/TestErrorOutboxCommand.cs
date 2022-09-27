@@ -4,6 +4,6 @@ namespace Dex.Outbox.Command.Test
 {
     public class TestErrorOutboxCommand : IOutboxMessage
     {
-        public int CountDown { get; set; } = 1;
+        public int MaxCount { get; set; } = 1;
     }
 }

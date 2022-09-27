@@ -18,6 +18,11 @@ namespace Dex.Cap.Outbox
             return JsonSerializer.Serialize(message, _options);
         }
 
+        public string Serialize(Type type, object message)
+        {
+            return JsonSerializer.Serialize(message, type, _options);
+        }
+
         public T? Deserialize<T>(string message)
         {
             return JsonSerializer.Deserialize<T>(message, _options);
