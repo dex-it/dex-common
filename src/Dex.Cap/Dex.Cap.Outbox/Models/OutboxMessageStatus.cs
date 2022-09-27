@@ -2,8 +2,8 @@
 {
     public enum OutboxMessageStatus
     {
-        New,
-        Failed,
-        Succeeded
+        New = 0,
+        Failed = 1,
+        Succeeded = 2
     }
 }
