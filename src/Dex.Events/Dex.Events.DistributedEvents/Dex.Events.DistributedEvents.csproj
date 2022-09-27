@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dex.MassTransit.Rabbit" Version="1.1.20" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="DistributedEventHandler.cs">
+        <DependentUpon>IDistributedEventHandler.cs</DependentUpon>
+      </Compile>
+      <Compile Update="DistributedEventRaiser.cs">
+        <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
+      </Compile>
+      <Compile Update="FakeDistributedEventRaiser.cs">
+        <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+</Project>
