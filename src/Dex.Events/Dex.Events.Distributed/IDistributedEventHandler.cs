@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Events.Distributed.Models;
 
 #pragma warning disable CA1711
 

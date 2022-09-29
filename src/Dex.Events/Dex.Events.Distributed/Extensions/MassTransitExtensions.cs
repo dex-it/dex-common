@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Reflection;
+using Dex.Events.Distributed.Models;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.Events.Distributed.Extensions
 {
@@ -11,13 +13,19 @@ namespace Dex.Events.Distributed.Extensions
         /// Register template consumer
         /// </summary>
         /// <param name="configurator">IBusRegistrationConfigurator</param>
+        /// <param name="handlersTypes">Handlers types</param>
         /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        public static void RegisterDistributedEventConsumer<T>(this IBusRegistrationConfigurator configurator)
+        public static void RegisterDistributedEventHandlers<T>(this IBusRegistrationConfigurator configurator, params Type[] handlersTypes)
             where T : DistributedBaseEventParams
         {
             if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+            if (handlersTypes == null) throw new ArgumentNullException(nameof(handlersTypes));
 
             configurator.AddConsumer<DistributedEventConsumer<T>>();
+            foreach (var handlerType in handlersTypes)
+            {
+                configurator.AddScoped(typeof(IDistributedEventHandler<T>), handlerType);
+            }
         }
 
         /// <summary>

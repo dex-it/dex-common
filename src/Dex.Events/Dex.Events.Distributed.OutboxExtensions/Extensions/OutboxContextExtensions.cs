@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Events.Distributed.Models;
 using MassTransit;
 
 #pragma warning disable CA1030

@@ -1,13 +1,11 @@
-﻿using System;
-using MassTransit;
+﻿using MassTransit;
 
-namespace Dex.Events.Distributed
+namespace Dex.Events.Distributed.Models
 {
     /// <summary>
     /// Base events params
     /// </summary>
     public abstract class DistributedBaseEventParams : IConsumer
     {
-        public Guid CustomerId { get; set; }
     }
 }

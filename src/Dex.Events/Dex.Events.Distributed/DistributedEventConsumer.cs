@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Dex.Events.Distributed.Models;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
@@ -34,7 +35,7 @@ namespace Dex.Events.Distributed
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("{Type}. Exception: {Exception}", eventHandler.GetType(), ex.Message);
+                    _logger.LogDebug("{Type}. Exception: {Exception}", eventHandler.GetType(), ex.Message);
                     throw;
                 }
             }

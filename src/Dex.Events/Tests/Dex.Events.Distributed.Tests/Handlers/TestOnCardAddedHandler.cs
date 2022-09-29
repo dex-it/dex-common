@@ -15,4 +15,15 @@ namespace Dex.Events.Distributed.Tests.Handlers
             return Task.CompletedTask;
         }
     }
+
+    public class TestOnCardAddedHandler2 : IDistributedEventHandler<OnCardAdded>
+    {
+        public Task ProcessAsync(OnCardAdded argument, CancellationToken cancellationToken)
+        {
+            if (argument == null) throw new ArgumentNullException(nameof(argument));
+
+            Console.WriteLine($"{nameof(TestOnCardAddedHandler2)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
+            return Task.CompletedTask;
+        }
+    }
 }

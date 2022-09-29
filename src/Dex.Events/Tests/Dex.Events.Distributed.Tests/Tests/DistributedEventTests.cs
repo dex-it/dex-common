@@ -3,8 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Events.Distributed.Extensions;
-using Dex.Events.Distributed.OutboxExtensions;
 using Dex.Events.Distributed.OutboxExtensions.Extensions;
+using Dex.Events.Distributed.OutboxExtensions;
 using Dex.Events.Distributed.Tests.Events;
 using Dex.Events.Distributed.Tests.Handlers;
 using Dex.Events.Distributed.Tests.Models;
@@ -25,8 +25,10 @@ namespace Dex.Events.Distributed.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection()
                 .RegisterDistributedEventRaiser()
-                .AddMassTransitInMemoryTestHarness(c => { c.RegisterDistributedEventConsumer<OnCardAdded>(); })
-                .AddScoped<IDistributedEventHandler<OnCardAdded>, TestOnCardAddedHandler>()
+                .AddMassTransitInMemoryTestHarness(c =>
+                {
+                    c.RegisterDistributedEventHandlers<OnCardAdded>(typeof(TestOnCardAddedHandler), typeof(TestOnCardAddedHandler2));
+                })
                 .BuildServiceProvider();
 
             using var harness = serviceProvider.GetRequiredService<InMemoryTestHarness>();
@@ -95,14 +97,13 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .Configure<RabbitMqOptions>(_ => { })
                 .AddMassTransitTestHarness(c =>
                 {
-                    c.RegisterDistributedEventConsumer<OnCardAdded>();
+                    c.RegisterDistributedEventHandlers<OnCardAdded>(typeof(TestOnCardAddedHandler));
                     c.RegisterBus((context, configurator) =>
                     {
                         context.RegisterDistributedEventSendEndPoint<OnCardAdded>();
                         context.RegisterDistributedEventReceiveEndpoint<OnCardAdded>(configurator);
                     });
                 })
-                .AddScoped<IDistributedEventHandler<OnCardAdded>, TestOnCardAddedHandler>()
                 .BuildServiceProvider();
 
             var count = 0;
@@ -143,8 +144,7 @@ namespace Dex.Events.Distributed.Tests.Tests
             await using var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .RegisterOutboxDistributedEventHandler()
-                .AddMassTransitInMemoryTestHarness(c => { c.RegisterDistributedEventConsumer<OnCardAdded>(); })
-                .AddScoped<IDistributedEventHandler<OnCardAdded>, TestOnCardAddedHandler>()
+                .AddMassTransitInMemoryTestHarness(c => { c.RegisterDistributedEventHandlers<OnCardAdded>(typeof(TestOnCardAddedHandler)); })
                 .BuildServiceProvider();
 
             var count = 0;
