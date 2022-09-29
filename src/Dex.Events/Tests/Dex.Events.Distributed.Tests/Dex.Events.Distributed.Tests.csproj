@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Dex.Cap.Outbox.Ef" Version="2.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17">
+          <TreatAsUsed>true</TreatAsUsed>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.17">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <TreatAsUsed>true</TreatAsUsed>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.10" />
+        <PackageReference Include="NUnit" Version="3.13.3" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Dex.Events.Distributed\Dex.Events.Distributed.csproj" />
+      <ProjectReference Include="..\..\Dex.Events.Distributed.OutboxExtensions\Dex.Events.Distributed.OutboxExtensions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Handlers\TestOutboxCommand.cs">
+        <DependentUpon>TestCommandHandler.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+</Project>
