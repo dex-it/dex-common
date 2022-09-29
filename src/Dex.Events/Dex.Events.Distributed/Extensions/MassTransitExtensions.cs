@@ -13,9 +13,54 @@ namespace Dex.Events.Distributed.Extensions
         /// Register template consumer
         /// </summary>
         /// <param name="configurator">IBusRegistrationConfigurator</param>
+        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
+        /// <typeparam name="TH1"></typeparam>
+        public static void RegisterDistributedEventHandlers<T, TH1>(this IBusRegistrationConfigurator configurator)
+            where TH1 : IDistributedEventHandler<T>
+            where T : DistributedBaseEventParams
+        {
+            configurator.RegisterDistributedEventHandlers<T>(typeof(TH1));
+        }
+
+        /// <summary>
+        /// Register template consumer
+        /// </summary>
+        /// <param name="configurator">IBusRegistrationConfigurator</param>
+        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
+        /// <typeparam name="TH1"></typeparam>
+        /// <typeparam name="TH2"></typeparam>
+        public static void RegisterDistributedEventHandlers<T, TH1, TH2>(this IBusRegistrationConfigurator configurator)
+            where TH1 : IDistributedEventHandler<T>
+            where T : DistributedBaseEventParams
+            where TH2 : IDistributedEventHandler<T>
+        {
+            configurator.RegisterDistributedEventHandlers<T>(typeof(TH1), typeof(TH2));
+        }
+
+        /// <summary>
+        /// Register template consumer
+        /// </summary>
+        /// <param name="configurator">IBusRegistrationConfigurator</param>
+        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
+        /// <typeparam name="TH1"></typeparam>
+        /// <typeparam name="TH2"></typeparam>
+        /// <typeparam name="TH3"></typeparam>
+        public static void RegisterDistributedEventHandlers<T, TH1, TH2, TH3>(this IBusRegistrationConfigurator configurator)
+            where TH1 : IDistributedEventHandler<T>
+            where T : DistributedBaseEventParams
+            where TH2 : IDistributedEventHandler<T>
+            where TH3 : IDistributedEventHandler<T>
+        {
+            configurator.RegisterDistributedEventHandlers<T>(typeof(TH1), typeof(TH2), typeof(TH3));
+        }
+
+        /// <summary>
+        /// Register template consumer
+        /// </summary>
+        /// <param name="configurator">IBusRegistrationConfigurator</param>
         /// <param name="handlersTypes">Handlers types</param>
         /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        public static void RegisterDistributedEventHandlers<T>(this IBusRegistrationConfigurator configurator, params Type[] handlersTypes)
+        private static void RegisterDistributedEventHandlers<T>(this IBusRegistrationConfigurator configurator, params Type[] handlersTypes)
             where T : DistributedBaseEventParams
         {
             if (configurator == null) throw new ArgumentNullException(nameof(configurator));
