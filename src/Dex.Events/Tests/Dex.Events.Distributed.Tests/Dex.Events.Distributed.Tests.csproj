@@ -31,4 +31,10 @@
       <ProjectReference Include="..\..\Dex.Events.Distributed.OutboxExtensions\Dex.Events.Distributed.OutboxExtensions.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="Handlers\TestOutboxCommand.cs">
+        <DependentUpon>TestCommandHandler.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

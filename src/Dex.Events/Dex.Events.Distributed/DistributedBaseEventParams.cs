@@ -1,7 +1,7 @@
 ﻿using System;
 using MassTransit;
 
-namespace DistributedEvents
+namespace Dex.Events.Distributed
 {
     /// <summary>
     /// Base events params

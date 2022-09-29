@@ -3,7 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using MassTransit;
 
-namespace DistributedEvents
+#pragma warning disable CA1030
+
+namespace Dex.Events.Distributed
 {
     /// <summary>
     /// Event sender contract

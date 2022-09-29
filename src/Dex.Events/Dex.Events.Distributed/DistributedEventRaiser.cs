@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using MassTransit;
 
-namespace DistributedEvents
+namespace Dex.Events.Distributed
 {
     public sealed class DistributedEventRaiser<TBus> : IDistributedEventRaiser<TBus>
         where TBus : IBus

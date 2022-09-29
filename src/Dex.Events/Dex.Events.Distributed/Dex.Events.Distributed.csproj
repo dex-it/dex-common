@@ -34,9 +34,6 @@
       <Compile Update="DistributedEventRaiser.cs">
         <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
       </Compile>
-      <Compile Update="FakeDistributedEventRaiser.cs">
-        <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
-      </Compile>
     </ItemGroup>
 
 </Project>

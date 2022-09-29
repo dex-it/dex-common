@@ -1,5 +1,4 @@
 ﻿using System;
-using DistributedEvents;
 
 namespace Dex.Events.Distributed.Tests.Events
 {

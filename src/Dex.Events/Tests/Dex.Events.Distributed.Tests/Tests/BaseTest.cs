@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
-namespace Dex.Events.Distributed.Tests
+namespace Dex.Events.Distributed.Tests.Tests
 {
     public abstract class BaseTest
     {

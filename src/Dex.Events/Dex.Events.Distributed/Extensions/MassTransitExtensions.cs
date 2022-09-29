@@ -3,7 +3,7 @@ using System.Reflection;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 
-namespace DistributedEvents
+namespace Dex.Events.Distributed.Extensions
 {
     public static class MassTransitExtensions
     {

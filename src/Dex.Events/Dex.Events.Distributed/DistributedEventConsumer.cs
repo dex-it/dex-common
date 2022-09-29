@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
-namespace DistributedEvents
+namespace Dex.Events.Distributed
 {
     /// <summary>
     /// Template consumer
