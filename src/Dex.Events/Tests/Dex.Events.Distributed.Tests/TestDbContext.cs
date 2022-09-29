@@ -22,8 +22,7 @@ namespace Dex.Events.Distributed.Tests
         {
             base.OnConfiguring(optionsBuilder);
 
-            optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=my-pass~003;",
-            // optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=postgres;",
+            optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=postgres;",
                 builder => { builder.EnableRetryOnFailure(); });
 
             optionsBuilder.UseLoggerFactory(LogFactory).EnableSensitiveDataLogging();

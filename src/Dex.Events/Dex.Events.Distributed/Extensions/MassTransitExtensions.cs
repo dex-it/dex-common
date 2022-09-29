@@ -16,8 +16,8 @@ namespace Dex.Events.Distributed.Extensions
         /// <typeparam name="T">DistributedBaseEventParams</typeparam>
         /// <typeparam name="TH1"></typeparam>
         public static void RegisterDistributedEventHandlers<T, TH1>(this IBusRegistrationConfigurator configurator)
-            where TH1 : IDistributedEventHandler<T>
             where T : DistributedBaseEventParams
+            where TH1 : IDistributedEventHandler<T>
         {
             configurator.RegisterDistributedEventHandlers<T>(typeof(TH1));
         }
@@ -30,8 +30,8 @@ namespace Dex.Events.Distributed.Extensions
         /// <typeparam name="TH1"></typeparam>
         /// <typeparam name="TH2"></typeparam>
         public static void RegisterDistributedEventHandlers<T, TH1, TH2>(this IBusRegistrationConfigurator configurator)
-            where TH1 : IDistributedEventHandler<T>
             where T : DistributedBaseEventParams
+            where TH1 : IDistributedEventHandler<T>
             where TH2 : IDistributedEventHandler<T>
         {
             configurator.RegisterDistributedEventHandlers<T>(typeof(TH1), typeof(TH2));
@@ -46,8 +46,8 @@ namespace Dex.Events.Distributed.Extensions
         /// <typeparam name="TH2"></typeparam>
         /// <typeparam name="TH3"></typeparam>
         public static void RegisterDistributedEventHandlers<T, TH1, TH2, TH3>(this IBusRegistrationConfigurator configurator)
-            where TH1 : IDistributedEventHandler<T>
             where T : DistributedBaseEventParams
+            where TH1 : IDistributedEventHandler<T>
             where TH2 : IDistributedEventHandler<T>
             where TH3 : IDistributedEventHandler<T>
         {

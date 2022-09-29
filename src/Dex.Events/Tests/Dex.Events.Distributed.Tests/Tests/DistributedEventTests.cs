@@ -25,12 +25,7 @@ namespace Dex.Events.Distributed.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection()
                 .RegisterDistributedEventRaiser()
-                .AddMassTransitInMemoryTestHarness(c =>
-                {
-                    c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler>();
-                    c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler2>();
-                    c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler, TestOnCardAddedHandler2>();
-                })
+                .AddMassTransitInMemoryTestHarness(c => { c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler, TestOnCardAddedHandler2>(); })
                 .BuildServiceProvider();
 
             using var harness = serviceProvider.GetRequiredService<InMemoryTestHarness>();
