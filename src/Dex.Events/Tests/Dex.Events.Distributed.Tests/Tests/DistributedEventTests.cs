@@ -21,6 +21,42 @@ namespace Dex.Events.Distributed.Tests.Tests
     public class DistributedEventTests : BaseTest
     {
         [Test]
+        public async Task RaiseDistributedEventMultipleRegistrationsTest()
+        {
+            await using var serviceProvider = InitServiceCollection()
+                .RegisterDistributedEventRaiser()
+                .AddMassTransitInMemoryTestHarness(c =>
+                {
+                    //
+                    c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler>();
+                    c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler2>();
+                    c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler, TestOnCardAddedHandler2>();
+                })
+                .BuildServiceProvider();
+
+            var count = 0;
+            TestOnCardAddedHandler.OnProcessed += (sender, args) => count++;
+            TestOnCardAddedHandler2.OnProcessed += (sender, args) => count++;
+
+            using var harness = serviceProvider.GetRequiredService<InMemoryTestHarness>();
+            await harness.Start();
+
+            var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+
+            var name = "juk_" + Guid.NewGuid();
+            var entity = new User { Name = name, Years = 25 };
+            await dbContext.Users.AddAsync(entity, CancellationToken.None);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await eventRaiser.RaiseAsync(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() }, CancellationToken.None);
+
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+            Assert.That(harness.Consumed.Count(), Is.EqualTo(1));
+            Assert.That(count, Is.EqualTo(4));
+            await harness.Stop();
+        }
+
+        [Test]
         public async Task RaiseDistributedEventAndPublishInMemoryTest()
         {
             await using var serviceProvider = InitServiceCollection()
