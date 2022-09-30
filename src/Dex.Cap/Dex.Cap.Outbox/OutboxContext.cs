@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
@@ -8,10 +9,13 @@ namespace Dex.Cap.Outbox
     {
         public TDbContext DbContext { get; }
         public TState State { get; }
+
+        private readonly Guid _correlationId;
         private IOutboxService<TDbContext> OutboxService { get; }
 
-        public OutboxContext(IOutboxService<TDbContext> outboxService, TDbContext dbContext, TState state)
+        public OutboxContext(IOutboxService<TDbContext> outboxService, TDbContext dbContext, TState state, Guid correlationId)
         {
+            _correlationId = correlationId;
             OutboxService = outboxService;
             DbContext = dbContext;
             State = state;
@@ -19,7 +23,7 @@ namespace Dex.Cap.Outbox
 
         public async Task EnqueueMessageAsync(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
-            await OutboxService.EnqueueAsync(outboxMessage, cancellationToken).ConfigureAwait(false);
+            await OutboxService.EnqueueAsync(_correlationId, outboxMessage, cancellationToken).ConfigureAwait(false);
         }
     }
 }

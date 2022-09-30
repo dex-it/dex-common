@@ -8,16 +8,18 @@ namespace Dex.Cap.Outbox.Models
     [Table("outbox", Schema = "cap")]
     public class OutboxEnvelope
     {
-        public OutboxEnvelope(Guid id, string messageType, OutboxMessageStatus status, string content)
+        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, OutboxMessageStatus status, string content)
         {
             Id = id;
+            CorrelationId = correlationId;
             MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
             Status = status;
             Content = content ?? throw new ArgumentNullException(nameof(content));
             ActivityId = Activity.Current?.Id;
         }
 
-        [Key] public Guid Id { get; set; }
+        [Key]
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Полное имя типа сообщения, AssemblyQualifiedName.
@@ -57,9 +59,13 @@ namespace Dex.Cap.Outbox.Models
         /// </summary>
         public string? Error { get; set; }
 
-        [Required] public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
+        [Required]
+        public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 
         public DateTime? Updated { get; set; }
+
+        [Required]
+        public Guid CorrelationId { get; set; }
 
         #region Межпроцессная синхронизация
 
