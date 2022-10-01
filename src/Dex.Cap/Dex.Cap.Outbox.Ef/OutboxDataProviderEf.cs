@@ -24,22 +24,20 @@ namespace Dex.Cap.Outbox.Ef
         private readonly TDbContext _dbContext;
         private readonly ILogger<OutboxDataProviderEf<TDbContext>> _logger;
         private readonly OutboxOptions _outboxOptions;
-        private readonly IOutboxSerializer _serializer;
 
-        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger,
-            IOutboxSerializer serializer)
+        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger)
         {
-            if (outboxOptions is null) throw new ArgumentNullException(nameof(outboxOptions));
-
             _dbContext = dbContext;
-            _logger = logger;
-            _serializer = serializer;
             _outboxOptions = outboxOptions.Value;
+            _logger = logger;
         }
 
         public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
         {
+            if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
+            if (action == null) throw new ArgumentNullException(nameof(action));
+
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             await strategy.ExecuteInTransactionAsync(
                 async () =>
@@ -58,7 +56,15 @@ namespace Dex.Cap.Outbox.Ef
                         throw;
                     }
 
-                    await CheckEntriesForAddEmptyOutboxMessage(correlationId, cancellationToken).ConfigureAwait(false);
+                    // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
+                    var isOutboxMessageExists = _dbContext.ChangeTracker.Entries<OutboxEnvelope>()
+                        .Any(x => x.State is EntityState.Added or EntityState.Modified);
+
+                    if (!isOutboxMessageExists)
+                    {
+                        await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken).ConfigureAwait(false);
+                    }
+
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
                 () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
@@ -274,23 +280,6 @@ namespace Dex.Cap.Outbox.Ef
                             (x.LockId == null ||
                              x.LockExpirationTimeUtc == null ||
                              x.LockExpirationTimeUtc < DateTime.UtcNow);
-            }
-        }
-
-        private async Task CheckEntriesForAddEmptyOutboxMessage(Guid correlationId, CancellationToken cancellationToken)
-        {
-            var isEntryExists = _dbContext.ChangeTracker.Entries<OutboxEnvelope>()
-                .Any(x => x.State is EntityState.Added or EntityState.Modified);
-
-            if (!isEntryExists)
-            {
-                var messageType = typeof(EmptyOutboxMessage);
-                var assemblyQualifiedName = messageType.AssemblyQualifiedName;
-                if (assemblyQualifiedName == null) throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
-
-                var outboxEnvelope = new OutboxEnvelope(Guid.NewGuid(), correlationId, assemblyQualifiedName, OutboxMessageStatus.New,
-                    _serializer.Serialize(messageType, EmptyOutboxMessage.Empty));
-                await Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
             }
         }
 

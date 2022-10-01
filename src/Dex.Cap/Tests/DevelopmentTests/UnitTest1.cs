@@ -13,10 +13,12 @@ public class Tests
     [Test]
     public void SetParentActivityTest()
     {
-        Activity a1 = new Activity("oper-1");
+        var a1 = new Activity("oper-1");
         a1.Start();
 
-        Activity a2 = new Activity("oper-2");
+        var a2 = new Activity("oper-2");
+        Debug.Assert(a1.Id != null, "a1.Id != null");
+        
         a2.SetParentId(a1.Id);
         a2.Start();
         
