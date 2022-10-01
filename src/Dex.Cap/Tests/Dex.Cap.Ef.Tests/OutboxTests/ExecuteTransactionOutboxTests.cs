@@ -37,7 +37,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 async (token, outboxContext) =>
                 {
                     await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
-                    await outboxContext.EnqueueMessageAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
                 }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
@@ -100,7 +100,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     };
 
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
-                    await outboxContext.EnqueueMessageAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
                 }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
@@ -136,8 +136,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     outboxContext.State.Logger.LogDebug("DEBUG...");
 
                     await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
-                    await outboxContext.EnqueueMessageAsync(new TestOutboxCommand { Args = "hello world" }, token);
-                    await outboxContext.EnqueueMessageAsync(new TestOutboxCommand2 { Args = "Command2" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand2 { Args = "Command2" }, token);
                 }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
@@ -176,7 +176,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                         throw new TimeoutException();
                     }
 
-                    await outboxContext.EnqueueMessageAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
                 }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();

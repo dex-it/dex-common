@@ -47,7 +47,7 @@ namespace Dex.Cap.Outbox.Ef
 
                     try
                     {
-                        var outboxContext = new OutboxContext<TDbContext, TState>(outboxService, _dbContext, state, correlationId);
+                        var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outboxService, _dbContext, state);
                         await action(cancellationToken, outboxContext).ConfigureAwait(false);
                     }
                     catch
