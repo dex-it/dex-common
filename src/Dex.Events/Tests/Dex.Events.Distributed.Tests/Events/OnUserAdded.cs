@@ -3,8 +3,7 @@ using Dex.Events.Distributed.Models;
 
 namespace Dex.Events.Distributed.Tests.Events
 {
-    public sealed class OnCardAdded : DistributedCustomerEventParams
+    public sealed class OnUserAdded : DistributedCustomerEventParams
     {
-        public Guid CardId { get; set; }
     }
 }

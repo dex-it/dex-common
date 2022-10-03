@@ -5,6 +5,8 @@ using Dex.Events.Distributed.Models;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable CA1031
+
 namespace Dex.Events.Distributed
 {
     /// <summary>
@@ -35,8 +37,7 @@ namespace Dex.Events.Distributed
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug("{Type}. Exception: {Exception}", eventHandler.GetType(), ex.Message);
-                    throw;
+                    _logger.LogWarning(ex, "Can't handle {EventType} by handler {Type}", typeof(T), eventHandler.GetType());
                 }
             }
         }

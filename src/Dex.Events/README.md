@@ -5,7 +5,7 @@ Event Management Service: allows to generate parameterized events and notify any
 * Events and event-handlers can be located in any part of the system.
 * Implemented the ability to subscribe to events from different services, as well as have different handlers in different services.
 * MassTransit-based implementation.
-* A consumer is created under the hood, tied to the type of message, inside which a handler of this type is taken from the DI-container and a handler is called from it.
+* A consumer is created under the hood, tied to the type of message, inside which handlers of this type are taken from the DI-container and executed.
 
 ### Basic usage
 ```csharp
@@ -14,11 +14,11 @@ await using var serviceProvider = InitServiceCollection()
     .Configure<RabbitMqOptions>(_ => { })
     .AddMassTransit(c =>
     {
-        c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler, TestOnCardAddedHandler2>();
+        c.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>();
         c.RegisterBus((context, configurator) =>
         {
-            context.RegisterDistributedEventSendEndPoint<OnCardAdded>();
-            context.RegisterDistributedEventReceiveEndpoint<OnCardAdded>(configurator);
+            context.RegisterDistributedEventSendEndPoint<OnUserAdded>();
+            context.RegisterDistributedEventReceiveEndpoint<OnUserAdded>(configurator);
         });
     })
     .BuildServiceProvider();
@@ -28,7 +28,7 @@ var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
 await dbContext.Users.AddAsync(entity, CancellationToken.None);
 await dbContext.SaveChangesAsync(CancellationToken.None);
-await eventRaiser.RaiseAsync(new OnCardAdded { CardId = Guid.NewGuid() }, CancellationToken.None);
+await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = entity.Id }, CancellationToken.None);
 ```
 
 # Dex.Events.Distributed.OutboxExtensions
@@ -44,11 +44,11 @@ await using var serviceProvider = InitServiceCollection()
     .Configure<RabbitMqOptions>(_ => { })
     .AddMassTransit(c =>
     {
-        c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler>();
+        c.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler>();
         c.RegisterBus((context, configurator) =>
         {
-            context.RegisterDistributedEventSendEndPoint<OnCardAdded>();
-            context.RegisterDistributedEventReceiveEndpoint<OnCardAdded>(configurator);
+            context.RegisterDistributedEventSendEndPoint<OnUserAdded>();
+            context.RegisterDistributedEventReceiveEndpoint<OnUserAdded>(configurator);
         });
     })
     .BuildServiceProvider();
@@ -63,7 +63,6 @@ await outboxService.ExecuteOperationAsync(Guid.NewGuid(), new { Logger = logger 
         outboxContext.State.Logger.LogDebug("DEBUG...");
         await outboxContext.DbContext.Users.AddAsync(entity, token);
         await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
-        await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid() }, token);
-    },
-    CancellationToken.None);
+        await outboxContext.RaiseDistributedEventAsync(new OnUserAdded { CustomerId = entity.Id }, token);
+    }, CancellationToken.None);
 ```
