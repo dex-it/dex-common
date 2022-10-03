@@ -3,32 +3,51 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Events.Distributed.Tests.Events;
 
+#pragma warning disable CS0162
+
 namespace Dex.Events.Distributed.Tests.Handlers
 {
-    public class TestOnCardAddedHandler : IDistributedEventHandler<OnCardAdded>
+    public class TestOnUserAddedHandler : IDistributedEventHandler<OnUserAdded>
     {
         public static event EventHandler OnProcessed;
 
-        public Task ProcessAsync(OnCardAdded argument, CancellationToken cancellationToken)
+        public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
         {
             if (argument == null) throw new ArgumentNullException(nameof(argument));
 
-            Console.WriteLine($"{nameof(TestOnCardAddedHandler)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
+            Console.WriteLine($"{nameof(TestOnUserAddedHandler)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
             OnProcessed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         }
     }
 
-    public class TestOnCardAddedHandler2 : IDistributedEventHandler<OnCardAdded>
+    public class TestOnUserAddedHandler2 : IDistributedEventHandler<OnUserAdded>
     {
         public static event EventHandler OnProcessed;
 
-        public Task ProcessAsync(OnCardAdded argument, CancellationToken cancellationToken)
+        public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
         {
             if (argument == null) throw new ArgumentNullException(nameof(argument));
 
-            Console.WriteLine($"{nameof(TestOnCardAddedHandler2)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
+            Console.WriteLine($"{nameof(TestOnUserAddedHandler2)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
 
+            OnProcessed?.Invoke(this, EventArgs.Empty);
+            return Task.CompletedTask;
+        }
+    }
+
+    public class TestOnUserAddedHandlerRaiseException : IDistributedEventHandler<OnUserAdded>
+    {
+        public static event EventHandler OnProcessed;
+
+        public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
+        {
+            if (argument == null) throw new ArgumentNullException(nameof(argument));
+
+            Console.WriteLine($"{nameof(TestOnUserAddedHandlerRaiseException)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
+            throw new Exception("test Exception");
+
+            // ReSharper disable once HeuristicUnreachableCode
             OnProcessed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         }
