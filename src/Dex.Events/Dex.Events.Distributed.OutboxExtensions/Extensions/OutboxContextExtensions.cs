@@ -27,7 +27,7 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
             var eventParams = JsonSerializer.Serialize(outboxMessage, messageType);
             var eventMessage = new OutboxDistributedEventMessage<TBus>(eventParams, messageType.AssemblyQualifiedName!);
 
-            await outboxContext.EnqueueMessageAsync(eventMessage, cancellationToken).ConfigureAwait(false);
+            await outboxContext.EnqueueAsync(eventMessage, cancellationToken).ConfigureAwait(false);
         }
     }
 }

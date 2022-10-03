@@ -27,7 +27,6 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .RegisterDistributedEventRaiser()
                 .AddMassTransitInMemoryTestHarness(c =>
                 {
-                    //
                     c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler>();
                     c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler2>();
                     c.RegisterDistributedEventHandlers<OnCardAdded, TestOnCardAddedHandler, TestOnCardAddedHandler2>();
@@ -35,8 +34,8 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestOnCardAddedHandler.OnProcessed += (sender, args) => count++;
-            TestOnCardAddedHandler2.OnProcessed += (sender, args) => count++;
+            TestOnCardAddedHandler.OnProcessed += (_, _) => count++;
+            TestOnCardAddedHandler2.OnProcessed += (_, _) => count++;
 
             using var harness = serviceProvider.GetRequiredService<InMemoryTestHarness>();
             await harness.Start();
@@ -48,7 +47,7 @@ namespace Dex.Events.Distributed.Tests.Tests
             var entity = new User { Name = name, Years = 25 };
             await dbContext.Users.AddAsync(entity, CancellationToken.None);
             await dbContext.SaveChangesAsync(CancellationToken.None);
-            await eventRaiser.RaiseAsync(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() }, CancellationToken.None);
+            await eventRaiser.RaiseAsync(new OnCardAdded { CardId = Guid.NewGuid() }, CancellationToken.None);
 
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
             Assert.That(harness.Consumed.Count(), Is.EqualTo(1));
@@ -74,7 +73,7 @@ namespace Dex.Events.Distributed.Tests.Tests
             var entity = new User { Name = name, Years = 25 };
             await dbContext.Users.AddAsync(entity, CancellationToken.None);
             await dbContext.SaveChangesAsync(CancellationToken.None);
-            await eventRaiser.RaiseAsync(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() }, CancellationToken.None);
+            await eventRaiser.RaiseAsync(new OnCardAdded { CardId = Guid.NewGuid() }, CancellationToken.None);
 
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
             Assert.That(await harness.Consumed.Any<OnCardAdded>());
@@ -105,14 +104,10 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = new User { Name = outboxContext.State.Name, Years = outboxContext.State.Age };
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() }, token);
-                    await outboxContext.RaiseDistributedEventAsync<IExternalBus>(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() },
-                        token);
-
-                    return new TestOutboxCommand { Args = "hello world" };
-                },
-                (_, command) => Task.FromResult(command),
-                CancellationToken.None);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid() }, token);
+                    await outboxContext.RaiseDistributedEventAsync<IExternalBus>(new OnCardAdded { CardId = Guid.NewGuid() }, token);
+                }, CancellationToken.None);
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -155,12 +150,9 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = new User { Name = outboxContext.State.Name, Years = outboxContext.State.Age };
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() }, token);
-
-                    return new TestOutboxCommand { Args = "hello world" };
-                },
-                (_, command) => Task.FromResult(command),
-                CancellationToken.None);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid() }, token);
+                }, CancellationToken.None);
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -196,12 +188,9 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = new User { Name = outboxContext.State.Name, Years = outboxContext.State.Age };
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid(), CustomerId = Guid.NewGuid() }, token);
-
-                    return new TestOutboxCommand { Args = "hello world" };
-                },
-                (_, command) => Task.FromResult(command),
-                CancellationToken.None);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.RaiseDistributedEventAsync(new OnCardAdded { CardId = Guid.NewGuid() }, token);
+                }, CancellationToken.None);
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
