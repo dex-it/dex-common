@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
+using Dex.Cap.Outbox.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox
@@ -166,7 +167,11 @@ namespace Dex.Cap.Outbox
 
             if (msg is IOutboxMessage outboxMessage)
             {
-                await ProcessOutboxMessageCore(outboxMessage, cancellationToken).ConfigureAwait(false);
+                if (msg is not EmptyOutboxMessage)
+                {
+                    await ProcessOutboxMessageCore(outboxMessage, cancellationToken).ConfigureAwait(false);
+                }
+
                 await _dataProvider.JobSucceed(job, cancellationToken).ConfigureAwait(false);
             }
             else

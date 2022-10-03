@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -58,12 +59,11 @@ namespace Dex.Cap.AspNet.Test
                     });
             });
 
-
             lifetime.ApplicationStarted.Register(async () =>
             {
                 using var scope = app.ApplicationServices.CreateScope();
                 var client = scope.ServiceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
-                await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
+                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
 
                 var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
                 await db.Database.EnsureCreatedAsync();

@@ -52,12 +52,12 @@ namespace Dex.Cap.ConsoleTest
             logger.LogDebug("DEBUG...");
             logger.LogInformation("INFO...");
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 var a = new Activity("TestActivity-2");
                 a.SetParentId(activity.Id);
                 a.Start();
-                await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world " + i }, CancellationToken.None);
+                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world " + i }, CancellationToken.None);
                 await db.SaveChangesAsync();
                 a.Stop();
             }

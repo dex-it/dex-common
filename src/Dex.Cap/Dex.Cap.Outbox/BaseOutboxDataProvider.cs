@@ -10,12 +10,8 @@ namespace Dex.Cap.Outbox
 {
     internal abstract class BaseOutboxDataProvider<TDbContext> : IOutboxDataProvider<TDbContext>
     {
-        public abstract Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
-            IOutboxService<TDbContext> outboxService, TState state,
-            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
-            Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData,
-            CancellationToken cancellationToken)
-            where TOutboxMessage : IOutboxMessage;
+        public abstract Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService,
+            TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
 
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
         public abstract Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);

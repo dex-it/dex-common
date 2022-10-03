@@ -27,29 +27,44 @@ namespace Dex.Cap.Outbox.Ef
 
         public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger)
         {
-            if (outboxOptions is null) throw new ArgumentNullException(nameof(outboxOptions));
-
             _dbContext = dbContext;
-            _logger = logger;
             _outboxOptions = outboxOptions.Value;
+            _logger = logger;
         }
 
-        public override async Task ExecuteUsefulAndSaveOutboxActionIntoTransaction<TState, TDataContext, TOutboxMessage>(Guid correlationId,
-            IOutboxService<TDbContext> outboxService, TState state,
-            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task<TDataContext>> usefulAction,
-            Func<CancellationToken, TDataContext, Task<TOutboxMessage>> createOutboxData, CancellationToken cancellationToken)
+        public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
         {
+            if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
+            if (action == null) throw new ArgumentNullException(nameof(action));
+
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             await strategy.ExecuteInTransactionAsync(
                 async () =>
                 {
-                    _dbContext.ChangeTracker.Clear();
+                    if (_dbContext.ChangeTracker.HasChanges())
+                        throw new InvalidOperationException("Can't start outbox action, unsaved changes detected");
 
-                    var outboxContext = new OutboxContext<TDbContext, TState>(outboxService, _dbContext, state);
-                    var dataContext = await usefulAction(cancellationToken, outboxContext).ConfigureAwait(false);
-                    await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outboxService, _dbContext, state);
+                        await action(cancellationToken, outboxContext).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        _dbContext.ChangeTracker.Clear();
+                        throw;
+                    }
 
-                    await createOutboxData(cancellationToken, dataContext).ConfigureAwait(false);
+                    // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
+                    var isOutboxMessageExists = _dbContext.ChangeTracker.Entries<OutboxEnvelope>()
+                        .Any(x => x.State is EntityState.Added or EntityState.Modified);
+
+                    if (!isOutboxMessageExists)
+                    {
+                        await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken).ConfigureAwait(false);
+                    }
+
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
                 () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
@@ -57,10 +72,8 @@ namespace Dex.Cap.Outbox.Ef
 
         public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
         {
-            if (outboxEnvelope == null)
-            {
-                throw new ArgumentNullException(nameof(outboxEnvelope));
-            }
+            if (outboxEnvelope == null) throw new ArgumentNullException(nameof(outboxEnvelope));
+            if (cancellationToken.IsCancellationRequested) throw new OperationCanceledException(cancellationToken);
 
             var entityEntry = _dbContext.Set<OutboxEnvelope>().Add(outboxEnvelope);
             return Task.FromResult(entityEntry.Entity);
@@ -91,7 +104,7 @@ namespace Dex.Cap.Outbox.Ef
 
         public override async Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
         {
-            return await _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == correlationId, cancellationToken).ConfigureAwait(false);
+            return await _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.CorrelationId == correlationId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <exception cref="RetryLimitExceededException"/>
@@ -130,16 +143,14 @@ namespace Dex.Cap.Outbox.Ef
                                 await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
                             }
                         }
-                        else
-                        {
-                            // Истекло время блокировки.
-                        }
+
+                        // Истекло время блокировки.
                     },
                     static async (state, ct) =>
                     {
                         var (dbContext, outboxJob, _) = state;
 
-                        bool existLocked = await dbContext.Set<OutboxEnvelope>()
+                        var existLocked = await dbContext.Set<OutboxEnvelope>()
                             .AnyAsync(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId), ct)
                             .ConfigureAwait(false);
 
@@ -192,20 +203,16 @@ namespace Dex.Cap.Outbox.Ef
             {
                 try
                 {
-                    using (var cts = CancellationTokenSource.CreateLinkedTokenSource(jobTimeout, cancellationToken))
-                    {
-                        return await TryLockMessageCore(freeMessageId, lockId, cts.Token).ConfigureAwait(false);
-                    }
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(jobTimeout, cancellationToken);
+                    return await TryLockMessageCore(freeMessageId, lockId, cts.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (jobTimeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
                 {
                     return null; // Не успели заблокировать задачу за превентивное время таймаута.
                 }
             }
-            else
-            {
-                return await TryLockMessageCore(freeMessageId, lockId, cancellationToken).ConfigureAwait(false);
-            }
+
+            return await TryLockMessageCore(freeMessageId, lockId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -247,21 +254,19 @@ namespace Dex.Cap.Outbox.Ef
 
                             return lockedJob.JobDb;
                         }
-                        else
-                        {
-                            logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
-                            return null;
-                        }
+
+                        logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
+                        return null;
                     },
                     static async (state, ct) =>
                     {
                         var (dbContext, freeMessageId, lockId, _) = state;
 
-                        var succeded = await dbContext.Set<OutboxEnvelope>()
+                        var succeeded = await dbContext.Set<OutboxEnvelope>()
                             .AnyAsync(x => x.Id == freeMessageId && x.LockId == lockId, ct)
                             .ConfigureAwait(false);
 
-                        return succeded;
+                        return succeeded;
                     },
                     IsolationLevel.RepeatableRead,
                     cancellationToken)

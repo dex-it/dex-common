@@ -37,16 +37,40 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 async (token, outboxContext) =>
                 {
                     await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
-                    return new TestOutboxCommand { Args = "hello world" };
-                },
-                (_, command) => Task.FromResult(command),
-                CancellationToken.None);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
             Assert.AreEqual(1, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+        }
+        
+        [Test]
+        public async Task SimpleRunExecuteInTransactionWithEmptyOutBoxMessageTest()
+        {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var correlationId = Guid.NewGuid();
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            await outboxService.ExecuteOperationAsync(correlationId,
+                async (token, outboxContext) =>
+                {
+                    await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
+                }, CancellationToken.None);
+
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            Assert.IsTrue(await outboxService.IsOperationExistsAsync(correlationId, CancellationToken.None));
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
         }
 
@@ -76,11 +100,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     };
 
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
-
-                    return new TestOutboxCommand { Args = "hello world" };
-                },
-                (_, command) => Task.FromResult(command),
-                CancellationToken.None);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -115,12 +136,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     outboxContext.State.Logger.LogDebug("DEBUG...");
 
                     await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
-                    await outboxContext.EnqueueMessageAsync(new TestOutboxCommand2 { Args = "Command2" }, token);
-
-                    return new TestOutboxCommand { Args = "hello world" };
-                },
-                (_, command) => Task.FromResult(command),
-                CancellationToken.None);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand2 { Args = "Command2" }, token);
+                }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -158,10 +176,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                         throw new TimeoutException();
                     }
 
-                    return new TestOutboxCommand { Args = "hello world" };
-                },
-                (_, command) => Task.FromResult(command),
-                CancellationToken.None);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                }, CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -196,9 +212,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             const string arg3 = "hello world3";
 
             var outboxService = services.GetRequiredService<IOutboxService<TestDbContext>>();
-            await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = arg1, DelayMsec = 5_000 });
-            await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = arg2, DelayMsec = 5_000 });
-            await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = arg3, DelayMsec = 5_000 });
+            var correlationId = Guid.NewGuid();
+            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = arg1, DelayMsec = 5_000 });
+            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = arg2, DelayMsec = 5_000 });
+            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = arg3, DelayMsec = 5_000 });
             await SaveChanges(services);
 
             async void ThreadEntry(string arg)
