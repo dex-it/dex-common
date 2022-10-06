@@ -62,18 +62,22 @@ namespace Dex.MassTransit.SQS
         /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
         /// <param name="amazonMqOptions">Force connection params</param>
         /// <param name="createSeparateQueue">True for Publish, false when only Send.</param>
+        /// <param name="serviceName">Unique service name prefix. If null will be entry point assembly name.</param>
         /// <typeparam name="T">Consumer type.</typeparam>
         /// <typeparam name="TMessage">Consumer message type.</typeparam>
         /// <exception cref="ArgumentNullException"/>
-        public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, AmazonMqOptions? amazonMqOptions = null, bool createSeparateQueue = false)
+        public static void RegisterReceiveEndpoint<T, TMessage>(this IBusRegistrationContext busRegistrationContext,
+            IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
+            Action<IEndpointConfigurator>? endpointConsumerConfigurator = null, AmazonMqOptions? amazonMqOptions = null,
+            bool createSeparateQueue = false, string? serviceName = null)
             where T : class, IConsumer<TMessage>
             where TMessage : class, IConsumer
         {
             if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
             if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, endpointConsumerConfigurator, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue);
+            RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator,
+                endpointConsumerConfigurator, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue, serviceName);
         }
 
         /// <summary>
@@ -84,10 +88,13 @@ namespace Dex.MassTransit.SQS
         /// <param name="endpointConsumer">Endpoint configuration context</param>
         /// <param name="amazonMqOptions">Force connection params</param>
         /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
+        /// <param name="serviceName">Unique service name prefix. If null will be entry point assembly name.</param>
         /// <exception cref="ArgumentNullException"/>
         /// <exception cref="ConfigurationException"/>
-        public static void RegisterReceiveEndpointAsFifo<T, TMessage>(this IBusRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
-            Action<IEndpointConfigurator>? endpointConsumer = null, AmazonMqOptions? amazonMqOptions = null, bool createSeparateQueue = false)
+        public static void RegisterReceiveEndpointAsFifo<T, TMessage>(this IBusRegistrationContext busRegistrationContext,
+            IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
+            Action<IEndpointConfigurator>? endpointConsumer = null, AmazonMqOptions? amazonMqOptions = null,
+            bool createSeparateQueue = false, string? serviceName = null)
             where T : class, IConsumer<TMessage>
             where TMessage : class
         {
@@ -100,7 +107,7 @@ namespace Dex.MassTransit.SQS
                 configurator.QueueAttributes.Add(QueueAttributeName.FifoQueue, true);
 
                 endpointConsumer?.Invoke(configurator);
-            }, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue);
+            }, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue, serviceName);
         }
 
         /// <summary>
@@ -181,9 +188,10 @@ namespace Dex.MassTransit.SQS
             return new UriBuilder(host + path);
         }
 
-        private static void RegisterConsumersEndpoint<TMessage>(IRegistrationContext busRegistrationContext, IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
+        private static void RegisterConsumersEndpoint<TMessage>(IRegistrationContext busRegistrationContext,
+            IAmazonSqsBusFactoryConfigurator busFactoryConfigurator,
             Action<IAmazonSqsReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types,
-            AmazonMqOptions? amazonMqOptions = null, bool createSeparateQueue = false)
+            AmazonMqOptions? amazonMqOptions = null, bool createSeparateQueue = false, string? serviceName = null)
             where TMessage : class
         {
             var endPoint = createSeparateQueue
@@ -195,13 +203,11 @@ namespace Dex.MassTransit.SQS
                 throw new ConfigurationException("AWS: DTO for FIFO queue must be end on [<Name>Fifo], example CommandProcessingFifo");
             }
 
-            var qName = endPoint.Uri.Segments.Last();
-
             foreach (var consumerType in types)
             {
                 var queueName = createSeparateQueue
-                    ? qName + "_" + consumerType.Name
-                    : qName;
+                    ? endPoint.Uri.GetName(consumerType, serviceName)
+                    : endPoint.Uri.GetName();
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
                 {

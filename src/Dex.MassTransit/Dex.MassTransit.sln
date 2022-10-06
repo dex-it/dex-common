@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Sample.Doma
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit.Sample.Consumer", "Tests\Dex.MassTransit.Sample.Consumer\Dex.MassTransit.Sample.Consumer.csproj", "{47CEE3D5-981E-487F-85FF-918415495D25}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.MassTransit", "Dex.MassTransit\Dex.MassTransit.csproj", "{045C3BB0-932D-47D1-AB3D-1BB044B30443}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{47CEE3D5-981E-487F-85FF-918415495D25}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47CEE3D5-981E-487F-85FF-918415495D25}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47CEE3D5-981E-487F-85FF-918415495D25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{045C3BB0-932D-47D1-AB3D-1BB044B30443}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{045C3BB0-932D-47D1-AB3D-1BB044B30443}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{045C3BB0-932D-47D1-AB3D-1BB044B30443}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{045C3BB0-932D-47D1-AB3D-1BB044B30443}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A0A58B4C-8696-445B-B8D9-F16D091A1B6A} = {8C9A546F-195D-4BF1-BAC5-17DD28A29B38}
