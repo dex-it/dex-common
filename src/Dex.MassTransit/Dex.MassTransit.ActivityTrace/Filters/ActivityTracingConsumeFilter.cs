@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using MassTransit;
 
-namespace Dex.MassTransit.ActivityTrace
+namespace Dex.MassTransit.ActivityTrace.Filters
 {
     internal class ActivityTracingConsumeFilter : IFilter<ConsumeContext>
     {
@@ -20,13 +20,11 @@ namespace Dex.MassTransit.ActivityTrace
 
             using (var activity = new Activity(operationName))
             {
-                var parentId = context.Headers.Get<string>("MT-Activity-Id");
+                var parentId = context.Headers.Get<string>(Consts.ActivityIdName);
                 if (parentId != null)
+                {
                     activity.SetParentId(parentId);
-
-                activity.AddBaggage("destination-address", context.DestinationAddress?.ToString());
-                activity.AddBaggage("source-address", context.SourceAddress?.ToString());
-                activity.AddBaggage("initiator-id", context.InitiatorId?.ToString());
+                }
 
                 activity.Start();
                 try

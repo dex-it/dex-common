@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <Version>1.0.25</Version>
+        <Version>1.0.26</Version>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <PackageReference Include="MassTransit" Version="8.0.6" />
+      <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
     </ItemGroup>
 
 </Project>

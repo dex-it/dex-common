@@ -1,6 +1,5 @@
 using System;
 using MassTransit;
-using MassTransit.Context;
 
 namespace Dex.MassTransit.ActivityTrace
 {
@@ -18,7 +17,10 @@ namespace Dex.MassTransit.ActivityTrace
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            value.AddPipeSpecification(new ActivityTracingPipeSpecification());
+            var activityTracingPipeSpecification = new ActivityTracingPipeSpecification();
+            value.AddPipeSpecification(activityTracingPipeSpecification);
+            value.ConfigureSend(configurator => configurator.AddPipeSpecification(activityTracingPipeSpecification));
+            value.ConfigurePublish(configurator => configurator.AddPipeSpecification(activityTracingPipeSpecification));
         }
     }
 }

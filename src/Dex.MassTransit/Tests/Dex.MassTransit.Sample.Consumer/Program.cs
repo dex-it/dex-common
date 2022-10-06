@@ -35,10 +35,10 @@ namespace Dex.MassTransit.Sample.Consumer
         private static void ConfigureRabbitMqOptions(RabbitMqOptions rabbitMqOptions)
         {
             //rabbitMqOptions.Port = 49158;
-            rabbitMqOptions.Password = "incorrect"; // умышленно ломаем пароль
+            // rabbitMqOptions.Password = "incorrect"; // умышленно ломаем пароль
             //rabbitMqOptions.VHost = "incorrect";
         }
-        
+
         private static void ConfigureOtherRabbitMqOptions(OtherRabbitMqOptions otherRabbitMqOptions)
         {
             otherRabbitMqOptions.Host = "localhost";
@@ -51,22 +51,22 @@ namespace Dex.MassTransit.Sample.Consumer
                 {
                     services.AddLogging(builder =>
                     {
-                        builder.AddOpenTelemetry(options => options
-                            .AddConsoleExporter());
+                        builder.AddOpenTelemetry(options => options.AddConsoleExporter());
+                        builder.AddConsole(options => options.IncludeScopes = true);
                     });
 
                     // register services
-                    //services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
+                    services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
                     services.Configure<OtherRabbitMqOptions>(ConfigureOtherRabbitMqOptions);
-                    services.AddSingleton<MassTransitTelemetryLogger>();
 
+                    services.AddSingleton<MassTransitTelemetryLogger>();
                     services.AddSingleton<ITestPasswordService, TestPasswordService>();
 
                     services.AddMassTransit(configurator =>
                     {
                         //configurator.AddConsumer<HelloConsumer>();
                         configurator.AddConsumer<HelloConsumer2>();
-                    
+
                         configurator.RegisterBus((context, factoryConfigurator) =>
                         {
                             // recieve endpoint
@@ -82,11 +82,11 @@ namespace Dex.MassTransit.Sample.Consumer
                             };
                         });
                     });
-                    
+
                     services.AddMassTransit<IOtherRabbitMqBus>(configurator =>
                     {
                         configurator.AddConsumer<OtherConsumer>();
-                        
+
                         configurator.RegisterBus<OtherRabbitMqOptions>((context, factoryConfig) =>
                         {
                             context.RegisterReceiveEndpoint<OtherConsumer, OtherMessageDto, OtherRabbitMqOptions>(factoryConfig);
