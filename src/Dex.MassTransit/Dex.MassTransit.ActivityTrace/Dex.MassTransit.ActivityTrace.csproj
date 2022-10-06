@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <PackageReference Include="MassTransit" Version="8.0.6" />
+      <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
     </ItemGroup>
 
 </Project>
