@@ -48,15 +48,12 @@ namespace Dex.MassTransit.Sample.Publisher
                 {
                     services.AddLogging(builder =>
                     {
-                        builder.AddOpenTelemetry(options => options
-                            .AddConsoleExporter());
+                        builder.AddOpenTelemetry(options => options.AddConsoleExporter());
+                        builder.AddConsole(options => options.IncludeScopes = true);
                     });
 
                     // register services
                     services.Configure<RabbitMqOptions>(ConfigureRabbitMqOptions);
-                    
-                    services.Configure<OtherRabbitMqOptions>(ConfigureOtherRabbitMqOptions);
-
                     services.AddMassTransit(configurator =>
                     {
                         configurator.RegisterBus((context, _) =>
@@ -66,6 +63,7 @@ namespace Dex.MassTransit.Sample.Publisher
                         });
                     });
 
+                    services.Configure<OtherRabbitMqOptions>(ConfigureOtherRabbitMqOptions);
                     services.AddMassTransit<IOtherRabbitMqBus>(configurator =>
                     {
                         configurator.RegisterBus<OtherRabbitMqOptions>((context, _) =>
@@ -75,6 +73,7 @@ namespace Dex.MassTransit.Sample.Publisher
                     });
 
                     services.AddHostedService<HelloMessageGeneratorHostedService>();
+                    // services.AddHostedService<OtherBusGeneratorHostedService>();
                 });
     }
 }
