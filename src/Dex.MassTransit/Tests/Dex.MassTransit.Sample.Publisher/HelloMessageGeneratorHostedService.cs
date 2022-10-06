@@ -34,7 +34,7 @@ namespace Dex.MassTransit.Sample.Publisher
                 var act = new Activity("Publish Test Messqge");
                 act.Start();
 
-                await _sendEndpoint.Send(
+                await _publishEndpoint.Publish(
                     new HelloMessageDto
                     {
                         Hi = publishHiThere,

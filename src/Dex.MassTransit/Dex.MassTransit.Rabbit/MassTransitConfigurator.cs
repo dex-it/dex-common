@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Dex.Extensions;
 using Dex.MassTransit.ActivityTrace;
 using MassTransit;
@@ -189,18 +187,11 @@ namespace Dex.MassTransit.Rabbit
                 ? busRegistrationContext.CreateQueueNameFromType<TMessage, TMqOptions>(rabbitMqOptions)
                 : busRegistrationContext.RegisterSendEndPoint<TMessage, TMqOptions>(rabbitMqOptions);
 
-            var qName = endPoint.Uri.Segments.Last();
-
-            // extra service name, for interprocess unifications
-            serviceName = string.IsNullOrWhiteSpace(serviceName)
-                ? Assembly.GetCallingAssembly().GetName().Name
-                : serviceName;
-
             foreach (var consumerType in types)
             {
                 var queueName = createSeparateQueue
-                    ? serviceName + "_" + qName + "_" + consumerType.Name.Replace("`", string.Empty)
-                    : qName;
+                    ? endPoint.Uri.GetName(consumerType, serviceName)
+                    : endPoint.Uri.GetName();
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
                 {
