@@ -35,6 +35,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Neo4J", "Dex.Neo4J\Dex.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Extensions.Test", "Tests\Dex.Extensions.Test\Dex.Extensions.Test.csproj", "{7FAFBDCB-E597-49B7-B2D7-DF5121F5ABEB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.DistributedCache", "Dex.DistributedCache\Dex.DistributedCache.csproj", "{060A722F-6508-4378-A186-3128F000DC1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -445,6 +447,34 @@ Global
 		{7FAFBDCB-E597-49B7-B2D7-DF5121F5ABEB}.Test|Any CPU.Build.0 = Debug|Any CPU
 		{7FAFBDCB-E597-49B7-B2D7-DF5121F5ABEB}.Test|x86.ActiveCfg = Debug|Any CPU
 		{7FAFBDCB-E597-49B7-B2D7-DF5121F5ABEB}.Test|x86.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Debug|x86.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Dev|Any CPU.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Dev|Any CPU.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Dev|x86.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Dev|x86.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_plehanova|Any CPU.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_plehanova|Any CPU.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_plehanova|x86.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_plehanova|x86.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_soviet|Any CPU.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_soviet|Any CPU.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_soviet|x86.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release_soviet|x86.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release|x86.ActiveCfg = Release|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Release|x86.Build.0 = Release|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Stage|Any CPU.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Stage|Any CPU.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Stage|x86.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Stage|x86.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Test|x86.ActiveCfg = Debug|Any CPU
+		{060A722F-6508-4378-A186-3128F000DC1B}.Test|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

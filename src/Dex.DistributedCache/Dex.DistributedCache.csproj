@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Dex.DistributedCache</AssemblyName>
+        <RootNamespace>Dex.DistributedCache</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Update="Services\CacheService.cs">
+        <DependentUpon>ICacheService.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Services\CacheUserVariableFactory.cs">
+        <DependentUpon>ICacheUserVariableFactory.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Services\CacheDependencyFactory.cs">
+        <DependentUpon>ICacheDependencyFactory.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+      <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Net.Http.Headers" Version="2.2.0" />
+    </ItemGroup>
+
+</Project>
