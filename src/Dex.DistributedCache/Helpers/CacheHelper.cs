@@ -5,6 +5,8 @@ using System.Text.Json;
 using Dex.DistributedCache.Models;
 using Microsoft.AspNetCore.Http;
 
+#pragma warning disable CA5351
+
 namespace Dex.DistributedCache.Helpers
 {
     internal static class CacheHelper

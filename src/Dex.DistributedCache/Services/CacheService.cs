@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.DistributedCache.Helpers;
 using Dex.DistributedCache.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
@@ -31,15 +30,9 @@ namespace Dex.DistributedCache.Services
             _cacheDependencyFactory = cacheDependencyFactory;
         }
 
-        string ICacheService.GenerateCacheKey(Guid userId, ActionExecutingContext executingContext)
+        string ICacheService.GenerateCacheKey(Dictionary<Type, string> variableKeys, List<string> paramsList)
         {
-            var request = executingContext.HttpContext.Request;
-            var paramsList = new List<string> { CacheHelper.GetDisplayUrl(request) };
-
-            if (userId != Guid.Empty)
-            {
-                paramsList.Add(userId.ToString());
-            }
+            paramsList.AddRange(variableKeys.Select(variableKey => variableKey.Key.Name + KeySeparator + variableKey.Value));
 
             return GenerateCacheKeyByParams(paramsList.ToArray());
         }
@@ -47,6 +40,8 @@ namespace Dex.DistributedCache.Services
         public async Task SetDependencyValueDataAsync(string key, CachePartitionedDependencies[] partDependencies, int expiration,
             CancellationToken cancellation)
         {
+            if (partDependencies == null) throw new ArgumentNullException(nameof(partDependencies));
+
             foreach (var partDependency in partDependencies)
             {
                 foreach (var partDependencyValue in partDependency.Values)
@@ -79,6 +74,8 @@ namespace Dex.DistributedCache.Services
 
         public async Task InvalidateByDependenciesAsync(CachePartitionedDependencies[] partDependencies, CancellationToken cancellation)
         {
+            if (partDependencies == null) throw new ArgumentNullException(nameof(partDependencies));
+
             foreach (var partDependency in partDependencies)
             foreach (var partDependencyValue in partDependency.Values)
             {
@@ -101,6 +98,12 @@ namespace Dex.DistributedCache.Services
                     await ((ICacheService)this).InvalidateByCacheKeyAsync(key, CancellationToken.None).ConfigureAwait(false);
                 }
             }
+        }
+
+        public async Task InvalidateByVariableKeyAsync<T>(T cacheVariableKey, string[] values, CancellationToken cancellation) where T : ICacheVariableKey
+        {
+            await InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(cacheVariableKey.GetType().Name, values) }, cancellation)
+                .ConfigureAwait(false);
         }
 
         async Task<byte[]?> ICacheService.GetMetaInfoAsync(string key, CancellationToken cancellation)
@@ -129,16 +132,20 @@ namespace Dex.DistributedCache.Services
             await _cache.RemoveAsync(GetCacheKeyForValueData(key), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheService.SetCacheDependenciesAsync(string key, int expiration, Guid userId, ActionExecutedContext executedContext)
+        async Task ICacheService.SetCacheDependenciesAsync(string key, int expiration, Dictionary<Type, string> variableKeys, object? executedActionResult,
+            CancellationToken cancellation)
         {
-            var result = (executedContext.Result as ObjectResult)?.Value;
-            var resultType = result?.GetType();
+            var resultType = executedActionResult?.GetType();
             if (resultType != null)
             {
                 var cacheDependencyService = _cacheDependencyFactory.GetCacheDependencyService(resultType);
                 if (cacheDependencyService != null)
                 {
-                    await cacheDependencyService.SetAsync(key, userId, result, expiration, executedContext.HttpContext.RequestAborted).ConfigureAwait(false);
+                    var partDependencies = variableKeys
+                        .Select(variableKey => new CachePartitionedDependencies(variableKey.Key.Name, new[] { variableKey.Value }));
+                    await SetDependencyValueDataAsync(key, partDependencies.ToArray(), expiration, cancellation).ConfigureAwait(false);
+
+                    await cacheDependencyService.SetAsync(key, executedActionResult, expiration, cancellation).ConfigureAwait(false);
                 }
             }
         }

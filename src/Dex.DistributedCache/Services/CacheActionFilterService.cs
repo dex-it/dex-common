@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -12,31 +14,37 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
+#pragma warning disable CA1031
+
 namespace Dex.DistributedCache.Services
 {
     internal sealed class CacheActionFilterService : ICacheActionFilterService
     {
         private readonly ILogger<CacheActionFilterService> _logger;
         private readonly ICacheService _cacheService;
-        private readonly ICacheUserVariableFactory _cacheUserVariableFactory;
+        private readonly ICacheVariableKeyFactory _cacheVariableKeyFactory;
 
         public CacheActionFilterService(ILogger<CacheActionFilterService> logger, ICacheService cacheService,
-            ICacheUserVariableFactory cacheUserVariableFactory)
+            ICacheVariableKeyFactory cacheVariableKeyFactory)
         {
             _logger = logger;
             _cacheService = cacheService;
-            _cacheUserVariableFactory = cacheUserVariableFactory;
+            _cacheVariableKeyFactory = cacheVariableKeyFactory;
         }
 
-        public Guid GetUserId(bool isUserVariableKey)
+        public Dictionary<Type, string> GetVariableKeys(Type[] cacheVariableKeys)
         {
-            var userId = Guid.Empty;
-            if (!isUserVariableKey) return userId;
+            var variableKeyDictionary = new Dictionary<Type, string>();
+            foreach (var cacheVariableKey in cacheVariableKeys)
+            {
+                var cacheVariableKeyService = _cacheVariableKeyFactory.GetCacheVariableKeyService(cacheVariableKey);
+                if (cacheVariableKeyService == null) continue;
 
-            var userIdService = _cacheUserVariableFactory.GetCacheUserVariableService();
-            userId = userIdService.UserId;
+                var variableKey = cacheVariableKeyService.GetVariableKey();
+                variableKeyDictionary.Add(cacheVariableKey, variableKey);
+            }
 
-            return userId;
+            return variableKeyDictionary;
         }
 
         public async Task<bool> CheckExistingCacheValue(string key, ActionExecutingContext executingContext)
@@ -74,10 +82,11 @@ namespace Dex.DistributedCache.Services
             return false;
         }
 
-        public async Task TryCacheValue(string key, int expiration, Guid userId, ActionExecutedContext executedContext)
+        public async Task<bool> TryCacheValue(string key, int expiration, Dictionary<Type, string> variableKeys, ActionExecutedContext executedContext)
         {
             if (executedContext.Exception != null) throw executedContext.Exception;
 
+            var cancellation = executedContext.HttpContext.RequestAborted;
             CacheMetaInfo? cacheMetaInfo = default;
             var isError = false;
 
@@ -90,12 +99,12 @@ namespace Dex.DistributedCache.Services
                 {
                     cacheMetaInfo = new CacheMetaInfo(CacheHelper.GenerateETag(), response.ContentType);
 
-                    await _cacheService.SetMetaInfoAsync(key, cacheMetaInfo.GetBytes(), expiration, executedContext.HttpContext.RequestAborted)
-                        .ConfigureAwait(false);
-                    await _cacheService.SetValueDataAsync(key, cacheValueByte, expiration, executedContext.HttpContext.RequestAborted).ConfigureAwait(false);
+                    await _cacheService.SetMetaInfoAsync(key, cacheMetaInfo.GetBytes(), expiration, cancellation).ConfigureAwait(false);
+                    await _cacheService.SetValueDataAsync(key, cacheValueByte, expiration, cancellation).ConfigureAwait(false);
                     SetETagHeader(executedContext, cacheMetaInfo);
 
-                    await _cacheService.SetCacheDependenciesAsync(key, expiration, userId, executedContext).ConfigureAwait(false);
+                    var executedActionResult = (executedContext.Result as ObjectResult)?.Value;
+                    await _cacheService.SetCacheDependenciesAsync(key, expiration, variableKeys, executedActionResult, cancellation).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -121,16 +130,18 @@ namespace Dex.DistributedCache.Services
                     if (cacheMetaInfo != null)
                     {
                         cacheMetaInfo.CompleteCache();
-                        await _cacheService.SetMetaInfoAsync(key, cacheMetaInfo.GetBytes(), expiration, executedContext.HttpContext.RequestAborted)
-                            .ConfigureAwait(false);
+                        await _cacheService.SetMetaInfoAsync(key, cacheMetaInfo.GetBytes(), expiration, cancellation).ConfigureAwait(false);
                     }
                 }
             }
+
+            return !isError;
         }
 
+        [SuppressMessage("Reliability", "CA2007:Попробуйте вызвать ConfigureAwait для ожидаемой задачи")]
         private static async Task<byte[]> GetBytesFromResponseAsync(ActionExecutedContext executedContext)
         {
-            if (executedContext.Result == null) throw new ArgumentNullException(nameof(executedContext.Result));
+            if (executedContext.Result == null) throw new ArgumentNullException(nameof(executedContext));
 
             var originBody = executedContext.HttpContext.Response.Body;
             await using var buffer = new MemoryStream();

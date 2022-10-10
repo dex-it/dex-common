@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Dex.DistributedCache.Services
 {
-    internal interface ICacheActionFilterService
+    public interface ICacheActionFilterService
     {
-        Guid GetUserId(bool isUserVariableKey);
+        Dictionary<Type, string> GetVariableKeys(Type[] cacheVariableKeys);
 
         Task<bool> CheckExistingCacheValue(string key, ActionExecutingContext executingContext);
 
-        Task TryCacheValue(string key, int expiration, Guid userId, ActionExecutedContext executedContext);
+        Task<bool> TryCacheValue(string key, int expiration, Dictionary<Type, string> variableKeys, ActionExecutedContext executedContext);
     }
 }

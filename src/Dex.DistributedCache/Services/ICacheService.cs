@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.DistributedCache.Models;
-using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Dex.DistributedCache.Services
 {
@@ -11,8 +11,11 @@ namespace Dex.DistributedCache.Services
         Task SetDependencyValueDataAsync(string key, CachePartitionedDependencies[] partDependencies, int expiration, CancellationToken cancellation);
 
         Task InvalidateByDependenciesAsync(CachePartitionedDependencies[] partDependencies, CancellationToken cancellation);
-        
-        internal string GenerateCacheKey(Guid userId, ActionExecutingContext executingContext);
+
+        Task InvalidateByVariableKeyAsync<T>(T cacheVariableKey, string[] values, CancellationToken cancellation)
+            where T : ICacheVariableKey;
+
+        internal string GenerateCacheKey(Dictionary<Type, string> variableKeys, List<string> paramsList);
 
         internal Task<byte[]?> GetMetaInfoAsync(string key, CancellationToken cancellation);
 
@@ -22,7 +25,8 @@ namespace Dex.DistributedCache.Services
 
         internal Task SetValueDataAsync(string key, byte[]? valueData, int expiration, CancellationToken cancellation);
 
-        internal Task SetCacheDependenciesAsync(string key, int expiration, Guid userId, ActionExecutedContext executedContext);
+        internal Task SetCacheDependenciesAsync(string key, int expiration, Dictionary<Type, string> variableKeys, object? executedActionResult,
+            CancellationToken cancellation);
 
         internal Task InvalidateByCacheKeyAsync(string key, CancellationToken cancellation);
     }

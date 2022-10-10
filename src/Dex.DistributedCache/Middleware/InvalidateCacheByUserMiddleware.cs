@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable CA1031
+
 namespace Dex.DistributedCache.Middleware
 {
     public class InvalidateCacheByUserMiddleware
@@ -23,25 +25,27 @@ namespace Dex.DistributedCache.Middleware
 
         public async Task Invoke(HttpContext context)
         {
+            if (context == null) throw new ArgumentNullException(nameof(context));
             try
             {
                 _serviceProvider = context.RequestServices;
                 _logger = _serviceProvider.GetRequiredService<ILogger<InvalidateCacheByUserMiddleware>>();
                 var cacheService = _serviceProvider.GetRequiredService<ICacheService>();
-                var userIdService = _serviceProvider.GetRequiredService<ICacheUserVariableService>();
+                var userIdService = _serviceProvider.GetRequiredService<ICacheUserVariableKey>();
 
                 _logger.LogDebug("Run InvalidateCacheByUserMiddleware");
 
                 if (context.Request.Headers.ContainsKey(InvalidateHeader))
                 {
-                    var values = new[] { userIdService.UserId.ToString() };
-                    await cacheService.InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies("user", values) }, context.RequestAborted)
+                    var values = new[] { userIdService.GetVariableKey() };
+                    await cacheService.InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(nameof(ICacheUserVariableKey), values) },
+                            context.RequestAborted)
                         .ConfigureAwait(false);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, e.Message);
+                _logger.LogError(e, $"{InvalidateHeader} error");
             }
 
             await _next(context).ConfigureAwait(false);

@@ -1,9 +1,8 @@
 using System;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.DistributedCache.Services
 {
-    class CacheUserVariableFactory : ICacheUserVariableFactory
+    internal sealed class CacheUserVariableFactory : ICacheVariableKeyFactory
     {
         private readonly IServiceProvider _serviceProvider;
 
@@ -12,9 +11,14 @@ namespace Dex.DistributedCache.Services
             _serviceProvider = serviceProvider;
         }
 
-        public ICacheUserVariableService GetCacheUserVariableService()
+        public ICacheVariableKey? GetCacheVariableKeyService(Type type)
         {
-            return _serviceProvider.GetRequiredService<ICacheUserVariableService>();
+            if (_serviceProvider.GetService(type) is ICacheVariableKey cacheVariableKeyService)
+            {
+                return cacheVariableKeyService;
+            }
+
+            return null;
         }
     }
 }

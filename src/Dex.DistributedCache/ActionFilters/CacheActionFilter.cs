@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Dex.DistributedCache.Helpers;
 using Dex.DistributedCache.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,10 +9,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Dex.DistributedCache.ActionFilters
 {
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-    public class CacheActionFilter : ActionFilterAttribute
+    public sealed class CacheActionFilter : ActionFilterAttribute
     {
-        private readonly int _expiration;
-        private readonly bool _isUserVariableKey;
+        public int Expiration { get; }
+        public Type[] CacheVariableKeys { get; }
 
         private IServiceProvider? _serviceProvider;
 
@@ -18,11 +20,11 @@ namespace Dex.DistributedCache.ActionFilters
         /// CacheActionFilter
         /// </summary>
         /// <param name="expiration">Absolute expiration time in seconds, relative to now</param>
-        /// <param name="isUserVariableKey">Indicates, that the key depends on the user</param>
-        public CacheActionFilter(int expiration = 3600, bool isUserVariableKey = true)
+        /// <param name="cacheVariableKeys">Variable key interfaces</param>
+        public CacheActionFilter(int expiration = 3600, params Type[] cacheVariableKeys)
         {
-            _expiration = expiration;
-            _isUserVariableKey = isUserVariableKey;
+            Expiration = expiration;
+            CacheVariableKeys = cacheVariableKeys;
         }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -34,14 +36,15 @@ namespace Dex.DistributedCache.ActionFilters
             var cacheService = _serviceProvider.GetRequiredService<ICacheService>();
             var cacheActionFilterService = _serviceProvider.GetRequiredService<ICacheActionFilterService>();
 
-            var userId = cacheActionFilterService.GetUserId(_isUserVariableKey);
-            var cacheKey = cacheService.GenerateCacheKey(userId, context);
+            var variableKeys = cacheActionFilterService.GetVariableKeys(CacheVariableKeys);
+            var paramsList = new List<string> { CacheHelper.GetDisplayUrl(context.HttpContext.Request) };
+            var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             if (await cacheActionFilterService.CheckExistingCacheValue(cacheKey, context).ConfigureAwait(false)) return;
 
             var executedContext = await next().ConfigureAwait(false);
 
-            await cacheActionFilterService.TryCacheValue(cacheKey, _expiration, userId, executedContext).ConfigureAwait(false);
+            await cacheActionFilterService.TryCacheValue(cacheKey, Expiration, variableKeys, executedContext).ConfigureAwait(false);
         }
     }
 }

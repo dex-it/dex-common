@@ -11,7 +11,7 @@ namespace Dex.DistributedCache.Extensions
                 .AddSingleton<ICacheService, CacheService>()
                 .AddSingleton<ICacheDependencyFactory, CacheDependencyFactory>()
                 .AddTransient<ICacheActionFilterService, CacheActionFilterService>()
-                .AddTransient<ICacheUserVariableFactory, CacheUserVariableFactory>();
+                .AddTransient<ICacheVariableKeyFactory, CacheUserVariableFactory>();
         }
     }
 }

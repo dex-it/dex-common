@@ -2,7 +2,7 @@ using System;
 
 namespace Dex.DistributedCache.Services
 {
-    public sealed class CacheDependencyFactory : ICacheDependencyFactory
+    internal sealed class CacheDependencyFactory : ICacheDependencyFactory
     {
         private readonly IServiceProvider _serviceProvider;
 
