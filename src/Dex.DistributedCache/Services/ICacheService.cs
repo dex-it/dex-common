@@ -8,14 +8,22 @@ namespace Dex.DistributedCache.Services
 {
     public interface ICacheService
     {
-        string GenerateCacheKey(Guid userId, ActionExecutingContext executingContext);
-
-        Task<bool> CheckExistingCacheValue(string key, ActionExecutingContext executingContext);
-
-        Task TryCacheValue(string key, int expiration, Guid userId, ActionExecutedContext executedContext);
-
         Task SetDependencyValueDataAsync(string key, CachePartitionedDependencies[] partDependencies, int expiration, CancellationToken cancellation);
 
         Task InvalidateByDependenciesAsync(CachePartitionedDependencies[] partDependencies, CancellationToken cancellation);
+        
+        internal string GenerateCacheKey(Guid userId, ActionExecutingContext executingContext);
+
+        internal Task<byte[]?> GetMetaInfoAsync(string key, CancellationToken cancellation);
+
+        internal Task<byte[]?> GetValueDataAsync(string key, CancellationToken cancellation);
+
+        internal Task SetMetaInfoAsync(string key, byte[]? metaInfo, int expiration, CancellationToken cancellation);
+
+        internal Task SetValueDataAsync(string key, byte[]? valueData, int expiration, CancellationToken cancellation);
+
+        internal Task SetCacheDependenciesAsync(string key, int expiration, Guid userId, ActionExecutedContext executedContext);
+
+        internal Task InvalidateByCacheKeyAsync(string key, CancellationToken cancellation);
     }
 }

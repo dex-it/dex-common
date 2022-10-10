@@ -1,6 +1,7 @@
+using Dex.DistributedCache.Middleware;
 using Microsoft.AspNetCore.Builder;
 
-namespace Dex.DistributedCache.Middleware
+namespace Dex.DistributedCache.Extensions
 {
     public static class InvalidateCacheByUserMiddlewareExtension
     {

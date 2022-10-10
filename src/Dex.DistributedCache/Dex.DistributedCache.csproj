@@ -17,6 +17,9 @@
       <Compile Update="Services\CacheDependencyFactory.cs">
         <DependentUpon>ICacheDependencyFactory.cs</DependentUpon>
       </Compile>
+      <Compile Update="Services\CacheActionFilterService.cs">
+        <DependentUpon>ICacheActionFilterService.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

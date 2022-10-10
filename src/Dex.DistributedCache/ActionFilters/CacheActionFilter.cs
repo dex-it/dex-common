@@ -32,26 +32,16 @@ namespace Dex.DistributedCache.ActionFilters
 
             _serviceProvider = context.HttpContext.RequestServices;
             var cacheService = _serviceProvider.GetRequiredService<ICacheService>();
+            var cacheActionFilterService = _serviceProvider.GetRequiredService<ICacheActionFilterService>();
 
-            var userId = GetUserId();
+            var userId = cacheActionFilterService.GetUserId(_isUserVariableKey);
             var cacheKey = cacheService.GenerateCacheKey(userId, context);
 
-            if (await cacheService.CheckExistingCacheValue(cacheKey, context).ConfigureAwait(false)) return;
+            if (await cacheActionFilterService.CheckExistingCacheValue(cacheKey, context).ConfigureAwait(false)) return;
 
             var executedContext = await next().ConfigureAwait(false);
 
-            await cacheService.TryCacheValue(cacheKey, _expiration, userId, executedContext).ConfigureAwait(false);
-        }
-
-        private Guid GetUserId()
-        {
-            var userId = Guid.Empty;
-            if (!_isUserVariableKey) return userId;
-
-            var userIdService = _serviceProvider!.GetRequiredService<ICacheUserVariableService>();
-            userId = userIdService.UserId;
-
-            return userId;
+            await cacheActionFilterService.TryCacheValue(cacheKey, _expiration, userId, executedContext).ConfigureAwait(false);
         }
     }
 }
