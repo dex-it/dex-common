@@ -72,7 +72,7 @@ public class CardInfoCacheService : ICacheDependencyService<CardInfo[]>
 
 Also you need to add a service CacheUserVariableKey that implements an interface ICacheUserVariableKey : ICacheVariableKey.
 
-Cache variability parameters - a separate cache object is created for each variable parameter
+Cache variability parameters - a separate cache object is created for each variable parameter.
 ```csharp
 public interface ICacheUserVariableKey : ICacheVariableKey
 {
@@ -96,4 +96,18 @@ public class CacheUserVariableKey : ICacheUserVariableKey
         return userIdClaim;
     }
 }
+```
+
+Invalidate cache examples:
+```csharp
+// Invalidate by variable key
+await cacheService.InvalidateByVariableKeyAsync<ICacheUserVariableKey>(values, cancellationToken);
+
+// Invalidate by dependencies
+await cacheService.InvalidateByDependenciesAsync(new[] {new CachePartitionedDependencies("card", values)}, cancellationToken);
+```
+
+It is possible to invalidate cache using middleware:
+```csharp
+app.UseInvalidateCacheByUserMiddleware();
 ```
