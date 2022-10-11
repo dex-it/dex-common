@@ -51,6 +51,9 @@
       <Compile Update="Services\ICacheUserVariableKey.cs">
         <DependentUpon>ICacheVariableKey.cs</DependentUpon>
       </Compile>
+      <Compile Update="Services\ICacheLocaleVariableKey.cs">
+        <DependentUpon>ICacheVariableKey.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

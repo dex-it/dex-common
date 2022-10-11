@@ -100,10 +100,9 @@ namespace Dex.DistributedCache.Services
             }
         }
 
-        public async Task InvalidateByVariableKeyAsync<T>(T cacheVariableKey, string[] values, CancellationToken cancellation) where T : ICacheVariableKey
+        public async Task InvalidateByVariableKeyAsync<T>(string[] values, CancellationToken cancellation) where T : ICacheVariableKey
         {
-            await InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(cacheVariableKey.GetType().Name, values) }, cancellation)
-                .ConfigureAwait(false);
+            await InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(typeof(T).Name, values) }, cancellation).ConfigureAwait(false);
         }
 
         async Task<byte[]?> ICacheService.GetMetaInfoAsync(string key, CancellationToken cancellation)
@@ -135,16 +134,19 @@ namespace Dex.DistributedCache.Services
         async Task ICacheService.SetCacheDependenciesAsync(string key, int expiration, Dictionary<Type, string> variableKeys, object? executedActionResult,
             CancellationToken cancellation)
         {
+            if (variableKeys.Count > 0)
+            {
+                var partDependencies = variableKeys
+                    .Select(variableKey => new CachePartitionedDependencies(variableKey.Key.Name, new[] { variableKey.Value }));
+                await SetDependencyValueDataAsync(key, partDependencies.ToArray(), expiration, cancellation).ConfigureAwait(false);
+            }
+
             var resultType = executedActionResult?.GetType();
             if (resultType != null)
             {
                 var cacheDependencyService = _cacheDependencyFactory.GetCacheDependencyService(resultType);
                 if (cacheDependencyService != null)
                 {
-                    var partDependencies = variableKeys
-                        .Select(variableKey => new CachePartitionedDependencies(variableKey.Key.Name, new[] { variableKey.Value }));
-                    await SetDependencyValueDataAsync(key, partDependencies.ToArray(), expiration, cancellation).ConfigureAwait(false);
-
                     await cacheDependencyService.SetAsync(key, executedActionResult, expiration, cancellation).ConfigureAwait(false);
                 }
             }

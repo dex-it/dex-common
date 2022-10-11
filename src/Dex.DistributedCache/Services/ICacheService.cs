@@ -12,7 +12,7 @@ namespace Dex.DistributedCache.Services
 
         Task InvalidateByDependenciesAsync(CachePartitionedDependencies[] partDependencies, CancellationToken cancellation);
 
-        Task InvalidateByVariableKeyAsync<T>(T cacheVariableKey, string[] values, CancellationToken cancellation)
+        Task InvalidateByVariableKeyAsync<T>(string[] values, CancellationToken cancellation)
             where T : ICacheVariableKey;
 
         internal string GenerateCacheKey(Dictionary<Type, string> variableKeys, List<string> paramsList);

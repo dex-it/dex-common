@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Dex.DistributedCache.Extensions;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.DistributedCache.Tests.Tests
@@ -12,7 +14,9 @@ namespace Dex.DistributedCache.Tests.Tests
                 {
                     builder.AddDebug();
                     builder.SetMinimumLevel(LogLevel.Debug);
-                });
+                })
+                .AddDistributedCache()
+                .AddSingleton<IDistributedCache, MemoryDistributedCache>();
 
             return serviceCollection;
         }

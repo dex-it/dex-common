@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.DistributedCache.Extensions;
 using Dex.DistributedCache.Helpers;
 using Dex.DistributedCache.Models;
 using Dex.DistributedCache.Services;
+using Dex.DistributedCache.Tests.Models;
 using Dex.DistributedCache.Tests.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +19,6 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using Moq;
@@ -31,11 +33,7 @@ namespace Dex.DistributedCache.Tests.Tests
         [Test]
         public async Task CheckExistingCacheValueReturnFalseTest()
         {
-            await using var serviceProvider = InitServiceCollection()
-                .AddDistributedCache()
-                .AddSingleton<IDistributedCache, MemoryDistributedCache>()
-                .BuildServiceProvider();
-
+            await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceProvider.GetRequiredService<ICacheService>();
 
@@ -52,17 +50,11 @@ namespace Dex.DistributedCache.Tests.Tests
         [Test]
         public async Task GetNotModifiedStatusCodeTest()
         {
-            await using var serviceProvider = InitServiceCollection()
-                .AddDistributedCache()
-                .AddSingleton<IDistributedCache, MemoryDistributedCache>()
-                .AddTransient<ICacheUserVariableKey, CacheUserVariableKeyTest>()
-                .BuildServiceProvider();
-
+            await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceProvider.GetRequiredService<ICacheService>();
 
-            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
-            var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
+            var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
@@ -75,23 +67,17 @@ namespace Dex.DistributedCache.Tests.Tests
             var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
 
             Assert.IsTrue(checkExistingCacheValue);
-            Assert.AreEqual((int)HttpStatusCode.NotModified, ((StatusCodeResult)actionExecutingContext.Result)!.StatusCode);
+            Assert.AreEqual((int)HttpStatusCode.NotModified, ((StatusCodeResult)actionExecutingContext.Result!).StatusCode);
         }
 
         [Test]
-        public async Task GetExistingValueFromCacheTest()
+        public async Task GetExistingValueFromCacheWhenRequestedOldETagTest()
         {
-            await using var serviceProvider = InitServiceCollection()
-                .AddDistributedCache()
-                .AddSingleton<IDistributedCache, MemoryDistributedCache>()
-                .AddTransient<ICacheUserVariableKey, CacheUserVariableKeyTest>()
-                .BuildServiceProvider();
-
+            await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceProvider.GetRequiredService<ICacheService>();
 
-            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
-            var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
+            var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
@@ -108,16 +94,14 @@ namespace Dex.DistributedCache.Tests.Tests
             var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
 
             Assert.IsTrue(checkExistingCacheValue);
-            Assert.AreEqual(cacheValue, Encoding.UTF8.GetString(((FileContentResult)actionExecutingContext.Result)!.FileContents));
+            Assert.AreEqual(cacheValue, Encoding.UTF8.GetString(((FileContentResult)actionExecutingContext.Result!).FileContents));
             Assert.IsTrue(actionExecutingContext.HttpContext.Response.Headers.ContainsKey(HeaderNames.ETag));
         }
 
         [Test]
         public async Task TryCacheValueWithoutDependenciesTest()
         {
-            var serviceCollection = InitServiceCollection()
-                .AddDistributedCache()
-                .AddSingleton<IDistributedCache, MemoryDistributedCache>();
+            var serviceCollection = InitServiceCollection();
             serviceCollection.AddMvc();
             await using var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -139,6 +123,142 @@ namespace Dex.DistributedCache.Tests.Tests
             var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, variableKeys, actionExecutedContext);
 
             Assert.IsTrue(isValueCached);
+            Assert.IsTrue(actionExecutedContext.HttpContext.Response.Headers.ContainsKey(HeaderNames.ETag));
+        }
+
+        [Test]
+        public async Task TryCacheValueWithVariableKeyDependenciesTest()
+        {
+            var serviceCollection = InitServiceCollection()
+                .RegisterCacheVariableKeyService<ICacheUserVariableKey, CacheUserVariableKeyTest>()
+                .RegisterCacheVariableKeyService<ICacheLocaleVariableKey, CacheLocaleVariableKeyTest>();
+            serviceCollection.AddMvc();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+
+            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey), typeof(ICacheLocaleVariableKey) };
+            var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
+            var paramsList = new List<string> { "paramTest" };
+            var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
+
+            var actionExecutedContext = CreateDefaultActionExecutedContext();
+
+            var cacheValue = "cacheValue";
+            await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(cacheValue));
+            actionExecutedContext.HttpContext.Response.Body = buffer;
+            actionExecutedContext.Result = new OkObjectResult(cacheValue);
+            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+
+            var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, variableKeys, actionExecutedContext);
+
+            Assert.IsTrue(isValueCached);
+            Assert.IsTrue(actionExecutedContext.HttpContext.Response.Headers.ContainsKey(HeaderNames.ETag));
+        }
+
+        [Test]
+        public async Task TryCacheValueWithPartitionedDependenciesTest()
+        {
+            var serviceCollection = InitServiceCollection()
+                .RegisterCacheVariableKeyService<ICacheUserVariableKey, CacheUserVariableKeyTest>()
+                .RegisterCacheDependencyService<CardInfo[], CardInfoCacheService>();
+            serviceCollection.AddMvc();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+
+            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
+            var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
+            var paramsList = new List<string> { "paramTest" };
+            var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
+
+            var actionExecutedContext = CreateDefaultActionExecutedContext();
+
+            var cacheValue = new CardInfo[] { new() { Id = Guid.NewGuid() }, new() { Id = Guid.NewGuid() } };
+            await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(cacheValue)));
+            actionExecutedContext.HttpContext.Response.Body = buffer;
+            actionExecutedContext.Result = new OkObjectResult(cacheValue);
+            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+
+            var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, variableKeys, actionExecutedContext);
+
+            Assert.IsTrue(isValueCached);
+            Assert.IsTrue(actionExecutedContext.HttpContext.Response.Headers.ContainsKey(HeaderNames.ETag));
+        }
+
+        [Test]
+        public async Task InvalidateCacheByVariableKeyTest()
+        {
+            var serviceCollection = InitServiceCollection()
+                .RegisterCacheVariableKeyService<ICacheUserVariableKey, CacheUserVariableKeyTest>();
+            serviceCollection.AddMvc();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+
+            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
+            var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
+            var paramsList = new List<string> { "paramTest" };
+            var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
+
+            var actionExecutedContext = CreateDefaultActionExecutedContext();
+
+            var cacheValue = "cacheValue";
+            await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(cacheValue));
+            actionExecutedContext.HttpContext.Response.Body = buffer;
+            actionExecutedContext.Result = new OkObjectResult(cacheValue);
+            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+
+            var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, variableKeys, actionExecutedContext);
+
+            Assert.IsTrue(isValueCached);
+
+            await cacheService.InvalidateByVariableKeyAsync<ICacheUserVariableKey>(variableKeys.Values.ToArray(), CancellationToken.None);
+            var actionExecutingContext = CreateDefaultActionExecutingContext();
+            var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
+
+            Assert.IsFalse(checkExistingCacheValue);
+        }
+
+        [Test]
+        public async Task InvalidateCacheByDependenciesTest()
+        {
+            var serviceCollection = InitServiceCollection()
+                .RegisterCacheVariableKeyService<ICacheUserVariableKey, CacheUserVariableKeyTest>()
+                .RegisterCacheDependencyService<CardInfo[], CardInfoCacheService>();
+            serviceCollection.AddMvc();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+
+            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
+            var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
+            var paramsList = new List<string> { "paramTest" };
+            var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
+
+            var actionExecutedContext = CreateDefaultActionExecutedContext();
+
+            var cacheValue = new CardInfo[] { new() { Id = Guid.NewGuid() }, new() { Id = Guid.NewGuid() } };
+            await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(cacheValue)));
+            actionExecutedContext.HttpContext.Response.Body = buffer;
+            actionExecutedContext.Result = new OkObjectResult(cacheValue);
+            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+
+            var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, variableKeys, actionExecutedContext);
+
+            Assert.IsTrue(isValueCached);
+
+            var invalidateValues = cacheValue.Select(x => x.Id.ToString()).ToArray();
+            await cacheService.InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies("card", invalidateValues) }, CancellationToken.None);
+
+            var actionExecutingContext = CreateDefaultActionExecutingContext();
+            var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
+
+            Assert.IsFalse(checkExistingCacheValue);
         }
 
         private static ActionExecutingContext CreateDefaultActionExecutingContext()

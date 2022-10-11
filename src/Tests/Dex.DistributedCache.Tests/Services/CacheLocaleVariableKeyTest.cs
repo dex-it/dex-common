@@ -2,11 +2,11 @@
 
 namespace Dex.DistributedCache.Tests.Services
 {
-    public class CacheUserVariableKeyTest : ICacheUserVariableKey
+    public class CacheLocaleVariableKeyTest : ICacheLocaleVariableKey
     {
         public string GetVariableKey()
         {
-            return "54a1e183-cbee-4fce-bdce-1b6d9e257471";
+            return "ru";
         }
     }
 }

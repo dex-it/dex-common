@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Dex.DistributedCache.Models;
 using Dex.DistributedCache.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,9 +37,7 @@ namespace Dex.DistributedCache.Middleware
                 if (context.Request.Headers.ContainsKey(InvalidateHeader))
                 {
                     var values = new[] { userIdService.GetVariableKey() };
-                    await cacheService.InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(nameof(ICacheUserVariableKey), values) },
-                            context.RequestAborted)
-                        .ConfigureAwait(false);
+                    await cacheService.InvalidateByVariableKeyAsync<ICacheUserVariableKey>(values, context.RequestAborted).ConfigureAwait(false);
                 }
             }
             catch (Exception e)

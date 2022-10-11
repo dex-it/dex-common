@@ -13,5 +13,18 @@ namespace Dex.DistributedCache.Extensions
                 .AddTransient<ICacheActionFilterService, CacheActionFilterService>()
                 .AddTransient<ICacheVariableKeyFactory, CacheUserVariableFactory>();
         }
+
+        public static IServiceCollection RegisterCacheDependencyService<TValue, TService>(this IServiceCollection services)
+            where TService : class, ICacheDependencyService<TValue>
+        {
+            return services.AddSingleton<ICacheDependencyService<TValue>, TService>();
+        }
+
+        public static IServiceCollection RegisterCacheVariableKeyService<TInterface, TService>(this IServiceCollection services)
+            where TInterface : ICacheVariableKey
+            where TService : class, ICacheVariableKey
+        {
+            return services.AddTransient(typeof(TInterface), typeof(TService));
+        }
     }
 }
