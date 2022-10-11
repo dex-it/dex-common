@@ -14,8 +14,6 @@ namespace Dex.DistributedCache.Middleware
         private const string InvalidateHeader = "InvalidateCacheByUser";
 
         private readonly RequestDelegate _next;
-        private IServiceProvider? _serviceProvider;
-        private ILogger<InvalidateCacheByUserMiddleware>? _logger;
 
         public InvalidateCacheByUserMiddleware(RequestDelegate next)
         {
@@ -25,14 +23,16 @@ namespace Dex.DistributedCache.Middleware
         public async Task Invoke(HttpContext context)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
+
+            var serviceProvider = context.RequestServices;
+            var logger = serviceProvider.GetRequiredService<ILogger<InvalidateCacheByUserMiddleware>>();
+
             try
             {
-                _serviceProvider = context.RequestServices;
-                _logger = _serviceProvider.GetRequiredService<ILogger<InvalidateCacheByUserMiddleware>>();
-                var cacheService = _serviceProvider.GetRequiredService<ICacheService>();
-                var userIdService = _serviceProvider.GetRequiredService<ICacheUserVariableKey>();
+                var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+                var userIdService = serviceProvider.GetRequiredService<ICacheUserVariableKey>();
 
-                _logger.LogDebug("Run InvalidateCacheByUserMiddleware");
+                logger.LogDebug("Run InvalidateCacheByUserMiddleware");
 
                 if (context.Request.Headers.ContainsKey(InvalidateHeader))
                 {
@@ -42,7 +42,7 @@ namespace Dex.DistributedCache.Middleware
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"{InvalidateHeader} error");
+                logger.LogError(e, "{Header} error", InvalidateHeader);
             }
 
             await _next(context).ConfigureAwait(false);

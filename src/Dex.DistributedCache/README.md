@@ -4,7 +4,7 @@ Distributed Cache Management - managing data caching in distributed applications
 
 * Caching the results of HTTP requests.
 * Full support for ETag notation.
-* Implemented on the basis of Redis.
+* Implemented on the basis of IDistributedCache.
 
 Solved problems:
 * The problem of updating the cache - is that there are many services that want to write or reuse the cache.

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 
 namespace Dex.DistributedCache.Extensions
 {
-    public static class InvalidateCacheByUserMiddlewareExtension
+    public static class MicrosoftApplicationBuilderExtension
     {
         public static void UseInvalidateCacheByUserMiddleware(this IApplicationBuilder app)
         {

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dex.DistributedCache.Helpers;
 using Dex.DistributedCache.Services;
@@ -33,11 +32,11 @@ namespace Dex.DistributedCache.ActionFilters
             if (next == null) throw new ArgumentNullException(nameof(next));
 
             _serviceProvider = context.HttpContext.RequestServices;
-            var cacheService = _serviceProvider.GetRequiredService<ICacheService>();
+            var cacheService = _serviceProvider.GetRequiredService<ICacheManagementService>();
             var cacheActionFilterService = _serviceProvider.GetRequiredService<ICacheActionFilterService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(CacheVariableKeys);
-            var paramsList = new List<string> { CacheHelper.GetDisplayUrl(context.HttpContext.Request) };
+            var paramsList = new[] { CacheHelper.GetDisplayUrl(context.HttpContext.Request) };
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             if (await cacheActionFilterService.CheckExistingCacheValue(cacheKey, context).ConfigureAwait(false)) return;

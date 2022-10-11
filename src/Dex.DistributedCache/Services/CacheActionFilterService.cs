@@ -21,10 +21,10 @@ namespace Dex.DistributedCache.Services
     internal sealed class CacheActionFilterService : ICacheActionFilterService
     {
         private readonly ILogger<CacheActionFilterService> _logger;
-        private readonly ICacheService _cacheService;
+        private readonly ICacheManagementService _cacheService;
         private readonly ICacheVariableKeyFactory _cacheVariableKeyFactory;
 
-        public CacheActionFilterService(ILogger<CacheActionFilterService> logger, ICacheService cacheService,
+        public CacheActionFilterService(ILogger<CacheActionFilterService> logger, ICacheManagementService cacheService,
             ICacheVariableKeyFactory cacheVariableKeyFactory)
         {
             _logger = logger;
@@ -32,7 +32,7 @@ namespace Dex.DistributedCache.Services
             _cacheVariableKeyFactory = cacheVariableKeyFactory;
         }
 
-        public Dictionary<Type, string> GetVariableKeys(Type[] cacheVariableKeys)
+        public IDictionary<Type, string> GetVariableKeys(IEnumerable<Type> cacheVariableKeys)
         {
             var variableKeyDictionary = new Dictionary<Type, string>();
             foreach (var cacheVariableKey in cacheVariableKeys)
@@ -82,7 +82,7 @@ namespace Dex.DistributedCache.Services
             return false;
         }
 
-        public async Task<bool> TryCacheValue(string key, int expiration, Dictionary<Type, string> variableKeys, ActionExecutedContext executedContext)
+        public async Task<bool> TryCacheValue(string key, int expiration, IDictionary<Type, string> variableKeys, ActionExecutedContext executedContext)
         {
             if (executedContext.Exception != null) throw executedContext.Exception;
 

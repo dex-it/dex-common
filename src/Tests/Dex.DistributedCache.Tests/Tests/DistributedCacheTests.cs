@@ -35,7 +35,7 @@ namespace Dex.DistributedCache.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -52,7 +52,7 @@ namespace Dex.DistributedCache.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -75,7 +75,7 @@ namespace Dex.DistributedCache.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -106,7 +106,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await using var serviceProvider = serviceCollection.BuildServiceProvider();
 
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -136,7 +136,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await using var serviceProvider = serviceCollection.BuildServiceProvider();
 
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
 
             Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey), typeof(ICacheLocaleVariableKey) };
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
@@ -167,7 +167,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await using var serviceProvider = serviceCollection.BuildServiceProvider();
 
             var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
 
             Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
@@ -202,7 +202,7 @@ namespace Dex.DistributedCache.Tests.Tests
             Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
             var paramsList = new List<string> { "paramTest" };
-            var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
+            var cacheKey = ((ICacheManagementService)cacheService).GenerateCacheKey(variableKeys, paramsList);
 
             var actionExecutedContext = CreateDefaultActionExecutedContext();
 
@@ -238,7 +238,7 @@ namespace Dex.DistributedCache.Tests.Tests
             Type[] cacheVariableKeys = { typeof(ICacheUserVariableKey) };
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
             var paramsList = new List<string> { "paramTest" };
-            var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
+            var cacheKey = ((ICacheManagementService)cacheService).GenerateCacheKey(variableKeys, paramsList);
 
             var actionExecutedContext = CreateDefaultActionExecutedContext();
 

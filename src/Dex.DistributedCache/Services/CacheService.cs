@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.DistributedCache.Services
 {
-    public sealed class CacheService : ICacheService
+    public sealed class CacheService : ICacheService, ICacheManagementService
     {
         private const string KeyPrefix = "dc";
         private const string KeyMetaInfoPrefix = "meta";
@@ -23,22 +23,15 @@ namespace Dex.DistributedCache.Services
         private readonly ILogger<CacheService> _logger;
         private readonly ICacheDependencyFactory _cacheDependencyFactory;
 
-        public CacheService(IDistributedCache cache, ILogger<CacheService> logger, ICacheDependencyFactory cacheDependencyFactory)
+        public CacheService(IDistributedCache cache, ICacheDependencyFactory cacheDependencyFactory, ILogger<CacheService> logger)
         {
             _cache = cache;
             _logger = logger;
             _cacheDependencyFactory = cacheDependencyFactory;
         }
 
-        string ICacheService.GenerateCacheKey(Dictionary<Type, string> variableKeys, List<string> paramsList)
-        {
-            paramsList.AddRange(variableKeys.Select(variableKey => variableKey.Key.Name + KeySeparator + variableKey.Value));
-
-            return GenerateCacheKeyByParams(paramsList.ToArray());
-        }
-
-        public async Task SetDependencyValueDataAsync(string key, CachePartitionedDependencies[] partDependencies, int expiration,
-            CancellationToken cancellation)
+        public async Task SetDependencyValueDataAsync(string key, IEnumerable<CachePartitionedDependencies> partDependencies,
+            int expiration, CancellationToken cancellation)
         {
             if (partDependencies == null) throw new ArgumentNullException(nameof(partDependencies));
 
@@ -72,7 +65,7 @@ namespace Dex.DistributedCache.Services
             }
         }
 
-        public async Task InvalidateByDependenciesAsync(CachePartitionedDependencies[] partDependencies, CancellationToken cancellation)
+        public async Task InvalidateByDependenciesAsync(IEnumerable<CachePartitionedDependencies> partDependencies, CancellationToken cancellation)
         {
             if (partDependencies == null) throw new ArgumentNullException(nameof(partDependencies));
 
@@ -95,50 +88,58 @@ namespace Dex.DistributedCache.Services
 
                 foreach (var key in dependencyValueKeys)
                 {
-                    await ((ICacheService)this).InvalidateByCacheKeyAsync(key, CancellationToken.None).ConfigureAwait(false);
+                    await ((ICacheManagementService)this).InvalidateByCacheKeyAsync(key, CancellationToken.None).ConfigureAwait(false);
                 }
             }
         }
 
-        public async Task InvalidateByVariableKeyAsync<T>(string[] values, CancellationToken cancellation) where T : ICacheVariableKey
+        public async Task InvalidateByVariableKeyAsync<T>(IEnumerable<string> values, CancellationToken cancellation) where T : ICacheVariableKey
         {
-            await InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(typeof(T).Name, values) }, cancellation).ConfigureAwait(false);
+            await InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(typeof(T).Name, values.ToArray()) }, cancellation)
+                .ConfigureAwait(false);
         }
 
-        async Task<byte[]?> ICacheService.GetMetaInfoAsync(string key, CancellationToken cancellation)
+        #region ICacheManagementService
+
+        // TODO check performance
+        string ICacheManagementService.GenerateCacheKey(IDictionary<Type, string> variableKeys, IEnumerable<string> paramsList)
+        {
+            return GenerateCacheKeyByParams(paramsList.Concat(variableKeys.Select(vk => vk.Key.Name + KeySeparator + vk.Value)));
+        }
+
+        async Task<byte[]?> ICacheManagementService.GetMetaInfoAsync(string key, CancellationToken cancellation)
         {
             return await _cache.GetAsync(GetCacheKeyForMetaInfo(key), cancellation).ConfigureAwait(false);
         }
 
-        async Task<byte[]?> ICacheService.GetValueDataAsync(string key, CancellationToken cancellation)
+        async Task<byte[]?> ICacheManagementService.GetValueDataAsync(string key, CancellationToken cancellation)
         {
             return await _cache.GetAsync(GetCacheKeyForValueData(key), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheService.SetMetaInfoAsync(string key, byte[]? metaInfo, int expiration, CancellationToken cancellation)
+        async Task ICacheManagementService.SetMetaInfoAsync(string key, byte[]? metaInfo, int expiration, CancellationToken cancellation)
         {
             await _cache.SetAsync(GetCacheKeyForMetaInfo(key), metaInfo, GetCacheEntryOptions(expiration), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheService.SetValueDataAsync(string key, byte[]? valueData, int expiration, CancellationToken cancellation)
+        async Task ICacheManagementService.SetValueDataAsync(string key, byte[]? valueData, int expiration, CancellationToken cancellation)
         {
             await _cache.SetAsync(GetCacheKeyForValueData(key), valueData, GetCacheEntryOptions(expiration), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheService.InvalidateByCacheKeyAsync(string key, CancellationToken cancellation)
+        async Task ICacheManagementService.InvalidateByCacheKeyAsync(string key, CancellationToken cancellation)
         {
             await _cache.RemoveAsync(GetCacheKeyForMetaInfo(key), cancellation).ConfigureAwait(false);
             await _cache.RemoveAsync(GetCacheKeyForValueData(key), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheService.SetCacheDependenciesAsync(string key, int expiration, Dictionary<Type, string> variableKeys, object? executedActionResult,
-            CancellationToken cancellation)
+        async Task ICacheManagementService.SetCacheDependenciesAsync(string key, int expiration,
+            IDictionary<Type, string> variableKeys, object? executedActionResult, CancellationToken cancellation)
         {
             if (variableKeys.Count > 0)
             {
-                var partDependencies = variableKeys
-                    .Select(variableKey => new CachePartitionedDependencies(variableKey.Key.Name, new[] { variableKey.Value }));
-                await SetDependencyValueDataAsync(key, partDependencies.ToArray(), expiration, cancellation).ConfigureAwait(false);
+                var partDependencies = variableKeys.Select(vk => new CachePartitionedDependencies(vk.Key.Name, new[] { vk.Value }));
+                await SetDependencyValueDataAsync(key, partDependencies, expiration, cancellation).ConfigureAwait(false);
             }
 
             var resultType = executedActionResult?.GetType();
@@ -152,16 +153,18 @@ namespace Dex.DistributedCache.Services
             }
         }
 
-        private static string GenerateCacheKeyByParams(params string[] args)
+        #endregion
+
+        private static string GenerateCacheKeyByParams(IEnumerable<string> args)
         {
             var argsStr = string.Join(KeySeparator, args);
-            return CacheHelper.CreateMd5(CacheHelper.Base64Encode($"{argsStr}"));
+            // TODO optimize, memory alloc, encoding
+            return CacheHelper.CreateMd5(CacheHelper.Base64Encode(argsStr));
         }
 
         private static DistributedCacheEntryOptions GetCacheEntryOptions(int expiration)
         {
-            var cacheEntryOptions = new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(expiration) };
-            return cacheEntryOptions;
+            return new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(expiration) };
         }
 
         private async Task<byte[]?> GetValueDataByDependencyAsync(string key, string dependencyType, CancellationToken cancellation)

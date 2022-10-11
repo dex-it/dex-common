@@ -3,12 +3,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.DistributedCache.Extensions
 {
-    public static class DistributedCacheExtension
+    public static class MicrosoftDependencyInjectionExtension
     {
         public static IServiceCollection AddDistributedCache(this IServiceCollection services)
         {
             return services
                 .AddSingleton<ICacheService, CacheService>()
+                .AddSingleton<ICacheManagementService, CacheService>(provider => (CacheService)provider.GetRequiredService<ICacheService>())
                 .AddSingleton<ICacheDependencyFactory, CacheDependencyFactory>()
                 .AddTransient<ICacheActionFilterService, CacheActionFilterService>()
                 .AddTransient<ICacheVariableKeyFactory, CacheUserVariableFactory>();

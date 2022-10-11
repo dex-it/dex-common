@@ -23,15 +23,13 @@ namespace Dex.DistributedCache.Tests.Services
 
             if (valueData != null)
             {
-                var cardList = new List<string>();
-                cardList.AddRange(valueData.Select(x => x.Id.ToString()));
-
-                partDependencies.Add(new CachePartitionedDependencies("card", cardList.Distinct().ToArray()));
+                var cardList = valueData.Select(x => x.Id).Distinct().Select(x => x.ToString()).ToArray();
+                partDependencies.Add(new CachePartitionedDependencies("card", cardList));
             }
 
             if (partDependencies.Any())
             {
-                await _cacheService.SetDependencyValueDataAsync(key, partDependencies.ToArray(), expiration, cancellation);
+                await _cacheService.SetDependencyValueDataAsync(key, partDependencies, expiration, cancellation);
             }
         }
     }
