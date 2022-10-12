@@ -7,10 +7,10 @@ namespace Dex.DistributedCache.Services
 {
     public interface ICacheActionFilterService
     {
-        IDictionary<Type, string> GetVariableKeys(IEnumerable<Type> cacheVariableKeys);
+        IDictionary<Type, string> GetVariableKeys(IEnumerable<Type> cacheVariableKeyResolvers);
 
         Task<bool> CheckExistingCacheValue(string key, ActionExecutingContext executingContext);
 
-        Task<bool> TryCacheValue(string key, int expiration, IDictionary<Type, string> variableKeys, ActionExecutedContext executedContext);
+        Task<bool> TryCacheValue(string key, int expiration, ActionExecutedContext executedContext);
     }
 }

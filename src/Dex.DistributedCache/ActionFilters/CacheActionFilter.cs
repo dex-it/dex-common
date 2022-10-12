@@ -11,7 +11,7 @@ namespace Dex.DistributedCache.ActionFilters
     public sealed class CacheActionFilter : ActionFilterAttribute
     {
         public int Expiration { get; }
-        public Type[] CacheVariableKeys { get; }
+        public Type[] CacheVariableKeyResolvers { get; }
 
         private IServiceProvider? _serviceProvider;
 
@@ -19,11 +19,11 @@ namespace Dex.DistributedCache.ActionFilters
         /// CacheActionFilter
         /// </summary>
         /// <param name="expiration">Absolute expiration time in seconds, relative to now</param>
-        /// <param name="cacheVariableKeys">Variable key interfaces</param>
-        public CacheActionFilter(int expiration = 3600, params Type[] cacheVariableKeys)
+        /// <param name="cacheVariableKeyResolvers">Variable key interfaces</param>
+        public CacheActionFilter(int expiration = 3600, params Type[] cacheVariableKeyResolvers)
         {
             Expiration = expiration;
-            CacheVariableKeys = cacheVariableKeys;
+            CacheVariableKeyResolvers = cacheVariableKeyResolvers;
         }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -35,7 +35,7 @@ namespace Dex.DistributedCache.ActionFilters
             var cacheService = _serviceProvider.GetRequiredService<ICacheManagementService>();
             var cacheActionFilterService = _serviceProvider.GetRequiredService<ICacheActionFilterService>();
 
-            var variableKeys = cacheActionFilterService.GetVariableKeys(CacheVariableKeys);
+            var variableKeys = cacheActionFilterService.GetVariableKeys(CacheVariableKeyResolvers);
             var paramsList = new[] { CacheHelper.GetDisplayUrl(context.HttpContext.Request) };
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
@@ -43,7 +43,7 @@ namespace Dex.DistributedCache.ActionFilters
 
             var executedContext = await next().ConfigureAwait(false);
 
-            await cacheActionFilterService.TryCacheValue(cacheKey, Expiration, variableKeys, executedContext).ConfigureAwait(false);
+            await cacheActionFilterService.TryCacheValue(cacheKey, Expiration, executedContext).ConfigureAwait(false);
         }
     }
 }

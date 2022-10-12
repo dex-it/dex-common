@@ -11,25 +11,29 @@ namespace Dex.DistributedCache.Tests.Services
     public class CardInfoCacheService : ICacheDependencyService<CardInfo[]>
     {
         private readonly ICacheService _cacheService;
+        private readonly ICacheUserVariableKeyResolver _cacheUserVariableKeyResolver;
 
-        public CardInfoCacheService(ICacheService cacheService)
+        public CardInfoCacheService(ICacheService cacheService, ICacheUserVariableKeyResolver cacheUserVariableKeyResolver)
         {
             _cacheService = cacheService;
+            _cacheUserVariableKeyResolver = cacheUserVariableKeyResolver;
         }
 
         public async Task SetAsync(string key, CardInfo[]? valueData, int expiration, CancellationToken cancellation)
         {
-            var partDependencies = new List<CachePartitionedDependencies>();
+            var dependencies = new List<CacheDependency>();
+
+            dependencies.Add(new CacheDependency(_cacheUserVariableKeyResolver.GetVariableKey()));
 
             if (valueData != null)
             {
-                var cardList = valueData.Select(x => x.Id).Distinct().Select(x => x.ToString()).ToArray();
-                partDependencies.Add(new CachePartitionedDependencies("card", cardList));
+                var cardList = valueData.Select(x => new CacheDependency(x.Id.ToString())).Distinct();
+                dependencies.AddRange(cardList);
             }
 
-            if (partDependencies.Any())
+            if (dependencies.Any())
             {
-                await _cacheService.SetDependencyValueDataAsync(key, partDependencies, expiration, cancellation);
+                await _cacheService.SetDependencyValueDataAsync(key, dependencies, expiration, cancellation);
             }
         }
     }

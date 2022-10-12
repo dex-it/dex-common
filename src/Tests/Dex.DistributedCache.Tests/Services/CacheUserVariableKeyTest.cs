@@ -2,7 +2,7 @@
 
 namespace Dex.DistributedCache.Tests.Services
 {
-    public class CacheUserVariableKeyTest : ICacheUserVariableKey
+    public class CacheUserVariableKeyTest : ICacheUserVariableKeyResolver
     {
         public string GetVariableKey()
         {

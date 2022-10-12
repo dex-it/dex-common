@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Dex.DistributedCache.Models;
 using Dex.DistributedCache.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +12,7 @@ namespace Dex.DistributedCache.Middleware
 {
     public class InvalidateCacheByUserMiddleware
     {
-        private const string InvalidateHeader = "InvalidateCacheByUser";
+        private const string InvalidateHeader = "InvalidateCacheByUserDependencyType";
 
         private readonly RequestDelegate _next;
 
@@ -30,14 +31,12 @@ namespace Dex.DistributedCache.Middleware
             try
             {
                 var cacheService = serviceProvider.GetRequiredService<ICacheService>();
-                var userIdService = serviceProvider.GetRequiredService<ICacheUserVariableKey>();
-
-                logger.LogDebug("Run InvalidateCacheByUserMiddleware");
+                var userIdService = serviceProvider.GetRequiredService<ICacheUserVariableKeyResolver>();
 
                 if (context.Request.Headers.ContainsKey(InvalidateHeader))
                 {
-                    var values = new[] { userIdService.GetVariableKey() };
-                    await cacheService.InvalidateByVariableKeyAsync<ICacheUserVariableKey>(values, context.RequestAborted).ConfigureAwait(false);
+                    var dependencies = new[] { new CacheDependency(userIdService.GetVariableKey()) };
+                    await cacheService.InvalidateByDependenciesAsync(dependencies, context.RequestAborted).ConfigureAwait(false);
                 }
             }
             catch (Exception e)

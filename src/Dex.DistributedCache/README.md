@@ -47,24 +47,28 @@ Dependencies - additional keys pointing to the cache object, allow you to reset 
 public class CardInfoCacheService : ICacheDependencyService<CardInfo[]>
 {
     private readonly ICacheService _cacheService;
+    private readonly ICacheUserVariableKeyResolver _cacheUserVariableKeyResolver;
 
-    public CardInfoCacheService(ICacheService cacheService)
+    public CardInfoCacheService(ICacheService cacheService, ICacheUserVariableKeyResolver cacheUserVariableKeyResolver)
     {
         _cacheService = cacheService;
+        _cacheUserVariableKeyResolver = cacheUserVariableKeyResolver;
     }
 
     public async Task SetAsync(string key, CardInfo[]? valueData, int expiration, CancellationToken cancellation)
     {
-        var partDependencies = new List<CachePartitionedDependencies>();
+        var dependencies = new List<CacheDependency>();
+        dependencies.Add(new CacheDependency(_cacheUserVariableKeyResolver.GetVariableKey()));
 
         if (valueData != null)
         {
-            partDependencies.Add(new CachePartitionedDependencies("card", valueData.Select(x => x.Id.ToString()).Distinct().ToArray()));
+            var cardList = valueData.Select(x => new CacheDependency(x.Id.ToString())).Distinct();
+            dependencies.AddRange(cardList);
         }
 
-        if (partDependencies.Any())
+        if (dependencies.Any())
         {
-            await _cacheService.SetDependencyValueDataAsync(key, partDependencies.ToArray(), expiration, cancellation);
+            await _cacheService.SetDependencyValueDataAsync(key, dependencies, expiration, cancellation);
         }
     }
 }
@@ -98,16 +102,14 @@ public class CacheUserVariableKey : ICacheUserVariableKey
 }
 ```
 
-Invalidate cache examples:
+Invalidate cache by dependencies:
 ```csharp
-// Invalidate by variable key
-await cacheService.InvalidateByVariableKeyAsync<ICacheUserVariableKey>(values, cancellationToken);
-
-// Invalidate by dependencies
-await cacheService.InvalidateByDependenciesAsync(new[] {new CachePartitionedDependencies("card", values)}, cancellationToken);
+var invalidateValues = values.Select(x => new CacheDependency(x.Id.ToString()));
+await cacheService.InvalidateByDependenciesAsync(invalidateValues, CancellationToken.None);
 ```
 
-It is possible to invalidate cache using middleware:
+It is possible to invalidate cache using middleware.
+To do this, an empty special header must be added to the request: InvalidateCacheByUserDependencyType.
 ```csharp
 app.UseInvalidateCacheByUserMiddleware();
 ```

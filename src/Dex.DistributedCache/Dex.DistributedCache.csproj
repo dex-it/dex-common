@@ -26,22 +26,22 @@
     <!--/Для NuGet-->
     
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0"/>
-        <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0"/>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0"/>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5"/>
-        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0"/>
-        <PackageReference Include="Microsoft.Net.Http.Headers" Version="2.2.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Net.Http.Headers" Version="2.2.0" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Update="Services\CacheService.cs">
             <DependentUpon>ICacheService.cs</DependentUpon>
         </Compile>
-        <Compile Update="Services\CacheUserVariableFactory.cs">
-            <DependentUpon>ICacheVariableKeyFactory.cs</DependentUpon>
+        <Compile Update="Services\CacheVariableKeyResolverFactory.cs">
+            <DependentUpon>ICacheVariableKeyResolverFactory.cs</DependentUpon>
         </Compile>
         <Compile Update="Services\CacheDependencyFactory.cs">
             <DependentUpon>ICacheDependencyFactory.cs</DependentUpon>
@@ -49,11 +49,11 @@
         <Compile Update="Services\CacheActionFilterService.cs">
             <DependentUpon>ICacheActionFilterService.cs</DependentUpon>
         </Compile>
-        <Compile Update="Services\ICacheUserVariableKey.cs">
-            <DependentUpon>ICacheVariableKey.cs</DependentUpon>
+        <Compile Update="Services\ICacheUserVariableKeyResolver.cs">
+            <DependentUpon>ICacheVariableKeyResolver.cs</DependentUpon>
         </Compile>
-        <Compile Update="Services\ICacheLocaleVariableKey.cs">
-            <DependentUpon>ICacheVariableKey.cs</DependentUpon>
+        <Compile Update="Services\ICacheLocaleVariableKeyResolver.cs">
+            <DependentUpon>ICacheVariableKeyResolver.cs</DependentUpon>
         </Compile>
         <Compile Update="Services\ICacheManagementService.cs">
             <DependentUpon>ICacheService.cs</DependentUpon>

@@ -7,12 +7,8 @@ namespace Dex.DistributedCache.Services
 {
     public interface ICacheService
     {
-        Task SetDependencyValueDataAsync(string key, IEnumerable<CachePartitionedDependencies> partDependencies, int expiration,
-            CancellationToken cancellation);
+        Task SetDependencyValueDataAsync(string key, IEnumerable<CacheDependency> dependencies, int expiration, CancellationToken cancellation);
 
-        Task InvalidateByDependenciesAsync(IEnumerable<CachePartitionedDependencies> partDependencies, CancellationToken cancellation);
-
-        // TODO зачем он ?
-        Task InvalidateByVariableKeyAsync<T>(IEnumerable<string> values, CancellationToken cancellation) where T : ICacheVariableKey;
+        Task InvalidateByDependenciesAsync(IEnumerable<CacheDependency> dependencies, CancellationToken cancellation);
     }
 }

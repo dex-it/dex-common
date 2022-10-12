@@ -17,6 +17,7 @@ namespace Dex.DistributedCache.Services
         private const string KeyPrefix = "dc";
         private const string KeyMetaInfoPrefix = "meta";
         private const string KeyValuePrefix = "value";
+        private const string KeyDependencyPrefix = "dep";
         private const char KeySeparator = ':';
 
         private readonly IDistributedCache _cache;
@@ -30,49 +31,44 @@ namespace Dex.DistributedCache.Services
             _cacheDependencyFactory = cacheDependencyFactory;
         }
 
-        public async Task SetDependencyValueDataAsync(string key, IEnumerable<CachePartitionedDependencies> partDependencies,
-            int expiration, CancellationToken cancellation)
+        public async Task SetDependencyValueDataAsync(string key, IEnumerable<CacheDependency> dependencies, int expiration, CancellationToken cancellation)
         {
-            if (partDependencies == null) throw new ArgumentNullException(nameof(partDependencies));
+            if (dependencies == null) throw new ArgumentNullException(nameof(dependencies));
 
-            foreach (var partDependency in partDependencies)
+            foreach (var dependency in dependencies)
             {
-                foreach (var partDependencyValue in partDependency.Values)
+                var cacheByte = await GetValueDataByDependencyAsync(dependency.Value, cancellation).ConfigureAwait(false);
+                var dependencyValueKeys = new List<string>();
+
+                if (cacheByte != null)
                 {
-                    var cacheByte = await GetValueDataByDependencyAsync(partDependencyValue, partDependency.Type, cancellation).ConfigureAwait(false);
-                    var dependencyValueKeys = new List<string>();
+                    dependencyValueKeys = JsonSerializer.Deserialize<List<string>>(cacheByte);
 
-                    if (cacheByte != null)
+                    if (dependencyValueKeys == null)
                     {
-                        dependencyValueKeys = JsonSerializer.Deserialize<List<string>>(cacheByte);
-
-                        if (dependencyValueKeys == null)
-                        {
-                            _logger.LogWarning("Unable to deserialize: {Data}", Encoding.UTF8.GetString(cacheByte));
-                            dependencyValueKeys = new List<string>();
-                        }
+                        _logger.LogWarning("Unable to deserialize: {Data}", Encoding.UTF8.GetString(cacheByte));
+                        dependencyValueKeys = new List<string>();
                     }
-
-                    if (!dependencyValueKeys.Contains(key))
-                    {
-                        dependencyValueKeys.Add(key);
-                    }
-
-                    await _cache.SetAsync(GetCacheKeyForDependencyValueData(partDependencyValue, partDependency.Type),
-                            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(dependencyValueKeys)), GetCacheEntryOptions(expiration), cancellation)
-                        .ConfigureAwait(false);
                 }
+
+                if (!dependencyValueKeys.Contains(key))
+                {
+                    dependencyValueKeys.Add(key);
+                }
+
+                await _cache.SetAsync(GetCacheKeyForDependencyValueData(dependency.Value),
+                        Encoding.UTF8.GetBytes(JsonSerializer.Serialize(dependencyValueKeys)), GetCacheEntryOptions(expiration), cancellation)
+                    .ConfigureAwait(false);
             }
         }
 
-        public async Task InvalidateByDependenciesAsync(IEnumerable<CachePartitionedDependencies> partDependencies, CancellationToken cancellation)
+        public async Task InvalidateByDependenciesAsync(IEnumerable<CacheDependency> dependencies, CancellationToken cancellation)
         {
-            if (partDependencies == null) throw new ArgumentNullException(nameof(partDependencies));
+            if (dependencies == null) throw new ArgumentNullException(nameof(dependencies));
 
-            foreach (var partDependency in partDependencies)
-            foreach (var partDependencyValue in partDependency.Values)
+            foreach (var dependency in dependencies)
             {
-                var cacheByte = await GetValueDataByDependencyAsync(partDependencyValue, partDependency.Type, cancellation).ConfigureAwait(false);
+                var cacheByte = await GetValueDataByDependencyAsync(dependency.Value, cancellation).ConfigureAwait(false);
                 var dependencyValueKeys = new List<string>();
 
                 if (cacheByte != null)
@@ -91,12 +87,6 @@ namespace Dex.DistributedCache.Services
                     await ((ICacheManagementService)this).InvalidateByCacheKeyAsync(key, CancellationToken.None).ConfigureAwait(false);
                 }
             }
-        }
-
-        public async Task InvalidateByVariableKeyAsync<T>(IEnumerable<string> values, CancellationToken cancellation) where T : ICacheVariableKey
-        {
-            await InvalidateByDependenciesAsync(new[] { new CachePartitionedDependencies(typeof(T).Name, values.ToArray()) }, cancellation)
-                .ConfigureAwait(false);
         }
 
         #region ICacheManagementService
@@ -133,15 +123,8 @@ namespace Dex.DistributedCache.Services
             await _cache.RemoveAsync(GetCacheKeyForValueData(key), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheManagementService.SetCacheDependenciesAsync(string key, int expiration,
-            IDictionary<Type, string> variableKeys, object? executedActionResult, CancellationToken cancellation)
+        async Task ICacheManagementService.SetCacheDependenciesAsync(string key, int expiration, object? executedActionResult, CancellationToken cancellation)
         {
-            if (variableKeys.Count > 0)
-            {
-                var partDependencies = variableKeys.Select(vk => new CachePartitionedDependencies(vk.Key.Name, new[] { vk.Value }));
-                await SetDependencyValueDataAsync(key, partDependencies, expiration, cancellation).ConfigureAwait(false);
-            }
-
             var resultType = executedActionResult?.GetType();
             if (resultType != null)
             {
@@ -158,8 +141,7 @@ namespace Dex.DistributedCache.Services
         private static string GenerateCacheKeyByParams(IEnumerable<string> args)
         {
             var argsStr = string.Join(KeySeparator, args);
-            // TODO optimize, memory alloc, encoding
-            return CacheHelper.CreateMd5(CacheHelper.Base64Encode(argsStr));
+            return CacheHelper.CreateMd5(argsStr);
         }
 
         private static DistributedCacheEntryOptions GetCacheEntryOptions(int expiration)
@@ -167,9 +149,9 @@ namespace Dex.DistributedCache.Services
             return new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(expiration) };
         }
 
-        private async Task<byte[]?> GetValueDataByDependencyAsync(string key, string dependencyType, CancellationToken cancellation)
+        private async Task<byte[]?> GetValueDataByDependencyAsync(string key, CancellationToken cancellation)
         {
-            return await _cache.GetAsync(GetCacheKeyForDependencyValueData(key, dependencyType), cancellation).ConfigureAwait(false);
+            return await _cache.GetAsync(GetCacheKeyForDependencyValueData(key), cancellation).ConfigureAwait(false);
         }
 
         private static string GetCacheKeyForMetaInfo(string key)
@@ -184,9 +166,9 @@ namespace Dex.DistributedCache.Services
             return string.Join(KeySeparator, keyArgs);
         }
 
-        private static string GetCacheKeyForDependencyValueData(string key, string dependencyType)
+        private static string GetCacheKeyForDependencyValueData(string key)
         {
-            return string.Join(KeySeparator, KeyPrefix, dependencyType, key);
+            return string.Join(KeySeparator, KeyPrefix, KeyDependencyPrefix, key);
         }
     }
 }

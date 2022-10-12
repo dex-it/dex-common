@@ -2,7 +2,7 @@
 
 namespace Dex.DistributedCache.Tests.Services
 {
-    public class CacheLocaleVariableKeyTest : ICacheLocaleVariableKey
+    public class CacheLocaleVariableKeyTest : ICacheLocaleVariableKeyResolver
     {
         public string GetVariableKey()
         {

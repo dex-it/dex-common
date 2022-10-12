@@ -22,26 +22,26 @@ namespace Dex.DistributedCache.Services
     {
         private readonly ILogger<CacheActionFilterService> _logger;
         private readonly ICacheManagementService _cacheService;
-        private readonly ICacheVariableKeyFactory _cacheVariableKeyFactory;
+        private readonly ICacheVariableKeyResolverFactory _cacheVariableKeyResolverFactory;
 
         public CacheActionFilterService(ILogger<CacheActionFilterService> logger, ICacheManagementService cacheService,
-            ICacheVariableKeyFactory cacheVariableKeyFactory)
+            ICacheVariableKeyResolverFactory cacheVariableKeyResolverFactory)
         {
             _logger = logger;
             _cacheService = cacheService;
-            _cacheVariableKeyFactory = cacheVariableKeyFactory;
+            _cacheVariableKeyResolverFactory = cacheVariableKeyResolverFactory;
         }
 
-        public IDictionary<Type, string> GetVariableKeys(IEnumerable<Type> cacheVariableKeys)
+        public IDictionary<Type, string> GetVariableKeys(IEnumerable<Type> cacheVariableKeyResolvers)
         {
             var variableKeyDictionary = new Dictionary<Type, string>();
-            foreach (var cacheVariableKey in cacheVariableKeys)
+            foreach (var cacheVariableKeyResolver in cacheVariableKeyResolvers)
             {
-                var cacheVariableKeyService = _cacheVariableKeyFactory.GetCacheVariableKeyService(cacheVariableKey);
-                if (cacheVariableKeyService == null) continue;
+                var cacheVariableKeyResolverService = _cacheVariableKeyResolverFactory.GetCacheVariableKeyResolverService(cacheVariableKeyResolver);
+                if (cacheVariableKeyResolverService == null) continue;
 
-                var variableKey = cacheVariableKeyService.GetVariableKey();
-                variableKeyDictionary.Add(cacheVariableKey, variableKey);
+                var variableKey = cacheVariableKeyResolverService.GetVariableKey();
+                variableKeyDictionary.Add(cacheVariableKeyResolver, variableKey);
             }
 
             return variableKeyDictionary;
@@ -82,7 +82,7 @@ namespace Dex.DistributedCache.Services
             return false;
         }
 
-        public async Task<bool> TryCacheValue(string key, int expiration, IDictionary<Type, string> variableKeys, ActionExecutedContext executedContext)
+        public async Task<bool> TryCacheValue(string key, int expiration, ActionExecutedContext executedContext)
         {
             if (executedContext.Exception != null) throw executedContext.Exception;
 
@@ -104,7 +104,7 @@ namespace Dex.DistributedCache.Services
                     SetETagHeader(executedContext, cacheMetaInfo);
 
                     var executedActionResult = (executedContext.Result as ObjectResult)?.Value;
-                    await _cacheService.SetCacheDependenciesAsync(key, expiration, variableKeys, executedActionResult, cancellation).ConfigureAwait(false);
+                    await _cacheService.SetCacheDependenciesAsync(key, expiration, executedActionResult, cancellation).ConfigureAwait(false);
                 }
             }
             catch (Exception e)

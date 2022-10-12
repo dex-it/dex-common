@@ -1,6 +1,6 @@
 namespace Dex.DistributedCache.Services
 {
-    public interface ICacheVariableKey
+    public interface ICacheVariableKeyResolver
     {
         string GetVariableKey();
     }
