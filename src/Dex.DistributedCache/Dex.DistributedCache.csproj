@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Dex.DistributedCache</AssemblyName>
+        <RootNamespace>Dex.DistributedCache</RootNamespace>
+        <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+        <PackageVersion>1.0.0</PackageVersion>
+        <PackageTags>response cache, etag specification, cache-control, distributed cache</PackageTags>
+    </PropertyGroup>
+
+    <!--Для NuGet-->
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>dex team</Authors>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
+    </PropertyGroup>
+    <!--/Для NuGet-->
+    
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Net.Http.Headers" Version="2.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Services\CacheService.cs">
+            <DependentUpon>ICacheService.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Services\CacheVariableKeyResolverFactory.cs">
+            <DependentUpon>ICacheVariableKeyResolverFactory.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Services\CacheDependencyFactory.cs">
+            <DependentUpon>ICacheDependencyFactory.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Services\CacheActionFilterService.cs">
+            <DependentUpon>ICacheActionFilterService.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Services\ICacheUserVariableKeyResolver.cs">
+            <DependentUpon>ICacheVariableKeyResolver.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Services\ICacheLocaleVariableKeyResolver.cs">
+            <DependentUpon>ICacheVariableKeyResolver.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Services\ICacheManagementService.cs">
+            <DependentUpon>ICacheService.cs</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+</Project>
