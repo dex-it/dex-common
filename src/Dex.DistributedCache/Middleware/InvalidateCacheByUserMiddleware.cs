@@ -12,7 +12,7 @@ namespace Dex.DistributedCache.Middleware
 {
     public class InvalidateCacheByUserMiddleware
     {
-        private const string InvalidateHeader = "InvalidateCacheByUserDependencyType";
+        private const string InvalidateHeader = "ForceInvalidateCacheByUser";
 
         private readonly RequestDelegate _next;
 
