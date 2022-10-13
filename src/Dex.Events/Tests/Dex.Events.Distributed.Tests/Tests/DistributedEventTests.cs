@@ -114,7 +114,7 @@ namespace Dex.Events.Distributed.Tests.Tests
         }
 
         [Test]
-        public async Task RaiseOutboxDistributedEventTest()
+        public async Task RaiseDistributedEventOnOutboxContextTest()
         {
             await using var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
@@ -147,6 +147,38 @@ namespace Dex.Events.Distributed.Tests.Tests
             await handler.ProcessAsync(CancellationToken.None);
 
             Assert.AreEqual(3, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+        }
+
+        [Test]
+        public async Task RaiseDistributedEventOnOutboxServiceTest()
+        {
+            await using var serviceProvider = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IBus>>, TestOutboxDistributedEventHandler<IBus>>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IExternalBus>>, TestOutboxDistributedEventHandler<IExternalBus>>()
+                .BuildServiceProvider();
+
+            var count = 0;
+            TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => { count++; };
+            TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => { count++; };
+
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+
+            dbContext.Set<User>().Add(user);
+            var correlationId = Guid.NewGuid();
+            await outboxService.RaiseDistributedEventAsync(correlationId, new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
+            await outboxService.RaiseDistributedEventAsync<IExternalBus>(correlationId, new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
+            await dbContext.SaveChangesAsync();
+
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            Assert.AreEqual(2, count);
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
         }
 
