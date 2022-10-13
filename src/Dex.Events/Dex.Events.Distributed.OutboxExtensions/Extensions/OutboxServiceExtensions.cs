@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
@@ -21,12 +20,8 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
             where TBus : IBus
         {
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
-            if (outboxMessage == null) throw new ArgumentNullException(nameof(outboxMessage));
 
-            var messageType = outboxMessage.GetType();
-            var eventParams = JsonSerializer.Serialize(outboxMessage, messageType);
-            var eventMessage = new OutboxDistributedEventMessage<TBus>(eventParams, messageType.AssemblyQualifiedName!);
-
+            var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage);
             await outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken).ConfigureAwait(false);
         }
     }
