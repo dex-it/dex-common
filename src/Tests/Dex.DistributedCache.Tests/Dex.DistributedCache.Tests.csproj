@@ -21,4 +21,10 @@
       <ProjectReference Include="..\..\Dex.DistributedCache\Dex.DistributedCache.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="Services\UserIdServiceTest.cs">
+        <DependentUpon>IUserIdServiceTest.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

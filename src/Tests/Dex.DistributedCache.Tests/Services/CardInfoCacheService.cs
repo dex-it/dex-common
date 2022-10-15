@@ -11,19 +11,18 @@ namespace Dex.DistributedCache.Tests.Services
     public class CardInfoCacheService : ICacheDependencyService<CardInfo[]>
     {
         private readonly ICacheService _cacheService;
-        private readonly ICacheUserVariableKeyResolver _cacheUserVariableKeyResolver;
+        private readonly IUserIdServiceTest _userIdService;
 
-        public CardInfoCacheService(ICacheService cacheService, ICacheUserVariableKeyResolver cacheUserVariableKeyResolver)
+        public CardInfoCacheService(ICacheService cacheService, IUserIdServiceTest userIdService)
         {
             _cacheService = cacheService;
-            _cacheUserVariableKeyResolver = cacheUserVariableKeyResolver;
+            _userIdService = userIdService;
         }
 
         public async Task SetAsync(string key, CardInfo[]? valueData, int expiration, CancellationToken cancellation)
         {
             var dependencies = new List<CacheDependency>();
-
-            dependencies.Add(new CacheDependency(_cacheUserVariableKeyResolver.GetVariableKey()));
+            dependencies.Add(new CacheDependency(_userIdService.UserId.ToString()));
 
             if (valueData != null)
             {

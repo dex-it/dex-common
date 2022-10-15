@@ -109,7 +109,7 @@ await cacheService.InvalidateByDependenciesAsync(invalidateValues, CancellationT
 ```
 
 It is possible to invalidate cache using middleware.
-To do this, an empty special header must be added to the request: InvalidateCacheByUserDependencyType.
+To do this, an empty special header must be added to the request: ForceInvalidateCacheByUser.
 ```csharp
 app.UseInvalidateCacheByUserMiddleware();
 ```
