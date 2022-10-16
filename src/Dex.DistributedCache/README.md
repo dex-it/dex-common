@@ -47,18 +47,18 @@ Dependencies - additional keys pointing to the cache object, allow you to reset 
 public class CardInfoCacheService : ICacheDependencyService<CardInfo[]>
 {
     private readonly ICacheService _cacheService;
-    private readonly ICacheUserVariableKeyResolver _cacheUserVariableKeyResolver;
+    private readonly IUserIdService _userIdService;
 
-    public CardInfoCacheService(ICacheService cacheService, ICacheUserVariableKeyResolver cacheUserVariableKeyResolver)
+    public CardInfoCacheService(ICacheService cacheService, IUserIdService userIdService)
     {
         _cacheService = cacheService;
-        _cacheUserVariableKeyResolver = cacheUserVariableKeyResolver;
+        _userIdService = userIdService;
     }
 
     public async Task SetAsync(string key, CardInfo[]? valueData, int expiration, CancellationToken cancellation)
     {
         var dependencies = new List<CacheDependency>();
-        dependencies.Add(new CacheDependency(_cacheUserVariableKeyResolver.GetVariableKey()));
+        dependencies.Add(new CacheDependency(_userIdService.UserId.ToString()));
 
         if (valueData != null)
         {
@@ -74,30 +74,24 @@ public class CardInfoCacheService : ICacheDependencyService<CardInfo[]>
 }
 ```
 
-Also you need to add a service CacheUserVariableKey that implements an interface ICacheUserVariableKey : ICacheVariableKey.
+Also you need to add a service, which will receive a variable key, for example CacheUserVariableKeyResolver that implements an interface ICacheUserVariableKeyResolver : ICacheVariableKeyResolver.
 
 Cache variability parameters - a separate cache object is created for each variable parameter.
+
+It is possible to use our interfaces of classic cache variability keys: ICacheUserVariableKeyResolver, ICacheLocaleVariableKeyResolver.
 ```csharp
-public interface ICacheUserVariableKey : ICacheVariableKey
+public class CacheUserVariableKeyResolver : ICacheUserVariableKeyResolver
 {
-}
+    private readonly IUserIdService _userIdService;
 
-public class CacheUserVariableKey : ICacheUserVariableKey
-{
-    private readonly IPrincipal _current;
-
-    public CacheUserVariableKey(IPrincipal current)
+    public CacheUserVariableKeyResolver(IUserIdService userIdService)
     {
-        _current = current;
+        _userIdService = userIdService;
     }
 
     public string GetVariableKey()
     {
-        var principal = (ClaimsPrincipal)_current;
-        var userIdClaim = principal.FindFirstValue(JwtClaimTypes.Subject) 
-                          ?? principal.FindFirstValue(ClaimTypes.NameIdentifier)
-                          ?? throw new AuthenticationException("Unknown UserId");
-        return userIdClaim;
+        return _userIdService.UserId.ToString();
     }
 }
 ```
@@ -109,7 +103,7 @@ await cacheService.InvalidateByDependenciesAsync(invalidateValues, CancellationT
 ```
 
 It is possible to invalidate cache using middleware.
-To do this, an empty special header must be added to the request: InvalidateCacheByUserDependencyType.
+To do this, an empty special header must be added to the request: ForceInvalidateCacheByUser.
 ```csharp
 app.UseInvalidateCacheByUserMiddleware();
 ```

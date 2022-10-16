@@ -8,9 +8,9 @@ namespace Dex.DistributedCache.Extensions
         public static IServiceCollection AddDistributedCache(this IServiceCollection services)
         {
             return services
-                .AddSingleton<ICacheService, CacheService>()
-                .AddSingleton<ICacheManagementService, CacheService>(provider => (CacheService)provider.GetRequiredService<ICacheService>())
-                .AddSingleton<ICacheDependencyFactory, CacheDependencyFactory>()
+                .AddTransient<ICacheService, CacheService>()
+                .AddTransient<ICacheManagementService, CacheService>(provider => (CacheService)provider.GetRequiredService<ICacheService>())
+                .AddTransient<ICacheDependencyFactory, CacheDependencyFactory>()
                 .AddTransient<ICacheActionFilterService, CacheActionFilterService>()
                 .AddTransient<ICacheVariableKeyResolverFactory, CacheVariableKeyResolverFactory>();
         }

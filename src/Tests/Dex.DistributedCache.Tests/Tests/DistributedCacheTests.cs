@@ -33,9 +33,11 @@ namespace Dex.DistributedCache.Tests.Tests
         [Test]
         public async Task CheckExistingCacheValueReturnFalseTest()
         {
-            await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
-            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
+            await using var serviceProvider = InitServiceCollection().BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
+
+            var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -50,9 +52,11 @@ namespace Dex.DistributedCache.Tests.Tests
         [Test]
         public async Task GetNotModifiedStatusCodeTest()
         {
-            await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
-            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
+            await using var serviceProvider = InitServiceCollection().BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
+
+            var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -73,9 +77,11 @@ namespace Dex.DistributedCache.Tests.Tests
         [Test]
         public async Task GetExistingValueFromCacheWhenRequestedOldETagTest()
         {
-            await using var serviceProvider = InitServiceCollection().BuildServiceProvider();
-            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
+            await using var serviceProvider = InitServiceCollection().BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
+
+            var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -103,10 +109,11 @@ namespace Dex.DistributedCache.Tests.Tests
         {
             var serviceCollection = InitServiceCollection();
             serviceCollection.AddMvc();
-            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
 
-            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
+            var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
             var paramsList = new List<string> { "paramTest" };
@@ -118,7 +125,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(cacheValue));
             actionExecutedContext.HttpContext.Response.Body = buffer;
             actionExecutedContext.Result = new OkObjectResult(cacheValue);
-            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+            actionExecutedContext.HttpContext.RequestServices = serviceScope.ServiceProvider;
 
             var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, actionExecutedContext);
 
@@ -130,13 +137,15 @@ namespace Dex.DistributedCache.Tests.Tests
         public async Task TryCacheValueWithVariableKeyDependenciesTest()
         {
             var serviceCollection = InitServiceCollection()
+                .AddScoped<IUserIdServiceTest, UserIdServiceTest>()
                 .RegisterCacheVariableKeyResolver<ICacheUserVariableKeyResolver, CacheUserVariableKeyTest>()
                 .RegisterCacheVariableKeyResolver<ICacheLocaleVariableKeyResolver, CacheLocaleVariableKeyTest>();
             serviceCollection.AddMvc();
-            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
 
-            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
+            var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
             Type[] cacheVariableKeys = { typeof(ICacheUserVariableKeyResolver), typeof(ICacheLocaleVariableKeyResolver) };
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
@@ -149,7 +158,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(cacheValue));
             actionExecutedContext.HttpContext.Response.Body = buffer;
             actionExecutedContext.Result = new OkObjectResult(cacheValue);
-            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+            actionExecutedContext.HttpContext.RequestServices = serviceScope.ServiceProvider;
 
             var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, actionExecutedContext);
 
@@ -161,13 +170,15 @@ namespace Dex.DistributedCache.Tests.Tests
         public async Task TryCacheValueWithPartitionedDependenciesTest()
         {
             var serviceCollection = InitServiceCollection()
+                .AddScoped<IUserIdServiceTest, UserIdServiceTest>()
                 .RegisterCacheVariableKeyResolver<ICacheUserVariableKeyResolver, CacheUserVariableKeyTest>()
                 .RegisterCacheDependencyService<CardInfo[], CardInfoCacheService>();
             serviceCollection.AddMvc();
-            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
 
-            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
+            var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
             Type[] cacheVariableKeys = { typeof(ICacheUserVariableKeyResolver) };
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
@@ -180,7 +191,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(cacheValue)));
             actionExecutedContext.HttpContext.Response.Body = buffer;
             actionExecutedContext.Result = new OkObjectResult(cacheValue);
-            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+            actionExecutedContext.HttpContext.RequestServices = serviceScope.ServiceProvider;
 
             var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, actionExecutedContext);
 
@@ -192,13 +203,15 @@ namespace Dex.DistributedCache.Tests.Tests
         public async Task InvalidateCacheByDependenciesTest()
         {
             var serviceCollection = InitServiceCollection()
+                .AddScoped<IUserIdServiceTest, UserIdServiceTest>()
                 .RegisterCacheVariableKeyResolver<ICacheUserVariableKeyResolver, CacheUserVariableKeyTest>()
                 .RegisterCacheDependencyService<CardInfo[], CardInfoCacheService>();
             serviceCollection.AddMvc();
-            await using var serviceProvider = serviceCollection.BuildServiceProvider();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
 
-            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
-            var cacheService = serviceProvider.GetRequiredService<ICacheService>();
+            var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
+            var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheService>();
 
             Type[] cacheVariableKeys = { typeof(ICacheUserVariableKeyResolver) };
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
@@ -211,7 +224,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(cacheValue)));
             actionExecutedContext.HttpContext.Response.Body = buffer;
             actionExecutedContext.Result = new OkObjectResult(cacheValue);
-            actionExecutedContext.HttpContext.RequestServices = serviceProvider;
+            actionExecutedContext.HttpContext.RequestServices = serviceScope.ServiceProvider;
 
             var isValueCached = await cacheActionFilterService.TryCacheValue(cacheKey, ExpirationInSeconds, actionExecutedContext);
 
