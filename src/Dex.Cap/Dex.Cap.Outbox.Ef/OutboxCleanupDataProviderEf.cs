@@ -70,9 +70,9 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            await strategy.ExecuteInTransactionAsync((_dbContext, messageId), static async (state, ct) =>
+            await strategy.ExecuteInTransactionAsync((_dbContext, _logger, messageId), static async (state, ct) =>
                     {
-                        var (dbContext, messageId) = state;
+                        var (dbContext, logger, messageId) = state;
 
                         var lockedJob = await dbContext.Set<OutboxEnvelope>()
                             .Where(x => x.Id == messageId)
@@ -82,12 +82,20 @@ namespace Dex.Cap.Outbox.Ef
                         if (lockedJob != null)
                         {
                             dbContext.Set<OutboxEnvelope>().Remove(lockedJob);
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+
+                            try
+                            {
+                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                            }
+                            catch (DbUpdateException e)
+                            {
+                                logger.LogInformation(e, "Job {JobId} has already been deleted", lockedJob.Id);
+                            }
                         }
                     },
                     static async (state, ct) =>
                     {
-                        var (dbContext, messageId) = state;
+                        var (dbContext, _, messageId) = state;
                         bool exists = await dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.Id == messageId, ct).ConfigureAwait(false);
                         return !exists;
                     },
