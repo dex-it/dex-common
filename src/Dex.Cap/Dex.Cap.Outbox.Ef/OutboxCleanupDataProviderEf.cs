@@ -89,7 +89,7 @@ namespace Dex.Cap.Outbox.Ef
                             }
                             catch (DbUpdateException e)
                             {
-                                logger.LogInformation(e, "Job {JobId} has already been deleted", lockedJob.Id);
+                                logger.LogDebug(e, "Job {JobId} has already been deleted", lockedJob.Id);
                             }
                         }
                     },
