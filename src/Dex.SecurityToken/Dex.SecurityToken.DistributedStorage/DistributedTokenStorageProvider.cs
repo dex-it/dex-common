@@ -1,22 +1,19 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Dex.SecurityTokenProvider.Exceptions;
+﻿using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Models;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Dex.SecurityToken.RedisStorage
+namespace Dex.SecurityToken.DistributedStorage
 {
     // ReSharper disable once UnusedType.Global
     /// <summary>
-    /// Implementation of ITokenInfoStorage based on Redis
+    /// Implementation of ITokenInfoStorage based on IDistributedCache 
     /// </summary>
-    public class TokenRedisStorageProvider : ITokenInfoStorage
+    internal class DistributedTokenStorageProvider : ITokenInfoStorage
     {
         private readonly IDistributedCacheTypedClient _cacheTypedClient;
 
-        public TokenRedisStorageProvider(IDistributedCacheTypedClient cacheTypedClient)
+        public DistributedTokenStorageProvider(IDistributedCacheTypedClient cacheTypedClient)
         {
             _cacheTypedClient = cacheTypedClient ?? throw new ArgumentNullException(nameof(cacheTypedClient));
         }

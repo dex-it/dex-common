@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Models;
 
-namespace Dex.SecurityTokenProviderTests
+namespace Dex.SecurityTokenProvider
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
-    internal class TestTokenInfoStorage : ITokenInfoStorage
+    /// <summary>
+    /// Not for production use, hold token info into memory, not persisted
+    /// </summary>
+    internal class InMemoryTokenInfoStorage : ITokenInfoStorage
     {
-        private readonly Dictionary<Guid, TokenInfo> _tokenInfos = new();
+        private readonly ConcurrentDictionary<Guid, TokenInfo> _tokenInfos = new();
 
         public Task<TokenInfo> GetTokenInfoAsync(Guid tokenInfoId, CancellationToken cancellationToken = default)
         {
@@ -25,14 +24,19 @@ namespace Dex.SecurityTokenProviderTests
         public Task SaveTokenInfoAsync(TokenInfo tokenInfo, CancellationToken cancellationToken = default)
         {
             if (tokenInfo == null) throw new ArgumentNullException(nameof(tokenInfo));
-            _tokenInfos.Add(tokenInfo.Id, tokenInfo);
+            if (!_tokenInfos.TryAdd(tokenInfo.Id, tokenInfo))
+            {
+                throw new TokenAlreadyExistException($"tokenId:{tokenInfo.Id}");
+            }
+
             return Task.CompletedTask;
         }
 
         public Task SetActivatedAsync(Guid tokenInfoId, CancellationToken cancellationToken = default)
         {
             if (tokenInfoId == default) throw new ArgumentNullException(nameof(tokenInfoId));
-            if (!_tokenInfos.ContainsKey(tokenInfoId)) throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
+            if (!_tokenInfos.ContainsKey(tokenInfoId))
+                throw new TokenInfoNotFoundException($"TokenInfoId = {tokenInfoId}");
 
             _tokenInfos[tokenInfoId].Activated = true;
             return Task.CompletedTask;

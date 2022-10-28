@@ -2,9 +2,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Dex.SecurityToken.RedisStorage
+namespace Dex.SecurityToken.DistributedStorage
 {
-    public interface IDistributedCacheTypedClient
+    internal interface IDistributedCacheTypedClient
     {
         Task SetAsync<T>(string key, T value, DistributedCacheEntryOptions options, CancellationToken cancellationToken = default);
 

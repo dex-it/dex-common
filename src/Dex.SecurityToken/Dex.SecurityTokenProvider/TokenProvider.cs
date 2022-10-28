@@ -90,7 +90,7 @@ namespace Dex.SecurityTokenProvider
             {
                 true when tokenInfo.Expired <= DateTimeOffset.UtcNow => throw new TokenExpiredException($"Id = {tokenInfo.Id}"),
                 true when tokenInfo.Activated => throw new TokenAlreadyActivatedException($"Id = {tokenInfo.Id}"),
-                true when _tokenProviderOptions.ApiResource != tokenData.Audience => throw new InvalidAudienceException(),
+                true when _tokenProviderOptions.ApiResource != tokenData.Audience => throw new TokenInvalidAudienceException(),
                 _ => tokenData
             };
             return result;
