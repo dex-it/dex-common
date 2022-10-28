@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Dex.SecurityTokenProvider.Models
+﻿namespace Dex.SecurityTokenProvider.Models
 {
     public record TokenInfo 
     {
