@@ -1,12 +1,9 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Dex.SecurityToken.RedisStorage
+namespace Dex.SecurityToken.DistributedStorage
 {
-    public class DistributedCacheTypedClient : IDistributedCacheTypedClient
+    internal class DistributedCacheTypedClient : IDistributedCacheTypedClient
     {
         private readonly IDistributedCache _distributedCache;
 
@@ -29,13 +26,13 @@ namespace Dex.SecurityToken.RedisStorage
             return Deserialize<T>(utf8Bytes);
         }
 
-        private T? Deserialize<T>(byte[]? jsonUtf8Bytes)
+        private static T? Deserialize<T>(byte[]? jsonUtf8Bytes)
         {
             if (jsonUtf8Bytes == null || jsonUtf8Bytes.Length == 0)
             {
                 return default;
             }
-            
+
             var readOnlySpan = new ReadOnlySpan<byte>(jsonUtf8Bytes);
             var deserializedEntity = JsonSerializer.Deserialize<T>(readOnlySpan);
             return deserializedEntity;

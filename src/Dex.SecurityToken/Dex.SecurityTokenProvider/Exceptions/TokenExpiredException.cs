@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Dex.SecurityTokenProvider.Exceptions
+﻿namespace Dex.SecurityTokenProvider.Exceptions
 {
     public class TokenExpiredException : Exception
     {

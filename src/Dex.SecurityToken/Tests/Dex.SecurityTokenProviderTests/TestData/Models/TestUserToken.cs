@@ -1,5 +1,4 @@
-﻿using System;
-using Dex.SecurityTokenProvider.Models;
+﻿using Dex.SecurityTokenProvider.Models;
 
 namespace Dex.SecurityTokenProviderTests.TestData.Models
 {

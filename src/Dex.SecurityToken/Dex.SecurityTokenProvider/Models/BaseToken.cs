@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Dex.SecurityTokenProvider.Models

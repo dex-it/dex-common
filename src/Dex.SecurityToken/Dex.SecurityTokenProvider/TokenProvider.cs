@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Interfaces;
 using Dex.SecurityTokenProvider.Models;
@@ -90,7 +87,7 @@ namespace Dex.SecurityTokenProvider
             {
                 true when tokenInfo.Expired <= DateTimeOffset.UtcNow => throw new TokenExpiredException($"Id = {tokenInfo.Id}"),
                 true when tokenInfo.Activated => throw new TokenAlreadyActivatedException($"Id = {tokenInfo.Id}"),
-                true when _tokenProviderOptions.ApiResource != tokenData.Audience => throw new InvalidAudienceException(),
+                true when _tokenProviderOptions.ApiResource != tokenData.Audience => throw new TokenInvalidAudienceException(),
                 _ => tokenData
             };
             return result;

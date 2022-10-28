@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Dex.SecurityToken.DistributedStorage;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Extensions;
 using Dex.SecurityTokenProvider.Interfaces;
@@ -9,6 +7,7 @@ using Dex.SecurityTokenProviderTests.TestData;
 using Dex.SecurityTokenProviderTests.TestData.Models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,6 +18,9 @@ namespace Dex.SecurityTokenProviderTests
     public class TokenProviderTests
     {
         private readonly IServiceProvider _serviceProvider;
+        private const string TestAudience = "TestAudience";
+
+        private const bool UseDistributedCache = true;
 
         public TokenProviderTests()
         {
@@ -26,7 +28,7 @@ namespace Dex.SecurityTokenProviderTests
         }
 
         [Fact]
-        public async Task TokenProviderSmokeTest()
+        public async Task CreateTokenAsUrlAsyncTest()
         {
             //Arrange
             var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
@@ -36,13 +38,31 @@ namespace Dex.SecurityTokenProviderTests
             var token = await tokenProvider.CreateTokenAsUrlAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
                 TimeSpan.FromSeconds(50));
 
+            var tokenData = await tokenProvider.GetTokenDataFromUrlAsync<TestUserToken>(token);
+
+            //Assert
+            Assert.Equal(tokenData.UserId, userToken.UserId);
+            Assert.Equal(tokenData.Audience, userToken.Audience);
+            Assert.Equal(tokenData.Audience, TestAudience);
+        }
+
+        [Fact]
+        public async Task CreateTokenAsyncTest()
+        {
+            //Arrange
+            var tokenProvider = _serviceProvider.GetRequiredService<ITokenProvider>();
+            var userToken = UserTokensData.ValidUserToken;
+
+            //Act
+            var token = await tokenProvider.CreateTokenAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
+                TimeSpan.FromSeconds(50));
+
             var tokenData = await tokenProvider.GetTokenDataAsync<TestUserToken>(token);
 
             //Assert
             Assert.Equal(tokenData.UserId, userToken.UserId);
             Assert.Equal(tokenData.Audience, userToken.Audience);
         }
-
 
         [Fact]
         public async Task TokenExpiredTest()
@@ -60,7 +80,7 @@ namespace Dex.SecurityTokenProviderTests
             await Assert.ThrowsAsync<TokenExpiredException>(async () => { await tokenProvider.GetTokenDataAsync<TestUserToken>(token); });
         }
 
-        
+
         [Fact]
         public void NegativeConcurrencyTest()
         {
@@ -70,20 +90,20 @@ namespace Dex.SecurityTokenProviderTests
             var protector2 = dataProtectionProvider.CreateProtector("Protector");
 
             var testString = "testString";
-            
+
             //Act
             var encryptedToken1 = protector1.Protect(testString);
             var encryptedToken2 = protector2.Protect(testString);
-            
-                            
+
+
             var decryptedToken1 = protector1.Unprotect(encryptedToken2);
             var decryptedToken2 = protector2.Unprotect(encryptedToken1);
-            
+
             //Arrange
             Assert.NotEqual(encryptedToken1, encryptedToken2);
             Assert.Equal(decryptedToken1, decryptedToken2);
         }
-        
+
         [Fact]
         public async Task TokenAlreadyActivatedTest()
         {
@@ -94,7 +114,7 @@ namespace Dex.SecurityTokenProviderTests
             //Act
             var token = await tokenProvider.CreateTokenAsUrlAsync<TestUserToken>(testUserToken => { testUserToken.UserId = userToken.UserId; },
                 TimeSpan.FromSeconds(10));
-            
+
             var tokenData = await tokenProvider.GetTokenDataFromUrlAsync<TestUserToken>(token);
             await tokenProvider.MarkTokenAsUsed(tokenData.Id);
 
@@ -109,7 +129,7 @@ namespace Dex.SecurityTokenProviderTests
                 .AddInMemoryCollection(
                     new Dictionary<string, string?>
                     {
-                        { $"{nameof(TokenProviderOptions)}:{nameof(TokenProviderOptions.ApiResource)}", "TestAudience" }
+                        { $"{nameof(TokenProviderOptions)}:{nameof(TokenProviderOptions.ApiResource)}", TestAudience }
                     }).Build();
 
 
@@ -126,7 +146,13 @@ namespace Dex.SecurityTokenProviderTests
                 .PersistKeysToDbContext<DataProtectionKeyContext>()
                 .SetApplicationName("TestApp");
 
-            services.AddSecurityTokenProvider<TestTokenInfoStorage>(config.GetSection(nameof(TokenProviderOptions)));
+            services.AddSecurityTokenProvider(config.GetSection(nameof(TokenProviderOptions)));
+            if (UseDistributedCache)
+            {
+                services.AddSingleton<IDistributedCache, MemoryDistributedCache>();
+                services.AddDistributedTokenInfoStorage();
+            }
+
             return services.BuildServiceProvider();
         }
     }
