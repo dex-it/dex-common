@@ -1,15 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-      <LangVersion>Latest</LangVersion>
-      <Nullable>enable</Nullable>
-      <PackageTags>dex; extensions</PackageTags>
-      <RepositoryUrl>https://github.com/dex-it/dex-common</RepositoryUrl>
-      <Copyright>dex</Copyright>
-      <PackageProjectUrl>https://github.com/dex-it/dex-common/projects/1</PackageProjectUrl>
-      <RepositoryType>github</RepositoryType>
-      <EnableNETAnalyzers>true</EnableNETAnalyzers>
-      <TargetFramework>netstandard2.1</TargetFramework>
-      <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-  </PropertyGroup>
+    <PropertyGroup>
+        <LangVersion>Latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <PackageVersion>1.0.11</PackageVersion>
+    </PropertyGroup>
+    <!--Для NuGet-->
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>dex; extensions</PackageTags>
+        <Authors>dex team</Authors>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
+    </PropertyGroup>
+    <!--/Для NuGet-->
 </Project>
