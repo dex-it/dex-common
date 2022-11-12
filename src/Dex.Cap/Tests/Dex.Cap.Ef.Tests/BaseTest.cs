@@ -13,14 +13,15 @@ namespace Dex.Cap.Ef.Tests
     {
         protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
 
-        [OneTimeSetUp]
+        [SetUp]
         public async Task Setup()
         {
             var db = new TestDbContext(DbName);
+            await db.Database.EnsureDeletedAsync();
             await db.Database.MigrateAsync();
         }
 
-        [OneTimeTearDown]
+        [TearDown]
         public async Task TearDown()
         {
             var db = new TestDbContext(DbName);
@@ -33,12 +34,12 @@ namespace Dex.Cap.Ef.Tests
                 .AddLogging(builder =>
                 {
                     builder.AddDebug();
-                    builder.SetMinimumLevel(LogLevel.Debug);
+                    builder.SetMinimumLevel(LogLevel.Trace);
                 })
                 .AddScoped(_ => new TestDbContext(DbName))
                 .AddOutbox<TestDbContext>();
 
-            sc.AddOptions<OutboxOptions>().Configure(options => options.ProcessorDelay = TimeSpan.FromMilliseconds(100));
+            sc.AddOptions<OutboxOptions>();
 
             return sc;
         }

@@ -43,7 +43,7 @@ namespace Dex.Cap.AspNet.Test
 
             services.AddOutbox<TestDbContext>();
             services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
-            services.RegisterOutboxScheduler(periodSeconds: 30, cleanupDays: 30);
+            services.RegisterOutboxScheduler(periodSeconds: 1, cleanupDays: 30);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime)

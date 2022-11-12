@@ -37,8 +37,12 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 count++;
                 TestContext.WriteLine(Activity.Current?.Id);
             };
+
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            await handler.ProcessAsync(CancellationToken.None);
+            for (int i = 0; i < 5; i++)
+            {
+                await handler.ProcessAsync(CancellationToken.None);
+            }
 
             Assert.AreEqual(2, count);
         }
@@ -87,18 +91,18 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            var repeat = 10;
-            while (repeat-- > 0)
+            for (var i = 0; i < 5; i++)
             {
                 await handler.ProcessAsync(CancellationToken.None);
-                await Task.Delay(100);
             }
 
             // assert
             var db = sp.GetRequiredService<TestDbContext>();
-            var envelope = await db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == oid2).FirstAsync();
-            Assert.AreEqual(envelope.Status, OutboxMessageStatus.Failed);
-            Assert.AreEqual(3, envelope.Retries);
+            var envelopes = await db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).ToArrayAsync();
+            var envelope = envelopes.First();
+            var envelope2 = envelopes.Last();
+            Assert.IsTrue(envelope.Status == OutboxMessageStatus.Succeeded && envelope2.Status == OutboxMessageStatus.Failed);
+            Assert.AreEqual(3, envelope2.Retries);
         }
 
         [Test]
@@ -153,7 +157,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             Assert.AreEqual(1, count);
 
-            await Task.Delay(1000);
+            await Task.Delay(2000);
 
             var cleaner = sp.GetRequiredService<IOutboxCleanupDataProvider>();
             int deletedMessages = await cleaner.Cleanup(TimeSpan.FromMilliseconds(olderThanMilliseconds), CancellationToken.None);
