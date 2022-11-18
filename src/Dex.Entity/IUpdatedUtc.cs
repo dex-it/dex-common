@@ -1,11 +1,9 @@
 using System;
-using Dex.Ef.Attributes;
 
-namespace Dex.Ef.Contracts.Entities
+namespace Dex.Entity
 {
     public interface IUpdatedUtc
     {
-        [Index]
         DateTime UpdatedUtc { get; set; }
     }
 }
