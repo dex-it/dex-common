@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
@@ -121,22 +122,95 @@ namespace Dex.Specifications.EntityFramework.TestProject
         }
 
         [Test]
-        public void MultipleOrSpecificationTest()
+        public void OrSpecificationMultTest()
         {
-            var countryId = Guid.NewGuid();
-            var id = Guid.NewGuid();
-            var employees = 3;
+            var companyIdFirst = Guid.NewGuid();
+            var companyIdSecond = Guid.NewGuid();
+            var companyIdThree = Guid.NewGuid();
 
             var sp = Sp<Company>
-                .Equal(c => c.CountryId, countryId)
-                .Or(s => s.AndEqual(c => c.Id, id)
-                    .Or(s2 => s2.AndEqual(c => c.Employees, employees)));
+                .Equal(c => c.Id, companyIdFirst)
+                .Or(Sp<Company>.Equal(c => c.Id, companyIdSecond))
+                .Or(Sp<Company>.Equal(c => c.Id, companyIdThree));
 
-            Expression<Func<Company, bool>> query = c => c.CountryId == countryId || (c.Id == id || c.Employees == employees);
+            Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst || c.Id == companyIdSecond || c.Id == companyIdThree;
 
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
 
+            TestContext.WriteLine(specificationSql);
+            TestContext.WriteLine(expressionSql);
+            
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+
+        [Test]
+        public void OrSpecificationMultTest2()
+        {
+            var companyIdFirst = Guid.NewGuid();
+            var companyIdSecond = Guid.NewGuid();
+            var companyIdThree = Guid.NewGuid();
+
+            var sp = new OrSpecification<Company>(
+                new Specification<Company>(x => x.Id == companyIdFirst),
+                new Specification<Company>(x => x.Id == companyIdSecond),
+                new Specification<Company>(x => x.Id == companyIdThree));
+
+            Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst || c.Id == companyIdSecond || c.Id == companyIdThree;
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+
+            Assert.AreEqual(specificationSql, expressionSql);
+        }
+
+        [Test]
+        public void OrSpecificationMultSatisfiedTest2()
+        {
+            var companyIdFirst = Guid.NewGuid();
+            var companyIdSecond = Guid.NewGuid();
+            var companyIdThree = Guid.NewGuid();
+
+            var list = new List<Company>()
+            {
+                new() { Id = companyIdFirst },
+                new() { Id = Guid.NewGuid() },
+                new() { Id = Guid.NewGuid() },
+                new() { Id = companyIdSecond },
+            };
+
+            var sp = new OrSpecification<Company>(
+                new Specification<Company>(x => x.Id == companyIdFirst),
+                new Specification<Company>(x => x.Id == companyIdSecond),
+                new Specification<Company>(x => x.Id == companyIdThree));
+
+            Expression<Func<Company, bool>> query = c => c.Id == companyIdFirst || c.Id == companyIdSecond || c.Id == companyIdThree;
+
+            var result1 = list.Where(sp);
+            var result2 = list.Where(query.Compile());
+
+            Assert.AreEqual(2, result1.Intersect(result2).Count());
+        }
+
+        [Test]
+        public void MultipleOrSpecificationTest()
+        {
+            var countryId = Guid.NewGuid();
+            var id = Guid.NewGuid();
+            int employees = 3;
+
+            var sp = Sp<Company>
+                .Equal(c => c.CountryId, countryId)
+                .Or(s => s.AndEqual(c => c.Id, id).Or(s2 => s2.AndEqual(c => c.Employees, employees)));
+
+            Expression<Func<Company, bool>> query = c => c.CountryId == countryId || (true && c.Id == id || (true && c.Employees == employees));
+
+            var specificationSql = GetSql(sp);
+            var expressionSql = GetSql(query);
+            
+            TestContext.WriteLine(specificationSql);
+            TestContext.WriteLine(expressionSql);
+            
             Assert.AreEqual(specificationSql, expressionSql);
         }
 
