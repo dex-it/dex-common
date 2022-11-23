@@ -26,7 +26,7 @@ namespace Dex.Specifications
         }
 
         private Func<T, bool> _compiledPredicate;
-        private Func<T, bool> CompiledPredicate => _compiledPredicate ?? (_compiledPredicate = _predicate.Compile());
+        private Func<T, bool> CompiledPredicate => _compiledPredicate ??= Predicate.Compile();
 
         private Expression<Func<T, bool>> _predicate;
 
@@ -44,11 +44,11 @@ namespace Dex.Specifications
         {
             if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-            var parametersMap = new Dictionary<string, Expression> {{Predicate.Parameters[0].Name, selector.Body}};
+            var parametersMap = new Dictionary<string, Expression> { { Predicate.Parameters[0].Name, selector.Body } };
 
             var creator = Expression.Lambda<Func<TO, bool>>(Predicate.Body, selector.Parameters);
             var result = ParameterExpressionToPropertyRewriter.ReplaceParameters(parametersMap, creator);
-            return new Specification<TO>((Expression<Func<TO, bool>>) result);
+            return new Specification<TO>((Expression<Func<TO, bool>>)result);
         }
 
         public static Specification<T> operator !(Specification<T> specification)
@@ -81,6 +81,11 @@ namespace Dex.Specifications
         public static implicit operator Expression<Func<T, bool>>(Specification<T> specification)
         {
             return specification?.Predicate;
+        }
+
+        public override string ToString()
+        {
+            return Predicate.ToString();
         }
     }
 }
