@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Buffer", "Dex.Buffer\De
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Tests", "_Tests", "{DC15F503-F8C8-4B09-B096-B25B8BB178A1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Ef", "Dex.Ef\Dex.Ef.csproj", "{DC6B199F-B25F-453B-B77E-148D51037ACB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Entity", "Dex.Entity\Dex.Entity.csproj", "{DC6B199F-B25F-453B-B77E-148D51037ACB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Pagination.Test", "Tests\Dex.Pagination.Test\Dex.Pagination.Test.csproj", "{A8867D9D-1E47-48CD-80AB-07D93F0336E5}"
 EndProject
