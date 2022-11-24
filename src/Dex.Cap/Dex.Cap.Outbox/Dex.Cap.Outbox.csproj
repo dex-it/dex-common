@@ -10,7 +10,7 @@
 
   <!--Для NuGet-->
   <PropertyGroup>
-    <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>dex team</Authors>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
