@@ -24,7 +24,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
             await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
