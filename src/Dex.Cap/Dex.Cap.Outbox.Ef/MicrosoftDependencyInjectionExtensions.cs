@@ -19,6 +19,7 @@ namespace Dex.Cap.Outbox.Ef
 
             return serviceProvider
                 .AddScoped<IOutboxService<TDbContext>, OutboxService<TDbContext>>()
+                .AddScoped<IOutboxService>(provider => provider.GetRequiredService<IOutboxService<TDbContext>>())
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
                 .AddScoped<IOutboxDataProvider<TDbContext>, OutboxDataProviderEf<TDbContext>>()

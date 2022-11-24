@@ -4,13 +4,13 @@
     <TargetFramework>net6.0</TargetFramework>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <Nullable>enable</Nullable>
-    <PackageVersion>2.2.0</PackageVersion>
+    <PackageVersion>2.2.1</PackageVersion>
     <PackageTags>outbox business-transaction consistency</PackageTags>
   </PropertyGroup>
 
   <!--Для NuGet-->
   <PropertyGroup>
-    <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>dex team</Authors>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
