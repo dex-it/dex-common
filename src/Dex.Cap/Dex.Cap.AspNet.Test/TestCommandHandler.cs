@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Cap.ConsoleTest
+namespace Dex.Cap.AspNet.Test
 {
     public class TestCommandHandler : IOutboxMessageHandler<TestOutboxCommand>
     {
@@ -19,7 +19,7 @@ namespace Dex.Cap.ConsoleTest
 
         public async Task ProcessMessage(TestOutboxCommand message, CancellationToken cancellationToken)
         {
-            await Task.Delay(2_000, cancellationToken);
+            await Task.Delay(200, cancellationToken);
 
             _logger.LogInformation($"TestCommandHandler - Processed command at {DateTime.Now}, Args: {message.Args}");
 
@@ -31,5 +31,10 @@ namespace Dex.Cap.ConsoleTest
         {
             return ProcessMessage((TestOutboxCommand)outbox, cancellationToken);
         }
+    }
+    
+    public class TestOutboxCommand : IOutboxMessage
+    {
+        public string Args { get; set; }
     }
 }

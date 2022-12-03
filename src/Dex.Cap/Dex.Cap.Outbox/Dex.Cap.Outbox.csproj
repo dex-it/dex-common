@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <Nullable>enable</Nullable>
-    <PackageVersion>2.1.0</PackageVersion>
+    <PackageVersion>2.1.2</PackageVersion>
     <PackageTags>outbox business-transaction consistency</PackageTags>
   </PropertyGroup>
 
@@ -24,6 +24,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="5.0.17" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
   </ItemGroup>
   <!--/Для NuGet-->
 
