@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -17,7 +18,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Dex.Cap.AspNet.Test
 {
@@ -39,9 +43,23 @@ namespace Dex.Cap.AspNet.Test
                 lb.AddConfiguration(Configuration.GetSection("Logging"));
             });
 
+            // configure resource
+            var serviceName = "dex.cap.aspnet.test";
+            var serviceVersion = "1.0";
+            var resourceBuilder =
+                ResourceBuilder
+                    .CreateDefault()
+                    .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+                    .AddAttributes(new Dictionary<string, object>
+                    {
+                        ["environment.name"] = "test",
+                        ["team.name"] = "backend"
+                    });
+
             // add telemetry exporter
             services.AddOpenTelemetryMetrics(builder =>
             {
+                builder.SetResourceBuilder(resourceBuilder);
                 builder.AddConsoleExporter();
                 builder.AddMeter("outbox"); // sample to export
             });
