@@ -23,8 +23,8 @@ namespace Dex.Cap.OnceExecutor.Neo4j
 
             try
             {
-                result = await operation(cancellationToken);
-                await t.CommitAsync();
+                result = await operation(cancellationToken).ConfigureAwait(false);
+                await t.CommitAsync().ConfigureAwait(false);
             }
             finally
             {
@@ -45,7 +45,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
                 .Match($"(t:{nameof(LastTransaction)})")
                 .Where((LastTransaction t) => t.IdempotentKey == idempotentKey)
                 .Return(t => t.As<LastTransaction>())
-                .ResultsAsync;
+                .ResultsAsync.ConfigureAwait(false);
 
             return lastTransaction.Any();
         }
@@ -55,7 +55,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             await Context.Cypher
                 .Create($"(last:{nameof(LastTransaction)}" + " {lt})")
                 .WithParam("lt", new LastTransaction {IdempotentKey = idempotentKey})
-                .ExecuteWithoutResultsAsync();
+                .ExecuteWithoutResultsAsync().ConfigureAwait(false);
         }
     }
 }
