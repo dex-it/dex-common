@@ -55,11 +55,7 @@ namespace Dex.Cap.Outbox
 
         protected abstract Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken);
 
-        public virtual bool IsDbTransientError(Exception ex)
-        {
-            return false;
-        }
-
         public abstract Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken);
+        public abstract int GetFreeMessagesCount();
     }
 }

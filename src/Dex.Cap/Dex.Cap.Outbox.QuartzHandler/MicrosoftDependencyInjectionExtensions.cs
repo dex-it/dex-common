@@ -24,6 +24,9 @@ namespace Dex.Cap.Outbox.AspNetScheduler
             {
                 throw new ArgumentOutOfRangeException(nameof(cleanupDays), cleanupDays, "Should be a positive number");
             }
+            
+            services.AddHealthChecks()
+                .AddCheck<OutboxHealthCheck>("outbox-scheduler");
 
             services
                 .AddSingleton(new OutboxHandlerOptions()

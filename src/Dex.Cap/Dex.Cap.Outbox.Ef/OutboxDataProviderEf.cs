@@ -298,5 +298,10 @@ namespace Dex.Cap.Outbox.Ef
 
             return potentialFree;
         }
+
+        public override int GetFreeMessagesCount()
+        {
+            return _dbContext.Set<OutboxEnvelope>().Count(o => o.Retries < _outboxOptions.Retries && o.Status != OutboxMessageStatus.Succeeded);
+        }
     }
 }

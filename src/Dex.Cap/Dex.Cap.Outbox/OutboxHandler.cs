@@ -20,14 +20,16 @@ namespace Dex.Cap.Outbox
         private readonly IOutboxDataProvider<TDbContext> _dataProvider;
         private readonly IOutboxMessageHandlerFactory _handlerFactory;
         private readonly IOutboxSerializer _serializer;
+        private readonly IOutboxMetricCollector _metricCollector;
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
 
         public OutboxHandler(IOutboxDataProvider<TDbContext> dataProvider, IOutboxMessageHandlerFactory messageHandlerFactory,
-            IOutboxSerializer serializer, ILogger<OutboxHandler<TDbContext>> logger)
+            IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, ILogger<OutboxHandler<TDbContext>> logger)
         {
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
             _handlerFactory = messageHandlerFactory ?? throw new ArgumentNullException(nameof(messageHandlerFactory));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            _metricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -39,6 +41,7 @@ namespace Dex.Cap.Outbox
             var enumerator = enumerable.GetAsyncEnumerator(cancellationToken);
             try
             {
+                _metricCollector.IncProcessCount();
                 if (await enumerator.MoveNextAsync().ConfigureAwait(false))
                 {
                     do
@@ -60,9 +63,11 @@ namespace Dex.Cap.Outbox
                                 {
                                     activity.Start();
                                     _logger.LogTrace("Processing job - {Job}", job.Envelope.Id);
-
+                                    _metricCollector.IncProcessJobCount();
+                                    var sw = Stopwatch.StartNew();
                                     await ProcessJob(job, cts.Token).ConfigureAwait(false);
-
+                                    _metricCollector.AddProcessJobSuccessDuration(sw.Elapsed);
+                                    _metricCollector.IncProcessJobSuccessCount();
                                     _logger.LogTrace("Job process completed - {Job}", job.Envelope.Id);
                                     activity.Stop();
                                 }
@@ -76,6 +81,7 @@ namespace Dex.Cap.Outbox
                 }
                 else
                 {
+                    _metricCollector.IncEmptyProcessCount();
                     _logger.LogTrace(NoMessagesToProcess);
                 }
             }
