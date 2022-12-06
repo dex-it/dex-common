@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <PackageTags>dex;specifications</PackageTags>
         <Nullable>enable</Nullable>
-        <Version>1.1.10</Version>
+        <Version>1.1.12</Version>
     </PropertyGroup>
 
     <!--Для NuGet-->
