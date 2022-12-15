@@ -5,7 +5,7 @@ using MassTransit;
 
 namespace Dex.Events.Distributed
 {
-    public sealed class DistributedEventRaiser<TBus> : IDistributedEventRaiser<TBus>
+    internal sealed class DistributedEventRaiser<TBus> : IDistributedEventRaiser<TBus>
         where TBus : IBus
     {
         private readonly TBus _bus;

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Events.Distributed.Models;
+using MassTransit;
 
 #pragma warning disable CA1711
 
@@ -11,10 +12,13 @@ namespace Dex.Events.Distributed
     /// DistributedEventHandler contract
     /// </summary>
     /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-    public interface IDistributedEventHandler<in T>
+    public interface IDistributedEventHandler<in T> : IConsumer<T>, IDistributedEventHandler
         where T : DistributedBaseEventParams
     {
-        [SuppressMessage("ReSharper", "UnusedParameter.Global")]
-        Task ProcessAsync(T argument, CancellationToken cancellationToken);
+    }
+
+    public interface IDistributedEventHandler
+    {
+        
     }
 }
