@@ -13,7 +13,7 @@ namespace Dex.Events.Distributed.Extensions
         /// Register all IDistributedEventHandler, when assembly is null, GetCallingAssembly is called
         /// </summary>
         /// <param name="registration">Bus consumers registration context</param>
-        /// <param name="assembly">Assemply for IDistributedEventHandler</param>
+        /// <param name="assembly">Assembly for IDistributedEventHandler</param>
         public static void RegisterAllEventHandlers(this IBusRegistrationConfigurator registration, Assembly? assembly = null)
         {
             assembly = assembly == null ? Assembly.GetCallingAssembly() : assembly;
