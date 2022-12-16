@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.0.25</PackageVersion>
+        <PackageVersion>1.0.0</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -21,8 +21,4 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <!--/Для NuGet-->
-    
-    <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17" />
-    </ItemGroup>
 </Project>

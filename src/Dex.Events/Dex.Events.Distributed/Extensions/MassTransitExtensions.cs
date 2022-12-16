@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Reflection;
 using Dex.Events.Distributed.Models;
-using Dex.MassTransit.Rabbit;
+using Dex.Extensions;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.Events.Distributed.Extensions
 {
@@ -13,96 +12,73 @@ namespace Dex.Events.Distributed.Extensions
         /// Register template consumer
         /// </summary>
         /// <param name="configurator">IBusRegistrationConfigurator</param>
-        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        /// <typeparam name="TH1"></typeparam>
-        public static void RegisterDistributedEventHandlers<T, TH1>(this IBusRegistrationConfigurator configurator)
-            where T : DistributedBaseEventParams
-            where TH1 : IDistributedEventHandler<T>
-        {
-            configurator.RegisterDistributedEventHandlers<T>(typeof(TH1));
-        }
-
-        /// <summary>
-        /// Register template consumer
-        /// </summary>
-        /// <param name="configurator">IBusRegistrationConfigurator</param>
-        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        /// <typeparam name="TH1"></typeparam>
-        /// <typeparam name="TH2"></typeparam>
-        public static void RegisterDistributedEventHandlers<T, TH1, TH2>(this IBusRegistrationConfigurator configurator)
-            where T : DistributedBaseEventParams
-            where TH1 : IDistributedEventHandler<T>
-            where TH2 : IDistributedEventHandler<T>
-        {
-            configurator.RegisterDistributedEventHandlers<T>(typeof(TH1), typeof(TH2));
-        }
-
-        /// <summary>
-        /// Register template consumer
-        /// </summary>
-        /// <param name="configurator">IBusRegistrationConfigurator</param>
-        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        /// <typeparam name="TH1"></typeparam>
-        /// <typeparam name="TH2"></typeparam>
-        /// <typeparam name="TH3"></typeparam>
-        public static void RegisterDistributedEventHandlers<T, TH1, TH2, TH3>(this IBusRegistrationConfigurator configurator)
-            where T : DistributedBaseEventParams
-            where TH1 : IDistributedEventHandler<T>
-            where TH2 : IDistributedEventHandler<T>
-            where TH3 : IDistributedEventHandler<T>
-        {
-            configurator.RegisterDistributedEventHandlers<T>(typeof(TH1), typeof(TH2), typeof(TH3));
-        }
-
-        /// <summary>
-        /// Register template consumer
-        /// </summary>
-        /// <param name="configurator">IBusRegistrationConfigurator</param>
-        /// <param name="handlersTypes">Handlers types</param>
-        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        private static void RegisterDistributedEventHandlers<T>(this IBusRegistrationConfigurator configurator, params Type[] handlersTypes)
-            where T : DistributedBaseEventParams
+        /// <param name="registrationContext">IBusRegistrationContext</param>
+        /// <param name="serviceName">Prefix for queue name</param>
+        /// <typeparam name="TEventParams">DistributedBaseEventParams</typeparam>
+        /// <typeparam name="TDistributedEventHandler">Type of event handler</typeparam>
+        public static void SubscribeEventHandlers<TEventParams, TDistributedEventHandler>(this IReceiveConfigurator<IReceiveEndpointConfigurator> configurator,
+            IBusRegistrationContext registrationContext, string? serviceName = null)
+            where TEventParams : DistributedBaseEventParams
+            where TDistributedEventHandler : IDistributedEventHandler<TEventParams>
         {
             if (configurator == null) throw new ArgumentNullException(nameof(configurator));
-            if (handlersTypes == null) throw new ArgumentNullException(nameof(handlersTypes));
+            if (registrationContext == null) throw new ArgumentNullException(nameof(registrationContext));
 
-            configurator.AddConsumer<DistributedEventConsumer<T>>();
-            foreach (var handlerType in handlersTypes)
-            {
-                configurator.AddScoped(typeof(IDistributedEventHandler<T>), handlerType);
-            }
+            serviceName = serviceName ?? Assembly.GetCallingAssembly().GetName().Name;
+
+            var queueName = typeof(TEventParams).Name.ReplaceRegex("(?i)dto(?-i)$", "");
+            var consumerName = typeof(TDistributedEventHandler).Name.Replace("`", string.Empty, StringComparison.OrdinalIgnoreCase);
+            var fullName = $"Event_{serviceName}_{queueName}_{consumerName}";
+
+            configurator.ReceiveEndpoint(fullName, x => x.ConfigureConsumer(registrationContext, typeof(TDistributedEventHandler)));
         }
 
         /// <summary>
-        /// Register SendEndPoint
+        /// Register template consumer
         /// </summary>
-        /// <param name="context">IBusRegistrationContext</param>
-        /// <param name="options">Overridden RabbitMqOptions</param>
-        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        public static void RegisterDistributedEventSendEndPoint<T>(this IBusRegistrationContext context, RabbitMqOptions? options = null)
-            where T : DistributedBaseEventParams
+        /// <param name="configurator">IBusRegistrationConfigurator</param>
+        /// <param name="registrationContext">IBusRegistrationContext</param>
+        /// <param name="serviceName">Prefix for queue name</param>
+        /// <typeparam name="TEventParams">DistributedBaseEventParams</typeparam>
+        /// <typeparam name="TDistributedEventHandler1">Type of event handler</typeparam>
+        /// <typeparam name="TDistributedEventHandler2">Type of event handler</typeparam>
+        public static void SubscribeEventHandlers<TEventParams, TDistributedEventHandler1, TDistributedEventHandler2>(
+            this IReceiveConfigurator<IReceiveEndpointConfigurator> configurator,
+            IBusRegistrationContext registrationContext, string? serviceName = null)
+            where TEventParams : DistributedBaseEventParams
+            where TDistributedEventHandler1 : IDistributedEventHandler<TEventParams>
+            where TDistributedEventHandler2 : IDistributedEventHandler<TEventParams>
         {
-            context.RegisterSendEndPoint<T>(options);
+            if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+            if (registrationContext == null) throw new ArgumentNullException(nameof(registrationContext));
+
+            configurator.SubscribeEventHandlers<TEventParams, TDistributedEventHandler1>(registrationContext, serviceName);
+            configurator.SubscribeEventHandlers<TEventParams, TDistributedEventHandler2>(registrationContext, serviceName);
         }
 
         /// <summary>
-        /// Register ReceiveEndpoint
+        /// Register template consumer
         /// </summary>
-        /// <param name="context">IBusRegistrationContext</param>
-        /// <param name="configurator">IRabbitMqBusFactoryConfigurator</param>
-        /// <param name="serviceName">Service name in which the method was called</param>
-        /// <param name="options">Overridden RabbitMqOptions</param>
-        /// <typeparam name="T">DistributedBaseEventParams</typeparam>
-        public static void RegisterDistributedEventReceiveEndpoint<T>(this IBusRegistrationContext context, IRabbitMqBusFactoryConfigurator configurator,
-            string? serviceName = null, RabbitMqOptions? options = null)
-            where T : DistributedBaseEventParams
+        /// <param name="configurator">IBusRegistrationConfigurator</param>
+        /// <param name="registrationContext">IBusRegistrationContext</param>
+        /// <param name="serviceName">Prefix for queue name</param>
+        /// <typeparam name="TEventParams">DistributedBaseEventParams</typeparam>
+        /// <typeparam name="TDistributedEventHandler1">Type of event handler</typeparam>
+        /// <typeparam name="TDistributedEventHandler2">Type of event handler</typeparam>
+        /// <typeparam name="TDistributedEventHandler3">Type of event handler</typeparam>
+        public static void SubscribeEventHandlers<TEventParams, TDistributedEventHandler1, TDistributedEventHandler2, TDistributedEventHandler3>(
+            this IReceiveConfigurator<IReceiveEndpointConfigurator> configurator, IBusRegistrationContext registrationContext, string? serviceName = null)
+            where TEventParams : DistributedBaseEventParams
+            where TDistributedEventHandler1 : IDistributedEventHandler<TEventParams>
+            where TDistributedEventHandler2 : IDistributedEventHandler<TEventParams>
+            where TDistributedEventHandler3 : IDistributedEventHandler<TEventParams>
         {
-            serviceName = string.IsNullOrWhiteSpace(serviceName)
-                ? Assembly.GetCallingAssembly().GetName().Name
-                : serviceName;
+            if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+            if (registrationContext == null) throw new ArgumentNullException(nameof(registrationContext));
 
-            context.RegisterReceiveEndpoint<DistributedEventConsumer<T>, T>(configurator, createSeparateQueue: true, serviceName: serviceName,
-                rabbitMqOptions: options);
+            configurator.SubscribeEventHandlers<TEventParams, TDistributedEventHandler1>(registrationContext, serviceName);
+            configurator.SubscribeEventHandlers<TEventParams, TDistributedEventHandler2>(registrationContext, serviceName);
+            configurator.SubscribeEventHandlers<TEventParams, TDistributedEventHandler3>(registrationContext, serviceName);
         }
     }
 }

@@ -2,15 +2,11 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Dex.Ef.Contracts.Entities
+namespace Dex.Entity
 {
     public interface IEntity
     {
         
-    }
-
-    public interface IDbEntity
-    {
     }
 
     public interface IEntity<out TKey> : IEntity

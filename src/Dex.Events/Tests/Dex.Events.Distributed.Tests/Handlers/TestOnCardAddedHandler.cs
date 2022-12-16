@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Events.Distributed.Tests.Events;
+using MassTransit;
 
 #pragma warning disable CS0162
 
@@ -19,6 +20,11 @@ namespace Dex.Events.Distributed.Tests.Handlers
             OnProcessed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         }
+
+        public Task Consume(ConsumeContext<OnUserAdded> context)
+        {
+            return ProcessAsync(context.Message, context.CancellationToken);
+        }
     }
 
     public class TestOnUserAddedHandler2 : IDistributedEventHandler<OnUserAdded>
@@ -33,6 +39,11 @@ namespace Dex.Events.Distributed.Tests.Handlers
 
             OnProcessed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
+        }
+
+        public Task Consume(ConsumeContext<OnUserAdded> context)
+        {
+            return ProcessAsync(context.Message, context.CancellationToken);
         }
     }
 
@@ -50,6 +61,11 @@ namespace Dex.Events.Distributed.Tests.Handlers
             // ReSharper disable once HeuristicUnreachableCode
             OnProcessed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
+        }
+
+        public Task Consume(ConsumeContext<OnUserAdded> context)
+        {
+            return ProcessAsync(context.Message, context.CancellationToken);
         }
     }
 }
