@@ -1,4 +1,7 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Linq;
+using System.Reflection;
+using Dex.Extensions;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,7 +20,28 @@ namespace Dex.Events.Distributed.Extensions
         public static void RegisterAllEventHandlers(this IBusRegistrationConfigurator registration, Assembly? assembly = null)
         {
             assembly = assembly == null ? Assembly.GetCallingAssembly() : assembly;
-            registration.AddConsumers(type => typeof(IDistributedEventHandler).IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface, assembly);
+            assembly.GetTypes()
+                .Where(type => typeof(IDistributedEventHandler).IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface)
+                .ForEach(x => registration.AddConsumer(x));
+        }
+
+        /// <summary>
+        /// Register IDistributedEventHandler, when assembly is null, GetCallingAssembly is called
+        /// </summary>
+        /// <param name="registration">Bus consumers registration context</param>
+        /// <param name="configurator"></param>
+        public static void RegisterEventHandler<T>(this IBusRegistrationConfigurator registration, Action<IConsumerConfigurator<T>>? configurator = null)
+            where T : class, IDistributedEventHandler
+        {
+            if (registration == null) throw new ArgumentNullException(nameof(registration));
+            if (configurator != null)
+            {
+                registration.AddConsumer(configurator);
+            }
+            else
+            {
+                registration.AddConsumer<T>();
+            }
         }
     }
 }

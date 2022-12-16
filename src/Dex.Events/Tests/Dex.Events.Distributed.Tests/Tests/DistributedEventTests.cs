@@ -25,10 +25,10 @@ namespace Dex.Events.Distributed.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection()
                 .RegisterDistributedEventRaiser()
-                .AddMassTransit(busRegistrationConfigurator =>
+                .AddMassTransit(c =>
                 {
-                    busRegistrationConfigurator.RegisterAllEventHandlers();
-                    busRegistrationConfigurator.UsingRabbitMq((context, busFactoryConfigurator) =>
+                    c.RegisterAllEventHandlers();
+                    c.UsingRabbitMq((context, busFactoryConfigurator) =>
                     {
                         // main approach
                         if (isMainApproach)
@@ -75,7 +75,10 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .RegisterDistributedEventRaiser()
                 .AddMassTransit(c =>
                 {
-                    c.RegisterAllEventHandlers();
+                    c.RegisterEventHandler<TestOnUserAddedHandler>(_ => { });
+                    c.RegisterEventHandler<TestOnUserAddedHandlerRaiseException>(x =>
+                        x.UseRetry(rc => rc.SetRetryPolicy(filter => filter.Interval(5, TimeSpan.FromMilliseconds(50)))));
+                    
                     c.UsingInMemory((context, configurator) =>
                         configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandlerRaiseException>(context));
                 })
