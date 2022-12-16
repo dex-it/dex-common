@@ -26,7 +26,7 @@ namespace Dex.Events.Distributed.Extensions
         }
 
         /// <summary>
-        /// Register IDistributedEventHandler, when assembly is null, GetCallingAssembly is called
+        /// Register IDistributedEventHandle and configure it 
         /// </summary>
         /// <param name="registration">Bus consumers registration context</param>
         /// <param name="configurator"></param>
