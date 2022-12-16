@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Dex.Cap.Outbox.Ef" Version="2.1.0" />
+        <PackageReference Include="Dex.MassTransit.Rabbit" Version="1.1.26" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17">
           <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>

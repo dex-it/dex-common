@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.0.1</PackageVersion>
+        <PackageVersion>1.2.0</PackageVersion>
         <PackageTags>distributed events</PackageTags>
     </PropertyGroup>
 
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Events</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -22,7 +22,9 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Dex.MassTransit.Rabbit" Version="1.1.25" />
+      <PackageReference Include="Dex.Extensions" Version="1.0.11" />
+      <PackageReference Include="MassTransit" Version="8.0.8" />
+      <PackageReference Include="MassTransit.Abstractions" Version="8.0.8" />
       <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     </ItemGroup>
     <!--/Для NuGet-->

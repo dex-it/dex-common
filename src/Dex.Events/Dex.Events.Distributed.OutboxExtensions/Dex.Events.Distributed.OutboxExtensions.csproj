@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.0.2</PackageVersion>
+        <PackageVersion>1.2.0</PackageVersion>
         <PackageTags>outbox distributed events</PackageTags>
     </PropertyGroup>
 
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Events</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -23,7 +23,6 @@
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Dex.Cap.Outbox" Version="2.1.0" />
-      <PackageReference Include="Dex.MassTransit.Rabbit" Version="1.1.25" />
       <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     </ItemGroup>
     <!--/Для NuGet-->

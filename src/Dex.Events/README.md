@@ -14,11 +14,10 @@ await using var serviceProvider = InitServiceCollection()
     .Configure<RabbitMqOptions>(_ => { })
     .AddMassTransit(c =>
     {
-        c.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>();
+        c.RegisterAllEventHandlers();
         c.RegisterBus((context, configurator) =>
         {
-            context.RegisterDistributedEventSendEndPoint<OnUserAdded>();
-            context.RegisterDistributedEventReceiveEndpoint<OnUserAdded>(configurator);
+            configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context, serviceName: "Test");
         });
     })
     .BuildServiceProvider();
@@ -44,11 +43,10 @@ await using var serviceProvider = InitServiceCollection()
     .Configure<RabbitMqOptions>(_ => { })
     .AddMassTransit(c =>
     {
-        c.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler>();
+        c.RegisterAllEventHandlers();
         c.RegisterBus((context, configurator) =>
         {
-            context.RegisterDistributedEventSendEndPoint<OnUserAdded>();
-            context.RegisterDistributedEventReceiveEndpoint<OnUserAdded>(configurator);
+            configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context, serviceName: "Test");
         });
     })
     .BuildServiceProvider();
