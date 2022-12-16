@@ -23,7 +23,6 @@
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Dex.Cap.Outbox" Version="2.1.0" />
-      <PackageReference Include="Dex.MassTransit.Rabbit" Version="1.1.25" />
       <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     </ItemGroup>
     <!--/Для NuGet-->
