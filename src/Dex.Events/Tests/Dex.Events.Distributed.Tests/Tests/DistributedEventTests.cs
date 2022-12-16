@@ -33,7 +33,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                         // main approach
                         if (isMainApproach)
                         {
-                            busFactoryConfigurator.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context,
+                            busFactoryConfigurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context,
                                 serviceName: "Test");
                         }
                         else
@@ -77,7 +77,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                 {
                     c.RegisterAllEventHandlers();
                     c.UsingInMemory((context, configurator) =>
-                        configurator.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandlerRaiseException>(context));
+                        configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandlerRaiseException>(context));
                 })
                 .BuildServiceProvider();
 
@@ -111,7 +111,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                 {
                     c.RegisterAllEventHandlers();
                     c.UsingInMemory((context, configurator) =>
-                        configurator.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context));
+                        configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context));
                 })
                 .BuildServiceProvider();
 
@@ -142,7 +142,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                 {
                     c.RegisterAllEventHandlers();
                     c.UsingInMemory((context, configurator) =>
-                        configurator.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context));
+                        configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context));
                 })
                 .BuildServiceProvider();
 
@@ -185,7 +185,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                 {
                     c.RegisterAllEventHandlers();
                     c.UsingInMemory((context, configurator) =>
-                        configurator.RegisterDistributedEventHandlers<OnUserAdded, TestOnUserAddedHandler>(context));
+                        configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler>(context));
                 })
                 .BuildServiceProvider();
 
