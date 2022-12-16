@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>1.2.26</Version>
+    <Version>1.1.27</Version>
   </PropertyGroup>
 
   <!--Для NuGet-->
@@ -23,13 +23,13 @@
 
   <!-- Source debugging -->
   <ItemGroup>
-    <PackageReference Include="MassTransit" Version="8.0.8" />
+    <PackageReference Include="MassTransit" Version="8.0.9" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dex.Extensions" Version="1.0.11" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.8" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.9" />
   </ItemGroup>
 
   <ItemGroup>
