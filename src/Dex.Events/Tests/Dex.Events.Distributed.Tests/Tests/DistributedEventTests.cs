@@ -11,6 +11,7 @@ using Dex.Events.Distributed.Tests.Models;
 using Dex.Events.Distributed.Tests.Services;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
+using MassTransit.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -69,6 +70,25 @@ namespace Dex.Events.Distributed.Tests.Tests
         }
 
         [Test]
+        public async Task RaiseDistributedEventOnlySendTest()
+        {
+            await using var serviceProvider = InitServiceCollection()
+                .RegisterDistributedEventRaiser()
+                .AddMassTransitTestHarness()
+                .BuildServiceProvider();
+
+            var harness = serviceProvider.GetRequiredService<ITestHarness>();
+            await harness.Start();
+
+            var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
+            await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = Guid.Empty }, CancellationToken.None);
+
+            Assert.IsTrue(await harness.Published.Any<OnUserAdded>());
+            Assert.IsTrue(harness.Published.Count() == 1);
+            await harness.Stop();
+        }
+
+        [Test]
         public async Task RaiseDistributedEventWithHandlerRaiseExceptionTest()
         {
             await using var serviceProvider = InitServiceCollection()
@@ -78,7 +98,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                     c.RegisterEventHandler<TestOnUserAddedHandler>(_ => { });
                     c.RegisterEventHandler<TestOnUserAddedHandlerRaiseException>(x =>
                         x.UseRetry(rc => rc.SetRetryPolicy(filter => filter.Interval(5, TimeSpan.FromMilliseconds(50)))));
-                    
+
                     c.UsingInMemory((context, configurator) =>
                         configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandlerRaiseException>(context));
                 })
