@@ -1,15 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <PackageTags>dex;specifications</PackageTags>
-        <Nullable>enable</Nullable>
-        <Version>1.1.12</Version>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Version>1.0.10</Version>
     </PropertyGroup>
-
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -21,9 +17,8 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <!--/Для NuGet-->
-
     <ItemGroup>
-        <ProjectReference Include="..\Dex.Specifications\Dex.Specifications.csproj"/>
+      <ProjectReference Include="..\Dex.Specifications\Dex.Specifications.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <PackageVersion>2.2.4</PackageVersion>
+    <PackageVersion>2.1.2</PackageVersion>
     <PackageTags>outbox business-transaction consistency EF implementation</PackageTags>
   </PropertyGroup>
 
   <!--Для NuGet-->
   <PropertyGroup>
-    <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>dex team</Authors>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -31,9 +31,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.11" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.17" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

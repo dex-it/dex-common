@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net5.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
-		<PackageVersion>1.4.26</PackageVersion>
+		<PackageVersion>1.3.26</PackageVersion>
 	</PropertyGroup>
 
 	<!--Для NuGet-->
 	<PropertyGroup>
-		<PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Authors>dex team</Authors>
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -21,7 +21,7 @@
 		<GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 	</ItemGroup>
 	<!--/Для NuGet-->
