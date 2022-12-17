@@ -18,7 +18,7 @@ namespace Dex.Lock.Async.Impl
         /// <summary>
         /// Токен который изначально имел право выполнить освобождение блокировки.
         /// </summary>
-        /// <remarks>Сверяется с <see cref="AsyncLock._releaseTaskToken"/> в момент Dispose 
+        /// <remarks>Сверяется с <see cref="AsyncLock.ReleaseTaskToken"/> в момент Dispose 
         /// для проверки права освобождения блокировки (предотвращение повторного Dispose).</remarks>
         internal readonly short ReleaseToken;
 
@@ -46,7 +46,7 @@ namespace Dex.Lock.Async.Impl
             }
 
             public AsyncLock Locker => _self._context;
-            public bool Disposed => _self._context._releaseTaskToken != _self.ReleaseToken;
+            public bool Disposed => _self._context.ReleaseTaskToken != _self.ReleaseToken;
         }
     }
 }

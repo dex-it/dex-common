@@ -28,7 +28,7 @@ namespace Dex.Lock.Async.Impl
         /// Может только увеличиваться.
         /// </summary>
         /// <remarks>Превентивная защита от освобождения блокировки чужим потоком.</remarks>
-        internal short _releaseTaskToken;
+        internal short ReleaseTaskToken;
 
         /// <summary>
         /// Когда блокировка захвачена таском.
@@ -203,11 +203,11 @@ namespace Dex.Lock.Async.Impl
         internal void ReleaseLock(LockReleaser userReleaser)
         {
             Debug.Assert(_taken == 1, "Нарушение порядка захвата блокировки");
-            Debug.Assert(userReleaser.ReleaseToken == _releaseTaskToken, "Освобождения блокировки чужим потоком");
+            Debug.Assert(userReleaser.ReleaseToken == ReleaseTaskToken, "Освобождения блокировки чужим потоком");
 
             lock (_syncObj)
             {
-                if (userReleaser.ReleaseToken == _releaseTaskToken) // У текущего потока (релизера) есть право освободить блокировку.
+                if (userReleaser.ReleaseToken == ReleaseTaskToken) // У текущего потока (релизера) есть право освободить блокировку.
                 {
                     if (_queue.Count == 0) // Больше потоков нет -> освободить блокировку.
                     {
@@ -228,7 +228,7 @@ namespace Dex.Lock.Async.Impl
         /// <summary>
         /// Увеличивает идентификатор что-бы инвалидировать все ранее созданные <see cref="LockReleaser"/>.
         /// </summary>
-        /// <remarks>Увеличивает <see cref="_releaseTaskToken"/>.</remarks>
+        /// <remarks>Увеличивает <see cref="ReleaseTaskToken"/>.</remarks>
         /// <returns><see cref="LockReleaser"/> у которого есть эксклюзивное право освободить текущую блокировку.</returns>
         private LockReleaser CreateNextReleaser()
         {
@@ -249,11 +249,11 @@ namespace Dex.Lock.Async.Impl
         /// <summary>
         /// Предотвращает освобождение блокировки чужим потоком.
         /// </summary>
-        /// <remarks>Увеличивает <see cref="_releaseTaskToken"/>.</remarks>
+        /// <remarks>Увеличивает <see cref="ReleaseTaskToken"/>.</remarks>
         private short GetNextReleaserToken()
         {
             Debug.Assert(_taken == 1);
-            return ++_releaseTaskToken;
+            return ++ReleaseTaskToken;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -270,8 +270,8 @@ namespace Dex.Lock.Async.Impl
             /// <summary>
             /// Очередь ожидающий потоков (тасков) претендующих на захват блокировки.
             /// </summary>
-            /// <remarks>Доступ только через блокировку <see cref="_context._syncObj"/>.</remarks>
-            private readonly Queue<TaskCompletionSource<LockReleaser>> _queue = new Queue<TaskCompletionSource<LockReleaser>>();
+            /// <remarks>Доступ только через блокировку <see />.</remarks>
+            private readonly Queue<TaskCompletionSource<LockReleaser>> _queue = new();
 
             public int Count => _queue.Count;
 
