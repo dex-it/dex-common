@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <PackageTags>dex;specifications;entityframework</PackageTags>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.0.10</Version>
+        <TargetFramework>net6.0</TargetFramework>
+        <Version>1.1.10</Version>
     </PropertyGroup>
     <!--Для NuGet-->
     <PropertyGroup>
@@ -19,12 +19,12 @@
     </PropertyGroup>
     <!--/Для NuGet-->
     <ItemGroup>
-        <ProjectReference Include="..\Dex.Specifications\Dex.Specifications.csproj"/>
+        <ProjectReference Include="..\Dex.Specifications\Dex.Specifications.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dex.Extensions" Version="1.0.11"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.5"/>
+        <PackageReference Include="Dex.Extensions" Version="1.0.11" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12" />
     </ItemGroup>
 
 </Project>
