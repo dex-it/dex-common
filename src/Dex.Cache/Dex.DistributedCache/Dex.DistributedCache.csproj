@@ -6,8 +6,8 @@
         <AssemblyName>Dex.DistributedCache</AssemblyName>
         <RootNamespace>Dex.DistributedCache</RootNamespace>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.1.2</PackageVersion>
-        <PackageTags>response cache, etag specification, cache-control, distributed cache</PackageTags>
+        <PackageVersion>2.1.2</PackageVersion>
+        <PackageTags>output cache, etag specification, cache-control, distributed cache</PackageTags>
     </PropertyGroup>
 
     <!--Для NuGet-->
