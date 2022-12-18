@@ -240,8 +240,8 @@ namespace Dex.Cap.Outbox.Ef
 
                         if (lockedJob != null)
                         {
-                            if (lockedJob.DbNow.Kind != DateTimeKind.Utc)
-                                throw new InvalidOperationException("can't fetch datetime from database");
+                            if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
+                                throw new InvalidOperationException("database return Unspecified datetime");
 
                             logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
 
