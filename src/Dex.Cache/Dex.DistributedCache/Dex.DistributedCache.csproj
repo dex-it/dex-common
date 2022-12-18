@@ -6,13 +6,13 @@
         <AssemblyName>Dex.DistributedCache</AssemblyName>
         <RootNamespace>Dex.DistributedCache</RootNamespace>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.1.1</PackageVersion>
-        <PackageTags>response cache, etag specification, cache-control, distributed cache</PackageTags>
+        <PackageVersion>2.1.2</PackageVersion>
+        <PackageTags>output cache, etag specification, cache-control, distributed cache</PackageTags>
     </PropertyGroup>
 
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.DistributedCache</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>

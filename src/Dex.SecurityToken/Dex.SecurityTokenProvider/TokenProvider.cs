@@ -60,13 +60,13 @@ namespace Dex.SecurityTokenProvider
         public async Task<string> CreateTokenAsUrlAsync<T>(Action<T>? action, TimeSpan timeout, CancellationToken cancellationToken = default)
             where T : BaseToken, new()
         {
-            return Uri.EscapeUriString(await CreateTokenAsync(action, timeout, cancellationToken));
+            return Uri.EscapeDataString(await CreateTokenAsync(action, timeout, cancellationToken));
         }
 
         public async Task<T> GetTokenDataFromUrlAsync<T>(string encryptedToken, bool throwIfInvalid = true, CancellationToken cancellationToken = default)
             where T : BaseToken
         {
-            var unescapedToken = Uri.EscapeUriString(encryptedToken);
+            var unescapedToken = Uri.EscapeDataString(encryptedToken);
             return await GetTokenDataAsync<T>(unescapedToken, throwIfInvalid, cancellationToken);
         }
 

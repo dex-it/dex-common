@@ -6,19 +6,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.11">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12">
           <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.11">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.12">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.7" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
         <PackageReference Include="NUnit" Version="3.13.3" />
-        <PackageReference Include="NUnit3TestAdapter" Version="4.3.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
     </ItemGroup>
 
     <ItemGroup>

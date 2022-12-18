@@ -5,14 +5,14 @@ using System.Threading.Tasks;
 
 namespace Dex.Lock.Async.Impl
 {
-    public class AsyncLockProvider<T> : IAsyncLockProvider<T, LockReleaser>
+    public sealed class AsyncLockProvider<T> : IAsyncLockProvider<T, LockReleaser> where T : notnull
     {
-        private readonly ConcurrentDictionary<T, AsyncLock> _locks = new ConcurrentDictionary<T, AsyncLock>();
+        private readonly ConcurrentDictionary<T, AsyncLock> _locks = new();
 
         public IAsyncLock<LockReleaser> GetLocker([NotNull] T key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            return _locks.GetOrAdd(key, key1 => new AsyncLock());
+            return _locks.GetOrAdd(key, _ => new AsyncLock());
         }
 
         public Task<bool> RemoveLocker([NotNull] T key)

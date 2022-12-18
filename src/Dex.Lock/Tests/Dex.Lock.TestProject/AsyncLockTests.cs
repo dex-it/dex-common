@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Dex.Lock.Async.Impl;
 using NUnit.Framework;
@@ -19,19 +19,33 @@ namespace Dex.Lock.TestProject
         {
             var list = new List<string>();
             var aLock = new AsyncLock();
+            var isError = false;
 
-            static Task AppendToListTask(ICollection<string> list)
+            Task AppendToListTask(ICollection<string> collection)
             {
-                return Task.Factory.StartNew(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
+                return Task.Run(() =>
+                {
+                    try
+                    {
+                        collection.Add("Thread" + System.Environment.CurrentManagedThreadId);
+                    }
+                    catch (Exception)
+                    {
+                        isError = true;
+                    }
+                });
             }
 
-            var tasks = Enumerable.Range(1, 25)
-                .Select(i => aLock.LockAsync(() => AppendToListTask(list)))
+            const int expected = 256;
+            var tasks = Enumerable.Range(1, expected)
+                .Select(_ => aLock.LockAsync(() => AppendToListTask(list)))
+                // .Select(_ => AppendToListTask(list))
                 .ToList();
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
-            Assert.AreEqual(25, list.Count);
+            Assert.AreEqual(expected, list.Count);
+            Assert.IsFalse(isError);
         }
     }
 }

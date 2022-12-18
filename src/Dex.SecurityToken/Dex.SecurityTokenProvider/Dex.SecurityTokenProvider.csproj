@@ -5,13 +5,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>default</LangVersion>
-        <PackageVersion>1.2.5</PackageVersion>
+        <PackageVersion>2.2.6</PackageVersion>
         <PackageTags>security token management, dataprotection</PackageTags>
     </PropertyGroup>
     
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.SecurityToken</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -24,11 +24,11 @@
     <!--/Для NuGet-->
     
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="5.0.17" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="6.0.12" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="6.0.0" />
     </ItemGroup>
 </Project>

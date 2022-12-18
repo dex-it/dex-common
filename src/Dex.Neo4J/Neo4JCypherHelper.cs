@@ -8,7 +8,9 @@ namespace Dex.Neo4J
     {
         public static string BuildQueryCase<T>(string targetName, Expression<Func<T, object>> selector) where T : class
         {
-            if (selector.Body is UnaryExpression unaryExpression && unaryExpression.Operand is ConditionalExpression conditionalExpression)
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+            if (selector.Body is UnaryExpression { Operand: ConditionalExpression conditionalExpression })
             {
                 var ifTrueValue = GetValueExpression(conditionalExpression.IfTrue, targetName);
                 var ifFalseValue = GetValueExpression(conditionalExpression.IfFalse, targetName);
@@ -16,15 +18,15 @@ namespace Dex.Neo4J
 
                 return $"CASE WHEN {binaryExpressionValue} THEN {ifTrueValue} ELSE {ifFalseValue} END";
             }
-            
+
             throw new NotSupportedException($"Not supported ({selector.Body}) expression. Supported only ConditionalExpression");
         }
-        
+
         private static string GetValueExpression(Expression expression, string targetName)
         {
             if (expression is BinaryExpression binaryExpression)
             {
-                string operand = null;
+                string? operand = null;
 
                 if (expression.NodeType == ExpressionType.OrElse)
                 {
@@ -60,7 +62,7 @@ namespace Dex.Neo4J
                 {
                     return $"\"{fieldInfo.GetValue((memberExpression.Expression as ConstantExpression)?.Value)}\"";
                 }
-                
+
                 return $"{targetName}.{memberExpression.Member.Name}";
             }
 
