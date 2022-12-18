@@ -270,7 +270,7 @@ namespace Dex.Lock.Async.Impl
             /// <summary>
             /// Очередь ожидающий потоков (тасков) претендующих на захват блокировки.
             /// </summary>
-            /// <remarks>Доступ только через блокировку <see cref="_context._syncObj"/>.</remarks>
+            /// <remarks>Доступ только через блокировку <see />.</remarks>
             private readonly Queue<TaskCompletionSource<LockReleaser>> _queue = new Queue<TaskCompletionSource<LockReleaser>>();
 
             public int Count => _queue.Count;

@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
         <PackageTags>dex; async lock provider abstraction; dex inprocess async lock;</PackageTags>
         <Nullable>enable</Nullable>
-        <PackageVersion>1.1.10</PackageVersion>
+        <PackageVersion>1.1.11</PackageVersion>
+        <TargetFrameworks>net5.0</TargetFrameworks>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
     <!--Для NuGet-->
     <PropertyGroup>
