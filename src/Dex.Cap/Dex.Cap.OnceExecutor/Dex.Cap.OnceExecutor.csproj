@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.2.25</PackageVersion>
+    <PackageVersion>1.1.25</PackageVersion>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   
@@ -24,11 +25,6 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
   <!--/Для NuGet-->
-  
-  
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.11" />
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Neo4j\**" />

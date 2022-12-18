@@ -243,7 +243,7 @@ namespace Dex.DistributedCache.Tests.Tests
         {
             var actionContext = new ActionContext(new DefaultHttpContext(), Mock.Of<RouteData>(), Mock.Of<ActionDescriptor>(), Mock.Of<ModelStateDictionary>());
             var actionExecutingContext =
-                new ActionExecutingContext(actionContext, new List<IFilterMetadata>(), new Dictionary<string, object>(), Mock.Of<Controller>());
+                new ActionExecutingContext(actionContext, new List<IFilterMetadata>(), new Dictionary<string, object>()!, Mock.Of<Controller>());
 
             return actionExecutingContext;
         }

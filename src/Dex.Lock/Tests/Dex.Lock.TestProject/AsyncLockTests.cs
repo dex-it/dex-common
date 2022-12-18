@@ -25,13 +25,14 @@ namespace Dex.Lock.TestProject
                 return Task.Factory.StartNew(() => list.Add("Thread" + Thread.CurrentThread.ManagedThreadId));
             }
 
-            var tasks = Enumerable.Range(1, 25)
+            var expected = 250;
+            var tasks = Enumerable.Range(1, expected)
                 .Select(i => aLock.LockAsync(() => AppendToListTask(list)))
                 .ToList();
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
-            Assert.AreEqual(25, list.Count);
+            Assert.AreEqual(expected, list.Count);
         }
     }
 }

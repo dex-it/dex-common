@@ -4,7 +4,7 @@
         <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.1.0</PackageVersion>
+        <PackageVersion>1.1.2</PackageVersion>
         <PackageTags>outbox distributed events</PackageTags>
     </PropertyGroup>
 
@@ -22,7 +22,7 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Dex.Cap.Outbox" Version="2.1.0" />
+      <PackageReference Include="Dex.Cap.Outbox" Version="1.4.27" />
       <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     </ItemGroup>
     <!--/Для NuGet-->

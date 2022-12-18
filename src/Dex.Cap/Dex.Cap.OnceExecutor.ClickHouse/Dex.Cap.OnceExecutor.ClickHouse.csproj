@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.2.25</PackageVersion>
+    <PackageVersion>1.1.25</PackageVersion>
   </PropertyGroup>
 
   <!--Для NuGet-->
