@@ -163,7 +163,7 @@ namespace Dex.MassTransit.SQS
         private static UriBuilder CreateQueueNameFromType<TMessage>(this IServiceProvider provider, AmazonMqOptions? sqsOptions = null)
             where TMessage : class
         {
-            var queueName = typeof(TMessage).Name.ReplaceRegex("(?i)dto(?-i)$", "");
+            var queueName = QueueNameConventionHelper.GetOnlyQueueName<TMessage>();
 
             static AmazonMqOptions ValidateAwsOptions(AmazonMqOptions sqsOptions)
             {
@@ -207,7 +207,7 @@ namespace Dex.MassTransit.SQS
             {
                 var queueName = createSeparateQueue
                     ? endPoint.Uri.GetName(consumerType, serviceName)
-                    : endPoint.Uri.GetName();
+                    : endPoint.Uri.GetOnlyQueueName();
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
                 {
