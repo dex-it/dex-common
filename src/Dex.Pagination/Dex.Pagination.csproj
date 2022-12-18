@@ -3,7 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <PackageVersion>1.1.0</PackageVersion>
+        <PackageVersion>2.1.0</PackageVersion>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
     
     <!--Для NuGet-->
