@@ -232,7 +232,7 @@ namespace Dex.Cap.Outbox.Ef
                             .Where(WhereFree(freeMessageId))
                             .Select(x => new
                             {
-                                DbNow = DateTime.UtcNow, // Вытащить текущее время БД что-бы синхронизироваться.
+                                DbNow = DateTime.Now, // NETCORE5, Вытащить текущее время БД что-бы синхронизироваться.
                                 JobDb = x
                             })
                             .FirstOrDefaultAsync(ct)
@@ -240,7 +240,8 @@ namespace Dex.Cap.Outbox.Ef
 
                         if (lockedJob != null)
                         {
-                            if (lockedJob.DbNow.Kind != DateTimeKind.Utc)
+                            // NETCORE 5
+                            if (lockedJob.DbNow.Kind != DateTimeKind.Local)
                                 throw new InvalidOperationException("can't fetch datetime from database");
 
                             logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);

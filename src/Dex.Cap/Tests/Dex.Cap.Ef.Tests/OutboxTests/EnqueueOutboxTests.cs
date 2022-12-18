@@ -91,7 +91,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 10; i++)
             {
                 await handler.ProcessAsync(CancellationToken.None);
             }
@@ -99,10 +99,12 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // assert
             var db = sp.GetRequiredService<TestDbContext>();
             var envelopes = await db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).ToArrayAsync();
-            var envelope = envelopes.First();
-            var envelope2 = envelopes.Last();
-            Assert.IsTrue(envelope.Status == OutboxMessageStatus.Succeeded && envelope2.Status == OutboxMessageStatus.Failed);
-            Assert.AreEqual(3, envelope2.Retries);
+
+            var failed = envelopes.Single(x => x.Status == OutboxMessageStatus.Failed);
+            Assert.NotNull(failed);
+            
+            var succ = envelopes.Single(x => x.Status == OutboxMessageStatus.Succeeded);
+            Assert.NotNull(succ);
         }
 
         [Test]
