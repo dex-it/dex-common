@@ -172,7 +172,7 @@ namespace Dex.MassTransit.Rabbit
         private static UriBuilder CreateQueueNameFromType<TMessage, TMqOptions>(this IServiceProvider provider, TMqOptions? rabbitMqOptions)
             where TMessage : class where TMqOptions : RabbitMqOptions, new()
         {
-            var queueName = typeof(TMessage).Name.ReplaceRegex("(?i)dto(?-i)$", "");
+            var queueName = QueueNameConventionHelper.GetOnlyQueueName<TMessage>();
             var mqOptions = rabbitMqOptions ?? provider.GetRequiredService<IOptions<TMqOptions>>().Value;
             return new UriBuilder(mqOptions + "/" + queueName);
         }
@@ -191,7 +191,7 @@ namespace Dex.MassTransit.Rabbit
             {
                 var queueName = createSeparateQueue
                     ? endPoint.Uri.GetName(consumerType, serviceName)
-                    : endPoint.Uri.GetName();
+                    : endPoint.Uri.GetOnlyQueueName();
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
                 {
