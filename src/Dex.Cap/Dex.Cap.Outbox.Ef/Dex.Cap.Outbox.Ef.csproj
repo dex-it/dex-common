@@ -6,6 +6,7 @@
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <PackageVersion>1.4.28</PackageVersion>
     <PackageTags>outbox business-transaction consistency EF implementation</PackageTags>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <!--Для NuGet-->

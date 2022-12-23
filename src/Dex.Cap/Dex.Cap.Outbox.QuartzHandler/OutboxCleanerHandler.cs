@@ -22,15 +22,14 @@ namespace Dex.Cap.Outbox.AspNetScheduler
         {
             _logger.LogTrace("Performing cleanup");
 
-            int removedMessages = await _outboxDataProvider.Cleanup(olderThan, cancellationToken).ConfigureAwait(false);
-
+            var removedMessages = await _outboxDataProvider.Cleanup(olderThan, cancellationToken).ConfigureAwait(false);
             if (removedMessages > 0)
             {
                 _logger.LogInformation("Cleanup finished. Messages removed: {Count}", removedMessages);
             }
             else
             {
-                _logger.LogTrace("Cleanup finished. No messages to remove");
+                _logger.LogInformation("Cleanup finished. No messages to remove");
             }
         }
     }
