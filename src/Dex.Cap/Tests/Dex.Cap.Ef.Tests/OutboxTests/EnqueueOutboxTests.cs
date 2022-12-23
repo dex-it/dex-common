@@ -160,7 +160,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await Task.Delay(2000);
 
             var cleaner = sp.GetRequiredService<IOutboxCleanupDataProvider>();
-            int deletedMessages = await cleaner.Cleanup(TimeSpan.FromMilliseconds(olderThanMilliseconds), CancellationToken.None);
+            var deletedMessages = await cleaner.Cleanup(TimeSpan.FromMilliseconds(olderThanMilliseconds), CancellationToken.None);
 
             Assert.AreEqual(expectedDeletedMessages, deletedMessages);
         }
