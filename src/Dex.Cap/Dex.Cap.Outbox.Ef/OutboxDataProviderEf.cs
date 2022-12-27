@@ -238,22 +238,29 @@ namespace Dex.Cap.Outbox.Ef
                             .FirstOrDefaultAsync(ct)
                             .ConfigureAwait(false);
 
-                        if (lockedJob != null)
+                        try
                         {
-                            if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
-                                throw new InvalidOperationException("database return Unspecified datetime");
+                            if (lockedJob != null)
+                            {
+                                if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
+                                    throw new InvalidOperationException("database return Unspecified datetime");
 
-                            logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
+                                logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
 
-                            lockedJob.JobDb.LockId = lockId;
-                            lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
+                                lockedJob.JobDb.LockId = lockId;
+                                lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
 
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                            logger.LogTrace("Message is successfully captured {MessageId}", freeMessageId);
+                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                                logger.LogTrace("Message is successfully captured {MessageId}", freeMessageId);
 
-                            dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
+                                dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
 
-                            return lockedJob.JobDb;
+                                return lockedJob.JobDb;
+                            }
+                        }
+                        catch (DbUpdateConcurrencyException)
+                        {
+                            // не смогли обновить запись, обновлена конкурентно
                         }
 
                         logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
