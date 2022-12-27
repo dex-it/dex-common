@@ -222,7 +222,6 @@ namespace Dex.Cap.Outbox.Ef
         private async Task<OutboxEnvelope?> TryLockMessageCore(Guid freeMessageId, Guid lockId, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
-
             var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger),
                     static async (state, ct) =>
                     {
@@ -245,7 +244,7 @@ namespace Dex.Cap.Outbox.Ef
                                 if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
                                     throw new InvalidOperationException("database return Unspecified datetime");
 
-                                logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
+                                logger.LogDebug("Attempt to lock the message {MessageId}", freeMessageId);
 
                                 lockedJob.JobDb.LockId = lockId;
                                 lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
@@ -258,12 +257,13 @@ namespace Dex.Cap.Outbox.Ef
                                 return lockedJob.JobDb;
                             }
                         }
-                        catch (DbUpdateConcurrencyException)
+                        catch (DbUpdateException)
                         {
                             // не смогли обновить запись, обновлена конкурентно
+                            logger.LogDebug("Can't update LockId because concurrency exception. {MessageId}", freeMessageId);
                         }
 
-                        logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
+                        logger.LogDebug("Another thread overtook and captured this message. {MessageId}", freeMessageId);
                         return null;
                     },
                     static async (state, ct) =>
@@ -284,7 +284,7 @@ namespace Dex.Cap.Outbox.Ef
 
             static Expression<Func<OutboxEnvelope, bool>> WhereFree(Guid messageId)
             {
-                return x => x.Id == messageId &&
+                return x => x.Id == messageId && x.Status != OutboxMessageStatus.Succeeded &&
                             (x.LockId == null ||
                              x.LockExpirationTimeUtc == null ||
                              x.LockExpirationTimeUtc < DateTime.UtcNow);

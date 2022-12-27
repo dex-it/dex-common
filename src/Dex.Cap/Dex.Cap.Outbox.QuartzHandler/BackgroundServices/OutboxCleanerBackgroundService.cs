@@ -41,12 +41,12 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
                     using (var scope = _scopeFactory.CreateScope())
                     {
                         var logger = (ILogger)scope.ServiceProvider.GetRequiredService(typeof(ILogger<OutboxCleanerBackgroundService>));
-                        logger.LogTrace("Background service '{ServiceName}' Tick event", GetType());
+                        logger.LogDebug("Background service '{ServiceName}' Tick event", GetType());
 
                         await OnTick(scope.ServiceProvider, logger, stoppingToken);
                     }
 
-                    _logger.LogTrace("Pause for {Seconds} seconds", (int)_options.CleanupInterval.TotalSeconds);
+                    _logger.LogDebug("Pause for {Seconds} seconds", (int)_options.CleanupInterval.TotalSeconds);
                     await Task.Delay(_options.CleanupInterval, stoppingToken);
                 }
             }
@@ -55,18 +55,18 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
         /// <exception cref="OperationCanceledException"/>
         private async Task OnTick(IServiceProvider serviceProvider, ILogger logger, CancellationToken cancellationToken)
         {
-            logger.LogTrace("Resolving Outbox cleaner");
+            logger.LogDebug("Resolving Outbox cleaner");
             var service = serviceProvider.GetRequiredService<IOutboxCleanerHandler>();
 
-            logger.LogTrace("Executing Outbox cleaner");
+            logger.LogDebug("Executing Outbox cleaner");
             try
             {
                 await service.Execute(_options.CleanupOlderThan, cancellationToken);
-                logger.LogTrace("Outbox cleaner finished");
+                logger.LogDebug("Outbox cleaner finished");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                logger.LogTrace("Outbox cleaner was interrupted by stopping of host process");
+                logger.LogDebug("Outbox cleaner was interrupted by stopping of host process");
                 throw;
             }
             catch (Exception ex)

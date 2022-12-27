@@ -35,7 +35,7 @@ namespace Dex.Cap.Outbox
 
         public async Task ProcessAsync(CancellationToken cancellationToken)
         {
-            _logger.LogTrace("Outbox processor has been started");
+            _logger.LogDebug("Outbox processor has been started");
 
             var enumerable = _dataProvider.GetWaitingJobs(cancellationToken);
             var enumerator = enumerable.GetAsyncEnumerator(cancellationToken);
@@ -62,13 +62,13 @@ namespace Dex.Cap.Outbox
                                 using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken))
                                 {
                                     activity.Start();
-                                    _logger.LogTrace("Processing job - {Job}", job.Envelope.Id);
+                                    _logger.LogDebug("Processing job - {Job}", job.Envelope.Id);
                                     _metricCollector.IncProcessJobCount();
                                     var sw = Stopwatch.StartNew();
                                     await ProcessJob(job, cts.Token).ConfigureAwait(false);
                                     _metricCollector.AddProcessJobSuccessDuration(sw.Elapsed);
                                     _metricCollector.IncProcessJobSuccessCount();
-                                    _logger.LogTrace("Job process completed - {Job}", job.Envelope.Id);
+                                    _logger.LogDebug("Job process completed - {Job}", job.Envelope.Id);
                                     activity.Stop();
                                 }
                             }
@@ -82,13 +82,13 @@ namespace Dex.Cap.Outbox
                 else
                 {
                     _metricCollector.IncEmptyProcessCount();
-                    _logger.LogTrace(NoMessagesToProcess);
+                    _logger.LogDebug(NoMessagesToProcess);
                 }
             }
             finally
             {
                 await enumerator.DisposeAsync().ConfigureAwait(false);
-                _logger.LogTrace("Outbox processor completed");
+                _logger.LogDebug("Outbox processor completed");
             }
         }
 
@@ -107,7 +107,7 @@ namespace Dex.Cap.Outbox
         /// <exception cref="OperationCanceledException"/>
         private async Task ProcessJob(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
-            _logger.LogTrace("Message has been started to process {MessageId}", job.Envelope.Id);
+            _logger.LogDebug("Message has been started to process {MessageId}", job.Envelope.Id);
 
             try
             {

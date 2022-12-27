@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Options;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -18,7 +17,8 @@ namespace Dex.Cap.Ef.Tests
         {
             var db = new TestDbContext(DbName);
             await db.Database.EnsureDeletedAsync();
-            await db.Database.MigrateAsync();
+            await db.Database.EnsureCreatedAsync();
+            // await db.Database.MigrateAsync();
         }
 
         [TearDown]
@@ -34,6 +34,7 @@ namespace Dex.Cap.Ef.Tests
                 .AddLogging(builder =>
                 {
                     builder.AddDebug();
+                    builder.AddProvider(new TestLoggerProvider());
                     builder.SetMinimumLevel(LogLevel.Trace);
                 })
                 .AddScoped(_ => new TestDbContext(DbName))

@@ -41,12 +41,12 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
                     using (var scope = _scopeFactory.CreateScope())
                     {
                         var logger = (ILogger)scope.ServiceProvider.GetRequiredService(typeof(ILogger<OutboxHandlerBackgroundService>));
-                        logger.LogTrace("Background service '{ServiceName}' Tick event", GetType());
+                        logger.LogDebug("Background service '{ServiceName}' Tick event", GetType());
 
                         await OnTick(scope.ServiceProvider, logger, stoppingToken);
                     }
 
-                    _logger.LogTrace("Pause for {Seconds} seconds", (int)_options.Period.TotalSeconds);
+                    _logger.LogDebug("Pause for {Seconds} seconds", (int)_options.Period.TotalSeconds);
                     await Task.Delay(_options.Period, stoppingToken);
                 }
             }
@@ -54,18 +54,18 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
 
         private static async Task OnTick(IServiceProvider serviceProvider, ILogger logger, CancellationToken cancellationToken)
         {
-            logger.LogTrace("Resolving IOutboxHandler");
+            logger.LogDebug("Resolving IOutboxHandler");
             var service = serviceProvider.GetRequiredService<IOutboxHandler>();
 
-            logger.LogTrace("Executing Outbox handler");
+            logger.LogDebug("Executing Outbox handler");
             try
             {
                 await service.ProcessAsync(cancellationToken);
-                logger.LogTrace("Outbox handler finished");
+                logger.LogDebug("Outbox handler finished");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                logger.LogTrace("Outbox handler was interrupted by stopping of host process");
+                logger.LogDebug("Outbox handler was interrupted by stopping of host process");
                 throw;
             }
             catch (Exception ex)
