@@ -7,6 +7,7 @@ using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox
@@ -17,17 +18,17 @@ namespace Dex.Cap.Outbox
         private const string UserCanceledDbMessage = "Operation canceled due to user request";
         private const string UserCanceledMessageWithId = "Operation canceled due to user request. MessageId: {MessageId}";
         private const string NoMessagesToProcess = "No messages to process";
+        private readonly IServiceProvider _serviceProvider;
         private readonly IOutboxDataProvider<TDbContext> _dataProvider;
-        private readonly IOutboxMessageHandlerFactory _handlerFactory;
         private readonly IOutboxSerializer _serializer;
         private readonly IOutboxMetricCollector _metricCollector;
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
 
-        public OutboxHandler(IOutboxDataProvider<TDbContext> dataProvider, IOutboxMessageHandlerFactory messageHandlerFactory,
+        public OutboxHandler(IServiceProvider serviceProvider, IOutboxDataProvider<TDbContext> dataProvider,
             IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, ILogger<OutboxHandler<TDbContext>> logger)
         {
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
-            _handlerFactory = messageHandlerFactory ?? throw new ArgumentNullException(nameof(messageHandlerFactory));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _metricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -128,7 +129,7 @@ namespace Dex.Cap.Outbox
             }
             catch (OutboxException ex)
             {
-                _logger.LogError(ex, "EnvelopeID: {Envelope} ", job.Envelope.Id);
+                _logger.LogError(ex, "EnvelopeID: {MessageId} ", job.Envelope.Id);
                 await _dataProvider.JobFail(job, cancellationToken, ex.Message).ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -189,7 +190,10 @@ namespace Dex.Cap.Outbox
 
         private async Task ProcessOutboxMessageCore(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
-            var handler = _handlerFactory.GetMessageHandler(outboxMessage);
+            using var scope = _serviceProvider.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+            var handlerFactory = serviceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
+            var handler = handlerFactory.GetMessageHandler(outboxMessage);
             try
             {
                 await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);

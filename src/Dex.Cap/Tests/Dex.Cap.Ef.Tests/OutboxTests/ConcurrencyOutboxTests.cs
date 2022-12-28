@@ -14,21 +14,21 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
     public class ConcurrencyOutboxTests : BaseTest
     {
         [Test]
-        public async Task RunTest()
+        public async Task MultipleOutboxHandlersRunTest()
         {
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
             var count = 0;
+            const int expected = 4;
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world " + count++ }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world " + count++ }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world " + count++ }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 1" }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 3" }, CancellationToken.None);
             await SaveChanges(sp);
 
-            TestCommandHandler.OnProcess += (_, _) => Interlocked.Decrement(ref count);
+            TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
             var tasks = new List<Task>();
             for (var i = 0; i < 30; i++)
@@ -37,20 +37,28 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 {
                     using var scope = sp.CreateScope();
                     var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
-                    await handler.ProcessAsync();
+                    while (count < expected)
+                    {
+                        await handler.ProcessAsync();
+                        await Task.Delay(50);
+                    }
                 }));
 
                 Thread.Sleep(2);
             }
+
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 2" }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 4" }, CancellationToken.None);
+            await SaveChanges(sp);
 
             Task.WaitAll(tasks.ToArray());
 
             TestContext.WriteLine("TestCompleted:" + count);
 
             var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
-            var otb = db.Set<OutboxEnvelope>().All(x => x.CorrelationId == correlationId && x.Retries == 1);
-            Assert.IsNotNull(otb);
-            Assert.AreEqual(0, count);
+            var envelopes = db.Set<OutboxEnvelope>().ToArray();
+            Assert.IsTrue(envelopes.All(x => x.Status == OutboxMessageStatus.Succeeded && x.Retries == 1));
+            Assert.AreEqual(expected, count);
         }
     }
 }

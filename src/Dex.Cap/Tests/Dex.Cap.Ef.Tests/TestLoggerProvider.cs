@@ -22,7 +22,7 @@ namespace Dex.Cap.Ef.Tests
             public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
             {
                 var now = DateTime.Now;
-                TestContext.WriteLine($"{now:mm:ss}:{now.Millisecond}[{Task.CurrentId}] {logLevel}: {formatter(state, exception)}");
+                TestContext.WriteLine($"{now:mm:ss}:{now.Millisecond} [{logLevel}]: {formatter(state, exception)}");
             }
 
             public bool IsEnabled(LogLevel logLevel)

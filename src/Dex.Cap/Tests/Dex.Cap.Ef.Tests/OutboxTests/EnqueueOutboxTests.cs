@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
@@ -85,16 +86,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var id = Guid.NewGuid();
             var correlationId = Guid.NewGuid();
-            var oid1 = await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
-            var oid2 = await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
             await SaveChanges(sp);
 
             // act
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            for (var i = 0; i < 10; i++)
-            {
-                await handler.ProcessAsync(CancellationToken.None);
-            }
+            await handler.ProcessAsync(CancellationToken.None);
 
             // assert
             var db = sp.GetRequiredService<TestDbContext>();
@@ -102,9 +100,34 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var failed = envelopes.Single(x => x.Status == OutboxMessageStatus.Failed);
             Assert.NotNull(failed);
-            
+
             var succ = envelopes.Single(x => x.Status == OutboxMessageStatus.Succeeded);
             Assert.NotNull(succ);
+        }
+
+        [Test]
+        public async Task DbContextIsolationTest()
+        {
+            // мусорим в дб контексте и падаем, следующий обработчик не должен вставить мусор из дб контекста
+
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, TestCreateUserCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+
+            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() }, CancellationToken.None);
+            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() }, CancellationToken.None);
+            await SaveChanges(sp);
+
+            // act
+            TestCreateUserCommandHandler.CountDown = 1; // первая обработка упадет
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // assert
+            var db = sp.GetRequiredService<TestDbContext>();
+            Assert.AreEqual(1, db.Set<User>().Count());
         }
 
         [Test]

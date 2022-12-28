@@ -10,6 +10,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
     public class TestCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
     {
         private readonly DbContext _dbContext;
+        public static int CountDown { get; set; }
 
         public TestCreateUserCommandHandler(TestDbContext dbContext)
         {
@@ -19,6 +20,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         public async Task ProcessMessage(TestUserCreatorCommand message, CancellationToken cancellationToken)
         {
             _dbContext.Set<User>().Add(new User { Id = message.Id });
+
+            if (CountDown-- > 0)
+                throw new InvalidOperationException("CountDown > 0");
+
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 

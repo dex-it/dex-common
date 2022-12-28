@@ -9,13 +9,21 @@ namespace Dex.Outbox.Command.Test
     {
         public static event EventHandler<TestOutboxCommand> OnProcess;
         private readonly Random _random = new((int)DateTime.UtcNow.Ticks);
+        private static int _enterCount;
+
+        public static int EnterCount => _enterCount;
 
         public async Task ProcessMessage(TestOutboxCommand message, CancellationToken cancellationToken)
         {
-            Console.WriteLine($"TestCommandHandler - Processed command at {DateTime.Now}, Args: {message.Args}");
-            OnProcess?.Invoke(this, message);
+            Interlocked.Increment(ref _enterCount);
 
-            await Task.Delay(_random.Next(15), cancellationToken);
+            Console.WriteLine($"TestCommandHandler - Processed command at {DateTime.Now}, Args: {message.Args}");
+
+            var delay = TimeSpan.FromMilliseconds(_random.Next(100));
+            Console.WriteLine($"TestCommandHandler - delay {delay}");
+
+            await Task.Delay(delay, cancellationToken);
+            OnProcess?.Invoke(this, message);
         }
 
         public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
