@@ -226,6 +226,8 @@ namespace Dex.Cap.Outbox.Ef
                     static async (state, ct) =>
                     {
                         var (dbContext, freeMessageId, lockId, logger) = state;
+                        // очищаем все изменения, в случае репита
+                        dbContext.ChangeTracker.Clear();
 
                         var lockedJob = await dbContext.Set<OutboxEnvelope>()
                             .Where(WhereFree(freeMessageId))
@@ -250,7 +252,7 @@ namespace Dex.Cap.Outbox.Ef
                                 lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
 
                                 await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                                logger.LogTrace("Message is successfully captured {MessageId}", freeMessageId);
+                                logger.LogDebug("Message is successfully captured {MessageId}", freeMessageId);
 
                                 dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
 

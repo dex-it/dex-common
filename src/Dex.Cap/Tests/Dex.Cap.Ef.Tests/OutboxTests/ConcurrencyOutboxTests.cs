@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Models;
 using Dex.Outbox.Command.Test;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -18,29 +20,37 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
-            var repeat = 10;
-            while (repeat-- > 0)
+            var count = 0;
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+            var correlationId = Guid.NewGuid();
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world " + count++ }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world " + count++ }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world " + count++ }, CancellationToken.None);
+            await SaveChanges(sp);
+
+            TestCommandHandler.OnProcess += (_, _) => Interlocked.Decrement(ref count);
+
+            var tasks = new List<Task>();
+            for (var i = 0; i < 30; i++)
             {
-                var outboxService = sp.GetRequiredService<IOutboxService>();
-                var correlationId = Guid.NewGuid();
-                await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world " + repeat }, CancellationToken.None);
-                await SaveChanges(sp);
-
-                var count = 0;
-                TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-
-                var tasks = Enumerable.Range(1, 26).Select(_ => Task.Run(async () =>
+                tasks.Add(Task.Run(async () =>
                 {
                     using var scope = sp.CreateScope();
                     var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
                     await handler.ProcessAsync();
                 }));
 
-                Task.WaitAll(tasks.ToArray());
-
-                TestContext.WriteLine("TestCompleted:" + count);
-                Assert.AreEqual(1, count);
+                Thread.Sleep(2);
             }
+
+            Task.WaitAll(tasks.ToArray());
+
+            TestContext.WriteLine("TestCompleted:" + count);
+
+            var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
+            var otb = db.Set<OutboxEnvelope>().All(x => x.CorrelationId == correlationId && x.Retries == 1);
+            Assert.IsNotNull(otb);
+            Assert.AreEqual(0, count);
         }
     }
 }
