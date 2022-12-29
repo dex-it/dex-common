@@ -5,7 +5,7 @@ using Octonica.ClickHouseClient;
 
 namespace Dex.Cap.OnceExecutor.ClickHouse
 {
-    public class OnceExecutorClickHouse<TResult> : BaseOnceExecutor<ClickHouseConnection, TResult>, IOnceExecutorClickHouse<TResult>
+    public class OnceExecutorClickHouse : BaseOnceExecutor<ClickHouseConnection>
     {
         protected override ClickHouseConnection Context { get; }
 
@@ -17,7 +17,9 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             Context = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellation)
+        protected override Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+            CancellationToken cancellation)
+            where TResult : default
         {
             return operation(cancellation);
         }
@@ -36,7 +38,8 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }
 
-            await using (var command = Context.CreateCommand($"SELECT count() FROM {LastTransaction.TableName} WHERE {nameof(LastTransaction.IdempotentKey)}=@key"))
+            await using (var command = Context.CreateCommand(
+                             $"SELECT count() FROM {LastTransaction.TableName} WHERE {nameof(LastTransaction.IdempotentKey)}=@key"))
             {
                 command.Parameters.AddWithValue("key", idempotentKey.ToString("N"));
 
@@ -48,7 +51,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
         protected override async Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken)
         {
             await using (var command =
-                Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd"))
+                         Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd"))
             {
                 command.Parameters.AddWithValue("key", idempotentKey.ToString("N"));
                 command.Parameters.AddWithValue("cd", DateTime.UtcNow.ToString("s"));

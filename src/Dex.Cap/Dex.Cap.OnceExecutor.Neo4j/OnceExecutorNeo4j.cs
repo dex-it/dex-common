@@ -7,7 +7,7 @@ using Neo4jClient.Transactions;
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
     // ReSharper disable once InconsistentNaming
-    public class OnceExecutorNeo4j<TResult> : BaseOnceExecutor<ITransactionalGraphClient, TResult>, IOnceExecutorNeo4j<TResult>
+    public class OnceExecutorNeo4j : BaseOnceExecutor<ITransactionalGraphClient>
     {
         protected override ITransactionalGraphClient Context { get; }
 
@@ -16,14 +16,18 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellation)
+        protected override async Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+            CancellationToken cancellationToken)
+            where TResult : default
         {
+            if (operation == null) throw new ArgumentNullException(nameof(operation));
+
             TResult? result;
             var t = Context.BeginTransaction();
 
             try
             {
-                result = await operation(cancellation).ConfigureAwait(false);
+                result = await operation(cancellationToken).ConfigureAwait(false);
                 await t.CommitAsync().ConfigureAwait(false);
             }
             finally
@@ -54,7 +58,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
         {
             await Context.Cypher
                 .Create($"(last:{nameof(LastTransaction)}" + " {lt})")
-                .WithParam("lt", new LastTransaction {IdempotentKey = idempotentKey})
+                .WithParam("lt", new LastTransaction { IdempotentKey = idempotentKey })
                 .ExecuteWithoutResultsAsync().ConfigureAwait(false);
         }
     }

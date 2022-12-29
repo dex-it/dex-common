@@ -41,8 +41,8 @@ namespace Dex.Cap.OnceExecutor
         protected abstract Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken);
 
-        protected abstract Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken);
         protected abstract Task OnModificationComplete();
         protected abstract Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken);
+        protected abstract Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken);
     }
 }
