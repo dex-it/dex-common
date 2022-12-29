@@ -43,7 +43,8 @@ namespace Dex.Cap.Ef.Tests
                 ;
 
             sc.AddOutbox<TestDbContext>().AddOptions<OutboxOptions>();
-            sc.AddScoped<IOnceExecutor<TestDbContext, object>, OnceExecutorEf<TestDbContext, object>>();
+            sc.AddOnceExecutor<TestDbContext>();
+
             return sc;
         }
 

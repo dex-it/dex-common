@@ -9,10 +9,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
 {
     public class IdempotentCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
     {
-        private readonly IOnceExecutor<TestDbContext, object> _onceExecutor;
+        private readonly IOnceExecutor<TestDbContext> _onceExecutor;
         public static int CountDown { get; set; }
 
-        public IdempotentCreateUserCommandHandler(IOnceExecutor<TestDbContext, object> onceExecutor)
+        public IdempotentCreateUserCommandHandler(IOnceExecutor<TestDbContext> onceExecutor)
         {
             _onceExecutor = onceExecutor;
         }

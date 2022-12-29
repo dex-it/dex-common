@@ -17,9 +17,9 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             Context = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellationToken)
+        protected override Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellation)
         {
-            return operation(cancellationToken);
+            return operation(cancellation);
         }
 
         protected override Task OnModificationComplete()

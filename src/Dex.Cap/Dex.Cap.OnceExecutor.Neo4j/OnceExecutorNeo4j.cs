@@ -16,14 +16,14 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellationToken)
+        protected override async Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellation)
         {
             TResult? result;
             var t = Context.BeginTransaction();
 
             try
             {
-                result = await operation(cancellationToken).ConfigureAwait(false);
+                result = await operation(cancellation).ConfigureAwait(false);
                 await t.CommitAsync().ConfigureAwait(false);
             }
             finally

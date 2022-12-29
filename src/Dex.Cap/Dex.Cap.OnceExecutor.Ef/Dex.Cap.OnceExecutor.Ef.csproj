@@ -30,10 +30,4 @@
 		<ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Compile Update="OnceExecutorEf.cs">
-			<DependentUpon>IOnceExecutorEf.cs</DependentUpon>
-		</Compile>
-	</ItemGroup>
-
 </Project>
