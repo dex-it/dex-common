@@ -19,7 +19,7 @@ namespace Dex.Outbox.Command.Test
 
             Console.WriteLine($"TestCommandHandler [{message.MessageId}] - Processed command at {DateTime.Now}, Args: {message.Args}");
 
-            var delay = TimeSpan.FromMilliseconds(_random.Next(100));
+            var delay = TimeSpan.FromMilliseconds(_random.Next(10, 100));
             Console.WriteLine($"TestCommandHandler - delay {delay}");
 
             await Task.Delay(delay, cancellationToken);

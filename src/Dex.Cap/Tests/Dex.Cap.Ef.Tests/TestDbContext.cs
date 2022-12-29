@@ -14,7 +14,7 @@ namespace Dex.Cap.Ef.Tests
             LoggerFactory.Create(builder =>
             {
                 builder.AddDebug();
-                // builder.AddProvider(new TestLoggerProvider());
+                builder.AddProvider(new TestLoggerProvider());
             });
 
         private readonly string _dbName;

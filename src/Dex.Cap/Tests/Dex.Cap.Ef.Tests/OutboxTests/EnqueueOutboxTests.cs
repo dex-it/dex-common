@@ -45,7 +45,16 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await SaveChanges(sp);
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, m) =>
+
+            TestCommandHandler.OnProcess += OnTestCommandHandlerOnOnProcess;
+
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            TestCommandHandler.OnProcess -= OnTestCommandHandlerOnOnProcess;
+            Assert.AreEqual(2, count);
+
+            void OnTestCommandHandlerOnOnProcess(object _, TestOutboxCommand m)
             {
                 if (!messageIds.Contains(m.MessageId))
                 {
@@ -54,12 +63,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                 Interlocked.Increment(ref count);
                 TestContext.WriteLine(Activity.Current?.Id);
-            };
-
-            var handler = sp.GetRequiredService<IOutboxHandler>();
-            await handler.ProcessAsync(CancellationToken.None);
-
-            Assert.AreEqual(2, count);
+            }
         }
 
         [Test]
