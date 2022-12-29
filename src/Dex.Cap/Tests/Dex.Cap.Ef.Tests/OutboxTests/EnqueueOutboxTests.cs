@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
+using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
@@ -93,7 +94,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // ошибка в БД в обработчике, по идее должна быть компенсация, но мы пока ничего не делаем
 
             var sp = InitServiceCollection()
-                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, TestCreateUserCommandHandler>()
+                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
@@ -124,7 +125,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // мусорим в дб контексте и падаем, следующий обработчик не должен вставить мусор из дб контекста
 
             var sp = InitServiceCollection()
-                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, TestCreateUserCommandHandler>()
+                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
@@ -134,13 +135,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await SaveChanges(sp);
 
             // act
-            TestCreateUserCommandHandler.CountDown = 1; // первая обработка упадет
+            NonIdempotentCreateUserCommandHandler.CountDown = 1; // первая обработка упадет
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
             // assert
             var db = sp.GetRequiredService<TestDbContext>();
-            Assert.AreEqual(1, db.Set<User>().Count());
+            Assert.AreEqual(1, db.Set<TestUser>().Count());
         }
 
         [Test]

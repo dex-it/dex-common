@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Dex.Cap.OnceExecutor;
+using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,17 +33,17 @@ namespace Dex.Cap.Ef.Tests
         protected IServiceCollection InitServiceCollection()
         {
             var sc = new ServiceCollection()
-                .AddLogging(builder =>
-                {
-                    builder.AddDebug();
-                    builder.AddProvider(new TestLoggerProvider());
-                    builder.SetMinimumLevel(LogLevel.Trace);
-                })
-                .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext>();
+                    .AddLogging(builder =>
+                    {
+                        builder.AddDebug();
+                        builder.AddProvider(new TestLoggerProvider());
+                        builder.SetMinimumLevel(LogLevel.Trace);
+                    })
+                    .AddScoped(_ => new TestDbContext(DbName))
+                ;
 
-            sc.AddOptions<OutboxOptions>();
-
+            sc.AddOutbox<TestDbContext>().AddOptions<OutboxOptions>();
+            sc.AddScoped<IOnceExecutor<TestDbContext, object>, OnceExecutorEf<TestDbContext, object>>();
             return sc;
         }
 

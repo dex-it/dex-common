@@ -32,4 +32,13 @@
       <Folder Include="Migrations\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="OutboxTests\Handlers\NonIdempotentCreateUserCommandHandler.cs">
+        <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
+      </Compile>
+      <Compile Update="OutboxTests\Handlers\IdempotentCreateUserCommandHandler.cs">
+        <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

@@ -3,24 +3,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Cap.Outbox.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.Ef.Tests.OutboxTests
+namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
 {
-    public class TestCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
+    public class NonIdempotentCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
     {
         private readonly DbContext _dbContext;
         public static int CountDown { get; set; }
 
-        public TestCreateUserCommandHandler(TestDbContext dbContext)
+        public NonIdempotentCreateUserCommandHandler(TestDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
         public async Task ProcessMessage(TestUserCreatorCommand message, CancellationToken cancellationToken)
         {
-            _dbContext.Set<User>().Add(new User { Id = message.Id });
+            _dbContext.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
 
             if (CountDown-- > 0)
                 throw new InvalidOperationException("CountDown > 0");
@@ -32,10 +31,5 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         {
             return ProcessMessage((TestUserCreatorCommand)outbox, cancellationToken);
         }
-    }
-
-    public class TestUserCreatorCommand : BaseOutboxMessage
-    {
-        public Guid Id { get; set; }
     }
 }

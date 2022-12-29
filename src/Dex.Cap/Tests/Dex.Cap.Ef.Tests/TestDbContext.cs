@@ -19,7 +19,7 @@ namespace Dex.Cap.Ef.Tests
 
         private readonly string _dbName;
 
-        public DbSet<User> Users => Set<User>();
+        public DbSet<TestUser> Users => Set<TestUser>();
 
         public TestDbContext(string dbName)
         {
@@ -40,7 +40,7 @@ namespace Dex.Cap.Ef.Tests
         {
             base.OnModelCreating(modelBuilder);
 
-            var userEntity = modelBuilder.Entity<User>();
+            var userEntity = modelBuilder.Entity<TestUser>();
             userEntity.HasKey(x => x.Id);
             userEntity.HasIndex(x => x.Name).IsUnique();
 

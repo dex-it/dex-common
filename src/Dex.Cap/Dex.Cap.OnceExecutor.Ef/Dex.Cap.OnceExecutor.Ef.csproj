@@ -32,7 +32,7 @@
 
 	<ItemGroup>
 		<Compile Update="OnceExecutorEf.cs">
-			<DependentUpon>IOnceExecutorEntityFramework.cs</DependentUpon>
+			<DependentUpon>IOnceExecutorEf.cs</DependentUpon>
 		</Compile>
 	</ItemGroup>
 
