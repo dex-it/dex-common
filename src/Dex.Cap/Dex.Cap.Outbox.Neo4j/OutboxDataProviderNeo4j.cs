@@ -80,5 +80,10 @@ namespace Dex.Cap.Outbox.Neo4j
 
             return potentialFree.ToArray();
         }
+
+        public override int GetFreeMessagesCount()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

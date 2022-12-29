@@ -17,7 +17,8 @@ namespace Dex.Cap.Outbox.Ef
                 .HasIndex(o => o.CreatedUtc);
 
             modelBuilder.Entity<Models.OutboxEnvelope>()
-                .HasIndex(o => o.Status);
+                .HasIndex(o => o.Status)
+                .HasFilter("\"Status\" in (0,1)");
 
             modelBuilder.Entity<Models.OutboxEnvelope>()
                 .HasIndex(o => o.Retries);
