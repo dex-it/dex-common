@@ -10,7 +10,7 @@ namespace Dex.Cap.Outbox
 {
     internal abstract class BaseOutboxDataProvider<TDbContext> : IOutboxDataProvider<TDbContext>
     {
-        public abstract Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService,
+        public abstract Task ExecuteActionInTransaction<TState>(Guid corellationId, IOutboxService<TDbContext> outboxService,
             TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
 
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
@@ -56,6 +56,7 @@ namespace Dex.Cap.Outbox
         protected abstract Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken);
 
         public abstract Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken);
+
         public abstract int GetFreeMessagesCount();
     }
 }

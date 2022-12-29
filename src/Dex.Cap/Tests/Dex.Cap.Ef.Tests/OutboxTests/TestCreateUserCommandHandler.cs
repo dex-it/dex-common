@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests
@@ -33,7 +34,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
     }
 
-    public class TestUserCreatorCommand : IOutboxMessage
+    public class TestUserCreatorCommand : BaseOutboxMessage
     {
         public Guid Id { get; set; }
     }

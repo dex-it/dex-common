@@ -17,7 +17,7 @@ namespace Dex.Outbox.Command.Test
         {
             Interlocked.Increment(ref _enterCount);
 
-            Console.WriteLine($"TestCommandHandler - Processed command at {DateTime.Now}, Args: {message.Args}");
+            Console.WriteLine($"TestCommandHandler [{message.MessageId}] - Processed command at {DateTime.Now}, Args: {message.Args}");
 
             var delay = TimeSpan.FromMilliseconds(_random.Next(100));
             Console.WriteLine($"TestCommandHandler - delay {delay}");

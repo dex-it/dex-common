@@ -32,7 +32,7 @@ namespace Dex.Cap.Outbox.Ef
             _logger = logger;
         }
 
-        public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
+        public override async Task ExecuteActionInTransaction<TState>(Guid corellationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
         {
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
@@ -47,7 +47,7 @@ namespace Dex.Cap.Outbox.Ef
 
                     try
                     {
-                        var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outboxService, _dbContext, state);
+                        var outboxContext = new OutboxContext<TDbContext, TState>(corellationId, outboxService, _dbContext, state);
                         await action(cancellationToken, outboxContext).ConfigureAwait(false);
                     }
                     catch
@@ -62,12 +62,12 @@ namespace Dex.Cap.Outbox.Ef
 
                     if (!isOutboxMessageExists)
                     {
-                        await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken).ConfigureAwait(false);
+                        await outboxService.EnqueueAsync(corellationId, EmptyOutboxMessage.Empty, cancellationToken).ConfigureAwait(false);
                     }
 
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
-                () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
+                () => IsExists(corellationId, cancellationToken)).ConfigureAwait(false);
         }
 
         public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)

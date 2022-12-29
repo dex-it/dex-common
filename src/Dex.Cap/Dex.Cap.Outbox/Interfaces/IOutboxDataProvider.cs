@@ -9,7 +9,7 @@ namespace Dex.Cap.Outbox.Interfaces
 {
     internal interface IOutboxDataProvider<TDbContext> : IOutboxDataProvider
     {
-        Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
+        Task ExecuteActionInTransaction<TState>(Guid corellationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
     }
     

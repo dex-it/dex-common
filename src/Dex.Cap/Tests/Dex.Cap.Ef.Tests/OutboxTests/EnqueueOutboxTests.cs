@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -10,14 +11,13 @@ using Dex.Cap.Outbox.Models;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class EnqueueOutboxTests : BaseTest
     {
-        private static readonly AsyncLocal<string> _asyncLocal = new();
-
         [Test]
         public async Task SimpleRunTest()
         {
@@ -25,25 +25,38 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
+            var logger = sp.GetRequiredService<ILogger<EnqueueOutboxTests>>();
             var outboxService = sp.GetRequiredService<IOutboxService>();
-            var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
 
+            var correlationId = Guid.NewGuid();
+            var messageIds = new List<Guid>();
+
+            var command = new TestOutboxCommand { Args = "hello world" };
+            messageIds.Add(command.MessageId);
+            logger.LogInformation("Command1 {MessageId}", ((IOutboxMessage)command).MessageId);
+            await outboxService.EnqueueAsync(correlationId, command, CancellationToken.None);
+
+            var command2 = new TestOutboxCommand { Args = "hello world2" };
+            messageIds.Add(command2.MessageId);
+            logger.LogInformation("Command2 {MessageId}", ((IOutboxMessage)command2).MessageId);
+
+            await outboxService.EnqueueAsync(correlationId, command2, CancellationToken.None);
             await SaveChanges(sp);
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) =>
+            TestCommandHandler.OnProcess += (_, m) =>
             {
-                count++;
+                if (!messageIds.Contains(m.MessageId))
+                {
+                    throw new InvalidOperationException("MessageId not equals");
+                }
+
+                Interlocked.Increment(ref count);
                 TestContext.WriteLine(Activity.Current?.Id);
             };
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            for (int i = 0; i < 5; i++)
-            {
-                await handler.ProcessAsync(CancellationToken.None);
-            }
+            await handler.ProcessAsync(CancellationToken.None);
 
             Assert.AreEqual(2, count);
         }
