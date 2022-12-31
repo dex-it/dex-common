@@ -14,7 +14,7 @@ namespace Dex.Cap.Ef.Tests
         {
             Assert.CatchAsync<DbUpdateException>(async () =>
             {
-                var user = new User {Name = "DoubleInsertTest", Years = 18};
+                var user = new TestUser { Name = "DoubleInsertTest", Years = 18 };
                 await using (var testDbContext = new TestDbContext(DbName))
                 {
                     await testDbContext.Users.AddAsync(user);
@@ -33,11 +33,11 @@ namespace Dex.Cap.Ef.Tests
         public async Task OnceExecuteTest()
         {
             var stepId = Guid.NewGuid();
-            var user = new User {Name = "OnceExecuteTest", Years = 18};
+            var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
             {
-                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
+                var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
 
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
@@ -50,7 +50,7 @@ namespace Dex.Cap.Ef.Tests
 
             await using (var testDbContext = new TestDbContext(DbName))
             {
-                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
+                var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
 
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
@@ -66,11 +66,11 @@ namespace Dex.Cap.Ef.Tests
         public async Task OnceExecuteBeginTransactionTest()
         {
             var stepId = Guid.NewGuid();
-            var user = new User {Name = "OnceExecuteBeginTransactionTest", Years = 18};
+            var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
             {
-                var ex = new OnceExecutorEf<TestDbContext, User>(testDbContext);
+                var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
 
                 // transaction 1
                 var result = await ex.Execute(stepId,
@@ -81,7 +81,7 @@ namespace Dex.Cap.Ef.Tests
                 Assert.IsNotNull(result);
                 Assert.AreEqual(user.Id, result.Id);
 
-                await testDbContext.Users.AddAsync(new User() {Name = "OnceExecuteBeginTransactionTest-2"});
+                await testDbContext.Users.AddAsync(new TestUser() { Name = "OnceExecuteBeginTransactionTest-2" });
                 // transaction 2
                 await testDbContext.SaveChangesAsync();
             }

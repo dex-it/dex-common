@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public static class OnceExecutorEfExtensions
+    public static class OnceExecutorDbContextExtensions
     {
         /// <summary>
         /// Регистрируем в контексте EF объект LastTransaction 

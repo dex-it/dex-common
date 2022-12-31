@@ -2,7 +2,6 @@ using System;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Ef;
-using Dex.Cap.Outbox.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Logging;
@@ -11,10 +10,16 @@ namespace Dex.Cap.Ef.Tests
 {
     public class TestDbContext : DbContext
     {
-        private static readonly ILoggerFactory LogFactory = LoggerFactory.Create(builder => { builder.AddDebug(); });
+        private static readonly ILoggerFactory LogFactory =
+            LoggerFactory.Create(builder =>
+            {
+                builder.AddDebug();
+                builder.AddProvider(new TestLoggerProvider());
+            });
+
         private readonly string _dbName;
 
-        public DbSet<User> Users { get; internal set; }
+        public DbSet<TestUser> Users => Set<TestUser>();
 
         public TestDbContext(string dbName)
         {
@@ -35,13 +40,12 @@ namespace Dex.Cap.Ef.Tests
         {
             base.OnModelCreating(modelBuilder);
 
-            var userEntity = modelBuilder.Entity<User>();
+            var userEntity = modelBuilder.Entity<TestUser>();
             userEntity.HasKey(x => x.Id);
             userEntity.HasIndex(x => x.Name).IsUnique();
 
             modelBuilder.OnceExecutorModelCreating();
             modelBuilder.OutboxModelCreating();
-            // modelBuilder.Entity<OutboxEnvelope>().
         }
 
         private sealed class DateTimeKindValueConverter : ValueConverter<DateTime, DateTime>
