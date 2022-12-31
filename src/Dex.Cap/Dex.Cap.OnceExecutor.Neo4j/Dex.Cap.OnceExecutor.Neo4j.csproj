@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>2.2.26</PackageVersion>
+        <PackageVersion>2.3.26</PackageVersion>
     </PropertyGroup>
     <!--Для NuGet-->
     <PropertyGroup>

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PackageVersion>2.2.25</PackageVersion>
+    <PackageVersion>2.3.26</PackageVersion>
   </PropertyGroup>
 
   
