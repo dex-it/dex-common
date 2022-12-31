@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.AspNet.Test
@@ -21,7 +22,7 @@ namespace Dex.Cap.AspNet.Test
         {
             await Task.Delay(200, cancellationToken);
 
-            _logger.LogInformation($"TestCommandHandler - Processed command at {DateTime.Now}, Args: {message.Args}");
+            _logger.LogInformation("TestCommandHandler - Processed command at {Now}, Args: {MessageArgs}", DateTime.Now, message.Args);
 
             OnProcess?.Invoke(this, EventArgs.Empty);
         }
@@ -32,8 +33,8 @@ namespace Dex.Cap.AspNet.Test
             return ProcessMessage((TestOutboxCommand)outbox, cancellationToken);
         }
     }
-    
-    public class TestOutboxCommand : IOutboxMessage
+
+    public class TestOutboxCommand : BaseOutboxMessage
     {
         public string Args { get; set; }
     }

@@ -48,6 +48,7 @@ namespace Dex.Cap.Outbox.Ef
 
             modelBuilder.Entity<Models.OutboxEnvelope>()
                 .Property(x => x.LockId)
+                .IsConcurrencyToken()
                 .HasComment("Idempotency key (unique key of the thread that captured the lock)");
 
             modelBuilder.Entity<Models.OutboxEnvelope>()

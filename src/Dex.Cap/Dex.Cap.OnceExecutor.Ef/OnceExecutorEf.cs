@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public class OnceExecutorEf<TDbContext, TResult> : BaseOnceExecutor<TDbContext, TResult>, IOnceExecutorEf<TDbContext, TResult>
+    public sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<TDbContext>
         where TDbContext : DbContext
     {
         protected override TDbContext Context { get; }
@@ -15,12 +15,12 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellationToken)
+        protected override async Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+            CancellationToken cancellationToken) where TResult : default
         {
             var strategy = Context.Database.CreateExecutionStrategy();
-            return await strategy.ExecuteInTransactionAsync(operation, (c) => IsAlreadyExecuted(idempotentKey, c), cancellationToken).ConfigureAwait(false);
+            return await strategy.ExecuteInTransactionAsync(operation, c => IsAlreadyExecuted(idempotentKey, c), cancellationToken).ConfigureAwait(false);
         }
-
 
         protected override Task OnModificationComplete()
         {

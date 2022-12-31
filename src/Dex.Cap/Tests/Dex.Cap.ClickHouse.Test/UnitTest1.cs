@@ -21,7 +21,7 @@ namespace Dex.Cap.ClickHouse.Test
             await using var conn = new ClickHouseConnection(_sb);
             await conn.OpenAsync();
 
-            var oe = new OnceExecutorClickHouse<int>(conn);
+            var oe = new OnceExecutorClickHouse(conn);
 
             var idempotentKey = Guid.NewGuid();
             await oe.Execute(idempotentKey, (connection, token) => connection.TryPingAsync(token));

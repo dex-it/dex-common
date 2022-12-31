@@ -1,22 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Ef.Tests.Model;
+using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class EnqueueOutboxTests : BaseTest
     {
-        private static readonly AsyncLocal<string> _asyncLocal = new();
-
         [Test]
         public async Task SimpleRunTest()
         {
@@ -24,27 +26,44 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
+            var logger = sp.GetRequiredService<ILogger<EnqueueOutboxTests>>();
             var outboxService = sp.GetRequiredService<IOutboxService>();
-            var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world2" }, CancellationToken.None);
 
+            var correlationId = Guid.NewGuid();
+            var messageIds = new List<Guid>();
+
+            var command = new TestOutboxCommand { Args = "hello world" };
+            messageIds.Add(command.MessageId);
+            logger.LogInformation("Command1 {MessageId}", ((IOutboxMessage)command).MessageId);
+            await outboxService.EnqueueAsync(correlationId, command, CancellationToken.None);
+
+            var command2 = new TestOutboxCommand { Args = "hello world2" };
+            messageIds.Add(command2.MessageId);
+            logger.LogInformation("Command2 {MessageId}", ((IOutboxMessage)command2).MessageId);
+
+            await outboxService.EnqueueAsync(correlationId, command2, CancellationToken.None);
             await SaveChanges(sp);
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) =>
-            {
-                count++;
-                TestContext.WriteLine(Activity.Current?.Id);
-            };
+
+            TestCommandHandler.OnProcess += OnTestCommandHandlerOnOnProcess;
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            for (int i = 0; i < 5; i++)
-            {
-                await handler.ProcessAsync(CancellationToken.None);
-            }
+            await handler.ProcessAsync(CancellationToken.None);
 
+            TestCommandHandler.OnProcess -= OnTestCommandHandlerOnOnProcess;
             Assert.AreEqual(2, count);
+
+            void OnTestCommandHandlerOnOnProcess(object _, TestOutboxCommand m)
+            {
+                if (!messageIds.Contains(m.MessageId))
+                {
+                    throw new InvalidOperationException("MessageId not equals");
+                }
+
+                Interlocked.Increment(ref count);
+                TestContext.WriteLine(Activity.Current?.Id);
+            }
         }
 
         [Test]
@@ -79,30 +98,54 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // ошибка в БД в обработчике, по идее должна быть компенсация, но мы пока ничего не делаем
 
             var sp = InitServiceCollection()
-                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, TestCreateUserCommandHandler>()
+                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var id = Guid.NewGuid();
             var correlationId = Guid.NewGuid();
-            var oid1 = await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
-            var oid2 = await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
             await SaveChanges(sp);
 
             // act
             var handler = sp.GetRequiredService<IOutboxHandler>();
-            for (var i = 0; i < 5; i++)
-            {
-                await handler.ProcessAsync(CancellationToken.None);
-            }
+            await handler.ProcessAsync(CancellationToken.None);
 
             // assert
             var db = sp.GetRequiredService<TestDbContext>();
             var envelopes = await db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).ToArrayAsync();
-            var envelope = envelopes.First();
-            var envelope2 = envelopes.Last();
-            Assert.IsTrue(envelope.Status == OutboxMessageStatus.Succeeded && envelope2.Status == OutboxMessageStatus.Failed);
-            Assert.AreEqual(3, envelope2.Retries);
+
+            var failed = envelopes.Single(x => x.Status == OutboxMessageStatus.Failed);
+            Assert.NotNull(failed);
+
+            var succ = envelopes.Single(x => x.Status == OutboxMessageStatus.Succeeded);
+            Assert.NotNull(succ);
+        }
+
+        [Test]
+        public async Task DbContextIsolationTest()
+        {
+            // мусорим в дб контексте и падаем, следующий обработчик не должен вставить мусор из дб контекста
+
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+
+            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() }, CancellationToken.None);
+            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() }, CancellationToken.None);
+            await SaveChanges(sp);
+
+            // act
+            NonIdempotentCreateUserCommandHandler.CountDown = 1; // первая обработка упадет
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // assert
+            var db = sp.GetRequiredService<TestDbContext>();
+            Assert.AreEqual(1, db.Set<TestUser>().Count());
         }
 
         [Test]

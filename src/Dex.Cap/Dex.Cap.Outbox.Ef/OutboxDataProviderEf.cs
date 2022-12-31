@@ -32,7 +32,7 @@ namespace Dex.Cap.Outbox.Ef
             _logger = logger;
         }
 
-        public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
+        public override async Task ExecuteActionInTransaction<TState>(Guid corellationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
         {
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
@@ -47,7 +47,7 @@ namespace Dex.Cap.Outbox.Ef
 
                     try
                     {
-                        var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outboxService, _dbContext, state);
+                        var outboxContext = new OutboxContext<TDbContext, TState>(corellationId, outboxService, _dbContext, state);
                         await action(cancellationToken, outboxContext).ConfigureAwait(false);
                     }
                     catch
@@ -62,12 +62,12 @@ namespace Dex.Cap.Outbox.Ef
 
                     if (!isOutboxMessageExists)
                     {
-                        await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken).ConfigureAwait(false);
+                        await outboxService.EnqueueAsync(corellationId, EmptyOutboxMessage.Empty, cancellationToken).ConfigureAwait(false);
                     }
 
                     await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 },
-                () => IsExists(correlationId, cancellationToken)).ConfigureAwait(false);
+                () => IsExists(corellationId, cancellationToken)).ConfigureAwait(false);
         }
 
         public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
@@ -222,11 +222,12 @@ namespace Dex.Cap.Outbox.Ef
         private async Task<OutboxEnvelope?> TryLockMessageCore(Guid freeMessageId, Guid lockId, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
-
             var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger),
                     static async (state, ct) =>
                     {
                         var (dbContext, freeMessageId, lockId, logger) = state;
+                        // очищаем все изменения, в случае репита
+                        dbContext.ChangeTracker.Clear();
 
                         var lockedJob = await dbContext.Set<OutboxEnvelope>()
                             .Where(WhereFree(freeMessageId))
@@ -238,25 +239,33 @@ namespace Dex.Cap.Outbox.Ef
                             .FirstOrDefaultAsync(ct)
                             .ConfigureAwait(false);
 
-                        if (lockedJob != null)
+                        try
                         {
-                            if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
-                                throw new InvalidOperationException("database return Unspecified datetime");
+                            if (lockedJob != null)
+                            {
+                                if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
+                                    throw new InvalidOperationException("database return Unspecified datetime");
 
-                            logger.LogTrace("Attempt to lock the message {MessageId}", freeMessageId);
+                                logger.LogDebug("Attempt to lock the message {MessageId}", freeMessageId);
 
-                            lockedJob.JobDb.LockId = lockId;
-                            lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
+                                lockedJob.JobDb.LockId = lockId;
+                                lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
 
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                            logger.LogTrace("Message is successfully captured {MessageId}", freeMessageId);
+                                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                                logger.LogDebug("Message is successfully captured {MessageId}", freeMessageId);
 
-                            dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
+                                dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
 
-                            return lockedJob.JobDb;
+                                return lockedJob.JobDb;
+                            }
+                        }
+                        catch (DbUpdateException)
+                        {
+                            // не смогли обновить запись, обновлена конкурентно
+                            logger.LogDebug("Can't update LockId because concurrency exception. {MessageId}", freeMessageId);
                         }
 
-                        logger.LogTrace("Another thread overtook and captured this message. {MessageId}", freeMessageId);
+                        logger.LogDebug("Another thread overtook and captured this message. {MessageId}", freeMessageId);
                         return null;
                     },
                     static async (state, ct) =>
@@ -277,7 +286,7 @@ namespace Dex.Cap.Outbox.Ef
 
             static Expression<Func<OutboxEnvelope, bool>> WhereFree(Guid messageId)
             {
-                return x => x.Id == messageId &&
+                return x => x.Id == messageId && x.Status != OutboxMessageStatus.Succeeded &&
                             (x.LockId == null ||
                              x.LockExpirationTimeUtc == null ||
                              x.LockExpirationTimeUtc < DateTime.UtcNow);

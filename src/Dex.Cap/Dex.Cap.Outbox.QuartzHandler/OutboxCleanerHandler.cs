@@ -20,7 +20,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler
 
         public async Task Execute(TimeSpan olderThan, CancellationToken cancellationToken)
         {
-            _logger.LogTrace("Performing cleanup");
+            _logger.LogDebug("Performing cleanup");
 
             var removedMessages = await _outboxDataProvider.Cleanup(olderThan, cancellationToken).ConfigureAwait(false);
             if (removedMessages > 0)

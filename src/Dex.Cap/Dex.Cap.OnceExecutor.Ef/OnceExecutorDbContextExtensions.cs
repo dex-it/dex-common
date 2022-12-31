@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public static class OnceExecutorEfExtensions
+    public static class OnceExecutorDbContextExtensions
     {
         /// <summary>
         /// Регистрируем в контексте EF объект LastTransaction 
@@ -14,8 +14,9 @@ namespace Dex.Cap.OnceExecutor.Ef
         {
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
-            builder.Entity<LastTransaction>()
-                .HasIndex(l => l.Created);
+            var eb = builder.Entity<LastTransaction>();
+            eb.HasKey(l => l.IdempotentKey);
+            eb.HasIndex(l => l.Created);
         }
     }
 }
