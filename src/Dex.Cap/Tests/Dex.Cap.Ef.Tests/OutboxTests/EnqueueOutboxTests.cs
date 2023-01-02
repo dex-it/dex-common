@@ -67,6 +67,44 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
+        public async Task EmptyRunTest()
+        {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+            var correlationId = Guid.NewGuid();
+            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, CancellationToken.None);
+            await SaveChanges(sp);
+
+            // act
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            using var scope = sp.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+            Assert.IsTrue(db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).All(x => x.Status == OutboxMessageStatus.Succeeded));
+        }
+
+        [Test]
+        public void FailedEmptyMessageIdRunTest()
+        {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+            var correlationId = Guid.NewGuid();
+
+            Assert.CatchAsync<InvalidOperationException>(async () =>
+            {
+                await outboxService.EnqueueAsync(correlationId, new TestEmptyMessageId(), CancellationToken.None);
+            });
+        }
+
+        [Test]
         public async Task ErrorCommandRunTest()
         {
             var sp = InitServiceCollection()

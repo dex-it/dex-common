@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <Nullable>enable</Nullable>
-    <PackageVersion>2.3.5</PackageVersion>
+    <PackageVersion>2.3.6</PackageVersion>
     <PackageTags>outbox business-transaction consistency</PackageTags>
   </PropertyGroup>
 

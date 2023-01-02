@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox.Models
@@ -6,6 +7,7 @@ namespace Dex.Cap.Outbox.Models
     internal sealed class EmptyOutboxMessage : IOutboxMessage
     {
         public static readonly EmptyOutboxMessage Empty = new();
-        public Guid MessageId => Guid.Empty;
+
+        [JsonIgnore] public Guid MessageId => Guid.Empty;
     }
 }

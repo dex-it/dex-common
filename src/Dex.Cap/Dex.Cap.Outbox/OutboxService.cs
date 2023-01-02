@@ -28,13 +28,17 @@ namespace Dex.Cap.Outbox
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, CancellationToken cancellationToken) where T : IOutboxMessage
         {
             var messageType = message.GetType();
+            if (messageType != typeof(EmptyOutboxMessage) && message.MessageId == default)
+                throw new InvalidOperationException("MessageId can't be empty");
+
             var assemblyQualifiedName = messageType.AssemblyQualifiedName;
             if (assemblyQualifiedName == null) throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
 
-            var outboxEnvelope = new OutboxEnvelope(Guid.NewGuid(), correlationId, assemblyQualifiedName, OutboxMessageStatus.New,
-                _serializer.Serialize(messageType, message));
+            var envelopeId = message.MessageId;
+            var msgBody = _serializer.Serialize(messageType, message);
+            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, assemblyQualifiedName, OutboxMessageStatus.New, msgBody);
             await _outboxDataProvider.Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
-            return correlationId;
+            return message.MessageId;
         }
 
         public async Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken)

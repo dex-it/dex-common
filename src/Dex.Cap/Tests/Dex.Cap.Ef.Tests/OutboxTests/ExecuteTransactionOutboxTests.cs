@@ -37,19 +37,23 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await outboxService.ExecuteOperationAsync(correlationId,
                 async (token, outboxContext) =>
                 {
+                    //
                     await outboxContext.EnqueueAsync(new TestUserCreatorCommand { MessageId = msgId, UserName = name }, token);
-                    // emulate double command
-                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { MessageId = msgId, UserName = name }, token);
-                }, CancellationToken.None);
+                },
+                CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
+            // repeat
+            var envelope = dbContext.Set<OutboxEnvelope>().First(x => x.CorrelationId == correlationId);
+            envelope.Status = OutboxMessageStatus.New;
+            await SaveChanges(sp);
+            await handler.ProcessAsync(CancellationToken.None);
+
             // check
-            Assert.IsNotNull(dbContext.Users.Single(x => x.Name == name));
-            var envelopes = dbContext.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).ToArray();
-            Assert.AreEqual(2, envelopes.Length);
-            Assert.IsTrue(envelopes.All(x => x.Status == OutboxMessageStatus.Succeeded));
+            envelope = dbContext.Set<OutboxEnvelope>().First(x => x.CorrelationId == correlationId);
+            Assert.AreEqual(envelope.Status, OutboxMessageStatus.Succeeded);
         }
 
         [Test]
@@ -67,20 +71,21 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var msgId = Guid.NewGuid();
             var correlationId = Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlationId,
-                async (token, outboxContext) =>
-                {
-                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { MessageId = msgId, UserName = name }, token);
-                    // emulate double command
-                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { MessageId = msgId, UserName = name }, token);
-                }, CancellationToken.None);
+                async (token, outboxContext) => { await outboxContext.EnqueueAsync(new TestUserCreatorCommand { MessageId = msgId, UserName = name }, token); },
+                CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
+            // repeat
+            var envelope = dbContext.Set<OutboxEnvelope>().First(x => x.CorrelationId == correlationId);
+            envelope.Status = OutboxMessageStatus.New;
+            await SaveChanges(sp);
+            await handler.ProcessAsync(CancellationToken.None);
+
             // check
-            var envelopes = dbContext.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).ToArray();
-            Assert.AreEqual(2, envelopes.Length);
-            Assert.IsTrue(envelopes.Any(x => x.Status == OutboxMessageStatus.Failed));
+            envelope = dbContext.Set<OutboxEnvelope>().First(x => x.CorrelationId == correlationId);
+            Assert.AreEqual(envelope.Status, OutboxMessageStatus.Failed);
         }
 
         [Test]
