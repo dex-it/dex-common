@@ -1,11 +1,11 @@
 using System;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Models;
 
 namespace Dex.Outbox.Command.Test
 {
-    public class TestErrorOutboxCommand : IOutboxMessage
+    public class TestErrorOutboxCommand : BaseOutboxMessage
     {
         public int MaxCount { get; set; } = 1;
-        public Guid MessageId { get; } = Guid.NewGuid();
     }
 }

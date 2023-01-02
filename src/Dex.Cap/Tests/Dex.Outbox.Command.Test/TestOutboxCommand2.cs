@@ -1,11 +1,9 @@
-using System;
-using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Models;
 
 namespace Dex.Outbox.Command.Test
 {
-    public class TestOutboxCommand2 : IOutboxMessage
+    public class TestOutboxCommand2 : BaseOutboxMessage
     {
         public string Args { get; set; }
-        public Guid MessageId { get; } = Guid.NewGuid();
     }
 }
