@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public abstract class BaseOnceExecutor<TDbContext> : IOnceExecutor<TDbContext>
+    public abstract class BaseOnceExecutor<TDbContext> : IOnceExecutor<TDbContext>, IOnceExecutor
     {
         protected abstract TDbContext Context { get; }
 
@@ -34,6 +34,18 @@ namespace Dex.Cap.OnceExecutor
         public Task Execute(Guid idempotentKey, Func<TDbContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
         {
             return Execute<int>(idempotentKey, modificator, null, cancellationToken);
+        }
+
+        public Task<TResult?> Execute<TResult>(Guid idempotentKey,
+            Func<CancellationToken, Task> modificator, Func<CancellationToken, Task<TResult?>> selector,
+            CancellationToken cancellationToken = default)
+        {
+            return Execute<TResult>(idempotentKey, (_, token) => modificator(token), (_, token) => selector(token), cancellationToken: cancellationToken);
+        }
+
+        public Task Execute(Guid idempotentKey, Func<CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
+        {
+            return Execute(idempotentKey, (_, token) => modificator(token), cancellationToken: cancellationToken);
         }
 
         // impl
