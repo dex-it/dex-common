@@ -24,11 +24,6 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
   <!--/Для NuGet-->
-  
-  
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12" />
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Neo4j\**" />
