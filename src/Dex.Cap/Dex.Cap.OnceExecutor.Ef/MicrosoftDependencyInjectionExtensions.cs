@@ -12,6 +12,7 @@ namespace Dex.Cap.OnceExecutor.Ef
 
             return serviceProvider
                     .AddScoped(typeof(IOnceExecutor<TDbContext>), typeof(OnceExecutorEf<TDbContext>))
+                    .AddScoped(typeof(IOnceExecutor), typeof(OnceExecutorEf<TDbContext>))
                 ;
         }
     }

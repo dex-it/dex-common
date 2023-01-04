@@ -11,4 +11,12 @@ namespace Dex.Cap.OnceExecutor
 
         Task Execute(Guid idempotentKey, Func<TContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default);
     }
+
+    public interface IOnceExecutor
+    {
+        Task<TResult?> Execute<TResult>(Guid idempotentKey, Func<CancellationToken, Task> modificator,
+            Func<CancellationToken, Task<TResult?>> selector, CancellationToken cancellationToken = default);
+
+        Task Execute(Guid idempotentKey, Func<CancellationToken, Task> modificator, CancellationToken cancellationToken = default);
+    }
 }
