@@ -84,8 +84,6 @@ namespace Dex.DistributedCache.Services
 
         public async Task<bool> TryCacheValue(string key, int expiration, ActionExecutedContext executedContext)
         {
-            if (executedContext.Exception != null) throw executedContext.Exception;
-
             var cancellation = executedContext.HttpContext.RequestAborted;
             CacheMetaInfo? cacheMetaInfo = default;
             var isError = false;

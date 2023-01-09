@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Dex.DistributedCache.Exceptions;
 using Dex.DistributedCache.Helpers;
 using Dex.DistributedCache.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -39,9 +40,15 @@ namespace Dex.DistributedCache.ActionFilters
             var paramsList = new[] { CacheHelper.GetDisplayUrl(context.HttpContext.Request) };
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
-            if (await cacheActionFilterService.CheckExistingCacheValue(cacheKey, context).ConfigureAwait(false)) return;
+            if (await cacheActionFilterService.CheckExistingCacheValue(cacheKey, context).ConfigureAwait(false))
+                return;
 
             var executedContext = await next().ConfigureAwait(false);
+
+            if (executedContext.Exception != null)
+            {
+                throw new CacheActionFilterException("ActionExecutedContext Exception", executedContext.Exception);
+            }
 
             await cacheActionFilterService.TryCacheValue(cacheKey, Expiration, executedContext).ConfigureAwait(false);
         }
