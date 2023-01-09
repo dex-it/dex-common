@@ -6,7 +6,7 @@
         <AssemblyName>Dex.DistributedCache</AssemblyName>
         <RootNamespace>Dex.DistributedCache</RootNamespace>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>2.1.2</PackageVersion>
+        <PackageVersion>2.1.3</PackageVersion>
         <PackageTags>output cache, etag specification, cache-control, distributed cache</PackageTags>
     </PropertyGroup>
 
