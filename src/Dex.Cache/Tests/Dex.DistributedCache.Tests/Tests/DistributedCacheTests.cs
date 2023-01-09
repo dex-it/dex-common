@@ -7,6 +7,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.DistributedCache.ActionFilters;
+using Dex.DistributedCache.Exceptions;
 using Dex.DistributedCache.Extensions;
 using Dex.DistributedCache.Helpers;
 using Dex.DistributedCache.Models;
@@ -239,11 +241,30 @@ namespace Dex.DistributedCache.Tests.Tests
             Assert.IsFalse(checkExistingCacheValue);
         }
 
+        [Test]
+        public async Task CacheActionFilterTest_ActionThrowException_ThrowCacheActionFilterException()
+        {
+            var serviceCollection = InitServiceCollection();
+            serviceCollection.AddMvc();
+            await using var serviceProvider = serviceCollection.BuildServiceProvider(true);
+            using var serviceScope = serviceProvider.CreateScope();
+
+            var actionExecutingContext = CreateDefaultActionExecutingContext();
+            actionExecutingContext.HttpContext.RequestServices = serviceScope.ServiceProvider;
+
+            var cacheActionFilter = new CacheActionFilter();
+            var actionExecutedContext = CreateDefaultActionExecutedContext();
+            actionExecutedContext.Exception = new NullReferenceException("inner", new ArgumentException());
+
+            Assert.ThrowsAsync<CacheActionFilterException>(() =>
+                cacheActionFilter.OnActionExecutionAsync(actionExecutingContext, () => Task.FromResult(actionExecutedContext)));
+        }
+
         private static ActionExecutingContext CreateDefaultActionExecutingContext()
         {
             var actionContext = new ActionContext(new DefaultHttpContext(), Mock.Of<RouteData>(), Mock.Of<ActionDescriptor>(), Mock.Of<ModelStateDictionary>());
             var actionExecutingContext =
-                new ActionExecutingContext(actionContext, new List<IFilterMetadata>(), new Dictionary<string, object>()!, Mock.Of<Controller>());
+                new ActionExecutingContext(actionContext, new List<IFilterMetadata>(), new Dictionary<string, object>(), Mock.Of<Controller>());
 
             return actionExecutingContext;
         }
