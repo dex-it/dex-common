@@ -1,8 +1,8 @@
-﻿using Dex.Cap.Outbox.Interfaces;
+﻿using Dex.Cap.Outbox.Models;
 
 namespace Dex.Events.Distributed.Tests.Handlers
 {
-    public class TestOutboxCommand : IOutboxMessage
+    public class TestOutboxCommand : BaseOutboxMessage
     {
         public string Args { get; set; }
     }
