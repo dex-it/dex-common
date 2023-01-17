@@ -4,21 +4,23 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public abstract class BaseOnceExecutor<TDbContext> : IOnceExecutor<TDbContext>, IOnceExecutor
+    public abstract class BaseOnceExecutor<TArg, TDbContext> : IOnceExecutor<TArg, TDbContext>, IOnceExecutor<TArg>
     {
         protected abstract TDbContext Context { get; }
 
-        public async Task<TResult?> Execute<TResult>(Guid idempotentKey,
-            Func<TDbContext, CancellationToken, Task> modificator, Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
+        public async Task<TResult?> Execute<TResult>(
+            TArg arg,
+            Func<TDbContext, CancellationToken, Task> modificator,
+            Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
             CancellationToken cancellationToken = default)
         {
-            var result = await ExecuteInTransaction(idempotentKey, async (token) =>
+            var result = await ExecuteInTransaction(arg, async (token) =>
             {
-                if (!await IsAlreadyExecuted(idempotentKey, token))
+                if (!await IsAlreadyExecuted(arg, token))
                 {
-                    await SaveIdempotentKey(idempotentKey, token);
+                    await BeforeModification(arg, token);
                     await modificator(Context, token);
-                    await OnModificationComplete();
+                    await AfterModification(arg, token);
                 }
 
                 var result = selector != null
@@ -31,30 +33,36 @@ namespace Dex.Cap.OnceExecutor
             return result;
         }
 
-        public Task Execute(Guid idempotentKey, Func<TDbContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
+        public Task Execute(TArg arg, Func<TDbContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
         {
-            return Execute<int>(idempotentKey, modificator, null, cancellationToken);
+            return Execute<int>(arg, modificator, null, cancellationToken);
         }
 
-        public Task<TResult?> Execute<TResult>(Guid idempotentKey,
+        public Task<TResult?> Execute<TResult>(TArg arg,
             Func<CancellationToken, Task> modificator, Func<CancellationToken, Task<TResult?>> selector,
             CancellationToken cancellationToken = default)
         {
-            return Execute<TResult>(idempotentKey, (_, token) => modificator(token), (_, token) => selector(token), cancellationToken: cancellationToken);
+            return Execute<TResult>(arg, (_, token) => modificator(token), (_, token) => selector(token), cancellationToken: cancellationToken);
         }
 
-        public Task Execute(Guid idempotentKey, Func<CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
+        public Task Execute(TArg arg, Func<CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
         {
-            return Execute(idempotentKey, (_, token) => modificator(token), cancellationToken: cancellationToken);
+            return Execute(arg, (_, token) => modificator(token), cancellationToken: cancellationToken);
         }
 
-        // impl
-
-        protected abstract Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected abstract Task<TResult?> ExecuteInTransaction<TResult>(TArg arg, Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken);
 
-        protected abstract Task OnModificationComplete();
-        protected abstract Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken);
-        protected abstract Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken);
+        protected abstract Task<bool> IsAlreadyExecuted(TArg arg, CancellationToken cancellationToken);
+
+        protected virtual Task BeforeModification(TArg arg, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        protected virtual Task AfterModification(TArg arg, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

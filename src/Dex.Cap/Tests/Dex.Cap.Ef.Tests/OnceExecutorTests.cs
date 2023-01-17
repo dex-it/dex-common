@@ -73,7 +73,7 @@ namespace Dex.Cap.Ef.Tests
             await using (var testDbContext = new TestDbContext(DbName))
             {
                 // without DbContext
-                var ex = new OnceExecutorEf<TestDbContext>(testDbContext) as IOnceExecutor;
+                var ex = new OnceExecutorEf<TestDbContext>(testDbContext) as IOnceExecutor<Guid>;
                 await ex.Execute(stepId, _ => CreateUser(testDbContext, user).AsTask(), cancellationToken: default);
                 await testDbContext.SaveChangesAsync();
             }
