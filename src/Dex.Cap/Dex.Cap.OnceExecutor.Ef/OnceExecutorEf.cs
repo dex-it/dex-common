@@ -15,7 +15,7 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected override async Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken) where TResult : default
         {
             var strategy = Context.Database.CreateExecutionStrategy();
@@ -27,12 +27,12 @@ namespace Dex.Cap.OnceExecutor.Ef
             return Context.SaveChangesAsync();
         }
 
-        protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
         {
             return await Context.Set<LastTransaction>().AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken)
+        protected override Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
         {
             return Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask();
         }
