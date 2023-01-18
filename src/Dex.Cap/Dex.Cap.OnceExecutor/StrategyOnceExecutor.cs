@@ -1,11 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public abstract class StrategyOnceExecutor<TArg, TExecutionStrategy, TResult> : IStrategyOnceExecutor<TArg, TResult>
+    public abstract class StrategyOnceExecutor<TArg, TResult, TExecutionStrategy> : IStrategyOnceExecutor<TArg, TResult>
         where TExecutionStrategy : IOnceExecutionStrategy<TArg, TResult>
     {
         protected TExecutionStrategy ExecutionStrategy { get; }
@@ -19,35 +18,19 @@ namespace Dex.Cap.OnceExecutor
         {
             return await ExecuteInTransactionAsync(async token =>
             {
-                if (!await ExecutionStrategy.CheckIdempotenceAsync(argument, token))
+                if (!await ExecutionStrategy.CheckIdempotenceAsync(argument, token).ConfigureAwait(false))
                 {
-                    await ExecutionStrategy.ExecuteAsync(argument, cancellationToken);
-                    await OnExecuteCompletedAsync(cancellationToken);
+                    await ExecutionStrategy.ExecuteAsync(argument, cancellationToken).ConfigureAwait(false);
+                    await OnExecuteCompletedAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                return await ExecutionStrategy.ReadAsync(argument, cancellationToken);
-            }, cancellationToken);
+                return await ExecutionStrategy.ReadAsync(argument, cancellationToken).ConfigureAwait(false);
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         protected abstract Task<TResult?> ExecuteInTransactionAsync(Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken);
 
         protected abstract Task OnExecuteCompletedAsync(CancellationToken cancellationToken);
-    }
-
-    public interface IStrategyOnceExecutor<in TArg, TResult>
-    {
-        Task<TResult?> ExecuteAsync(TArg arg, CancellationToken cancellationToken = default);
-    }
-
-    public interface IOnceExecutionStrategy<in TArg, TResult>
-    {
-        IsolationLevel TransactionIsolationLevel => IsolationLevel.ReadCommitted;
-
-        Task<bool> CheckIdempotenceAsync(TArg argument, CancellationToken cancellationToken);
-
-        Task ExecuteAsync(TArg argument, CancellationToken cancellationToken);
-
-        Task<TResult?> ReadAsync(TArg argument, CancellationToken cancellationToken);
     }
 }

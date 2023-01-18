@@ -1,6 +1,6 @@
 using System.Transactions;
 
-namespace Dex.Cap.OnceExecutor.Ef
+namespace Dex.Cap.OnceExecutor.Ef.Helpers
 {
     public static class TransactionScopeHelper
     {

@@ -4,13 +4,13 @@ using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.Ef.Tests
+namespace Dex.Cap.Ef.Tests.Strategies
 {
-    public class PgaCheckAvailableExecutionStrategy : IOnceExecutionStrategy<string, string>
+    public class TestExecutionStrategy1 : IOnceExecutionStrategy<string, string>
     {
         private readonly TestDbContext _dbContext;
 
-        public PgaCheckAvailableExecutionStrategy(TestDbContext dbContext)
+        public TestExecutionStrategy1(TestDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -30,7 +30,7 @@ namespace Dex.Cap.Ef.Tests
         public async Task<string?> ReadAsync(string argument, CancellationToken cancellationToken)
         {
             var userDb = await _dbContext.Users.SingleOrDefaultAsync(x => x.Name == argument, cancellationToken);
-            return userDb.Name;
+            return userDb?.Name;
         }
     }
 }

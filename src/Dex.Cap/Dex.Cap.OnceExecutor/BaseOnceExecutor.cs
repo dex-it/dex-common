@@ -14,17 +14,17 @@ namespace Dex.Cap.OnceExecutor
         {
             return await ExecuteInTransaction(idempotentKey, async token =>
             {
-                if (!await IsAlreadyExecuted(idempotentKey, token))
+                if (!await IsAlreadyExecuted(idempotentKey, token).ConfigureAwait(false))
                 {
-                    await SaveIdempotentKey(idempotentKey, token);
-                    await modificator(Context, token);
-                    await OnModificationCompleted(token);
+                    await SaveIdempotentKey(idempotentKey, token).ConfigureAwait(false);
+                    await modificator(Context, token).ConfigureAwait(false);
+                    await OnModificationCompleted(token).ConfigureAwait(false);
                 }
 
                 return selector != null
-                    ? await selector(Context, token)
+                    ? await selector(Context, token).ConfigureAwait(false)
                     : default;
-            }, cancellationToken);
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         public Task Execute(string idempotentKey, Func<TDbContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
@@ -47,9 +47,9 @@ namespace Dex.Cap.OnceExecutor
         protected abstract Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken);
 
-        protected abstract Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken);
+        protected abstract Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken);
 
-        protected abstract Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken);
+        protected abstract Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken);
 
         protected abstract Task OnModificationCompleted(CancellationToken cancellationToken);
     }

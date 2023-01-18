@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
@@ -8,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests
+namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 {
-    public class OnceExecutorTests : BaseTest
+    public class BaseOnceExecutorTests : BaseTest
     {
         [Test]
         public void DoubleInsertTest1()
@@ -116,32 +115,6 @@ namespace Dex.Cap.Ef.Tests
             }
 
             await CheckUsers("OnceExecuteBeginTransactionTest", "OnceExecuteBeginTransactionTest-2");
-        }
-        
-        [Test]
-        public async Task StrategyOnceExecuteTest1()
-        {
-            var arg = "StrategyOnceExecuteTest";
-
-            await using (var testDbContext = new TestDbContext(DbName))
-            {
-                var ex = new StrategyOnceExecutorEf<string, TestDbContext, PgaCheckAvailableExecutionStrategy, string>(testDbContext, new PgaCheckAvailableExecutionStrategy(testDbContext));
-
-                var result = await ex.ExecuteAsync(arg, CancellationToken.None);
-
-                Assert.IsNotNull(result);
-                Assert.AreEqual(arg, result);
-            }
-            
-            await using (var testDbContext = new TestDbContext(DbName))
-            {
-                var ex = new StrategyOnceExecutorEf<string, TestDbContext, PgaCheckAvailableExecutionStrategy, string>(testDbContext, new PgaCheckAvailableExecutionStrategy(testDbContext));
-
-                var result = await ex.ExecuteAsync(arg, CancellationToken.None);
-
-                Assert.IsNotNull(result);
-                Assert.AreEqual(arg, result);
-            }
         }
 
         private async Task CheckUsers(params string[] userNames)

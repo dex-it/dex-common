@@ -2,11 +2,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.OnceExecutor.Ef.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public sealed class StrategyOnceExecutorEf<TArg, TDbContext, TExecutionStrategy, TResult> : StrategyOnceExecutor<TArg, TExecutionStrategy, TResult>
+    public sealed class StrategyOnceExecutorEf<TArg, TResult, TExecutionStrategy, TDbContext> : StrategyOnceExecutor<TArg, TResult, TExecutionStrategy>
         where TDbContext : DbContext
         where TExecutionStrategy : IOnceExecutionStrategy<TArg, TResult>
     {
@@ -17,10 +18,10 @@ namespace Dex.Cap.OnceExecutor.Ef
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        protected override async Task<TResult?> ExecuteInTransactionAsync(Func<CancellationToken, Task<TResult?>> operation,
+        protected override Task<TResult?> ExecuteInTransactionAsync(Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken)
         {
-            return await _dbContext.Database.CreateExecutionStrategy()
+            return _dbContext.Database.CreateExecutionStrategy()
                 .ExecuteAsync(async () =>
                 {
                     using var transactionScope =
@@ -28,12 +29,12 @@ namespace Dex.Cap.OnceExecutor.Ef
                     var result = await operation(cancellationToken).ConfigureAwait(false);
                     transactionScope.Complete();
                     return result;
-                }).ConfigureAwait(false);
+                });
         }
 
-        protected override async Task OnExecuteCompletedAsync(CancellationToken cancellationToken)
+        protected override Task OnExecuteCompletedAsync(CancellationToken cancellationToken)
         {
-            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return _dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

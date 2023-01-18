@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.OnceExecutor.Models;
 using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j

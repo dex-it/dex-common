@@ -6,6 +6,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
     public class TestUserCreatorCommand : BaseOutboxMessage
     {
         public Guid Id { get; set; }
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
     }
 }

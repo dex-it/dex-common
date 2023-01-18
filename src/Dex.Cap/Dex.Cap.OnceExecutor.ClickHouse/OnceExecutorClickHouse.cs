@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.OnceExecutor.Models;
 using Octonica.ClickHouseClient;
 
 namespace Dex.Cap.OnceExecutor.ClickHouse

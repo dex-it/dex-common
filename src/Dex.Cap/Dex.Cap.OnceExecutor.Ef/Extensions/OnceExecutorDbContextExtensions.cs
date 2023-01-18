@@ -1,7 +1,8 @@
 ﻿using System;
+using Dex.Cap.OnceExecutor.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.OnceExecutor.Ef
+namespace Dex.Cap.OnceExecutor.Ef.Extensions
 {
     public static class OnceExecutorDbContextExtensions
     {
