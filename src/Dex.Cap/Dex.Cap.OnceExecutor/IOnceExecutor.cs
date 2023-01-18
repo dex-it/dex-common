@@ -7,13 +7,13 @@ namespace Dex.Cap.OnceExecutor
     public interface IOnceExecutor<out TContext>
     {
         Task<TResult?> Execute<TResult>(
-            Guid idempotentKey,
+            string idempotentKey,
             Func<TContext, CancellationToken, Task> modificator,
             Func<TContext, CancellationToken, Task<TResult?>> selector,
             CancellationToken cancellationToken = default);
 
         Task Execute(
-            Guid idempotentKey,
+            string idempotentKey,
             Func<TContext, CancellationToken, Task> modificator,
             CancellationToken cancellationToken = default);
     }
@@ -21,13 +21,13 @@ namespace Dex.Cap.OnceExecutor
     public interface IOnceExecutor
     {
         Task<TResult?> Execute<TResult>(
-            Guid idempotentKey,
+            string idempotentKey,
             Func<CancellationToken, Task> modificator,
             Func<CancellationToken, Task<TResult?>> selector,
             CancellationToken cancellationToken = default);
 
         Task Execute(
-            Guid idempotentKey,
+            string idempotentKey,
             Func<CancellationToken, Task> modificator,
             CancellationToken cancellationToken = default);
     }

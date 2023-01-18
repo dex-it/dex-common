@@ -23,7 +23,7 @@ namespace Dex.Cap.ClickHouse.Test
 
             var oe = new OnceExecutorClickHouse(conn);
 
-            var idempotentKey = Guid.NewGuid();
+            var idempotentKey = Guid.NewGuid().ToString("N");
             await oe.Execute(idempotentKey, (connection, token) => connection.TryPingAsync(token));
             await oe.Execute(idempotentKey, (_, _) => throw new NotImplementedException());
         }

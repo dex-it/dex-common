@@ -8,7 +8,7 @@ namespace Dex.Cap.OnceExecutor
     {
         public const string TableName = "last_transaction";
 
-        public Guid IdempotentKey { get; set; }
+        public string IdempotentKey { get; set; } = null!;
         public DateTime Created { get; set; } = DateTime.UtcNow;
     }
 }

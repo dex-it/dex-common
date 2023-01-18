@@ -35,7 +35,7 @@ namespace Dex.Cap.Ef.Tests
         [Test]
         public async Task OnceExecuteTest1()
         {
-            var stepId = Guid.NewGuid();
+            var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
@@ -68,7 +68,7 @@ namespace Dex.Cap.Ef.Tests
         [Test]
         public async Task OnceExecuteTest2()
         {
-            var stepId = Guid.NewGuid();
+            var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
@@ -94,7 +94,7 @@ namespace Dex.Cap.Ef.Tests
         [Test]
         public async Task OnceExecuteBeginTransactionTest()
         {
-            var stepId = Guid.NewGuid();
+            var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
