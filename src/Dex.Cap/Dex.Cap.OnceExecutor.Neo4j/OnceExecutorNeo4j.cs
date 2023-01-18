@@ -38,7 +38,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return result;
         }
 
-        protected override Task OnModificationComplete()
+        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }

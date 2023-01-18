@@ -24,7 +24,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             return operation(cancellation);
         }
 
-        protected override Task OnModificationComplete()
+        protected override Task OnModificationCompleted(CancellationToken cancellation)
         {
             return Task.CompletedTask;
         }

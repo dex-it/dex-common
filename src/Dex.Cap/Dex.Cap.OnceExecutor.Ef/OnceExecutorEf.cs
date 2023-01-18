@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public sealed class OnceExecutorEf<TDbContext> : SimpleOnceExecutor<TDbContext>
+    public sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<TDbContext>
         where TDbContext : DbContext
     {
         protected override TDbContext Context { get; }
@@ -17,14 +17,9 @@ namespace Dex.Cap.OnceExecutor.Ef
 
         protected override async Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation, CancellationToken cancellationToken) where TResult : default
         {
-            var strategy = Context.Database.CreateExecutionStrategy();
-            return await strategy.ExecuteInTransactionAsync(operation, 
-                token => IsAlreadyExecuted(idempotentKey, token), cancellationToken).ConfigureAwait(false);
-        }
-
-        protected override Task AfterModification(Guid idempotentKey, CancellationToken cancellationToken)
-        {
-            return Context.SaveChangesAsync(cancellationToken);
+            return await Context.Database.CreateExecutionStrategy().ExecuteInTransactionAsync(operation, 
+                token => IsAlreadyExecuted(idempotentKey, token),
+                cancellationToken).ConfigureAwait(false);
         }
 
         protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken)
@@ -32,9 +27,14 @@ namespace Dex.Cap.OnceExecutor.Ef
             return await Context.Set<LastTransaction>().AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken)
         {
-            return Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask();
+            await Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).ConfigureAwait(false);
+        }
+
+        protected override async Task OnModificationCompleted(CancellationToken cancellationToken)
+        {
+            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }

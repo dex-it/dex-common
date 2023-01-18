@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <PackageVersion>1.3.28-Prerelease</PackageVersion>
-    <LangVersion>default</LangVersion>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
 
   
@@ -29,9 +29,6 @@
   <ItemGroup>
     <Compile Remove="Neo4j\**" />
     <Compile Update="BaseOnceExecutor.cs">
-      <DependentUpon>IOnceExecutor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="SimpleOnceExecutor.cs">
       <DependentUpon>IOnceExecutor.cs</DependentUpon>
     </Compile>
   </ItemGroup>

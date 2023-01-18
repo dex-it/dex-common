@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
@@ -43,11 +44,11 @@ namespace Dex.Cap.Ef.Tests
 
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)!
                 );
 
                 Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result.Id);
+                Assert.AreEqual(user.Id, result!.Id);
             }
 
             await using (var testDbContext = new TestDbContext(DbName))
@@ -56,11 +57,11 @@ namespace Dex.Cap.Ef.Tests
 
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)!
                 );
 
                 Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result.Id);
+                Assert.AreEqual(user.Id, result!.Id);
             }
         }
 
@@ -73,7 +74,7 @@ namespace Dex.Cap.Ef.Tests
             await using (var testDbContext = new TestDbContext(DbName))
             {
                 // without DbContext
-                var ex = new OnceExecutorEf<TestDbContext>(testDbContext) as IOnceExecutor<Guid>;
+                var ex = new OnceExecutorEf<TestDbContext>(testDbContext) as IOnceExecutor;
                 await ex.Execute(stepId, _ => CreateUser(testDbContext, user).AsTask(), cancellationToken: default);
                 await testDbContext.SaveChangesAsync();
             }
@@ -103,28 +104,52 @@ namespace Dex.Cap.Ef.Tests
                 // transaction 1
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", cancellationToken: c)
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", cancellationToken: c)!
                 );
 
                 Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result.Id);
+                Assert.AreEqual(user.Id, result!.Id);
 
-                await testDbContext.Users.AddAsync(new TestUser() { Name = "OnceExecuteBeginTransactionTest-2" });
+                await testDbContext.Users.AddAsync(new TestUser { Name = "OnceExecuteBeginTransactionTest-2" });
                 // transaction 2
                 await testDbContext.SaveChangesAsync();
             }
 
             await CheckUsers("OnceExecuteBeginTransactionTest", "OnceExecuteBeginTransactionTest-2");
         }
+        
+        [Test]
+        public async Task StrategyOnceExecuteTest1()
+        {
+            var arg = "StrategyOnceExecuteTest";
+
+            await using (var testDbContext = new TestDbContext(DbName))
+            {
+                var ex = new StrategyOnceExecutorEf<string, TestDbContext, PgaCheckAvailableExecutionStrategy, string>(testDbContext, new PgaCheckAvailableExecutionStrategy(testDbContext));
+
+                var result = await ex.ExecuteAsync(arg, CancellationToken.None);
+
+                Assert.IsNotNull(result);
+                Assert.AreEqual(arg, result);
+            }
+            
+            await using (var testDbContext = new TestDbContext(DbName))
+            {
+                var ex = new StrategyOnceExecutorEf<string, TestDbContext, PgaCheckAvailableExecutionStrategy, string>(testDbContext, new PgaCheckAvailableExecutionStrategy(testDbContext));
+
+                var result = await ex.ExecuteAsync(arg, CancellationToken.None);
+
+                Assert.IsNotNull(result);
+                Assert.AreEqual(arg, result);
+            }
+        }
 
         private async Task CheckUsers(params string[] userNames)
         {
-            await using (var testDbContext = new TestDbContext(DbName))
+            await using var testDbContext = new TestDbContext(DbName);
+            foreach (var u in userNames)
             {
-                foreach (var u in userNames)
-                {
-                    Assert.IsNotNull(await testDbContext.Users.SingleAsync(x => x.Name == u));
-                }
+                Assert.IsNotNull(await testDbContext.Users.SingleAsync(x => x.Name == u));
             }
         }
     }
