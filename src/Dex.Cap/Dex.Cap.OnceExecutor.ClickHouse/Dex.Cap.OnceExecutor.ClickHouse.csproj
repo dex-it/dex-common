@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.2.26</PackageVersion>
+    <PackageVersion>1.2.27</PackageVersion>
   </PropertyGroup>
 
   <!--Для NuGet-->

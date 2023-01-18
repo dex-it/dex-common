@@ -13,7 +13,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             if (graphClient == null) throw new ArgumentNullException(nameof(graphClient));
 
             return Task.WhenAll(
-                graphClient.CreateIndex<LastTransaction, Guid>(arg => arg.IdempotentKey),
+                graphClient.CreateIndex<LastTransaction, string>(arg => arg.IdempotentKey),
                 graphClient.CreateIndex<LastTransaction, DateTime>(arg => arg.Created)
             );
         }
