@@ -17,7 +17,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             Context = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected override Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellation)
             where TResult : default
         {
@@ -29,7 +29,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             return Task.CompletedTask;
         }
 
-        protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.OpenAsync(cancellationToken);
 
@@ -41,19 +41,19 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             await using (var command = Context.CreateCommand(
                              $"SELECT count() FROM {LastTransaction.TableName} WHERE {nameof(LastTransaction.IdempotentKey)}=@key"))
             {
-                command.Parameters.AddWithValue("key", idempotentKey.ToString("N"));
+                command.Parameters.AddWithValue("key", idempotentKey);
 
                 var count = await command.ExecuteScalarAsync<ulong>(cancellationToken);
                 return count > 0;
             }
         }
 
-        protected override async Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
         {
             await using (var command =
                          Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd"))
             {
-                command.Parameters.AddWithValue("key", idempotentKey.ToString("N"));
+                command.Parameters.AddWithValue("key", idempotentKey);
                 command.Parameters.AddWithValue("cd", DateTime.UtcNow.ToString("s"));
 
                 await command.ExecuteNonQueryAsync(cancellationToken);
