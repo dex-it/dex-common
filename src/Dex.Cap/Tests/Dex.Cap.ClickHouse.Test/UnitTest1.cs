@@ -8,7 +8,7 @@ namespace Dex.Cap.ClickHouse.Test
 {
     public class Tests
     {
-        private readonly ClickHouseConnectionStringBuilder _sb = new() {Host = "127.0.0.1"};
+        private readonly ClickHouseConnectionStringBuilder _sb = new() { Host = "127.0.0.1" };
 
         [SetUp]
         public void Setup()
@@ -25,7 +25,7 @@ namespace Dex.Cap.ClickHouse.Test
 
             var idempotentKey = Guid.NewGuid().ToString("N");
             await oe.Execute(idempotentKey, (connection, token) => connection.TryPingAsync(token));
-            await oe.Execute(idempotentKey, (connection, token) => throw new NotImplementedException());
+            await oe.Execute(idempotentKey, (_, _) => throw new NotImplementedException());
         }
     }
 }

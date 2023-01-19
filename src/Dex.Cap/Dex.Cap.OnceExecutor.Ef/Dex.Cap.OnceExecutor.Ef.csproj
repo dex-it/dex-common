@@ -23,17 +23,12 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+		<PackageReference Include="Npgsql" Version="6.0.8" />
 	</ItemGroup>
 	<!--/Для NuGet-->
 
 	<ItemGroup>
 		<ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Update="OnceExecutorEf.cs">
-			<DependentUpon>IOnceExecutorEntityFramework.cs</DependentUpon>
-		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
