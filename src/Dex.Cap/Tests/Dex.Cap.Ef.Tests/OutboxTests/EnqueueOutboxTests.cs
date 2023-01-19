@@ -46,12 +46,12 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var count = 0;
 
-            TestCommandHandler.OnProcess += OnTestCommandHandlerOnOnProcess;
+            TestCommandHandler.OnProcess += OnTestCommandHandlerOnOnProcess!;
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
-            TestCommandHandler.OnProcess -= OnTestCommandHandlerOnOnProcess;
+            TestCommandHandler.OnProcess -= OnTestCommandHandlerOnOnProcess!;
             Assert.AreEqual(2, count);
 
             void OnTestCommandHandlerOnOnProcess(object _, TestOutboxCommand m)

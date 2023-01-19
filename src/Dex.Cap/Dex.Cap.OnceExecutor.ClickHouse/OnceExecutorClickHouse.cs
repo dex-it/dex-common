@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.OnceExecutor.Models;
@@ -6,6 +7,7 @@ using Octonica.ClickHouseClient;
 
 namespace Dex.Cap.OnceExecutor.ClickHouse
 {
+    [SuppressMessage("Reliability", "CA2007:Попробуйте вызвать ConfigureAwait для ожидаемой задачи")]
     public class OnceExecutorClickHouse : BaseOnceExecutor<ClickHouseConnection>
     {
         protected override ClickHouseConnection Context { get; }
@@ -19,13 +21,15 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
         }
 
         protected override Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
-            CancellationToken cancellation)
+            CancellationToken cancellationToken)
             where TResult : default
         {
-            return operation(cancellation);
+            if (operation == null) throw new ArgumentNullException(nameof(operation));
+
+            return operation(cancellationToken);
         }
 
-        protected override Task OnModificationCompleted(CancellationToken cancellation)
+        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }

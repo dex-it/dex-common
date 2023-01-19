@@ -48,6 +48,7 @@ namespace Dex.Cap.Ef.Tests
             modelBuilder.OutboxModelCreating();
         }
 
+        // ReSharper disable once UnusedType.Local
         private sealed class DateTimeKindValueConverter : ValueConverter<DateTime, DateTime>
         {
             public DateTimeKindValueConverter(DateTimeKind kind, ConverterMappingHints mappingHints = null!)

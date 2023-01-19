@@ -43,7 +43,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)!
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
                 );
 
                 Assert.IsNotNull(result);
@@ -56,7 +56,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)!
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
                 );
 
                 Assert.IsNotNull(result);
@@ -103,7 +103,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 // transaction 1
                 var result = await ex.Execute(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", cancellationToken: c)!
+                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", cancellationToken: c)
                 );
 
                 Assert.IsNotNull(result);
