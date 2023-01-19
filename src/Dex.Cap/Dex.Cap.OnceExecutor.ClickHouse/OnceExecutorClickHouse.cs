@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.OnceExecutor.Models;
 using Octonica.ClickHouseClient;
 
 namespace Dex.Cap.OnceExecutor.ClickHouse
@@ -24,7 +25,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             return operation(cancellation);
         }
 
-        protected override Task OnModificationComplete()
+        protected override Task OnModificationCompleted(CancellationToken cancellation)
         {
             return Task.CompletedTask;
         }

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.OnceExecutor.Models;
 using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
@@ -38,7 +39,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return result;
         }
 
-        protected override Task OnModificationComplete()
+        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }

@@ -3,12 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.2.27</PackageVersion>
+    <PackageVersion>1.3.29</PackageVersion>
   </PropertyGroup>
 
   <!--Для NuGet-->
   <PropertyGroup>
-    <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/netcore-5/src/Dex.Cap</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>dex team</Authors>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>

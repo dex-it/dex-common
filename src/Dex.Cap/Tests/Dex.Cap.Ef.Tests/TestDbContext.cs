@@ -1,6 +1,6 @@
 using System;
 using Dex.Cap.Ef.Tests.Model;
-using Dex.Cap.OnceExecutor.Ef;
+using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
