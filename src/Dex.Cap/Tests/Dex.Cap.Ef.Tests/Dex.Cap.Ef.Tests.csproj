@@ -40,6 +40,15 @@
       <Compile Update="OutboxTests\Handlers\IdempotentCreateUserCommandHandler.cs">
         <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
       </Compile>
+      <Compile Update="OnceExecutorTests\Strategies\Concrete1ExecutionStrategy.cs">
+        <DependentUpon>IConcrete1ExecutionStrategy.cs</DependentUpon>
+      </Compile>
+      <Compile Update="OnceExecutorTests\Strategies\Concrete2ExecutionStrategy.cs">
+        <DependentUpon>IConcrete2ExecutionStrategy.cs</DependentUpon>
+      </Compile>
+      <Compile Update="OnceExecutorTests\Strategies\Concrete3ExecutionStrategy.cs">
+        <DependentUpon>IConcrete3ExecutionStrategy.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public abstract class StrategyOnceExecutor<TArg, TResult, TExecutionStrategy> : IStrategyOnceExecutor<TArg, TResult>
+    public abstract class StrategyOnceExecutor<TArg, TResult, TExecutionStrategy> : IStrategyOnceExecutor<TArg, TResult, TExecutionStrategy>
         where TExecutionStrategy : IOnceExecutionStrategy<TArg, TResult>
     {
         protected TExecutionStrategy ExecutionStrategy { get; }

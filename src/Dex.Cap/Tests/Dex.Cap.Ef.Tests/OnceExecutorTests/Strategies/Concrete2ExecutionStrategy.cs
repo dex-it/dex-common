@@ -1,16 +1,15 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
-using Dex.Cap.OnceExecutor;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Ef.Tests.Strategies
 {
-    public class TestExecutionStrategy1 : IOnceExecutionStrategy<string, string>
+    public class Concrete2ExecutionStrategy : IConcrete2ExecutionStrategy
     {
         private readonly TestDbContext _dbContext;
 
-        public TestExecutionStrategy1(TestDbContext dbContext)
+        public Concrete2ExecutionStrategy(TestDbContext dbContext)
         {
             _dbContext = dbContext;
         }

@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Ef.Tests.Strategies
 {
-    public class TestExecutionStrategy2 : IOnceExecutionStrategy<string, TestUser>
+    public class Concrete3ExecutionStrategy : IConcrete3ExecutionStrategy
     {
         private readonly TestDbContext _dbContext;
 
-        public TestExecutionStrategy2(TestDbContext dbContext)
+        public Concrete3ExecutionStrategy(TestDbContext dbContext)
         {
             _dbContext = dbContext;
         }

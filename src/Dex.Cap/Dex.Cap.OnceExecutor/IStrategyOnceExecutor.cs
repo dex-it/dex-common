@@ -3,7 +3,9 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public interface IStrategyOnceExecutor<in TArg, TResult>
+    // ReSharper disable once UnusedTypeParameter
+    public interface IStrategyOnceExecutor<in TArg, TResult, TExecutionStrategy>
+        where TExecutionStrategy : IOnceExecutionStrategy<TArg, TResult>
     {
         Task<TResult?> ExecuteAsync(TArg arg, CancellationToken cancellationToken = default);
     }
