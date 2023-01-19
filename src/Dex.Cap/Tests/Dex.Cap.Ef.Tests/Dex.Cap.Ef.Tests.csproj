@@ -41,13 +41,13 @@
         <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
       </Compile>
       <Compile Update="OnceExecutorTests\Strategies\Concrete1ExecutionStrategy.cs">
-        <DependentUpon>IConcrete1ExecutionStrategy.cs</DependentUpon>
+        <DependentUpon>Concrete1ExecutionStrategyRequest.cs</DependentUpon>
       </Compile>
       <Compile Update="OnceExecutorTests\Strategies\Concrete2ExecutionStrategy.cs">
-        <DependentUpon>IConcrete2ExecutionStrategy.cs</DependentUpon>
+        <DependentUpon>Concrete2ExecutionStrategyRequest.cs</DependentUpon>
       </Compile>
       <Compile Update="OnceExecutorTests\Strategies\Concrete3ExecutionStrategy.cs">
-        <DependentUpon>IConcrete3ExecutionStrategy.cs</DependentUpon>
+        <DependentUpon>Concrete3ExecutionStrategyRequest.cs</DependentUpon>
       </Compile>
     </ItemGroup>
 

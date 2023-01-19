@@ -16,18 +16,16 @@ namespace Dex.Cap.OnceExecutor.Ef.Extensions
                 .AddScoped(typeof(IOnceExecutor), typeof(OnceExecutorEf<TDbContext>));
         }
 
-        public static IServiceCollection AddStrategyOnceExecutor<TArg, TResult, TExecutionStrategyInterface, TExecutionStrategyImplementation, TDbContext>(
-            this IServiceCollection serviceProvider)
+        public static IServiceCollection AddStrategyOnceExecutor<TArg, TResult, TExecutionStrategy, TDbContext>(this IServiceCollection serviceProvider)
             where TDbContext : DbContext
-            where TExecutionStrategyInterface : IOnceExecutionStrategy<TArg, TResult>
-            where TExecutionStrategyImplementation : class, IOnceExecutionStrategy<TArg, TResult>
+            where TExecutionStrategy : IOnceExecutionStrategy<TArg, TResult>
         {
             if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
 
             return serviceProvider
-                .AddScoped(typeof(TExecutionStrategyInterface), typeof(TExecutionStrategyImplementation))
-                .AddScoped(typeof(IStrategyOnceExecutor<TArg, TResult, TExecutionStrategyInterface>),
-                    typeof(StrategyOnceExecutorEf<TArg, TResult, TExecutionStrategyInterface, TDbContext>));
+                .AddScoped(typeof(IOnceExecutionStrategy<TArg, TResult>), typeof(TExecutionStrategy))
+                .AddScoped(typeof(IStrategyOnceExecutor<TArg, TResult>),
+                    typeof(StrategyOnceExecutorEf<TArg, TResult, IOnceExecutionStrategy<TArg, TResult>, TDbContext>));
         }
     }
 }

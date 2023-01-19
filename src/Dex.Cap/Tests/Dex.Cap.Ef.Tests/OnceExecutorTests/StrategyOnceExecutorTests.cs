@@ -15,51 +15,51 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
         public async Task ExecuteAsync_DoubleCallExecuteAsync_ModificatorCalledOnce()
         {
             var sp = InitServiceCollection()
-                .AddStrategyOnceExecutor<string, string, IConcrete1ExecutionStrategy, Concrete1ExecutionStrategy, TestDbContext>()
+                .AddStrategyOnceExecutor<Concrete1ExecutionStrategyRequest, string, Concrete1ExecutionStrategy, TestDbContext>()
                 .BuildServiceProvider();
 
-            var arg = "StrategyOnceExecuteTest1";
-            var executor = sp.GetRequiredService<IStrategyOnceExecutor<string, string, IConcrete1ExecutionStrategy>>();
+            var arg = new Concrete1ExecutionStrategyRequest { Value = "StrategyOnceExecuteTest1" };
+            var executor = sp.GetRequiredService<IStrategyOnceExecutor<Concrete1ExecutionStrategyRequest, string>>();
 
             var firstResult = await executor.ExecuteAsync(arg, CancellationToken.None);
             var secondResult = await executor.ExecuteAsync(arg, CancellationToken.None);
 
             Assert.IsNotNull(firstResult);
-            Assert.AreEqual(arg, firstResult);
+            Assert.AreEqual(arg.Value, firstResult);
 
             Assert.IsNotNull(secondResult);
-            Assert.AreEqual(arg, secondResult);
+            Assert.AreEqual(arg.Value, secondResult);
         }
 
         [Test]
         public async Task ExecuteAsync_StrategyMultiplyRegistration_ReturnsValue()
         {
             var sp = InitServiceCollection()
-                .AddStrategyOnceExecutor<string, string, IConcrete1ExecutionStrategy, Concrete1ExecutionStrategy, TestDbContext>()
-                .AddStrategyOnceExecutor<string, string, IConcrete2ExecutionStrategy, Concrete2ExecutionStrategy, TestDbContext>()
-                .AddStrategyOnceExecutor<string, TestUser, IConcrete3ExecutionStrategy, Concrete3ExecutionStrategy, TestDbContext>()
+                .AddStrategyOnceExecutor<Concrete1ExecutionStrategyRequest, string, Concrete1ExecutionStrategy, TestDbContext>()
+                .AddStrategyOnceExecutor<Concrete2ExecutionStrategyRequest, string, Concrete2ExecutionStrategy, TestDbContext>()
+                .AddStrategyOnceExecutor<Concrete3ExecutionStrategyRequest, TestUser, Concrete3ExecutionStrategy, TestDbContext>()
                 .BuildServiceProvider();
 
-            var arg1 = "StrategyOnceExecuteTest1";
-            var arg2 = "StrategyOnceExecuteTest2";
-            var arg3 = "StrategyOnceExecuteTest3";
+            var arg1 = new Concrete1ExecutionStrategyRequest { Value = "StrategyOnceExecuteTest1" };
+            var arg2 = new Concrete2ExecutionStrategyRequest { Value = "StrategyOnceExecuteTest2" };
+            var arg3 = new Concrete3ExecutionStrategyRequest { Value = "StrategyOnceExecuteTest3" };
 
-            var executor1 = sp.GetRequiredService<IStrategyOnceExecutor<string, string, IConcrete1ExecutionStrategy>>();
-            var executor2 = sp.GetRequiredService<IStrategyOnceExecutor<string, string, IConcrete2ExecutionStrategy>>();
-            var executor3 = sp.GetRequiredService<IStrategyOnceExecutor<string, TestUser, IConcrete3ExecutionStrategy>>();
+            var executor1 = sp.GetRequiredService<IStrategyOnceExecutor<Concrete1ExecutionStrategyRequest, string>>();
+            var executor2 = sp.GetRequiredService<IStrategyOnceExecutor<Concrete2ExecutionStrategyRequest, string>>();
+            var executor3 = sp.GetRequiredService<IStrategyOnceExecutor<Concrete3ExecutionStrategyRequest, TestUser>>();
 
             var executor1Result = await executor1.ExecuteAsync(arg1, CancellationToken.None);
             var executor2Result = await executor2.ExecuteAsync(arg2, CancellationToken.None);
             var executor3Result = await executor3.ExecuteAsync(arg3, CancellationToken.None);
 
             Assert.IsNotNull(executor1Result);
-            Assert.AreEqual(arg1, executor1Result);
+            Assert.AreEqual(arg1.Value, executor1Result);
 
             Assert.IsNotNull(executor2Result);
-            Assert.AreEqual(arg2, executor2Result);
+            Assert.AreEqual(arg2.Value, executor2Result);
 
             Assert.IsNotNull(executor3Result);
-            Assert.AreEqual(arg3, executor3Result!.Name);
+            Assert.AreEqual(arg3.Value, executor3Result!.Name);
         }
     }
 }

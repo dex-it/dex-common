@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Ef.Tests.Strategies
 {
-    public class Concrete1ExecutionStrategy : IConcrete1ExecutionStrategy
+    public class Concrete1ExecutionStrategy : IOnceExecutionStrategy<Concrete1ExecutionStrategyRequest, string>
     {
         private readonly TestDbContext _dbContext;
 
@@ -15,21 +15,21 @@ namespace Dex.Cap.Ef.Tests.Strategies
             _dbContext = dbContext;
         }
 
-        public async Task<bool> CheckIdempotenceAsync(string argument, CancellationToken cancellationToken)
+        public async Task<bool> CheckIdempotenceAsync(Concrete1ExecutionStrategyRequest argument, CancellationToken cancellationToken)
         {
-            var userDb = await _dbContext.Users.SingleOrDefaultAsync(x => x.Name == argument, cancellationToken);
+            var userDb = await _dbContext.Users.SingleOrDefaultAsync(x => x.Name == argument.Value, cancellationToken);
             return userDb != null;
         }
 
-        public async Task ExecuteAsync(string argument, CancellationToken cancellationToken)
+        public async Task ExecuteAsync(Concrete1ExecutionStrategyRequest argument, CancellationToken cancellationToken)
         {
-            var user = new TestUser { Name = argument, Years = 18 };
+            var user = new TestUser { Name = argument.Value, Years = 18 };
             await _dbContext.Users.AddAsync(user, cancellationToken);
         }
 
-        public async Task<string?> ReadAsync(string argument, CancellationToken cancellationToken)
+        public async Task<string?> ReadAsync(Concrete1ExecutionStrategyRequest argument, CancellationToken cancellationToken)
         {
-            var userDb = await _dbContext.Users.SingleOrDefaultAsync(x => x.Name == argument, cancellationToken);
+            var userDb = await _dbContext.Users.SingleOrDefaultAsync(x => x.Name == argument.Value, cancellationToken);
             return userDb?.Name;
         }
     }
