@@ -18,10 +18,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace Dex.Cap.AspNet.Test
 {
@@ -32,7 +30,7 @@ namespace Dex.Cap.AspNet.Test
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        private IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -84,7 +82,7 @@ namespace Dex.Cap.AspNet.Test
                     });
             });
 
-            lifetime.ApplicationStarted.Register(async () =>
+            async void Callback()
             {
                 using var scope = app.ApplicationServices.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
@@ -92,23 +90,26 @@ namespace Dex.Cap.AspNet.Test
                 await db.Database.EnsureCreatedAsync();
 
                 await Task.Run(async () =>
-                {
-                    var iter = 10;
-                    while (!lifetime.ApplicationStopping.IsCancellationRequested && iter-- > 0)
                     {
-                        using var scope2 = app.ApplicationServices.CreateScope();
-                        for (var i = 0; i < 10; i++)
+                        var iter = 10;
+                        while (!lifetime.ApplicationStopping.IsCancellationRequested && iter-- > 0)
                         {
-                            var client = scope2.ServiceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
-                            var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
-                            await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
-                            await db2.SaveChangesAsync();
-                        }
+                            using var scope2 = app.ApplicationServices.CreateScope();
+                            for (var i = 0; i < 10; i++)
+                            {
+                                var client = scope2.ServiceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+                                var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
+                                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
+                                await db2.SaveChangesAsync();
+                            }
 
-                        await Task.Delay(500);
-                    }
-                }).ConfigureAwait(false);
-            });
+                            await Task.Delay(500);
+                        }
+                    })
+                    .ConfigureAwait(false);
+            }
+
+            lifetime.ApplicationStarted.Register(Callback);
         }
 
         private static async Task HealthReportResponseWriter(HttpContext context, HealthReport report)

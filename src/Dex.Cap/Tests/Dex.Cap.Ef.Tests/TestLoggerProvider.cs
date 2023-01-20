@@ -1,6 +1,4 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -19,10 +17,10 @@ namespace Dex.Cap.Ef.Tests
 
         private class TestLogger : ILogger
         {
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception, string> formatter)
             {
                 var now = DateTime.Now;
-                TestContext.WriteLine($"{now:mm:ss}:{now.Millisecond} [{logLevel}]: {formatter(state, exception)}");
+                TestContext.WriteLine($"{now:mm:ss}:{now.Millisecond} [{logLevel}]: {formatter(state, exception!)}");
             }
 
             public bool IsEnabled(LogLevel logLevel)

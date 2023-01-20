@@ -1,5 +1,3 @@
-using System;
-using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 
 namespace Dex.Outbox.Command.Test

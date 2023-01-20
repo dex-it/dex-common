@@ -14,7 +14,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var command = new TestOutboxCommand {Args = "hello"};
             var commandText = serializer.Serialize(command);
             var typeName = typeof(TestOutboxCommand).AssemblyQualifiedName ?? throw new InvalidOperationException();
-            var cmd = (TestOutboxCommand) serializer.Deserialize(Type.GetType(typeName, true), commandText);
+            var cmd = (TestOutboxCommand) serializer.Deserialize(Type.GetType(typeName, true)!, commandText)!;
             
             Assert.IsNotNull(cmd);
             Assert.AreEqual(command.Args, cmd.Args);

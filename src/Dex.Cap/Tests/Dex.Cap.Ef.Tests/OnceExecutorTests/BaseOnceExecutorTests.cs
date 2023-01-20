@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests
+namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 {
-    public class OnceExecutorTests : BaseTest
+    public class BaseOnceExecutorTests : BaseTest
     {
         [Test]
         public void DoubleInsertTest1()
@@ -34,7 +34,7 @@ namespace Dex.Cap.Ef.Tests
         [Test]
         public async Task OnceExecuteTest1()
         {
-            var stepId = Guid.NewGuid();
+            var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
@@ -47,7 +47,7 @@ namespace Dex.Cap.Ef.Tests
                 );
 
                 Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result.Id);
+                Assert.AreEqual(user.Id, result!.Id);
             }
 
             await using (var testDbContext = new TestDbContext(DbName))
@@ -60,14 +60,14 @@ namespace Dex.Cap.Ef.Tests
                 );
 
                 Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result.Id);
+                Assert.AreEqual(user.Id, result!.Id);
             }
         }
 
         [Test]
         public async Task OnceExecuteTest2()
         {
-            var stepId = Guid.NewGuid();
+            var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
@@ -93,7 +93,7 @@ namespace Dex.Cap.Ef.Tests
         [Test]
         public async Task OnceExecuteBeginTransactionTest()
         {
-            var stepId = Guid.NewGuid();
+            var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
 
             await using (var testDbContext = new TestDbContext(DbName))
@@ -107,9 +107,9 @@ namespace Dex.Cap.Ef.Tests
                 );
 
                 Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result.Id);
+                Assert.AreEqual(user.Id, result!.Id);
 
-                await testDbContext.Users.AddAsync(new TestUser() { Name = "OnceExecuteBeginTransactionTest-2" });
+                await testDbContext.Users.AddAsync(new TestUser { Name = "OnceExecuteBeginTransactionTest-2" });
                 // transaction 2
                 await testDbContext.SaveChangesAsync();
             }
@@ -119,12 +119,10 @@ namespace Dex.Cap.Ef.Tests
 
         private async Task CheckUsers(params string[] userNames)
         {
-            await using (var testDbContext = new TestDbContext(DbName))
+            await using var testDbContext = new TestDbContext(DbName);
+            foreach (var u in userNames)
             {
-                foreach (var u in userNames)
-                {
-                    Assert.IsNotNull(await testDbContext.Users.SingleAsync(x => x.Name == u));
-                }
+                Assert.IsNotNull(await testDbContext.Users.SingleAsync(x => x.Name == u));
             }
         }
     }

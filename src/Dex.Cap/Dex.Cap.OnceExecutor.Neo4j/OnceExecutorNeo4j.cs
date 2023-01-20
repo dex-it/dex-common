@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.OnceExecutor.Models;
 using Neo4jClient.Transactions;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
@@ -16,7 +17,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction<TResult>(Guid idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected override async Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken)
             where TResult : default
         {
@@ -38,12 +39,12 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return result;
         }
 
-        protected override Task OnModificationComplete()
+        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }
 
-        protected override async Task<bool> IsAlreadyExecuted(Guid idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
         {
             var lastTransaction = await Context.Cypher
                 .Match($"(t:{nameof(LastTransaction)})")
@@ -54,7 +55,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return lastTransaction.Any();
         }
 
-        protected override async Task SaveIdempotentKey(Guid idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.Cypher
                 .Create($"(last:{nameof(LastTransaction)}" + " {lt})")

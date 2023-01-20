@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
-		<PackageVersion>2.3.27</PackageVersion>
+		<PackageVersion>2.4.29</PackageVersion>
 	</PropertyGroup>
 
 	<!--Для NuGet-->
@@ -23,6 +23,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+		<PackageReference Include="Npgsql" Version="6.0.8" />
 	</ItemGroup>
 	<!--/Для NuGet-->
 
