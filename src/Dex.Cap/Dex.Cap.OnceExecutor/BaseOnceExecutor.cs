@@ -8,7 +8,7 @@ namespace Dex.Cap.OnceExecutor
     {
         protected abstract TDbContext Context { get; }
 
-        public async Task<TResult?> Execute<TResult>(string idempotentKey,
+        public async Task<TResult?> ExecuteAsync<TResult>(string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator, Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
             CancellationToken cancellationToken = default)
         {
@@ -27,21 +27,21 @@ namespace Dex.Cap.OnceExecutor
             }, cancellationToken).ConfigureAwait(false);
         }
 
-        public Task Execute(string idempotentKey, Func<TDbContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
+        public Task ExecuteAsync(string idempotentKey, Func<TDbContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
         {
-            return Execute<int>(idempotentKey, modificator, null, cancellationToken);
+            return ExecuteAsync<int>(idempotentKey, modificator, null, cancellationToken);
         }
 
-        public Task<TResult?> Execute<TResult>(string idempotentKey,
+        public Task<TResult?> ExecuteAsync<TResult>(string idempotentKey,
             Func<CancellationToken, Task> modificator, Func<CancellationToken, Task<TResult?>> selector,
             CancellationToken cancellationToken = default)
         {
-            return Execute(idempotentKey, (_, token) => modificator(token), (_, token) => selector(token), cancellationToken: cancellationToken);
+            return ExecuteAsync(idempotentKey, (_, token) => modificator(token), (_, token) => selector(token), cancellationToken: cancellationToken);
         }
 
-        public Task Execute(string idempotentKey, Func<CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
+        public Task ExecuteAsync(string idempotentKey, Func<CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
         {
-            return Execute(idempotentKey, (_, token) => modificator(token), cancellationToken: cancellationToken);
+            return ExecuteAsync(idempotentKey, (_, token) => modificator(token), cancellationToken: cancellationToken);
         }
 
         protected abstract Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
