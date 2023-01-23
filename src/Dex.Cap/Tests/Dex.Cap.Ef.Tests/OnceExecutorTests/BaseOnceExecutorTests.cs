@@ -41,7 +41,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             {
                 var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
 
-                var result = await ex.Execute(stepId,
+                var result = await ex.ExecuteAsync(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
                     (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)!
                 );
@@ -54,7 +54,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             {
                 var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
 
-                var result = await ex.Execute(stepId,
+                var result = await ex.ExecuteAsync(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
                     (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)!
                 );
@@ -74,7 +74,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             {
                 // without DbContext
                 var ex = new OnceExecutorEf<TestDbContext>(testDbContext) as IOnceExecutor;
-                await ex.Execute(stepId, _ => CreateUser(testDbContext, user).AsTask(), cancellationToken: default);
+                await ex.ExecuteAsync(stepId, _ => CreateUser(testDbContext, user).AsTask(), cancellationToken: default);
                 await testDbContext.SaveChangesAsync();
             }
 
@@ -101,7 +101,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
 
                 // transaction 1
-                var result = await ex.Execute(stepId,
+                var result = await ex.ExecuteAsync(stepId,
                     (context, c) => context.Users.AddAsync(user, c).AsTask(),
                     (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", cancellationToken: c)!
                 );

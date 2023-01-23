@@ -18,7 +18,7 @@ namespace Dex.Cap.OnceExecutor
         {
             return await ExecuteInTransactionAsync(async token =>
             {
-                if (!await ExecutionStrategy.CheckIdempotenceAsync(argument, token).ConfigureAwait(false))
+                if (!await ExecutionStrategy.IsAlreadyExecutedAsync(argument, token).ConfigureAwait(false))
                 {
                     await ExecutionStrategy.ExecuteAsync(argument, cancellationToken).ConfigureAwait(false);
                     await OnExecuteCompletedAsync(cancellationToken).ConfigureAwait(false);
