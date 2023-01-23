@@ -1,7 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Options;

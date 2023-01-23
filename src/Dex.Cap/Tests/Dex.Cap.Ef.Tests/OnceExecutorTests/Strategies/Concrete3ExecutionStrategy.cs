@@ -15,7 +15,7 @@ namespace Dex.Cap.Ef.Tests.Strategies
             _dbContext = dbContext;
         }
 
-        public async Task<bool> CheckIdempotenceAsync(Concrete3ExecutionStrategyRequest argument, CancellationToken cancellationToken)
+        public async Task<bool> IsAlreadyExecutedAsync(Concrete3ExecutionStrategyRequest argument, CancellationToken cancellationToken)
         {
             var userDb = await _dbContext.Users.SingleOrDefaultAsync(x => x.Name == argument.Value, cancellationToken);
             return userDb != null;

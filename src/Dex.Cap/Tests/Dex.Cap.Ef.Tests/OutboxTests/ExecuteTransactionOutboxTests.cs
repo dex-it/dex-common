@@ -269,9 +269,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             {
                 lock (threads)
                 {
-                    threads.Add(AsyncLocal.Value);
+                    threads.Add(AsyncLocal.Value!);
                 }
 
+                // ReSharper disable once AccessToDisposedClosure
                 ce.Signal();
             };
 
@@ -288,7 +289,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             async void ThreadEntry(string arg)
             {
-                AsyncLocal.Value = arg;
+                lock (threads)
+                {
+                    AsyncLocal.Value = arg;
+                }
+
                 using var scope = services.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
                 await handler.ProcessAsync();
