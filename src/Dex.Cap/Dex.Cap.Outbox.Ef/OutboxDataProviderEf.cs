@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.Outbox.Helpers;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
@@ -112,7 +112,7 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            await strategy.ExecuteInTransactionAsync((_dbContext, lockedJob, _logger), static async (state, ct) =>
+            await strategy.ExecuteInTransactionScopeAsync((_dbContext, lockedJob, _logger), static async (state, ct) =>
                     {
                         var (dbContext, lockedJob, logger) = state;
 
@@ -222,7 +222,7 @@ namespace Dex.Cap.Outbox.Ef
         private async Task<OutboxEnvelope?> TryLockMessageCore(Guid freeMessageId, Guid lockId, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
-            var message = await strategy.ExecuteInTransactionAsync((_dbContext, freeMessageId, lockId, _logger),
+            var message = await strategy.ExecuteInTransactionScopeAsync((_dbContext, freeMessageId, lockId, _logger),
                     static async (state, ct) =>
                     {
                         var (dbContext, freeMessageId, lockId, logger) = state;

@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.OnceExecutor.Models;
 using Octonica.ClickHouseClient;
 
@@ -20,7 +21,9 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             Context = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected override Task<TResult?> ExecuteInTransaction<TResult>(
+            Func<CancellationToken, Task<TResult?>> operation,
+            IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default
         {

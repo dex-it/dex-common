@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.OnceExecutor.Models;
 using Neo4jClient.Transactions;
 
@@ -17,7 +18,9 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected override async Task<TResult?> ExecuteInTransaction<TResult>(
+            Func<CancellationToken, Task<TResult?>> operation,
+            IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default
         {

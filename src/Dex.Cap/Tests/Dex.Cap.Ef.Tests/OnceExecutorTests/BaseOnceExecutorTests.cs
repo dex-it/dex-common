@@ -1,10 +1,12 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.OnceExecutorTests
@@ -14,105 +16,101 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
         [Test]
         public void DoubleInsertTest1()
         {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+
             Assert.CatchAsync<DbUpdateException>(async () =>
             {
                 var user = new TestUser { Name = "DoubleInsertTest", Years = 18 };
-                await using (var testDbContext = new TestDbContext(DbName))
-                {
-                    await testDbContext.Users.AddAsync(user);
-                    await testDbContext.SaveChangesAsync();
-                }
 
-                await using (var testDbContext = new TestDbContext(DbName))
-                {
-                    await testDbContext.Users.AddAsync(user);
-                    await testDbContext.SaveChangesAsync();
-                }
+                await dbContext.Users.AddAsync(user);
+                await dbContext.SaveChangesAsync();
+
+                await dbContext.Users.AddAsync(user);
+                await dbContext.SaveChangesAsync();
             });
         }
 
         [Test]
         public async Task OnceExecuteTest1()
         {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
-            await using (var testDbContext = new TestDbContext(DbName))
-            {
-                var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
+            var firstResult = await executor.ExecuteAsync(stepId,
+                (context, c) => context.Users.AddAsync(user, c).AsTask(),
+                (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
+            );
 
-                var result = await ex.ExecuteAsync(stepId,
-                    (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
-                );
+            var secondResult = await executor.ExecuteAsync(stepId,
+                (context, c) => context.Users.AddAsync(user, c).AsTask(),
+                (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
+            );
 
-                Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result!.Id);
-            }
+            Assert.IsNotNull(firstResult);
+            Assert.AreEqual(user.Id, firstResult!.Id);
 
-            await using (var testDbContext = new TestDbContext(DbName))
-            {
-                var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
-
-                var result = await ex.ExecuteAsync(stepId,
-                    (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
-                );
-
-                Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result!.Id);
-            }
+            Assert.IsNotNull(secondResult);
+            Assert.AreEqual(user.Id, secondResult!.Id);
         }
 
         [Test]
         public async Task OnceExecuteTest2()
         {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
-            await using (var testDbContext = new TestDbContext(DbName))
-            {
-                // without DbContext
-                var ex = new OnceExecutorEf<TestDbContext>(testDbContext) as IOnceExecutor;
-                await ex.ExecuteAsync(stepId, _ => CreateUser(testDbContext, user).AsTask(), cancellationToken: default);
-                await testDbContext.SaveChangesAsync();
-            }
+            await executor.ExecuteAsync(stepId, (context, _) => CreateUser(context, user, default).AsTask());
+            await dbContext.SaveChangesAsync();
 
-            await using (var testDbContext = new TestDbContext(DbName))
-            {
-                var xUser = testDbContext.Find<TestUser>(user.Id);
-                Assert.IsNotNull(xUser);
-            }
+            var xUser = dbContext.Find<TestUser>(user.Id);
+            Assert.IsNotNull(xUser);
 
-            ValueTask<EntityEntry<TestUser>> CreateUser(TestDbContext dbContext, TestUser newUser)
+            ValueTask<EntityEntry<TestUser>> CreateUser(TestDbContext context, TestUser newUser, CancellationToken token)
             {
-                return dbContext.Users.AddAsync(newUser);
+                return context.Users.AddAsync(newUser, token);
             }
         }
 
         [Test]
         public async Task OnceExecuteBeginTransactionTest()
         {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
 
-            await using (var testDbContext = new TestDbContext(DbName))
-            {
-                var ex = new OnceExecutorEf<TestDbContext>(testDbContext);
+            // transaction 1
+            var result = await executor.ExecuteAsync(stepId,
+                (context, token) => context.Users.AddAsync(user, token).AsTask(),
+                (context, token) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", token),
+                IsolationLevel.ReadCommitted,
+                CancellationToken.None
+            );
 
-                // transaction 1
-                var result = await ex.ExecuteAsync(stepId,
-                    (context, c) => context.Users.AddAsync(user, c).AsTask(),
-                    (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", cancellationToken: c)
-                );
+            Assert.IsNotNull(result);
+            Assert.AreEqual(user.Id, result!.Id);
 
-                Assert.IsNotNull(result);
-                Assert.AreEqual(user.Id, result!.Id);
-
-                await testDbContext.Users.AddAsync(new TestUser { Name = "OnceExecuteBeginTransactionTest-2" });
-                // transaction 2
-                await testDbContext.SaveChangesAsync();
-            }
+            await dbContext.Users.AddAsync(new TestUser { Name = "OnceExecuteBeginTransactionTest-2" });
+            // transaction 2
+            await dbContext.SaveChangesAsync();
 
             await CheckUsers("OnceExecuteBeginTransactionTest", "OnceExecuteBeginTransactionTest-2");
         }
