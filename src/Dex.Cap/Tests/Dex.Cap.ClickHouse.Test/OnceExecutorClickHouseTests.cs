@@ -1,12 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using Dex.Cap.OnceExecutor;
 using Dex.Cap.OnceExecutor.ClickHouse;
 using NUnit.Framework;
 using Octonica.ClickHouseClient;
 
 namespace Dex.Cap.ClickHouse.Test
 {
-    public class Tests
+    public class OnceExecutorClickHouseTests
     {
         private readonly ClickHouseConnectionStringBuilder _sb = new() { Host = "127.0.0.1" };
 
@@ -21,11 +22,11 @@ namespace Dex.Cap.ClickHouse.Test
             await using var conn = new ClickHouseConnection(_sb);
             await conn.OpenAsync();
 
-            var oe = new OnceExecutorClickHouse(conn);
+            IOnceExecutor<ClickHouseConnection> executor = new OnceExecutorClickHouse(conn);
 
             var idempotentKey = Guid.NewGuid().ToString("N");
-            await oe.ExecuteAsync(idempotentKey, (connection, token) => connection.TryPingAsync(token));
-            await oe.ExecuteAsync(idempotentKey, (_, _) => throw new NotImplementedException());
+            await executor.ExecuteAsync(idempotentKey, (connection, token) => connection.TryPingAsync(token));
+            await executor.ExecuteAsync(idempotentKey, (_, _) => throw new NotImplementedException());
         }
     }
 }
