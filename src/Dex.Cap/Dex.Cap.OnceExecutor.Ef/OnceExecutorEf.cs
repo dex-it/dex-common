@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.OnceExecutor.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,13 +17,14 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected override Task<TResult?> ExecuteInTransaction<TResult>(
+            Func<CancellationToken, Task<TResult?>> operation,
+            IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default
         {
-            return Context.Database.CreateExecutionStrategy().ExecuteInTransactionAsync(operation,
-                token => IsAlreadyExecuted(idempotentKey, token),
-                cancellationToken);
+            return Context.Database.CreateExecutionStrategy()
+                .ExecuteInTransactionScopeAsync(operation, isolationLevel, cancellationToken);
         }
 
         protected override Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)

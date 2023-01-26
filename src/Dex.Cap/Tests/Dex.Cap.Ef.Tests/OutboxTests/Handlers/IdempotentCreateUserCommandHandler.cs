@@ -19,15 +19,18 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
 
         public async Task ProcessMessage(TestUserCreatorCommand message, CancellationToken cancellationToken)
         {
-            await _onceExecutor.Execute(message.MessageId.ToString("N"), async (context, token) =>
-            {
-                context.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
+            await _onceExecutor.ExecuteAsync(
+                message.MessageId.ToString("N"),
+                async (context, token) =>
+                {
+                    context.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
 
-                if (CountDown-- > 0)
-                    throw new InvalidOperationException("CountDown > 0");
+                    if (CountDown-- > 0)
+                        throw new InvalidOperationException("CountDown > 0");
 
-                await context.SaveChangesAsync(token);
-            }, cancellationToken);
+                    await context.SaveChangesAsync(token);
+                },
+                cancellationToken: cancellationToken);
         }
 
         public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)

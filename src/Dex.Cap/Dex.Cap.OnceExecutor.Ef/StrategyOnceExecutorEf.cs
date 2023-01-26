@@ -1,8 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
-using Dex.Cap.OnceExecutor.Ef.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
@@ -18,18 +16,12 @@ namespace Dex.Cap.OnceExecutor.Ef
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        protected override Task<TResult?> ExecuteInTransactionAsync(Func<CancellationToken, Task<TResult?>> operation,
+        protected override Task<TResult?> ExecuteInTransactionAsync(
+            Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken)
         {
             return _dbContext.Database.CreateExecutionStrategy()
-                .ExecuteAsync(async () =>
-                {
-                    using var transactionScope =
-                        TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.Required, ExecutionStrategy.TransactionIsolationLevel);
-                    var result = await operation(cancellationToken).ConfigureAwait(false);
-                    transactionScope.Complete();
-                    return result;
-                });
+                .ExecuteInTransactionScopeAsync(operation, ExecutionStrategy.TransactionIsolationLevel, cancellationToken);
         }
 
         protected override Task OnExecuteCompletedAsync(CancellationToken cancellationToken)

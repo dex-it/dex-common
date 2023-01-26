@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Microsoft.EntityFrameworkCore;
@@ -10,12 +11,14 @@ namespace Dex.Cap.Ef.Tests.Strategies
     {
         private readonly TestDbContext _dbContext;
 
+        public IsolationLevel TransactionIsolationLevel => IsolationLevel.RepeatableRead;
+
         public Concrete1ExecutionStrategy(TestDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public async Task<bool> CheckIdempotenceAsync(Concrete1ExecutionStrategyRequest argument, CancellationToken cancellationToken)
+        public async Task<bool> IsAlreadyExecutedAsync(Concrete1ExecutionStrategyRequest argument, CancellationToken cancellationToken)
         {
             var userDb = await _dbContext.Users.SingleOrDefaultAsync(x => x.Name == argument.Value, cancellationToken);
             return userDb != null;

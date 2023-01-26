@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 
 namespace Dex.Cap.OnceExecutor
 {
@@ -8,11 +9,14 @@ namespace Dex.Cap.OnceExecutor
     {
         protected abstract TDbContext Context { get; }
 
-        public async Task<TResult?> Execute<TResult>(string idempotentKey,
-            Func<TDbContext, CancellationToken, Task> modificator, Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
-            CancellationToken cancellationToken = default)
+        public async Task<TResult?> ExecuteAsync<TResult>(
+            string idempotentKey,
+            Func<TDbContext, CancellationToken, Task> modificator,
+            Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
+            IsolationLevel isolationLevel,
+            CancellationToken cancellationToken)
         {
-            return await ExecuteInTransaction(idempotentKey, async token =>
+            return await ExecuteInTransaction(async token =>
             {
                 if (!await IsAlreadyExecuted(idempotentKey, token).ConfigureAwait(false))
                 {
@@ -24,27 +28,40 @@ namespace Dex.Cap.OnceExecutor
                 return selector != null
                     ? await selector(Context, token).ConfigureAwait(false)
                     : default;
-            }, cancellationToken).ConfigureAwait(false);
+            }, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
-        public Task Execute(string idempotentKey, Func<TDbContext, CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
+        public Task ExecuteAsync(
+            string idempotentKey,
+            Func<TDbContext, CancellationToken, Task> modificator,
+            IsolationLevel isolationLevel,
+            CancellationToken cancellationToken)
         {
-            return Execute<int>(idempotentKey, modificator, null, cancellationToken);
+            return ExecuteAsync<int>(idempotentKey, modificator, null, isolationLevel, cancellationToken);
         }
 
-        public Task<TResult?> Execute<TResult>(string idempotentKey,
-            Func<CancellationToken, Task> modificator, Func<CancellationToken, Task<TResult?>> selector,
-            CancellationToken cancellationToken = default)
+        public Task<TResult?> ExecuteAsync<TResult>(
+            string idempotentKey,
+            Func<CancellationToken, Task> modificator,
+            Func<CancellationToken, Task<TResult?>> selector,
+            IsolationLevel isolationLevel,
+            CancellationToken cancellationToken)
         {
-            return Execute(idempotentKey, (_, token) => modificator(token), (_, token) => selector(token), cancellationToken: cancellationToken);
+            return ExecuteAsync(idempotentKey, (_, token) => modificator(token), (_, token) => selector(token), isolationLevel, cancellationToken);
         }
 
-        public Task Execute(string idempotentKey, Func<CancellationToken, Task> modificator, CancellationToken cancellationToken = default)
+        public Task ExecuteAsync(
+            string idempotentKey,
+            Func<CancellationToken, Task> modificator,
+            IsolationLevel isolationLevel,
+            CancellationToken cancellationToken)
         {
-            return Execute(idempotentKey, (_, token) => modificator(token), cancellationToken: cancellationToken);
+            return ExecuteAsync(idempotentKey, (_, token) => modificator(token), isolationLevel, cancellationToken);
         }
 
-        protected abstract Task<TResult?> ExecuteInTransaction<TResult>(string idempotentKey, Func<CancellationToken, Task<TResult?>> operation,
+        protected abstract Task<TResult?> ExecuteInTransaction<TResult>(
+            Func<CancellationToken, Task<TResult?>> operation,
+            IsolationLevel isolationLevel,
             CancellationToken cancellationToken);
 
         protected abstract Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken);

@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <PackageVersion>2.3.5</PackageVersion>
+    <PackageVersion>2.3.6</PackageVersion>
     <PackageTags>outbox business-transaction consistency EF implementation</PackageTags>
   </PropertyGroup>
 
@@ -27,6 +27,7 @@
   <!--/Для NuGet-->
 
   <ItemGroup>
+    <ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
     <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
   </ItemGroup>
 

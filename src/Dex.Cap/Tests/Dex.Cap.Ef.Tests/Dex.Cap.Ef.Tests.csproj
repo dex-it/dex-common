@@ -23,6 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
       <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj" />
       <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
       <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
