@@ -1,7 +1,9 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
+using Dex.Cap.Outbox.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -28,6 +30,39 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                 {
                     await state.executor.ExecuteAsync(stepId, (context, t) => context.Users.AddAsync(user, t).AsTask(), cancellationToken: ct);
                 });
+        }
+
+        [Test]
+        public async Task OutboxExecuteOperationInOutboxExecuteOperation_DoesNotThrowException()
+        {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var correlationId = Guid.NewGuid();
+            var name = "mmx_" + Guid.NewGuid();
+            var anotherName = "mmx_" + Guid.NewGuid();
+
+            // act
+            await outboxService.ExecuteOperationAsync(correlationId,
+                async (token, outboxContext) =>
+                {
+                    await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    // обязательно перед вызовом следующего этапа процесса - сохранить данные
+                    await outboxContext.DbContext.SaveChangesAsync(token);
+
+                    await outboxService.ExecuteOperationAsync(correlationId,
+                        async (t, context) => { await context.DbContext.Users.AddAsync(new TestUser { Name = anotherName }, t); }, token);
+                }, CancellationToken.None);
+
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            Assert.IsTrue(await outboxService.IsOperationExistsAsync(correlationId, CancellationToken.None));
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == anotherName));
         }
 
         [Test]

@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <PackageVersion>2.3.6</PackageVersion>
-    <PackageTags>outbox business-transaction consistency EF implementation</PackageTags>
   </PropertyGroup>
 
   <!--Для NuGet-->
