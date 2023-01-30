@@ -39,35 +39,39 @@ namespace Dex.Cap.Outbox.Ef
             if (action == null) throw new ArgumentNullException(nameof(action));
 
             var strategy = _dbContext.Database.CreateExecutionStrategy();
-            await strategy.ExecuteInTransactionAsync(
-                async () =>
-                {
-                    if (_dbContext.ChangeTracker.HasChanges())
-                        throw new InvalidOperationException("Can't start outbox action, unsaved changes detected");
-
-                    try
+            await strategy.ExecuteInTransactionScopeAsync(
+                    (_dbContext, outboxService, state),
+                    async (st, ct) =>
                     {
-                        var outboxContext = new OutboxContext<TDbContext, TState>(corellationId, outboxService, _dbContext, state);
-                        await action(cancellationToken, outboxContext).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        _dbContext.ChangeTracker.Clear();
-                        throw;
-                    }
+                        var (dbContext, outbox, outerState) = st;
+                        if (dbContext.ChangeTracker.HasChanges())
+                            throw new InvalidOperationException("Can't start outbox action, unsaved changes detected");
 
-                    // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
-                    var isOutboxMessageExists = _dbContext.ChangeTracker.Entries<OutboxEnvelope>()
-                        .Any(x => x.State is EntityState.Added or EntityState.Modified);
+                        try
+                        {
+                            var outboxContext = new OutboxContext<TDbContext, TState>(corellationId, outbox, dbContext, outerState);
+                            await action(ct, outboxContext).ConfigureAwait(false);
+                        }
+                        catch
+                        {
+                            dbContext.ChangeTracker.Clear();
+                            throw;
+                        }
 
-                    if (!isOutboxMessageExists)
-                    {
-                        await outboxService.EnqueueAsync(corellationId, EmptyOutboxMessage.Empty, cancellationToken).ConfigureAwait(false);
-                    }
+                        // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
+                        var isOutboxMessageExists = dbContext.ChangeTracker.Entries<OutboxEnvelope>()
+                            .Any(x => x.State is EntityState.Added or EntityState.Modified);
 
-                    await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                },
-                () => IsExists(corellationId, cancellationToken)).ConfigureAwait(false);
+                        if (!isOutboxMessageExists)
+                        {
+                            await outbox.EnqueueAsync(corellationId, EmptyOutboxMessage.Empty, ct).ConfigureAwait(false);
+                        }
+
+                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                    },
+                    (_, ct) => IsExists(corellationId, ct),
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
 
         public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
@@ -112,7 +116,9 @@ namespace Dex.Cap.Outbox.Ef
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            await strategy.ExecuteInTransactionScopeAsync((_dbContext, lockedJob, _logger), static async (state, ct) =>
+            await strategy.ExecuteInTransactionScopeAsync(
+                    (_dbContext, lockedJob, _logger),
+                    static async (state, ct) =>
                     {
                         var (dbContext, lockedJob, logger) = state;
 
@@ -222,7 +228,8 @@ namespace Dex.Cap.Outbox.Ef
         private async Task<OutboxEnvelope?> TryLockMessageCore(Guid freeMessageId, Guid lockId, CancellationToken cancellationToken)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
-            var message = await strategy.ExecuteInTransactionScopeAsync((_dbContext, freeMessageId, lockId, _logger),
+            var message = await strategy.ExecuteInTransactionScopeAsync(
+                    (_dbContext, freeMessageId, lockId, _logger),
                     static async (state, ct) =>
                     {
                         var (dbContext, freeMessageId, lockId, logger) = state;
