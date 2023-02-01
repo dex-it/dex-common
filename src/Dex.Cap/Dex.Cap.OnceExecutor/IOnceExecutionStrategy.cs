@@ -9,6 +9,8 @@ namespace Dex.Cap.OnceExecutor
     /// </summary>
     public interface IOnceExecutionStrategy<in TArg, TResult>
     {
+        TransactionScopeOption TransactionScopeOption => TransactionScopeOption.Required;
+
         IsolationLevel TransactionIsolationLevel => IsolationLevel.ReadCommitted;
 
         /// <summary>

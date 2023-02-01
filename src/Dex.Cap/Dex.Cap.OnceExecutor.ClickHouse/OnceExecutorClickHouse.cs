@@ -23,6 +23,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
 
         protected override Task<TResult?> ExecuteInTransaction<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default

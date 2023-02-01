@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Dex.Cap.OnceExecutor.Models;
 using Neo4jClient.Transactions;
+using TransactionScopeOption = System.Transactions.TransactionScopeOption;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
@@ -20,6 +21,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
 
         protected override async Task<TResult?> ExecuteInTransaction<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default

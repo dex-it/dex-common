@@ -162,8 +162,8 @@ namespace Dex.Cap.Outbox.Ef
 
                         return !existLocked;
                     },
-                    IsolationLevel.RepeatableRead,
-                    cancellationToken)
+                    isolationLevel: IsolationLevel.RepeatableRead,
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
             static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
@@ -285,8 +285,8 @@ namespace Dex.Cap.Outbox.Ef
 
                         return succeeded;
                     },
-                    IsolationLevel.RepeatableRead,
-                    cancellationToken)
+                    isolationLevel: IsolationLevel.RepeatableRead,
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
             return message;
