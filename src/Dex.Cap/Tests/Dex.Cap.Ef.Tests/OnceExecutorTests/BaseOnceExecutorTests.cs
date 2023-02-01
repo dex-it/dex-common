@@ -101,8 +101,8 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var result = await executor.ExecuteAsync(stepId,
                 (context, token) => context.Users.AddAsync(user, token).AsTask(),
                 (context, token) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", token)!,
-                IsolationLevel.ReadCommitted,
-                CancellationToken.None
+                isolationLevel: IsolationLevel.ReadCommitted,
+                cancellationToken: CancellationToken.None
             );
 
             Assert.IsNotNull(result);
