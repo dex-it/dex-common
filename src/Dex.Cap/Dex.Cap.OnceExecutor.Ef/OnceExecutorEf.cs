@@ -19,12 +19,13 @@ namespace Dex.Cap.OnceExecutor.Ef
 
         protected override Task<TResult?> ExecuteInTransaction<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default
         {
             return Context.Database.CreateExecutionStrategy()
-                .ExecuteInTransactionScopeAsync(operation, isolationLevel, cancellationToken);
+                .ExecuteInTransactionScopeAsync(operation, transactionScopeOption, isolationLevel, cancellationToken);
         }
 
         protected override Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)

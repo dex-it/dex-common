@@ -16,42 +16,48 @@ namespace Microsoft.EntityFrameworkCore
             TState state,
             Func<TState, CancellationToken, Task<TResult>> operation,
             Func<TState, CancellationToken, Task<bool>> verifySucceeded,
+            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             CancellationToken cancellationToken = default)
             => strategy.ExecuteAsync(
                 new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
-                async (_, s, ct) =>
+                async (_, st, ct) =>
                 {
-                    using var transactionScope = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.Required, isolationLevel);
-                    s.Result = await s.Operation(s.State, ct).ConfigureAwait(false);
+                    using var transactionScope = TransactionScopeHelper.CreateTransactionScope(transactionScopeOption, isolationLevel);
+                    st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
                     transactionScope.Complete();
 
-                    return s.Result;
+                    return st.Result;
                 },
-                async (_, s, ct) => new ExecutionResult<TResult>(await s.VerifySucceeded(s.State, ct).ConfigureAwait(false), s.Result),
+                async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
                 cancellationToken);
 
         public static Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
             this IExecutionStrategy strategy,
             Func<CancellationToken, Task<TResult>> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
+            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
+            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            CancellationToken cancellationToken = default)
+            => strategy.ExecuteInTransactionScopeAsync<object, TResult>(
+                default!,
+                async (_, token) => await operation(token).ConfigureAwait(false),
+                async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
+                transactionScopeOption,
+                isolationLevel,
+                cancellationToken);
+
+        public static Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
+            this IExecutionStrategy strategy,
+            Func<CancellationToken, Task<TResult>> operation,
+            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             CancellationToken cancellationToken = default)
             => strategy.ExecuteInTransactionScopeAsync<object, TResult>(
                 default!,
                 async (_, token) => await operation(token).ConfigureAwait(false),
                 (_, _) => Task.FromResult(true),
-                isolationLevel,
-                cancellationToken);
-
-        public static Task ExecuteInTransactionScopeAsync(
-            this IExecutionStrategy strategy,
-            Func<CancellationToken, Task> operation,
-            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-            CancellationToken cancellationToken = default)
-            => strategy.ExecuteInTransactionScopeAsync<object>(
-                default!,
-                async (_, token) => await operation(token).ConfigureAwait(false),
-                (_, _) => Task.FromResult(true),
+                transactionScopeOption,
                 isolationLevel,
                 cancellationToken);
 
@@ -60,16 +66,18 @@ namespace Microsoft.EntityFrameworkCore
             TState state,
             Func<TState, CancellationToken, Task> operation,
             Func<TState, CancellationToken, Task<bool>> verifySucceeded,
+            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             CancellationToken cancellationToken = default)
             => strategy.ExecuteInTransactionScopeAsync(
                 state,
-                async (s, ct) =>
+                async (st, ct) =>
                 {
-                    await operation(s, ct).ConfigureAwait(false);
+                    await operation(st, ct).ConfigureAwait(false);
                     return true;
                 },
                 verifySucceeded,
+                transactionScopeOption,
                 isolationLevel,
                 cancellationToken);
 
@@ -77,16 +85,47 @@ namespace Microsoft.EntityFrameworkCore
             this IExecutionStrategy strategy,
             TState state,
             Func<TState, CancellationToken, Task> operation,
+            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             CancellationToken cancellationToken = default)
             => strategy.ExecuteInTransactionScopeAsync(
                 state,
-                async (s, ct) =>
+                async (st, ct) =>
                 {
-                    await operation(s, ct).ConfigureAwait(false);
+                    await operation(st, ct).ConfigureAwait(false);
                     return true;
                 },
                 (_, _) => Task.FromResult(true),
+                transactionScopeOption,
+                isolationLevel,
+                cancellationToken);
+
+        public static Task ExecuteInTransactionScopeAsync(
+            this IExecutionStrategy strategy,
+            Func<CancellationToken, Task> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
+            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
+            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            CancellationToken cancellationToken = default)
+            => strategy.ExecuteInTransactionScopeAsync<object>(
+                default!,
+                async (_, token) => await operation(token).ConfigureAwait(false),
+                async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
+                transactionScopeOption,
+                isolationLevel,
+                cancellationToken);
+
+        public static Task ExecuteInTransactionScopeAsync(
+            this IExecutionStrategy strategy,
+            Func<CancellationToken, Task> operation,
+            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
+            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            CancellationToken cancellationToken = default)
+            => strategy.ExecuteInTransactionScopeAsync<object>(
+                default!,
+                async (_, token) => await operation(token).ConfigureAwait(false),
+                (_, _) => Task.FromResult(true),
+                transactionScopeOption,
                 isolationLevel,
                 cancellationToken);
 
