@@ -38,6 +38,51 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             Assert.AreEqual(expected, db.Users.LongCount());
         }
 
+        [Test]
+        public async Task RabbitTest1()
+        {
+            const string queueName = "TestMessageConsumer";
+
+            await using var provider = InitServiceCollection()
+                .AddMassTransit(cfg =>
+                {
+                    const int concurrentMessageLimit = 25;
+                    cfg.AddConsumer<TestMessageConsumer>(configurator => configurator.ConcurrentMessageLimit = concurrentMessageLimit);
+                    cfg.UsingRabbitMq((context, configurator) =>
+                    {
+                        //
+                        configurator.ReceiveEndpoint(queueName, cc =>
+                        {
+                            //
+                            cc.ConfigureConsumer(context, typeof(TestMessageConsumer));
+                            cc.ConcurrentMessageLimit = concurrentMessageLimit;
+                        });
+                    });
+                })
+                .BuildServiceProvider(true);
+
+            var busControl = provider.GetRequiredService<IBusControl>();
+            busControl.Start();
+
+            try
+            {
+                const int expected = 1000;
+                var msgs = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
+
+                var endpoint = await busControl.GetSendEndpoint(new Uri("queue:" + queueName));
+                await endpoint.SendBatch(msgs);
+
+                await Task.Delay(2000);
+
+                var db = provider.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
+                Assert.AreEqual(expected, db.Users.LongCount());
+            }
+            finally
+            {
+                busControl.Stop();
+            }
+        }
+
         #region Consumer data
 
         public interface ITestMessage : IConsumer
