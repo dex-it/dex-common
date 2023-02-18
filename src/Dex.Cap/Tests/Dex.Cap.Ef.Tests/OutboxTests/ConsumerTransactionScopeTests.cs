@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,8 +14,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class ConsumerTransactionScopeTests : BaseTest
     {
+      
         [Test]
-        public async Task InMemoryTestHarnessTest1()
+        public async Task OnceExecutorInMemoryTestHarnessTest1()
         {
             await using var provider = InitServiceCollection()
                 .AddMassTransitTestHarness(cfg =>
@@ -28,7 +30,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await harness.Start();
 
             var endpoint = await harness.GetConsumerEndpoint<TestMessageConsumer>();
-            const int expected = 100;
+            const int expected = 10000;
             var msgs = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
             await endpoint.SendBatch(msgs);
 
@@ -39,7 +41,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public async Task RabbitTest1()
+        public async Task OnceExecutorRabbitTest1()
         {
             const string queueName = "TestMessageConsumer";
 
@@ -62,17 +64,24 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider(true);
 
             var busControl = provider.GetRequiredService<IBusControl>();
+            var messageCounter = new MessageCounter();
+            busControl.ConnectConsumeMessageObserver(messageCounter);
             busControl.Start();
 
             try
             {
-                const int expected = 1000;
+                const int expected = 10000;
                 var msgs = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
 
                 var endpoint = await busControl.GetSendEndpoint(new Uri("queue:" + queueName));
-                await endpoint.SendBatch(msgs);
 
-                await Task.Delay(2000);
+                await Task.WhenAll(msgs.Select(x => endpoint.Send(x)));
+
+                var sw = Stopwatch.StartNew();
+                while (messageCounter.Count < expected && sw.ElapsedMilliseconds < 5000)
+                {
+                    await Task.Delay(20);
+                }
 
                 var db = provider.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                 Assert.AreEqual(expected, db.Users.LongCount());
@@ -115,6 +124,28 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             {
                 dbContext.Users.Add(new TestUser { Id = m.Id, Name = m.Name });
                 await dbContext.SaveChangesAsync(token);
+            }
+        }
+
+        private class MessageCounter : IConsumeMessageObserver<ITestMessage>
+        {
+            private long _count;
+            public long Count => _count;
+
+            public Task PreConsume(ConsumeContext<ITestMessage> context)
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task PostConsume(ConsumeContext<ITestMessage> context)
+            {
+                Interlocked.Increment(ref _count);
+                return Task.CompletedTask;
+            }
+
+            public Task ConsumeFault(ConsumeContext<ITestMessage> context, Exception exception)
+            {
+                return Task.CompletedTask;
             }
         }
 
