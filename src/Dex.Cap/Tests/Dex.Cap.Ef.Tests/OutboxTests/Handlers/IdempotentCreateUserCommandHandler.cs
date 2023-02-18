@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.Outbox.Interfaces;
@@ -11,6 +12,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
     {
         private readonly IOnceExecutor<TestDbContext> _onceExecutor;
         public static int CountDown { get; set; }
+
+        public bool IsTransactional => true;
 
         public IdempotentCreateUserCommandHandler(IOnceExecutor<TestDbContext> onceExecutor)
         {
@@ -30,6 +33,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
 
                     await context.SaveChangesAsync(token);
                 },
+                TransactionScopeOption.RequiresNew, // может быть любой уровень
                 cancellationToken: cancellationToken);
         }
 

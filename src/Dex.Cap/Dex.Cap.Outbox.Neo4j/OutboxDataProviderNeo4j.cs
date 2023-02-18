@@ -52,7 +52,7 @@ namespace Dex.Cap.Outbox.Neo4j
 
             foreach (var o in outboxes)
             {
-                yield return new OutboxLockedJob(o, default, cts: null);
+                yield return new OutboxLockedJob(o, default, TimeSpan.FromSeconds(30), cts: null);
             }
         }
 
