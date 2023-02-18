@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
@@ -191,12 +192,21 @@ namespace Dex.Cap.Outbox
         private async Task ProcessOutboxMessageCore(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
-            var handlerFactory = serviceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
+            var handlerFactory = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
             var handler = handlerFactory.GetMessageHandler(outboxMessage);
             try
             {
-                await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
+                if (handler.IsTransactional)
+                {
+                    // supress ambient transaction, we are root here
+                    using var transactionScope = new TransactionScope(TransactionScopeOption.Suppress, TransactionScopeAsyncFlowOption.Enabled);
+                    await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
+                    transactionScope.Complete();
+                }
+                else
+                {
+                    await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
+                }
             }
             finally
             {
