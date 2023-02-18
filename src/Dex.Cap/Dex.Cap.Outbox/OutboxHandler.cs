@@ -194,14 +194,25 @@ namespace Dex.Cap.Outbox
             using var scope = _serviceProvider.CreateScope();
             var handlerFactory = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
             var handler = handlerFactory.GetMessageHandler(outboxMessage);
+
             try
             {
                 if (handler.IsTransactional)
                 {
-                    // supress ambient transaction, we are root here
-                    using var transactionScope = new TransactionScope(TransactionScopeOption.Suppress, timeout, TransactionScopeAsyncFlowOption.Enabled);
-                    await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
-                    transactionScope.Complete();
+                    try
+                    {
+                        // supress ambient transaction, we are root here
+                        using var transactionScope = new TransactionScope(TransactionScopeOption.Suppress, timeout, TransactionScopeAsyncFlowOption.Enabled);
+                        await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
+                        transactionScope.Complete();
+                    }
+                    finally
+                    {
+                        if (Transaction.Current != null)
+                        {
+                            Transaction.Current.Rollback();
+                        }
+                    }
                 }
                 else
                 {
