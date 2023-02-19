@@ -199,20 +199,10 @@ namespace Dex.Cap.Outbox
             {
                 if (handler.IsTransactional)
                 {
-                    try
-                    {
-                        // supress ambient transaction, we are root here
-                        using var transactionScope = new TransactionScope(TransactionScopeOption.Suppress, timeout, TransactionScopeAsyncFlowOption.Enabled);
-                        await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
-                        transactionScope.Complete();
-                    }
-                    finally
-                    {
-                        if (Transaction.Current != null)
-                        {
-                            Transaction.Current.Rollback();
-                        }
-                    }
+                    // supress ambient transaction, we are root here
+                    using var transactionScope = new TransactionScope(TransactionScopeOption.Suppress, timeout, TransactionScopeAsyncFlowOption.Enabled);
+                    await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
+                    transactionScope.Complete();
                 }
                 else
                 {

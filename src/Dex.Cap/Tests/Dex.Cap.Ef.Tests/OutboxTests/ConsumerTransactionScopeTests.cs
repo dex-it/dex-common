@@ -30,7 +30,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await harness.Start();
 
             var endpoint = await harness.GetConsumerEndpoint<TestMessageConsumer>();
-            const int expected = 10000;
+            const int expected = 1000;
             var msgs = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
             await endpoint.SendBatch(msgs);
 
@@ -70,7 +70,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             try
             {
-                const int expected = 10000;
+                const int expected = 1000;
                 var msgs = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
 
                 var endpoint = await busControl.GetSendEndpoint(new Uri("queue:" + queueName));

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.Outbox.Interfaces;
@@ -34,7 +33,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
                     if (CountDown-- > 0)
                         throw new InvalidOperationException("CountDown > 0");
                 },
-                TransactionScopeOption.RequiresNew, // может быть любой уровень
                 cancellationToken: cancellationToken);
         }
 
