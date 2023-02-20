@@ -69,7 +69,7 @@ namespace Dex.Cap.Outbox.Ef
 
                         await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
                     },
-                    (_, ct) => IsExists(corellationId, ct),
+                    async (_, ct) => await IsExists(corellationId, ct).ConfigureAwait(false),
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }

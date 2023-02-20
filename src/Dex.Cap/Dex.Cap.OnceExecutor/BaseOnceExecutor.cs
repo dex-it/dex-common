@@ -32,17 +32,17 @@ namespace Dex.Cap.OnceExecutor
             }, transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
-        public Task ExecuteAsync(
+        public async Task ExecuteAsync(
             string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
         {
-            return ExecuteAsync<int>(idempotentKey, modificator, null, transactionScopeOption, isolationLevel, cancellationToken);
+            await ExecuteAsync<int>(idempotentKey, modificator, null, transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
-        public Task<TResult?> ExecuteAsync<TResult>(
+        public async Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             Func<CancellationToken, Task<TResult?>> selector,
@@ -50,18 +50,24 @@ namespace Dex.Cap.OnceExecutor
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
         {
-            return ExecuteAsync(idempotentKey, (_, token) => modificator(token), (_, token) => selector(token),
-                transactionScopeOption, isolationLevel, cancellationToken);
+            return await ExecuteAsync(
+                idempotentKey,
+                async (_, token) => await modificator(token).ConfigureAwait(false),
+                async (_, token) => await selector(token).ConfigureAwait(false),
+                transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
-        public Task ExecuteAsync(
+        public async Task ExecuteAsync(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
         {
-            return ExecuteAsync(idempotentKey, (_, token) => modificator(token), transactionScopeOption, isolationLevel, cancellationToken);
+            await ExecuteAsync(
+                idempotentKey,
+                async (_, token) => await modificator(token).ConfigureAwait(false),
+                transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
         protected abstract Task<TResult?> ExecuteInTransaction<TResult>(

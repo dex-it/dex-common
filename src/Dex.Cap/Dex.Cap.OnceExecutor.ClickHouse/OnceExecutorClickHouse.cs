@@ -21,7 +21,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             Context = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction<TResult>(
+        protected override async Task<TResult?> ExecuteInTransaction<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
@@ -30,7 +30,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
         {
             if (operation == null) throw new ArgumentNullException(nameof(operation));
 
-            return operation(cancellationToken);
+            return await operation(cancellationToken).ConfigureAwait(false);
         }
 
         protected override Task OnModificationCompleted(CancellationToken cancellationToken)
@@ -59,14 +59,11 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
 
         protected override async Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
         {
-            await using (var command =
-                         Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd"))
-            {
-                command.Parameters.AddWithValue("key", idempotentKey);
-                command.Parameters.AddWithValue("cd", DateTime.UtcNow.ToString("s"));
+            await using var command = Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd");
+            command.Parameters.AddWithValue("key", idempotentKey);
+            command.Parameters.AddWithValue("cd", DateTime.UtcNow.ToString("s"));
 
-                await command.ExecuteNonQueryAsync(cancellationToken);
-            }
+            await command.ExecuteNonQueryAsync(cancellationToken);
         }
     }
 }

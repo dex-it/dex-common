@@ -4,10 +4,10 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <PackageVersion>2.6.33</PackageVersion>
+    <PackageVersion>2.6.34</PackageVersion>
   </PropertyGroup>
 
-  
+
   <!--Для NuGet-->
   <PropertyGroup>
     <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
