@@ -17,31 +17,31 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction<TResult>(
+        protected override async Task<TResult?> ExecuteInTransaction<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default
         {
-            return Context.Database.CreateExecutionStrategy()
-                .ExecuteInTransactionScopeAsync(operation, transactionScopeOption, isolationLevel, cancellationToken);
+            return await Context.Database.CreateExecutionStrategy()
+                .ExecuteInTransactionScopeAsync(operation, transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
         {
-            return Context.Set<LastTransaction>()
-                .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken);
+            return await Context.Set<LastTransaction>()
+                .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
         {
-            return Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask();
+            await Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask().ConfigureAwait(false);
         }
 
-        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
+        protected override async Task OnModificationCompleted(CancellationToken cancellationToken)
         {
-            return Context.SaveChangesAsync(cancellationToken);
+            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }
