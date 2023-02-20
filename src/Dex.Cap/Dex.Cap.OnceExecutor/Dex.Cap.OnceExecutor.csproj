@@ -4,8 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <PackageVersion>1.6.33</PackageVersion>
-    <LangVersion>9</LangVersion>
+    <PackageVersion>1.6.34</PackageVersion>
   </PropertyGroup>
 
   

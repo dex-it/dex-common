@@ -16,17 +16,17 @@ namespace Dex.Cap.OnceExecutor.Ef
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        protected override Task<TResult?> ExecuteInTransactionAsync(
+        protected override async Task<TResult?> ExecuteInTransactionAsync(
             Func<CancellationToken, Task<TResult?>> operation,
             CancellationToken cancellationToken)
         {
-            return _dbContext.Database.CreateExecutionStrategy().ExecuteInTransactionScopeAsync(
-                operation, ExecutionStrategy.TransactionScopeOption, ExecutionStrategy.TransactionIsolationLevel, cancellationToken);
+            return await _dbContext.Database.CreateExecutionStrategy().ExecuteInTransactionScopeAsync(
+                operation, ExecutionStrategy.TransactionScopeOption, ExecutionStrategy.TransactionIsolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task OnExecuteCompletedAsync(CancellationToken cancellationToken)
+        protected override async Task OnExecuteCompletedAsync(CancellationToken cancellationToken)
         {
-            return _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }
