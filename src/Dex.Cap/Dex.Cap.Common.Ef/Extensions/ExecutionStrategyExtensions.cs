@@ -30,8 +30,9 @@ namespace Microsoft.EntityFrameworkCore
                     return st.Result;
                 },
                 async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
-                cancellationToken).ConfigureAwait(false);
-        
+                cancellationToken
+            ).ConfigureAwait(false);
+
         public static async Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
             this IExecutionStrategy strategy,
             TState state,
@@ -45,7 +46,8 @@ namespace Microsoft.EntityFrameworkCore
                 (_, _) => Task.FromResult(true),
                 transactionScopeOption,
                 isolationLevel,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken
+            ).ConfigureAwait(false);
 
         public static async Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
             this IExecutionStrategy strategy,
@@ -60,7 +62,8 @@ namespace Microsoft.EntityFrameworkCore
                 async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
                 transactionScopeOption,
                 isolationLevel,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken
+            ).ConfigureAwait(false);
 
         public static async Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
             this IExecutionStrategy strategy,
@@ -74,8 +77,10 @@ namespace Microsoft.EntityFrameworkCore
                 (_, _) => Task.FromResult(true),
                 transactionScopeOption,
                 isolationLevel,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken
+            ).ConfigureAwait(false);
 
+        // without result
         public static async Task ExecuteInTransactionScopeAsync<TState>(
             this IExecutionStrategy strategy,
             TState state,
@@ -94,7 +99,8 @@ namespace Microsoft.EntityFrameworkCore
                 verifySucceeded,
                 transactionScopeOption,
                 isolationLevel,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken
+            ).ConfigureAwait(false);
 
         public static async Task ExecuteInTransactionScopeAsync<TState>(
             this IExecutionStrategy strategy,
@@ -113,7 +119,8 @@ namespace Microsoft.EntityFrameworkCore
                 (_, _) => Task.FromResult(true),
                 transactionScopeOption,
                 isolationLevel,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken
+            ).ConfigureAwait(false);
 
         public static async Task ExecuteInTransactionScopeAsync(
             this IExecutionStrategy strategy,
@@ -128,7 +135,8 @@ namespace Microsoft.EntityFrameworkCore
                 async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
                 transactionScopeOption,
                 isolationLevel,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken
+            ).ConfigureAwait(false);
 
         public static async Task ExecuteInTransactionScopeAsync(
             this IExecutionStrategy strategy,
@@ -142,7 +150,8 @@ namespace Microsoft.EntityFrameworkCore
                 (_, _) => Task.FromResult(true),
                 transactionScopeOption,
                 isolationLevel,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken
+            ).ConfigureAwait(false);
 
         private sealed class ExecutionStateAsync<TState, TResult>
         {
