@@ -38,8 +38,7 @@ namespace Dex.Cap.Outbox.Ef
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            var strategy = _dbContext.Database.CreateExecutionStrategy();
-            await strategy.ExecuteInTransactionScopeAsync(
+            await _dbContext.ExecuteInTransactionScopeAsync(
                     (_dbContext, outboxService, state),
                     async (st, ct) =>
                     {
@@ -114,9 +113,7 @@ namespace Dex.Cap.Outbox.Ef
         /// <exception cref="RetryLimitExceededException"/>
         protected override async Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)
         {
-            var strategy = _dbContext.Database.CreateExecutionStrategy();
-
-            await strategy.ExecuteInTransactionScopeAsync(
+            await _dbContext.ExecuteInTransactionScopeAsync(
                     (_dbContext, lockedJob, _logger),
                     static async (state, ct) =>
                     {
@@ -227,8 +224,7 @@ namespace Dex.Cap.Outbox.Ef
         /// <exception cref="RetryLimitExceededException"/>
         private async Task<OutboxEnvelope?> TryLockMessageCore(Guid freeMessageId, Guid lockId, CancellationToken cancellationToken)
         {
-            var strategy = _dbContext.Database.CreateExecutionStrategy();
-            var message = await strategy.ExecuteInTransactionScopeAsync(
+            var message = await _dbContext.ExecuteInTransactionScopeAsync(
                     (_dbContext, freeMessageId, lockId, _logger),
                     static async (state, ct) =>
                     {
