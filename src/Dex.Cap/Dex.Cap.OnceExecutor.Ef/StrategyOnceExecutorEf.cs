@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
@@ -22,7 +23,12 @@ namespace Dex.Cap.OnceExecutor.Ef
             CancellationToken cancellationToken)
         {
             return await _dbContext.ExecuteInTransactionScopeAsync(
-                    operation, verifySucceeded, ExecutionStrategy.TransactionScopeOption, ExecutionStrategy.TransactionIsolationLevel, cancellationToken)
+                    operation,
+                    verifySucceeded,
+                    ExecutionStrategy.TransactionScopeOption,
+                    ExecutionStrategy.TransactionIsolationLevel,
+                    ExecutionStrategy.TransactionTimeoutInSeconds,
+                    cancellationToken)
                 .ConfigureAwait(false);
         }
 

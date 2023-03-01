@@ -24,6 +24,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
+            uint timeoutInSeconds,
             CancellationToken cancellationToken)
             where TResult : default
         {
