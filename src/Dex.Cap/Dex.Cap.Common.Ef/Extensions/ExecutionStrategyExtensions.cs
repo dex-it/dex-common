@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -25,7 +26,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                 async (context, st, ct) =>
                 {
                     if (dbContext.ChangeTracker.HasChanges())
-                        throw new InvalidOperationException("Can't execute action, unsaved changes detected");
+                        throw new UnsavedChangesDetectedException("Can't execute action, unsaved changes detected");
 
                     try
                     {
@@ -33,7 +34,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                         st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
                         if (context.ChangeTracker.HasChanges())
-                            throw new InvalidOperationException("Can't complete action, unsaved changes detected");
+                            throw new UnsavedChangesDetectedException("Can't complete action, unsaved changes detected");
 
                         transactionScope.Complete();
 

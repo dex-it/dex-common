@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Outbox.Helpers;
 using Dex.Cap.Outbox.Interfaces;
@@ -45,7 +46,7 @@ namespace Dex.Cap.Outbox.Ef
                     {
                         var (dbContext, outbox, outerState) = st;
                         if (dbContext.ChangeTracker.HasChanges())
-                            throw new InvalidOperationException("Can't start outbox action, unsaved changes detected");
+                            throw new UnsavedChangesDetectedException("Can't start outbox action, unsaved changes detected");
 
                         try
                         {
