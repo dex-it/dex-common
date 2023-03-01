@@ -18,10 +18,12 @@ namespace Dex.Cap.OnceExecutor.Ef
 
         protected override async Task<TResult?> ExecuteInTransactionAsync(
             Func<CancellationToken, Task<TResult?>> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
             CancellationToken cancellationToken)
         {
-            return await _dbContext.Database.CreateExecutionStrategy().ExecuteInTransactionScopeAsync(
-                operation, ExecutionStrategy.TransactionScopeOption, ExecutionStrategy.TransactionIsolationLevel, cancellationToken).ConfigureAwait(false);
+            return await _dbContext.ExecuteInTransactionScopeAsync(
+                    operation, verifySucceeded, ExecutionStrategy.TransactionScopeOption, ExecutionStrategy.TransactionIsolationLevel, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         protected override async Task OnExecuteCompletedAsync(CancellationToken cancellationToken)

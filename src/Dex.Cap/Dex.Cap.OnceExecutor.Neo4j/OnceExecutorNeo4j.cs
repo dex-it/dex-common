@@ -19,8 +19,9 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction<TResult>(
+        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
@@ -44,12 +45,12 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return result;
         }
 
-        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
+        protected override Task OnModificationCompletedAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }
 
-        protected override async Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             var lastTransaction = await Context.Cypher
                 .Match($"(t:{nameof(LastTransaction)})")
@@ -60,7 +61,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return lastTransaction.Any();
         }
 
-        protected override async Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.Cypher
                 .Create($"(last:{nameof(LastTransaction)}" + " {lt})")
