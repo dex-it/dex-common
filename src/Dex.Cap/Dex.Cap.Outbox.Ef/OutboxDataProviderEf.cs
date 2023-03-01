@@ -46,7 +46,7 @@ namespace Dex.Cap.Outbox.Ef
                     {
                         var (dbContext, outbox, outerState) = st;
                         if (dbContext.ChangeTracker.HasChanges())
-                            throw new UnsavedChangesDetectedException("Can't start outbox action, unsaved changes detected");
+                            throw new UnsavedChangesDetectedException(dbContext, "Can't start outbox action, unsaved changes detected");
 
                         try
                         {

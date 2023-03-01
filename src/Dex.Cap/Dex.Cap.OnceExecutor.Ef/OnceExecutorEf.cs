@@ -23,11 +23,12 @@ namespace Dex.Cap.OnceExecutor.Ef
             Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
+            uint timeoutInSeconds,
             CancellationToken cancellationToken)
             where TResult : default
         {
-            return await Context.ExecuteInTransactionScopeAsync(operation, verifySucceeded, transactionScopeOption, isolationLevel, cancellationToken)
-                .ConfigureAwait(false);
+            return await Context.ExecuteInTransactionScopeAsync(
+                    operation, verifySucceeded, transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
         }
 
         protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)

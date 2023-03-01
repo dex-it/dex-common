@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Dex.Cap.Common.Ef.Extensions
 {
-    public static class ExecutionStrategyExtensions
+    public static class DbContextExecuteInTransactionExtensions
     {
         [SuppressMessage("Design", "CA1062:Проверить аргументы или открытые методы")]
         public static async Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
@@ -20,21 +20,23 @@ namespace Dex.Cap.Common.Ef.Extensions
             Func<TState, CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
             => await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
                 new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
                 async (context, st, ct) =>
                 {
                     if (dbContext.ChangeTracker.HasChanges())
-                        throw new UnsavedChangesDetectedException("Can't execute action, unsaved changes detected");
+                        throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
 
                     try
                     {
-                        using var transactionScope = TransactionScopeHelper.CreateTransactionScope(transactionScopeOption, isolationLevel);
+                        var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
+                        using var transactionScope = TransactionScopeHelper.CreateTransactionScope(transactionScopeOption, isolationLevel, timeout);
                         st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
                         if (context.ChangeTracker.HasChanges())
-                            throw new UnsavedChangesDetectedException("Can't complete action, unsaved changes detected");
+                            throw new UnsavedChangesDetectedException(context, "Can't complete action, unsaved changes detected");
 
                         transactionScope.Complete();
 
@@ -55,6 +57,7 @@ namespace Dex.Cap.Common.Ef.Extensions
             Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
             => await dbContext.ExecuteInTransactionScopeAsync<object, TResult>(
                 default!,
@@ -62,6 +65,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                 async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
                 transactionScopeOption,
                 isolationLevel,
+                timeoutInSeconds,
                 cancellationToken
             ).ConfigureAwait(false);
 
@@ -73,6 +77,7 @@ namespace Dex.Cap.Common.Ef.Extensions
             Func<TState, CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
             => await dbContext.ExecuteInTransactionScopeAsync(
                 state,
@@ -84,6 +89,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                 verifySucceeded,
                 transactionScopeOption,
                 isolationLevel,
+                timeoutInSeconds,
                 cancellationToken
             ).ConfigureAwait(false);
 
@@ -93,6 +99,7 @@ namespace Dex.Cap.Common.Ef.Extensions
             Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
             => await dbContext.ExecuteInTransactionScopeAsync<object>(
                 default!,
@@ -100,6 +107,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                 async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
                 transactionScopeOption,
                 isolationLevel,
+                timeoutInSeconds,
                 cancellationToken
             ).ConfigureAwait(false);
 
