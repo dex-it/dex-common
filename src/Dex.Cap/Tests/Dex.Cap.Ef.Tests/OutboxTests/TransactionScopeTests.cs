@@ -20,7 +20,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void AmbientAbort_CantExecuteRetryStrategy_NonRetryStrategy_Test1()
+        public void AmbientAbort_CantExecuteRetryStrategy_Test1()
         {
             TestDbContext.IsRetryStrategy = true;
 
