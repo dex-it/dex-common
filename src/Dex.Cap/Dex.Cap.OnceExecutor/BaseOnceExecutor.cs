@@ -17,19 +17,22 @@ namespace Dex.Cap.OnceExecutor
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
         {
-            return await ExecuteInTransaction(async token =>
-            {
-                if (!await IsAlreadyExecuted(idempotentKey, token).ConfigureAwait(false))
+            return await ExecuteInTransactionAsync(
+                async token =>
                 {
-                    await modificator(Context, token).ConfigureAwait(false);
-                    await SaveIdempotentKey(idempotentKey, token).ConfigureAwait(false);
-                    await OnModificationCompleted(token).ConfigureAwait(false);
-                }
+                    if (!await IsAlreadyExecutedAsync(idempotentKey, token).ConfigureAwait(false))
+                    {
+                        await modificator(Context, token).ConfigureAwait(false);
+                        await SaveIdempotentKeyAsync(idempotentKey, token).ConfigureAwait(false);
+                        await OnModificationCompletedAsync(token).ConfigureAwait(false);
+                    }
 
-                return selector != null
-                    ? await selector(Context, token).ConfigureAwait(false)
-                    : default;
-            }, transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
+                    return selector != null
+                        ? await selector(Context, token).ConfigureAwait(false)
+                        : default;
+                },
+                async token => await IsAlreadyExecutedAsync(idempotentKey, token).ConfigureAwait(false),
+                transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task ExecuteAsync(
@@ -70,16 +73,17 @@ namespace Dex.Cap.OnceExecutor
                 transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
         }
 
-        protected abstract Task<TResult?> ExecuteInTransaction<TResult>(
+        protected abstract Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken);
 
-        protected abstract Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken);
+        protected abstract Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken);
 
-        protected abstract Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken);
+        protected abstract Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken);
 
-        protected abstract Task OnModificationCompleted(CancellationToken cancellationToken);
+        protected abstract Task OnModificationCompletedAsync(CancellationToken cancellationToken);
     }
 }

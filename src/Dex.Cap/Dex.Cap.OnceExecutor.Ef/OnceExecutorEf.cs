@@ -17,29 +17,30 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override async Task<TResult?> ExecuteInTransaction<TResult>(
+        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
             CancellationToken cancellationToken)
             where TResult : default
         {
-            return await Context.Database.CreateExecutionStrategy()
-                .ExecuteInTransactionScopeAsync(operation, transactionScopeOption, isolationLevel, cancellationToken).ConfigureAwait(false);
+            return await Context.ExecuteInTransactionScopeAsync(operation, verifySucceeded, transactionScopeOption, isolationLevel, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        protected override async Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             return await Context.Set<LastTransaction>()
                 .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override async Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask().ConfigureAwait(false);
         }
 
-        protected override async Task OnModificationCompleted(CancellationToken cancellationToken)
+        protected override async Task OnModificationCompletedAsync(CancellationToken cancellationToken)
         {
             await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
