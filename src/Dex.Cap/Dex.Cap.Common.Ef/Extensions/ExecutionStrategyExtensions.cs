@@ -23,18 +23,24 @@ namespace Microsoft.EntityFrameworkCore
                 new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
                 async (context, st, ct) =>
                 {
+                    if (dbContext.ChangeTracker.HasChanges())
+                        throw new InvalidOperationException("Can't execute action, unsaved changes detected");
+
                     try
                     {
                         using var transactionScope = TransactionScopeHelper.CreateTransactionScope(transactionScopeOption, isolationLevel);
                         st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
+
+                        if (context.ChangeTracker.HasChanges())
+                            throw new InvalidOperationException("Can't complete action, unsaved changes detected");
+
                         transactionScope.Complete();
 
                         return st.Result;
                     }
-                    catch
+                    finally
                     {
                         context.ChangeTracker.Clear();
-                        throw;
                     }
                 },
                 async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),

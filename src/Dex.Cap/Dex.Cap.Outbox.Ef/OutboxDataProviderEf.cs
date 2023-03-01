@@ -50,23 +50,22 @@ namespace Dex.Cap.Outbox.Ef
                         {
                             var outboxContext = new OutboxContext<TDbContext, TState>(corellationId, outbox, dbContext, outerState);
                             await action(ct, outboxContext).ConfigureAwait(false);
+
+                            // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
+                            var isOutboxMessageExists = dbContext.ChangeTracker.Entries<OutboxEnvelope>()
+                                .Any(x => x.State is EntityState.Added or EntityState.Modified);
+
+                            if (!isOutboxMessageExists)
+                            {
+                                await outbox.EnqueueAsync(corellationId, EmptyOutboxMessage.Empty, ct).ConfigureAwait(false);
+                            }
+
+                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
                         }
-                        catch
+                        finally
                         {
                             dbContext.ChangeTracker.Clear();
-                            throw;
                         }
-
-                        // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
-                        var isOutboxMessageExists = dbContext.ChangeTracker.Entries<OutboxEnvelope>()
-                            .Any(x => x.State is EntityState.Added or EntityState.Modified);
-
-                        if (!isOutboxMessageExists)
-                        {
-                            await outbox.EnqueueAsync(corellationId, EmptyOutboxMessage.Empty, ct).ConfigureAwait(false);
-                        }
-
-                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
                     },
                     async (_, ct) => await IsExists(corellationId, ct).ConfigureAwait(false),
                     cancellationToken: cancellationToken)
@@ -144,6 +143,10 @@ namespace Dex.Cap.Outbox.Ef
                                 dbContext.ChangeTracker.Clear();
                                 dbContext.Update(job);
                                 await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                            }
+                            finally
+                            {
+                                dbContext.ChangeTracker.Clear();
                             }
                         }
 
@@ -257,8 +260,6 @@ namespace Dex.Cap.Outbox.Ef
                                 await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
                                 logger.LogDebug("Message is successfully captured {MessageId}", freeMessageId);
 
-                                dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
-
                                 return lockedJob.JobDb;
                             }
                         }
@@ -266,6 +267,13 @@ namespace Dex.Cap.Outbox.Ef
                         {
                             // не смогли обновить запись, обновлена конкурентно
                             logger.LogDebug("Can't update LockId because concurrency exception. {MessageId}", freeMessageId);
+                        }
+                        finally
+                        {
+                            if (lockedJob != null)
+                            {
+                                dbContext.Entry(lockedJob.JobDb).State = EntityState.Detached;
+                            }
                         }
 
                         logger.LogDebug("Another thread overtook and captured this message. {MessageId}", freeMessageId);
