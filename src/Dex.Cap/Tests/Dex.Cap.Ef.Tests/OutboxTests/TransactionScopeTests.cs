@@ -20,7 +20,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void AmbientTransaction_CantExecuteRetryStrategy_NonRetryStrategy_Test1()
+        public void AmbientAbort_CantExecuteRetryStrategy_NonRetryStrategy_Test1()
         {
             TestDbContext.IsRetryStrategy = true;
 
@@ -55,7 +55,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void AbortAmbientTransaction_NonRetryStrategy_Success_Test1()
+        public void AmbientAbort_NonRetryStrategy_Success_Test1()
         {
             TestDbContext.IsRetryStrategy = false;
 
@@ -91,7 +91,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void AbortAmbientTransaction_SupressAmbient_CommitInnerTransactionTest1()
+        public void AmbientAbort_Supress_CommitInnerTransactionTest1()
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
@@ -130,7 +130,70 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void Ambient_2Transaction_Complete_UncompleteTest1()
+        public void AmbientCommit_Requered_2Inner_Transaction_CompleteAndUncomplete_Test1()
+        {
+            TestDbContext.IsRetryStrategy = false;
+
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var id = Guid.NewGuid();
+            var id2 = Guid.NewGuid();
+            Assert.Catch<TransactionAbortedException>(() =>
+            {
+                using (var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
+                {
+                    var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
+                    db.Database.CreateExecutionStrategy()
+                        .Execute(0,
+                            (context, i) =>
+                            {
+                                using (var inner2 = TransactionScopeHelper
+                                           .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                {
+                                    db.Users.Add(new TestUser { Id = id, Name = "max" });
+                                    db.SaveChanges();
+
+                                    inner2.Complete();
+                                }
+
+                                return 0;
+                            },
+                            (context, i) => new ExecutionResult<int>(true, 0));
+
+                    db.Database.CreateExecutionStrategy()
+                        .Execute(0,
+                            (context, i) =>
+                            {
+                                using (var inner3 = TransactionScopeHelper
+                                           .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                {
+                                    db.Users.Add(new TestUser { Id = id2, Name = "max2" });
+                                    db.SaveChanges();
+
+                                    //inner3.Complete();
+                                }
+
+                                return 0;
+                            },
+                            (context, i) => new ExecutionResult<int>(true, 0));
+
+                    ambient.Complete();
+                }
+            });
+
+            // из-за отката внутренней транзакции, внешняя транзакция откатилась данные не сохранены!
+
+            var db2 = sp.GetRequiredService<TestDbContext>();
+            var saved = db2.Users.Find(id);
+            Assert.IsNull(saved);
+
+            var saved2 = db2.Users.Find(id2);
+            Assert.IsNull(saved2);
+        }
+
+        [Test]
+        public void AmbientCommit_Suppress_2Inner_Transaction_CompleteAndUncomplete_Test1()
         {
             TestDbContext.IsRetryStrategy = false;
 
