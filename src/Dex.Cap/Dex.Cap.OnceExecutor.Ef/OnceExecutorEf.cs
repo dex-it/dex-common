@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Models;
 using Microsoft.EntityFrameworkCore;
 

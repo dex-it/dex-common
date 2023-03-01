@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef

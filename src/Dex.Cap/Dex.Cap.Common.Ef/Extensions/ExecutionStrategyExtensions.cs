@@ -4,9 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dex.Cap.Common.Ef.Helpers;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore
+namespace Dex.Cap.Common.Ef.Extensions
 {
     public static class ExecutionStrategyExtensions
     {
