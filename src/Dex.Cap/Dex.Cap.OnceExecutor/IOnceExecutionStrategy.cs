@@ -12,6 +12,8 @@ namespace Dex.Cap.OnceExecutor
         TransactionScopeOption TransactionScopeOption => TransactionScopeOption.Required;
 
         IsolationLevel TransactionIsolationLevel => IsolationLevel.ReadCommitted;
+        
+        uint TransactionTimeoutInSeconds => 60;
 
         /// <summary>
         /// Checks that the execution has already been completed
