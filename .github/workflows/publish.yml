@@ -145,6 +145,7 @@ jobs:
         run: |
           find . -name '*.nupkg' -type f -print0 |
           while IFS= read -r -d '' nuget; do
+            echo "nuget push" "${NUGET_SOURCE}"
             dotnet nuget push "$nuget" --api-key "${{ secrets.NUGET_APIKEY }}" --source "${{ secrets.NUGET_SOURCE }}" --skip-duplicate
           done
 
