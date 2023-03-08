@@ -15,9 +15,6 @@ env:
   DOTNET_NOLOGO: true
   NuGetDirectory: ${{ github.workspace}}/nuget
 
-defaults:
-  run:
-    shell: pwsh
 
 jobs:
   create_nuget:
@@ -32,9 +29,9 @@ jobs:
         uses: actions/setup-dotnet@v3
 
       - run: |
-          foreach($file in (Get-ChildItem ./ -Recurse -Include *.sln)) {
-              dotnet build --configuration Release $file && dotnet pack --configuration Release --output ${{ env.NuGetDirectory }} $file
-          }
+          for file in $(find . -name "*.sln" -type f); do
+              dotnet build --configuration Release $file && dotnet pack --configuration Release --output $NuGetDirectory $file
+          done
 
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
       - uses: actions/upload-artifact@v3
@@ -66,7 +63,7 @@ jobs:
       # If some rules are not applicable, you can disable them
       # using the --excluded-rules or --excluded-rule-ids option
       - name: Validate package
-        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
+        run: meziantou.validate-nuget-package "${NUGET_DIRECTORY}"/*.nupkg
 
   run_test:
     runs-on: ubuntu-latest
@@ -76,9 +73,18 @@ jobs:
         uses: actions/setup-dotnet@v3
       - name: Run tests
         run: |
-          foreach($file in (Get-ChildItem ./ -Recurse -Include *.sln)) {
-              dotnet test --configuration Release $file
-          }
+          find . -name '*.sln' -type f -print0 |
+          while IFS= read -r -d '' solution; do
+            echo "Testing solution $solution"
+            dotnet test "$solution"
+          done
+      - name: Upload dotnet test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: dotnet-results-${{ matrix.dotnet-version }}
+          path: TestResults-${{ matrix.dotnet-version }}
+          # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() }}
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -97,7 +103,8 @@ jobs:
 
       - name: Publish NuGet package
         run: |
-          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source http://mikhailov.se.fvds.ru:8081/nexus/service/local/nuget/test-nuget/ --skip-duplicate
-          }
-          
+          for file in "${NUGET_DIRECTORY}"/**/*.nupkg; do
+          dotnet nuget push "$file" --api-key "${NUGET_APIKEY}" --source http://mikhailov.se.fvds.ru:8081/nexus/service/local/nuget/test-nuget/ --skip-duplicate
+          done
+
+
