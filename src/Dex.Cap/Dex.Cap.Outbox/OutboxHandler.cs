@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
@@ -177,7 +176,7 @@ namespace Dex.Cap.Outbox
             {
                 if (msg is not EmptyOutboxMessage)
                 {
-                    await ProcessOutboxMessageCore(outboxMessage, job.Timeout, cancellationToken).ConfigureAwait(false);
+                    await ProcessOutboxMessageCore(outboxMessage, cancellationToken).ConfigureAwait(false);
                 }
 
                 await _dataProvider.JobSucceed(job, cancellationToken).ConfigureAwait(false);
@@ -189,7 +188,7 @@ namespace Dex.Cap.Outbox
             }
         }
 
-        private async Task ProcessOutboxMessageCore(IOutboxMessage outboxMessage, TimeSpan timeout, CancellationToken cancellationToken)
+        private async Task ProcessOutboxMessageCore(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var handlerFactory = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
@@ -197,17 +196,7 @@ namespace Dex.Cap.Outbox
 
             try
             {
-                if (handler.IsTransactional)
-                {
-                    // supress ambient transaction, we are root here
-                    using var transactionScope = new TransactionScope(TransactionScopeOption.Suppress, timeout, TransactionScopeAsyncFlowOption.Enabled);
-                    await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
-                    transactionScope.Complete();
-                }
-                else
-                {
-                    await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
-                }
+                await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
