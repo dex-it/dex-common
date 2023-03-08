@@ -15,7 +15,6 @@ env:
   DOTNET_NOLOGO: true
   NuGetDirectory: ${{ github.workspace}}/nuget
 
-
 jobs:
   create_nuget:
     runs-on: ubuntu-latest
@@ -63,10 +62,51 @@ jobs:
       # If some rules are not applicable, you can disable them
       # using the --excluded-rules or --excluded-rule-ids option
       - name: Validate package
-        run: meziantou.validate-nuget-package "${NUGET_DIRECTORY}"/*.nupkg
+        run: |
+          find . -name '*.nupkg' -type f -print0 |
+          while IFS= read -r -d '' nuget; do
+            echo "validate nuget"
+            meziantou.validate-nuget-package "$nuget"
+          done
+  
 
   run_test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: my-pass~003
+          POSTGRES_DB: my_database
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_port_connectivity"
+          --health-interval 5s
+          --health-timeout 30s
+          --health-retries 3
+
+      clickhouse:
+        image: yandex/clickhouse-server
+        ports:
+          - 8123:8123
+          - 9000:9000
+
     steps:
       - uses: actions/checkout@v3
       - name: Setup .NET
@@ -103,8 +143,10 @@ jobs:
 
       - name: Publish NuGet package
         run: |
-          for file in "${NUGET_DIRECTORY}"/**/*.nupkg; do
-          dotnet nuget push "$file" --api-key "${NUGET_APIKEY}" --source http://mikhailov.se.fvds.ru:8081/nexus/service/local/nuget/test-nuget/ --skip-duplicate
+          find . -name '*.nupkg' -type f -print0 |
+          while IFS= read -r -d '' nuget; do
+            echo "nuget push"
+            dotnet nuget push $nuget" --api-key "${NUGET_APIKEY}" --source "${NUGET_SOURCE}" --skip-duplicate
           done
 
 
