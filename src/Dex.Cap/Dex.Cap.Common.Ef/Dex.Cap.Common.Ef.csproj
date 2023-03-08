@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>2.1.1</PackageVersion>
+        <PackageVersion>2.3.4</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -26,7 +26,7 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12" />
     </ItemGroup>
 
 </Project>

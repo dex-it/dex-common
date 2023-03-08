@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,31 +18,33 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction<TResult>(
+        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
+            uint timeoutInSeconds,
             CancellationToken cancellationToken)
             where TResult : default
         {
-            return Context.Database.CreateExecutionStrategy()
-                .ExecuteInTransactionScopeAsync(operation, transactionScopeOption, isolationLevel, cancellationToken);
+            return await Context.ExecuteInTransactionScopeAsync(
+                    operation, verifySucceeded, transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)
         {
-            return Context.Set<LastTransaction>()
-                .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken);
+            return await Context.Set<LastTransaction>()
+                .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
-            return Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask();
+            await Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask().ConfigureAwait(false);
         }
 
-        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
+        protected override async Task OnModificationCompletedAsync(CancellationToken cancellationToken)
         {
-            return Context.SaveChangesAsync(cancellationToken);
+            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }
