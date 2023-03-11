@@ -21,24 +21,26 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             Context = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        protected override Task<TResult?> ExecuteInTransaction<TResult>(
+        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
+            Func<CancellationToken, Task<bool>> verifySucceeded,
             TransactionScopeOption transactionScopeOption,
             IsolationLevel isolationLevel,
+            uint timeoutInSeconds,
             CancellationToken cancellationToken)
             where TResult : default
         {
             if (operation == null) throw new ArgumentNullException(nameof(operation));
 
-            return operation(cancellationToken);
+            return await operation(cancellationToken).ConfigureAwait(false);
         }
 
-        protected override Task OnModificationCompleted(CancellationToken cancellationToken)
+        protected override Task OnModificationCompletedAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }
 
-        protected override async Task<bool> IsAlreadyExecuted(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.OpenAsync(cancellationToken);
 
@@ -57,16 +59,13 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             }
         }
 
-        protected override async Task SaveIdempotentKey(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
-            await using (var command =
-                         Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd"))
-            {
-                command.Parameters.AddWithValue("key", idempotentKey);
-                command.Parameters.AddWithValue("cd", DateTime.UtcNow.ToString("s"));
+            await using var command = Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd");
+            command.Parameters.AddWithValue("key", idempotentKey);
+            command.Parameters.AddWithValue("cd", DateTime.UtcNow.ToString("s"));
 
-                await command.ExecuteNonQueryAsync(cancellationToken);
-            }
+            await command.ExecuteNonQueryAsync(cancellationToken);
         }
     }
 }

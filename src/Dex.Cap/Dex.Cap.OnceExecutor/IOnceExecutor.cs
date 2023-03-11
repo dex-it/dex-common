@@ -13,6 +13,7 @@ namespace Dex.Cap.OnceExecutor
             Func<TContext, CancellationToken, Task<TResult?>> selector,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default);
 
         Task ExecuteAsync(
@@ -20,6 +21,7 @@ namespace Dex.Cap.OnceExecutor
             Func<TContext, CancellationToken, Task> modificator,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default);
     }
 
@@ -31,6 +33,7 @@ namespace Dex.Cap.OnceExecutor
             Func<CancellationToken, Task<TResult?>> selector,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default);
 
         Task ExecuteAsync(
@@ -38,6 +41,7 @@ namespace Dex.Cap.OnceExecutor
             Func<CancellationToken, Task> modificator,
             TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+            uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default);
     }
 }

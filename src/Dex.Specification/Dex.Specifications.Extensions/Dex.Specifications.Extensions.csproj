@@ -6,6 +6,7 @@
     </PropertyGroup>
     <!--Для NuGet-->
     <PropertyGroup>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Specification</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>

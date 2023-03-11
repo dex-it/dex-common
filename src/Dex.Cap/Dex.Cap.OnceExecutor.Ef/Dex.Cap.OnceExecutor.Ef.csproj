@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
-		<PackageVersion>2.6.32</PackageVersion>
+		<PackageVersion>2.8.35</PackageVersion>
 	</PropertyGroup>
 
 	<!--Для NuGet-->
@@ -30,12 +30,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
 		<ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Update="OnceExecutorEf.cs">
-			<DependentUpon>IOnceExecutorEntityFramework.cs</DependentUpon>
-		</Compile>
 	</ItemGroup>
 
 </Project>
