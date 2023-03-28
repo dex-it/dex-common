@@ -26,6 +26,8 @@ jobs:
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '5.0.101'
 
       - run: |
           for file in $(find . -name "*.sln" -type f); do
@@ -47,6 +49,8 @@ jobs:
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '5.0.101'
 
       # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v3
@@ -113,6 +117,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '5.0.101'
       - name: Run tests
         run: |
           find . -name '*.sln' -type f -print0 |
@@ -142,6 +148,8 @@ jobs:
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '5.0.101'
 
       - name: Publish NuGet package
         run: |
