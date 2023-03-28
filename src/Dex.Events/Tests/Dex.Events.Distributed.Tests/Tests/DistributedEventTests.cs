@@ -48,8 +48,8 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestOnUserAddedHandler.OnProcessed += (_, _) => count++;
-            TestOnUserAddedHandler2.OnProcessed += (_, _) => count++;
+            TestOnUserAddedHandler.OnProcessed += (_, _) => Interlocked.Increment(ref count);
+            TestOnUserAddedHandler2.OnProcessed += (_, _) => Interlocked.Increment(ref count);
 
             var harness = serviceProvider.GetRequiredService<IBusControl>();
             harness.Start();
@@ -105,8 +105,8 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestOnUserAddedHandler.OnProcessed += (_, _) => count++;
-            TestOnUserAddedHandlerRaiseException.OnProcessed += (_, _) => count++;
+            TestOnUserAddedHandler.OnProcessed += (_, _) => Interlocked.Increment(ref count);
+            TestOnUserAddedHandlerRaiseException.OnProcessed += (_, _) => Interlocked.Increment(ref count);
 
             var harness = serviceProvider.GetRequiredService<IBusControl>();
             harness.Start();
@@ -170,7 +170,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
             var harness = serviceProvider.GetRequiredService<IBusControl>();
             harness.Start();
@@ -213,7 +213,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
             var harness = serviceProvider.GetRequiredService<IBusControl>();
             harness.Start();
@@ -251,9 +251,9 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestCommandHandler.OnProcess += (_, _) => { count++; };
-            TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => { count++; };
-            TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => { count++; };
+            TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
+            TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
+            TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
             var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
@@ -288,8 +288,8 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => { count++; };
-            TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => { count++; };
+            TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
+            TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
             var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
