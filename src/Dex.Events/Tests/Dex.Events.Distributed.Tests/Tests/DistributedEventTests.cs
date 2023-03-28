@@ -48,8 +48,8 @@ namespace Dex.Events.Distributed.Tests.Tests
                 .BuildServiceProvider();
 
             var count = 0;
-            TestOnUserAddedHandler.OnProcessed += (_, _) => count++;
-            TestOnUserAddedHandler2.OnProcessed += (_, _) => count++;
+            TestOnUserAddedHandler.OnProcessed += (_, _) => Interlocked.Increment(ref count);
+            TestOnUserAddedHandler2.OnProcessed += (_, _) => Interlocked.Increment(ref count);
 
             var harness = serviceProvider.GetRequiredService<IBusControl>();
             harness.Start();
