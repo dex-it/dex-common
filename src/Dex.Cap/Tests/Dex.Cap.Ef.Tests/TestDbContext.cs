@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Ef.Tests
@@ -30,8 +32,15 @@ namespace Dex.Cap.Ef.Tests
         {
             base.OnConfiguring(optionsBuilder);
 
-            optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=my-pass~003;",
-                builder => { builder.EnableRetryOnFailure(); });
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile("appsettings.local.json", optional: true);
+            var config = builder.Build();
+
+            var connectionString = config.GetConnectionString("DefaultConnection");
+            connectionString = connectionString.Replace("_dbName_", _dbName);
+            optionsBuilder.UseNpgsql(connectionString, options => { options.EnableRetryOnFailure(); });
 
             optionsBuilder.UseLoggerFactory(LogFactory).EnableSensitiveDataLogging();
         }
