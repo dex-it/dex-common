@@ -297,3 +297,5 @@ crashlytics-build.properties
 /Sources/Taxi/Taxi.Dispatcher.Desktop/Resources/MapScripts/script.js.map
 /src/nuget-upload.txt
 *.snupkg
+
+*.local.json

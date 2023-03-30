@@ -120,6 +120,8 @@ namespace Dex.Events.Distributed.Tests.Tests
             await dbContext.SaveChangesAsync(CancellationToken.None);
             await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
 
+            await Task.Delay(100);
+
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
             Assert.That(count, Is.EqualTo(1));
             harness.Stop();
