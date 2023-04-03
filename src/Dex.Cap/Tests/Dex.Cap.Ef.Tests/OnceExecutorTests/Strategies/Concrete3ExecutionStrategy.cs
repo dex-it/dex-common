@@ -25,6 +25,7 @@ namespace Dex.Cap.Ef.Tests.Strategies
         {
             var user = new TestUser { Name = argument.Value, Years = 18 };
             await _dbContext.Users.AddAsync(user, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<TestUser?> ReadAsync(Concrete3ExecutionStrategyRequest argument, CancellationToken cancellationToken)

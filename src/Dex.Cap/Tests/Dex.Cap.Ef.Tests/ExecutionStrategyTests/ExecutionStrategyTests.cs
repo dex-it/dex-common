@@ -29,7 +29,13 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                 (dbContext, executor),
                 async (state, ct) =>
                 {
-                    await state.executor.ExecuteAsync(stepId, (context, t) => context.Users.AddAsync(user, t).AsTask(), cancellationToken: ct);
+                    await state.executor.ExecuteAsync(stepId, async (context, t) =>
+                    {
+                        await context.Users.AddAsync(user, t);
+                        await state.dbContext.SaveChangesAsync(t);
+                    }, cancellationToken: ct);
+
+                    await dbContext.SaveChangesAsync(ct);
                 },
                 (_, _) => Task.FromResult(false));
         }
