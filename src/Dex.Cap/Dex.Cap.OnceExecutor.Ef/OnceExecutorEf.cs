@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Models;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ namespace Dex.Cap.OnceExecutor.Ef
             where TResult : default
         {
             return await Context.ExecuteInTransactionScopeAsync(
-                    operation, verifySucceeded, transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
+                operation, verifySucceeded, transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
         }
 
         protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)
@@ -40,11 +41,15 @@ namespace Dex.Cap.OnceExecutor.Ef
         protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask().ConfigureAwait(false);
+            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        protected override async Task OnModificationCompletedAsync(CancellationToken cancellationToken)
+        protected override Task OnModificationCompletedAsync(CancellationToken cancellationToken)
         {
-            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            if (Context.ChangeTracker.HasChanges())
+                throw new UnsavedChangesDetectedException(Context, "Can't complete action, unsaved changes detected");
+
+            return Task.CompletedTask;
         }
     }
 }

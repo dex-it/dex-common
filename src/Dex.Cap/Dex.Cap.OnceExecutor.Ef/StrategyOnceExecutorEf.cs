@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,9 +33,12 @@ namespace Dex.Cap.OnceExecutor.Ef
                 .ConfigureAwait(false);
         }
 
-        protected override async Task OnExecuteCompletedAsync(CancellationToken cancellationToken)
+        protected override Task OnExecuteCompletedAsync(CancellationToken cancellationToken)
         {
-            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            if (_dbContext.ChangeTracker.HasChanges())
+                throw new UnsavedChangesDetectedException(_dbContext, "Can't complete action, unsaved changes detected");
+
+            return Task.CompletedTask;
         }
     }
 }
