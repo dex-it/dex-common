@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>2.3.5</PackageVersion>
+        <PackageVersion>2.3.6</PackageVersion>
         <PackageTags>shared exceptions, extentions and helpers</PackageTags>
     </PropertyGroup>
 
