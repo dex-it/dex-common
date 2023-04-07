@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.4.30</PackageVersion>
+    <PackageVersion>1.4.31</PackageVersion>
     <PackageTags>outbox business-transaction consistency</PackageTags>
   </PropertyGroup>
 
@@ -58,6 +58,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
   </ItemGroup>
 
 </Project>
