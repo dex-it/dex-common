@@ -64,6 +64,8 @@ namespace Dex.Events.Distributed.Tests.Tests
             await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
             await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
 
+            await Task.Delay(100);
+
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
             Assert.That(count, Is.EqualTo(2 * 2));
             harness.Stop();
@@ -195,6 +197,8 @@ namespace Dex.Events.Distributed.Tests.Tests
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
+            await Task.Delay(100);
+
             Assert.AreEqual(1, count);
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
             harness.Stop();
@@ -238,6 +242,8 @@ namespace Dex.Events.Distributed.Tests.Tests
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
+            await Task.Delay(100);
+
             Assert.AreEqual(1, count);
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
             harness.Stop();
@@ -276,6 +282,8 @@ namespace Dex.Events.Distributed.Tests.Tests
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
+            await Task.Delay(100);
+
             Assert.AreEqual(3, count);
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
         }
@@ -307,6 +315,8 @@ namespace Dex.Events.Distributed.Tests.Tests
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
+            
+            await Task.Delay(100);
 
             Assert.AreEqual(2, count);
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
