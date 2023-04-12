@@ -23,8 +23,8 @@ namespace Dex.Cap.OnceExecutor
                 {
                     if (!await IsAlreadyExecutedAsync(idempotentKey, token).ConfigureAwait(false))
                     {
-                        await modificator(Context, token).ConfigureAwait(false);
                         await SaveIdempotentKeyAsync(idempotentKey, token).ConfigureAwait(false);
+                        await modificator(Context, token).ConfigureAwait(false);
                         await OnModificationCompletedAsync(token).ConfigureAwait(false);
                     }
 

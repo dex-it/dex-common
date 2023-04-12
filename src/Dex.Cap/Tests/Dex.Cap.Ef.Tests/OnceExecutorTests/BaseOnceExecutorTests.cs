@@ -2,11 +2,13 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.OnceExecutorTests
@@ -44,13 +46,19 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
-            var firstResult = await executor.ExecuteAsync(stepId,
-                (context, c) => context.Users.AddAsync(user, c).AsTask(),
+            var firstResult = await executor.ExecuteAsync(stepId, async (context, c) =>
+                {
+                    await context.Users.AddAsync(user, c);
+                    await context.SaveChangesAsync(c);
+                },
                 (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
             );
 
-            var secondResult = await executor.ExecuteAsync(stepId,
-                (context, c) => context.Users.AddAsync(user, c).AsTask(),
+            var secondResult = await executor.ExecuteAsync(stepId, async (context, c) =>
+                {
+                    await context.Users.AddAsync(user, c);
+                    await context.SaveChangesAsync(c);
+                },
                 (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
             );
 
@@ -73,7 +81,11 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
-            await executor.ExecuteAsync(stepId, (context, _) => CreateUser(context, user, default).AsTask());
+            await executor.ExecuteAsync(stepId, async (context, token) =>
+            {
+                await CreateUser(context, user, token);
+                await context.SaveChangesAsync(token);
+            });
             await dbContext.SaveChangesAsync();
 
             var xUser = dbContext.Find<TestUser>(user.Id);
@@ -82,6 +94,42 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             ValueTask<EntityEntry<TestUser>> CreateUser(TestDbContext context, TestUser newUser, CancellationToken token)
             {
                 return context.Users.AddAsync(newUser, token);
+            }
+        }
+
+        [Test]
+        public async Task OnceExecuteUnsavedChangesExceptionTest()
+        {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var logger = sp.GetRequiredService<ILogger<BaseOnceExecutorTests>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+
+            var stepId = Guid.NewGuid().ToString("N");
+            var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+
+            try
+            {
+                await executor.ExecuteAsync(stepId,
+                    (context, token) =>
+                    {
+                        return context.ExecuteInTransactionScopeAsync(
+                            context, async (state, t) =>
+                            {
+                                await state.Users.AddAsync(user, t);
+                                await state.SaveChangesAsync(t);
+                            },
+                            (_, _) => Task.FromResult(false),
+                            cancellationToken: token);
+                    });
+                await dbContext.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Exception Data: {Data}", e.Data);
+                throw;
             }
         }
 
@@ -98,8 +146,11 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
 
             // transaction 1
-            var result = await executor.ExecuteAsync(stepId,
-                (context, token) => context.Users.AddAsync(user, token).AsTask(),
+            var result = await executor.ExecuteAsync(stepId, async (context, token) =>
+                {
+                    await context.Users.AddAsync(user, token);
+                    await context.SaveChangesAsync(token);
+                },
                 (context, token) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", token),
                 isolationLevel: IsolationLevel.ReadCommitted,
                 cancellationToken: CancellationToken.None
