@@ -22,7 +22,7 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
 
             var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage);
-            await outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken).ConfigureAwait(false);
+            await outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 }
