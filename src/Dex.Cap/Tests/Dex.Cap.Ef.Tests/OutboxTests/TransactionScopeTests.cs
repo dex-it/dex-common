@@ -35,7 +35,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                     db.Database.CreateExecutionStrategy()
                         .Execute(0,
-                            (context, i) =>
+                            (_, _) =>
                             {
                                 using (var inner2 = TransactionScopeHelper
                                            .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
@@ -47,7 +47,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                                 return 0;
                             },
-                            (context, i) => new ExecutionResult<int>(true, 0));
+                            (_, _) => new ExecutionResult<int>(true, 0));
 
                     aScope.Dispose(); // abort
                 }
@@ -68,7 +68,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                 db.Database.CreateExecutionStrategy()
                     .Execute(0,
-                        (context, i) =>
+                        (_, _) =>
                         {
                             using (var inner2 = TransactionScopeHelper
                                        .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
@@ -80,7 +80,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                             return 0;
                         },
-                        (context, i) => new ExecutionResult<int>(true, 0));
+                        (_, _) => new ExecutionResult<int>(true, 0));
 
                 aScope.Dispose(); // abort
             }
@@ -91,7 +91,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void AmbientAbort_Supress_CommitInnerTransactionTest1()
+        public void AmbientAbort_Suppress_CommitInnerTransactionTest1()
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
@@ -104,7 +104,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                     db.Database.CreateExecutionStrategy()
                         .Execute(0,
-                            (context, i) =>
+                            (_, _) =>
                             {
                                 using (var inner2 = TransactionScopeHelper
                                            .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
@@ -116,7 +116,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                                 return 0;
                             },
-                            (context, i) => new ExecutionResult<int>(true, 0));
+                            (_, _) => new ExecutionResult<int>(true, 0));
 
                     inner.Complete();
                 }
@@ -130,7 +130,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void AmbientCommit_Requered_2Inner_Transaction_CompleteAndUncomplete_Test1()
+        public void AmbientCommit_Required_2Inner_Transaction_CompleteAndUnComplete_Test1()
         {
             TestDbContext.IsRetryStrategy = false;
 
@@ -146,7 +146,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                     db.Database.CreateExecutionStrategy()
                         .Execute(0,
-                            (context, i) =>
+                            (_, _) =>
                             {
                                 using (var inner2 = TransactionScopeHelper
                                            .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
@@ -159,13 +159,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                                 return 0;
                             },
-                            (context, i) => new ExecutionResult<int>(true, 0));
+                            (_, _) => new ExecutionResult<int>(true, 0));
 
                     db.Database.CreateExecutionStrategy()
                         .Execute(0,
-                            (context, i) =>
+                            (_, _) =>
                             {
-                                using (var inner3 = TransactionScopeHelper
+                                using (TransactionScopeHelper
                                            .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
                                 {
                                     db.Users.Add(new TestUser { Id = id2, Name = "max2" });
@@ -176,7 +176,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                                 return 0;
                             },
-                            (context, i) => new ExecutionResult<int>(true, 0));
+                            (_, _) => new ExecutionResult<int>(true, 0));
 
                     ambient.Complete();
                 }
@@ -193,7 +193,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void AmbientCommit_Suppress_2Inner_Transaction_CompleteAndUncomplete_Test1()
+        public void AmbientCommit_Suppress_2Inner_Transaction_CompleteAndUnComplete_Test1()
         {
             TestDbContext.IsRetryStrategy = false;
 
@@ -207,7 +207,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                 db.Database.CreateExecutionStrategy()
                     .Execute(0,
-                        (context, i) =>
+                        (_, _) =>
                         {
                             using (var inner2 = TransactionScopeHelper
                                        .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
@@ -220,13 +220,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                             return 0;
                         },
-                        (context, i) => new ExecutionResult<int>(true, 0));
+                        (_, _) => new ExecutionResult<int>(true, 0));
 
                 db.Database.CreateExecutionStrategy()
                     .Execute(0,
-                        (context, i) =>
+                        (_, _) =>
                         {
-                            using (var inner3 = TransactionScopeHelper
+                            using (TransactionScopeHelper
                                        .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
                             {
                                 db.Users.Add(new TestUser { Id = id2, Name = "max2" });
@@ -237,7 +237,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                             return 0;
                         },
-                        (context, i) => new ExecutionResult<int>(true, 0));
+                        (_, _) => new ExecutionResult<int>(true, 0));
 
                 ambient.Complete();
             }
@@ -268,7 +268,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                 db.Database.CreateExecutionStrategy()
                     .Execute(0,
-                        (context, i) =>
+                        (_, _) =>
                         {
                             using (var inner2 = TransactionScopeHelper
                                        .CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
@@ -281,7 +281,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                             return 0;
                         },
-                        (context, i) => new ExecutionResult<int>(true, 0));
+                        (_, _) => new ExecutionResult<int>(true, 0));
 
                 aScope.Rollback();
                 Transaction.Current = null;
@@ -298,7 +298,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             TestDbContext.IsRetryStrategy = false;
             var sp = InitServiceCollection().BuildServiceProvider();
 
-            using (var ambient = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+            using (new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
                 using var scope1 = sp.CreateScope();
                 await using (var db1 = scope1.ServiceProvider.GetRequiredService<TestDbContext>())

@@ -14,7 +14,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class ConsumerTransactionScopeTests : BaseTest
     {
-      
         [Test]
         public async Task OnceExecutorInMemoryTestHarnessTest1()
         {
@@ -31,8 +30,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var endpoint = await harness.GetConsumerEndpoint<TestMessageConsumer>();
             const int expected = 1000;
-            var msgs = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
-            await endpoint.SendBatch(msgs);
+            var messages = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
+            await endpoint.SendBatch(messages);
 
             await harness.InactivityTask;
 
@@ -71,11 +70,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             try
             {
                 const int expected = 1000;
-                var msgs = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
+                var messages = Enumerable.Range(1, expected).Select(x => new TestMessage { Id = Guid.NewGuid(), Name = "m" + x });
 
                 var endpoint = await busControl.GetSendEndpoint(new Uri("queue:" + queueName));
 
-                await Task.WhenAll(msgs.Select(x => endpoint.Send(x)));
+                await Task.WhenAll(messages.Select(x => endpoint.Send(x)));
 
                 var sw = Stopwatch.StartNew();
                 while (messageCounter.Count < expected && sw.ElapsedMilliseconds < 5000)
@@ -97,13 +96,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         public interface ITestMessage : IConsumer
         {
             Guid Id { get; }
-            string Name { get; }
+            string? Name { get; }
         }
 
         private class TestMessage : ITestMessage
         {
-            public Guid Id { get; set; }
-            public string Name { get; set; }
+            public Guid Id { get; init; }
+            public string? Name { get; init; }
         }
 
         public class TestMessageConsumer : IConsumer<ITestMessage>
@@ -117,7 +116,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             public async Task Consume(ConsumeContext<ITestMessage> context)
             {
-                await _executor.ExecuteAsync(context.MessageId.ToString(), (dbContext, token) => CreateUser(context.Message, dbContext, token));
+                await _executor.ExecuteAsync(context.MessageId!.Value.ToString(),
+                    (dbContext, token) => CreateUser(context.Message, dbContext, token));
             }
 
             private static async Task CreateUser(ITestMessage m, TestDbContext dbContext, CancellationToken token)
