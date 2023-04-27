@@ -64,6 +64,8 @@ namespace Dex.Events.Distributed.Tests.Tests
             await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
             await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
 
+            await Task.Delay(500);
+
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
             Assert.That(count, Is.EqualTo(2 * 2));
             harness.Stop();
