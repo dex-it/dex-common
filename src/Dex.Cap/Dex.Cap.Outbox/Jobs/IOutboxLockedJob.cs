@@ -17,5 +17,10 @@ namespace Dex.Cap.Outbox.Jobs
         /// Отражает время жизни захваченной блокировки.
         /// </summary>
         CancellationToken LockToken { get; }
+
+        /// <summary>
+        /// Таймаут операции
+        /// </summary>
+        TimeSpan Timeout { get; }
     }
 }

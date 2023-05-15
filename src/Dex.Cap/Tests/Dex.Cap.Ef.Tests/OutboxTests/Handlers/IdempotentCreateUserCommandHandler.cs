@@ -12,6 +12,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
         private readonly IOnceExecutor<TestDbContext> _onceExecutor;
         public static int CountDown { get; set; }
 
+        public bool IsTransactional => true;
+
         public IdempotentCreateUserCommandHandler(IOnceExecutor<TestDbContext> onceExecutor)
         {
             _onceExecutor = onceExecutor;
@@ -23,12 +25,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
                 message.MessageId.ToString("N"),
                 async (context, token) =>
                 {
-                    context.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
+                    context.Set<TestUser>()
+                        .Add(new TestUser { Id = message.Id, Name = message.UserName });
+
+                    await context.SaveChangesAsync(token);
 
                     if (CountDown-- > 0)
                         throw new InvalidOperationException("CountDown > 0");
-
-                    await context.SaveChangesAsync(token);
                 },
                 cancellationToken: cancellationToken);
         }

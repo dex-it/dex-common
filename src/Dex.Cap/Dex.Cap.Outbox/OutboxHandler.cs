@@ -191,9 +191,9 @@ namespace Dex.Cap.Outbox
         private async Task ProcessOutboxMessageCore(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
-            var handlerFactory = serviceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
+            var handlerFactory = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
             var handler = handlerFactory.GetMessageHandler(outboxMessage);
+
             try
             {
                 await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
