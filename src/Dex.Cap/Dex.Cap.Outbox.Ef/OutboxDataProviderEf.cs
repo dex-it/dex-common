@@ -185,9 +185,10 @@ namespace Dex.Cap.Outbox.Ef
             var lockId = Guid.NewGuid(); // Ключ идемпотентности.
             CancellationTokenSource? cts = null;
 
+            var timeout = Timeout.InfiniteTimeSpan;
             if (freeMessage.LockTimeout != Timeout.InfiniteTimeSpan)
             {
-                var timeout = freeMessage.LockTimeout - TimeSpan.FromSeconds(10);
+                timeout = freeMessage.LockTimeout - TimeSpan.FromSeconds(10);
                 Debug.Assert(timeout > TimeSpan.Zero, "Таймаут должен быть больше 10 секунд.");
 
                 // Будем отсчитывать время жизни блокировки ещё перед запросом.
@@ -199,7 +200,7 @@ namespace Dex.Cap.Outbox.Ef
                 var lockedMessage = await TryLockMessage(freeMessage.Id, lockId, cts?.Token ?? default, cancellationToken).ConfigureAwait(false);
 
                 return lockedMessage is { Status: OutboxMessageStatus.New or OutboxMessageStatus.Failed }
-                    ? new OutboxLockedJob(lockedMessage, lockId, NullableHelper.SetNull(ref cts))
+                    ? new OutboxLockedJob(lockedMessage, lockId, timeout, NullableHelper.SetNull(ref cts))
                     : null;
             }
             finally
