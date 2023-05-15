@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Dex.Extensions;
 using Dex.MassTransit.ActivityTrace;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
@@ -195,18 +194,7 @@ namespace Dex.MassTransit.Rabbit
 
                 busFactoryConfigurator.ReceiveEndpoint(queueName, configurator =>
                 {
-                    if (endpointConsumerConfigurator == null)
-                    {
-                        configurator.UseMessageRetry(x =>
-                        {
-                            // default policy
-                            x.SetRetryPolicy(filter => filter.Interval(10, 1.Minutes()));
-                        });
-                    }
-                    else
-                    {
-                        endpointConsumerConfigurator.Invoke(configurator);
-                    }
+                    endpointConsumerConfigurator?.Invoke(configurator);
 
                     configurator.ConfigureConsumer(busRegistrationContext, consumerType);
                 });
