@@ -215,18 +215,7 @@ namespace Dex.MassTransit.SQS
                     configurator.PrefetchCount = 10; // max 10
                     configurator.WaitTimeSeconds = 20; // enable long pooling requests, range [0-20] 
 
-                    if (endpointConsumerConfigurator == null)
-                    {
-                        configurator.UseMessageRetry(x =>
-                        {
-                            // default policy
-                            x.SetRetryPolicy(filter => filter.Interval(256, 1.Minutes()));
-                        });
-                    }
-                    else
-                    {
-                        endpointConsumerConfigurator.Invoke(configurator);
-                    }
+                    endpointConsumerConfigurator?.Invoke(configurator);
 
                     configurator.ConfigureConsumer(busRegistrationContext, consumerType);
                 });

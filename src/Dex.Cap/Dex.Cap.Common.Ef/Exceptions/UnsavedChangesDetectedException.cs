@@ -22,9 +22,12 @@ namespace Dex.Cap.Common.Ef.Exceptions
         {
             if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
-            var entries = dbContext.ChangeTracker.Entries().Select(e => e.Entity).ToArray();
+            var entries = dbContext.ChangeTracker.Entries()
+                .Where(e => e.State != EntityState.Unchanged)
+                .Select(e => e.Entity.GetType()).ToArray();
+
             Data["unsaved_changes_count"] = entries.Length;
-            Data["unsaved_changes_first_10"] = entries.Take(10);
+            Data["unsaved_changes_first_10"] = string.Join("; ",entries.Take(10));
         }
     }
 }
