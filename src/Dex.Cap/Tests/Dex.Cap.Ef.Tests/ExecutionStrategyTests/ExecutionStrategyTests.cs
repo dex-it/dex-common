@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
+using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                 .BuildServiceProvider();
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "Test", Years = 18 };
@@ -81,7 +82,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                 .BuildServiceProvider();
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "Test", Years = 18 };

@@ -32,4 +32,10 @@
 		<ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Compile Update="EfOptions.cs">
+	    <DependentUpon>IEfOptions.cs</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
 </Project>

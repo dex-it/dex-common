@@ -12,8 +12,8 @@ namespace Dex.Cap.OnceExecutor.Ef.Extensions
             if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
 
             return serviceProvider
-                .AddScoped(typeof(IOnceExecutor<TDbContext>), typeof(OnceExecutorEf<TDbContext>))
-                .AddScoped(typeof(IOnceExecutor), typeof(OnceExecutorEf<TDbContext>));
+                .AddScoped(typeof(IOnceExecutor<IEfOptions, TDbContext>), typeof(OnceExecutorEf<TDbContext>))
+                .AddScoped(typeof(IOnceExecutor<IEfOptions>), typeof(OnceExecutorEf<TDbContext>));
         }
 
         public static IServiceCollection AddStrategyOnceExecutor<TArg, TResult, TExecutionStrategy, TDbContext>(this IServiceCollection serviceProvider)
