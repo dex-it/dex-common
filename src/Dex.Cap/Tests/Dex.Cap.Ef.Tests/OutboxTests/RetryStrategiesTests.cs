@@ -11,11 +11,12 @@ using Dex.Extensions;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests;
 
-public class RetryStrategiesTests : BaseTest
+public class RetryStrategiesTests
 {
     [Test]
     [TestCase(100, 1, OutboxMessageStatus.Succeeded, "Incremental")]
@@ -25,10 +26,15 @@ public class RetryStrategiesTests : BaseTest
     public async Task IncrementalRetry_ProcessMessage(int intervalMilliseconds, int expectedCount, OutboxMessageStatus expectedStatus, string retryStrategy)
     {
         var serviceCollection = new ServiceCollection();
-        AddLogging(serviceCollection);
+        serviceCollection.AddLogging(builder =>
+        {
+            builder.AddDebug();
+            builder.AddProvider(new TestLoggerProvider());
+            builder.SetMinimumLevel(LogLevel.Error);
+        });
         serviceCollection
             .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
-            .AddScoped(_ => new TestDbContext(DbName))
+            .AddScoped(_ => new TestDbContext("db_test_" + Guid.NewGuid().ToString("N")))
             .AddOutbox<TestDbContext>((_, configurator) =>
             {
                 switch (retryStrategy)
@@ -46,10 +52,13 @@ public class RetryStrategiesTests : BaseTest
 
         TestErrorCommandHandler.Reset();
 
+        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+        await dbContext.Database.EnsureCreatedAsync();
+
         var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
         var correlationId = Guid.NewGuid();
         await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 2 });
-        await SaveChanges(serviceProvider);
+        await dbContext.SaveChangesAsync();
 
         var count = 0;
         TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
@@ -62,10 +71,10 @@ public class RetryStrategiesTests : BaseTest
             await Task.Delay(100);
         }
 
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
         var envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
         Assert.AreEqual(expectedStatus, envelope.Status);
-
         Assert.AreEqual(expectedCount, count);
+
+        await dbContext.Database.EnsureDeletedAsync();
     }
 }
