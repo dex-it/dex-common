@@ -4,7 +4,7 @@ using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox
 {
-    public class OutboxMessageHandlerFactory : IOutboxMessageHandlerFactory
+    internal sealed class OutboxMessageHandlerFactory : IOutboxMessageHandlerFactory
     {
         private readonly IServiceProvider _serviceProvider;
 

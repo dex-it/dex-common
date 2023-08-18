@@ -8,13 +8,17 @@ namespace Dex.Cap.Outbox.Models
     [Table("outbox", Schema = "cap")]
     public class OutboxEnvelope
     {
-        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, OutboxMessageStatus status, string content)
+        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, OutboxMessageStatus status, string content, DateTime? startAtUtc = null)
         {
+            var startDateUtc = startAtUtc ?? DateTime.UtcNow;
+
             Id = id;
             CorrelationId = correlationId;
             MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
             Status = status;
             Content = content ?? throw new ArgumentNullException(nameof(content));
+            StartAtUtc = startDateUtc;
+            ScheduledStartIndexing = startDateUtc;
             ActivityId = Activity.Current?.Id;
         }
 
@@ -66,6 +70,10 @@ namespace Dex.Cap.Outbox.Models
 
         [Required]
         public Guid CorrelationId { get; set; }
+
+        public DateTime? StartAtUtc { get; set; }
+
+        public DateTime? ScheduledStartIndexing { get; set; }
 
         #region Межпроцессная синхронизация
 

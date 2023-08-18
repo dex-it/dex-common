@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Dex.Extensions" Version="1.0.11" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12">
           <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
@@ -60,6 +61,7 @@
       </Content>
       <None Update="appsettings.local.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <DependentUpon>appsettings.json</DependentUpon>
       </None>
     </ItemGroup>
 

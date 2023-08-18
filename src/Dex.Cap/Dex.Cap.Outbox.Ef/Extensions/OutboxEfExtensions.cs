@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.Outbox.Ef
+namespace Dex.Cap.Outbox.Ef.Extensions
 {
     public static class OutboxEfExtensions
     {
@@ -24,6 +24,9 @@ namespace Dex.Cap.Outbox.Ef
 
             modelBuilder.Entity<Models.OutboxEnvelope>()
                 .HasIndex(o => o.CorrelationId);
+
+            modelBuilder.Entity<Models.OutboxEnvelope>()
+                .HasIndex(o => o.ScheduledStartIndexing);
 
             modelBuilder.Entity<Models.OutboxEnvelope>()
                 .Property(x => x.CreatedUtc)

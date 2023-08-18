@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
-using Dex.Cap.Ef.Tests.Strategies;
+using Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Microsoft.Extensions.DependencyInjection;
