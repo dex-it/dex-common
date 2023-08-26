@@ -88,7 +88,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             });
             await dbContext.SaveChangesAsync();
 
-            var xUser = dbContext.Find<TestUser>(user.Id);
+            var xUser = await dbContext.FindAsync<TestUser>(user.Id);
             Assert.IsNotNull(xUser);
 
             ValueTask<EntityEntry<TestUser>> CreateUser(TestDbContext context, TestUser newUser, CancellationToken token)

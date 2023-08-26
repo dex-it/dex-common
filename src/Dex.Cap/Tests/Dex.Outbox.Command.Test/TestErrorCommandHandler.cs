@@ -9,9 +9,9 @@ namespace Dex.Outbox.Command.Test
     public class TestErrorCommandHandler : IOutboxMessageHandler<TestErrorOutboxCommand>
     {
         public static event EventHandler OnProcess;
-        public static int Count { get; private set; }
-
         public static void Reset() => Count = 0;
+
+        private static int Count { get; set; }
 
         public Task ProcessMessage(TestErrorOutboxCommand message, CancellationToken cancellationToken)
         {
@@ -19,7 +19,7 @@ namespace Dex.Outbox.Command.Test
 
             Console.WriteLine($"TestErrorCommandHandler - Try processed command at {DateTime.Now}, MaxCount: {message.MaxCount}");
 
-            if (message.MaxCount < Count) throw new InvalidDataException();
+            if (message.MaxCount > Count) throw new InvalidDataException();
 
             Console.WriteLine($"TestErrorCommandHandler - Processed command at {DateTime.Now}, Count: {message.MaxCount}");
 

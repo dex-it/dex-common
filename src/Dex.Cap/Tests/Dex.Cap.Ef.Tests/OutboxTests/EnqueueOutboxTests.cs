@@ -35,13 +35,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var command = new TestOutboxCommand { Args = "hello world" };
             messageIds.Add(command.MessageId);
             logger.LogInformation("Command1 {MessageId}", ((IOutboxMessage)command).MessageId);
-            await outboxService.EnqueueAsync(correlationId, command, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, command);
 
             var command2 = new TestOutboxCommand { Args = "hello world2" };
             messageIds.Add(command2.MessageId);
             logger.LogInformation("Command2 {MessageId}", ((IOutboxMessage)command2).MessageId);
 
-            await outboxService.EnqueueAsync(correlationId, command2, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, command2);
             await SaveChanges(sp);
 
             var count = 0;
@@ -74,9 +74,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty);
+            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty);
+            await outboxService.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty);
             await SaveChanges(sp);
 
             // act
@@ -98,10 +98,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
 
-            Assert.CatchAsync<InvalidOperationException>(async () =>
-            {
-                await outboxService.EnqueueAsync(correlationId, new TestEmptyMessageId(), CancellationToken.None);
-            });
+            Assert.CatchAsync<InvalidOperationException>(async () => { await outboxService.EnqueueAsync(correlationId, new TestEmptyMessageId()); });
         }
 
         [Test]
@@ -113,19 +110,25 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             TestErrorCommandHandler.Reset();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
-            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestErrorOutboxCommand { MaxCount = 3 }, CancellationToken.None);
+            var correlationId = Guid.NewGuid();
+            await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 2 });
             await SaveChanges(sp);
 
             var count = 0;
             TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
             var handler = sp.GetRequiredService<IOutboxHandler>();
 
-            var repeat = 3;
+            var repeat = 5;
             while (repeat-- > 0)
             {
                 await handler.ProcessAsync(CancellationToken.None);
-                await Task.Delay(50);
+                await Task.Delay(100);
             }
+
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            Assert.AreEqual(2, envelope.Retries);
+            Assert.AreEqual(OutboxMessageStatus.Succeeded, envelope.Status);
 
             Assert.AreEqual(1, count);
         }
@@ -142,8 +145,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var id = Guid.NewGuid();
             var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id });
+            await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id });
             await SaveChanges(sp);
 
             // act
@@ -157,8 +160,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var failed = envelopes.Single(x => x.Status == OutboxMessageStatus.Failed);
             Assert.NotNull(failed);
 
-            var succ = envelopes.Single(x => x.Status == OutboxMessageStatus.Succeeded);
-            Assert.NotNull(succ);
+            var success = envelopes.Single(x => x.Status == OutboxMessageStatus.Succeeded);
+            Assert.NotNull(success);
         }
 
         [Test]
@@ -172,8 +175,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
 
-            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() }, CancellationToken.None);
-            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() }, CancellationToken.None);
+            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() });
+            await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() });
             await SaveChanges(sp);
 
             // act
@@ -197,8 +200,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello" }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 1 }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello" });
+            await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 1 });
             await SaveChanges(sp);
 
             var count = 0;
@@ -210,7 +213,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             while (repeat-- > 0)
             {
                 await handler.ProcessAsync(CancellationToken.None);
-                await Task.Delay(20);
+                await Task.Delay(100);
             }
 
             Assert.AreEqual(2, count);
@@ -244,6 +247,39 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var deletedMessages = await cleaner.Cleanup(TimeSpan.FromMilliseconds(olderThanMilliseconds), CancellationToken.None);
 
             Assert.AreEqual(expectedDeletedMessages, deletedMessages);
+        }
+
+        [Test]
+        [TestCase(100, 1, OutboxMessageStatus.Succeeded)]
+        [TestCase(1000, 0, OutboxMessageStatus.New)]
+        public async Task EnqueueWithDelayedStart_ProcessMessage(int intervalMilliseconds, int expectedCount, OutboxMessageStatus expectedStatus)
+        {
+            var serviceProvider = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .BuildServiceProvider();
+            TestErrorCommandHandler.Reset();
+
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var correlationId = Guid.NewGuid();
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello" }, DateTime.UtcNow.AddMilliseconds(intervalMilliseconds));
+            await SaveChanges(serviceProvider);
+
+            var count = 0;
+            TestCommandHandler.OnProcess += (_, _) => { count++; };
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.ProcessAsync(CancellationToken.None);
+                await Task.Delay(100);
+            }
+
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            Assert.AreEqual(expectedStatus, envelope.Status);
+
+            Assert.AreEqual(expectedCount, count);
         }
     }
 }

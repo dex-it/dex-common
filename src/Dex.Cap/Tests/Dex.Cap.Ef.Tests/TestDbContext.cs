@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
-using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;

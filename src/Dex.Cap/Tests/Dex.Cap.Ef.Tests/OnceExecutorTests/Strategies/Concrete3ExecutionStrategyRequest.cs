@@ -1,4 +1,4 @@
-namespace Dex.Cap.Ef.Tests.Strategies
+namespace Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies
 {
     public class Concrete3ExecutionStrategyRequest
     {

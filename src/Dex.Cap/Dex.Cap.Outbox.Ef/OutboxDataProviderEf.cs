@@ -21,20 +21,22 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Ef
 {
-    internal class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<TDbContext> where TDbContext : DbContext
+    internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<TDbContext>
+        where TDbContext : DbContext
     {
         private readonly TDbContext _dbContext;
         private readonly ILogger<OutboxDataProviderEf<TDbContext>> _logger;
         private readonly OutboxOptions _outboxOptions;
 
-        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger)
+        public OutboxDataProviderEf(TDbContext dbContext, IOptions<OutboxOptions> outboxOptions, ILogger<OutboxDataProviderEf<TDbContext>> logger,
+            IOutboxRetryStrategy retryStrategy) : base(retryStrategy)
         {
             _dbContext = dbContext;
             _outboxOptions = outboxOptions.Value;
             _logger = logger;
         }
 
-        public override async Task ExecuteActionInTransaction<TState>(Guid corellationId, IOutboxService<TDbContext> outboxService, TState state,
+        public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
         {
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
@@ -50,7 +52,7 @@ namespace Dex.Cap.Outbox.Ef
 
                         try
                         {
-                            var outboxContext = new OutboxContext<TDbContext, TState>(corellationId, outbox, dbContext, outerState);
+                            var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outbox, dbContext, outerState);
                             await action(ct, outboxContext).ConfigureAwait(false);
 
                             // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
@@ -59,7 +61,7 @@ namespace Dex.Cap.Outbox.Ef
 
                             if (!isOutboxMessageExists)
                             {
-                                await outbox.EnqueueAsync(corellationId, EmptyOutboxMessage.Empty, ct).ConfigureAwait(false);
+                                await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct).ConfigureAwait(false);
                             }
 
                             await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -69,7 +71,7 @@ namespace Dex.Cap.Outbox.Ef
                             dbContext.ChangeTracker.Clear();
                         }
                     },
-                    async (_, ct) => await IsExists(corellationId, ct).ConfigureAwait(false),
+                    async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -132,6 +134,8 @@ namespace Dex.Cap.Outbox.Ef
                             job.Retries = lockedJob.Envelope.Retries;
                             job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
                             job.Error = lockedJob.Envelope.Error;
+                            job.StartAtUtc = lockedJob.Envelope.StartAtUtc;
+                            job.ScheduledStartIndexing = lockedJob.Envelope.ScheduledStartIndexing;
                             job.LockId = null;
 
                             try
@@ -310,9 +314,11 @@ namespace Dex.Cap.Outbox.Ef
         public override async Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
         {
             var potentialFree = await _dbContext.Set<OutboxEnvelope>()
+                .Where(o => o.ScheduledStartIndexing.HasValue)
                 .Where(o => o.Retries < _outboxOptions.Retries && (o.Status == OutboxMessageStatus.New || o.Status == OutboxMessageStatus.Failed))
                 .Where(x => x.LockId == null || x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc < DateTime.UtcNow)
-                .OrderBy(o => o.CreatedUtc)
+                .Where(o => DateTime.UtcNow >= o.StartAtUtc)
+                .OrderBy(o => o.ScheduledStartIndexing)
                 .Take(limit)
                 .AsNoTracking()
                 .ToArrayAsync(cancellationToken)
@@ -323,7 +329,8 @@ namespace Dex.Cap.Outbox.Ef
 
         public override int GetFreeMessagesCount()
         {
-            return _dbContext.Set<OutboxEnvelope>().Count(o => o.Retries < _outboxOptions.Retries && o.Status != OutboxMessageStatus.Succeeded);
+            return _dbContext.Set<OutboxEnvelope>()
+                .Count(o => o.Retries < _outboxOptions.Retries && o.Status != OutboxMessageStatus.Succeeded);
         }
     }
 }

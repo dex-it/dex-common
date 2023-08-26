@@ -5,7 +5,7 @@ using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.Ef.Tests.Strategies
+namespace Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies
 {
     public class Concrete1ExecutionStrategy : IOnceExecutionStrategy<Concrete1ExecutionStrategyRequest, string>
     {
