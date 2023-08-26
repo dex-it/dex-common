@@ -7,6 +7,6 @@ internal static class OutboxRetryStrategyConfiguratorExtension
 {
     internal static void UseOutboxExponentialRetryStrategy(this OutboxRetryStrategyConfigurator configurator, TimeSpan interval)
     {
-        configurator.RetryStrategy = new ExponentialOutboxRetryStrategy(interval);
+        configurator.RetryStrategy = new TestOutboxRetryStrategy(interval);
     }
 }

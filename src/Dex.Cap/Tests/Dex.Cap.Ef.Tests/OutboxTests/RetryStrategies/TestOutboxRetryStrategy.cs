@@ -4,11 +4,11 @@ using Dex.Cap.Outbox.Options;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests.RetryStrategies;
 
-internal sealed class ExponentialOutboxRetryStrategy : IOutboxRetryStrategy
+internal sealed class TestOutboxRetryStrategy : IOutboxRetryStrategy
 {
     private readonly TimeSpan _interval;
 
-    public ExponentialOutboxRetryStrategy(TimeSpan interval)
+    public TestOutboxRetryStrategy(TimeSpan interval)
     {
         _interval = interval;
     }
