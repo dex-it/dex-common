@@ -4,8 +4,9 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public abstract class StrategyOnceExecutor<TArg, TResult, TExecutionStrategy> : IStrategyOnceExecutor<TArg, TResult>
-        where TExecutionStrategy : IOnceExecutionStrategy<TArg, TResult>
+    public abstract class StrategyOnceExecutor<TArg, TOptions, TResult, TExecutionStrategy> : IStrategyOnceExecutor<TArg, TResult>
+        where TExecutionStrategy : class, IOnceExecutionStrategy<TArg, TOptions, TResult>
+        where TOptions : IOnceExecutorOptions
     {
         protected TExecutionStrategy ExecutionStrategy { get; }
 
@@ -14,7 +15,7 @@ namespace Dex.Cap.OnceExecutor
             ExecutionStrategy = executionStrategy ?? throw new ArgumentNullException(nameof(executionStrategy));
         }
 
-        public async Task<TResult?> ExecuteAsync(TArg argument, CancellationToken cancellationToken = default)
+        public async Task<TResult?> ExecuteAsync(TArg argument, CancellationToken cancellationToken)
         {
             return await ExecuteInTransactionAsync(
                 async token =>

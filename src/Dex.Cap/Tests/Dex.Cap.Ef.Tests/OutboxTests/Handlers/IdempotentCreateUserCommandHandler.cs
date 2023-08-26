@@ -3,18 +3,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
+using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
 {
     public class IdempotentCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
     {
-        private readonly IOnceExecutor<TestDbContext> _onceExecutor;
+        private readonly IOnceExecutor<IEfOptions, TestDbContext> _onceExecutor;
         public static int CountDown { get; set; }
 
         public bool IsTransactional => true;
 
-        public IdempotentCreateUserCommandHandler(IOnceExecutor<TestDbContext> onceExecutor)
+        public IdempotentCreateUserCommandHandler(IOnceExecutor<IEfOptions, TestDbContext> onceExecutor)
         {
             _onceExecutor = onceExecutor;
         }
@@ -25,8 +26,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
                 message.MessageId.ToString("N"),
                 async (context, token) =>
                 {
-                    context.Set<TestUser>()
-                        .Add(new TestUser { Id = message.Id, Name = message.UserName });
+                    context.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
 
                     await context.SaveChangesAsync(token);
 

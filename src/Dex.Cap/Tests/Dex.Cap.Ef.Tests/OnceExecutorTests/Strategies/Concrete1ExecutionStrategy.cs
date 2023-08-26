@@ -3,15 +3,17 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
+using Dex.Cap.OnceExecutor.Ef;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.Ef.Tests.Strategies
+namespace Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies
 {
-    public class Concrete1ExecutionStrategy : IOnceExecutionStrategy<Concrete1ExecutionStrategyRequest, string>
+    // ReSharper disable once ClassNeverInstantiated.Global
+    internal sealed class Concrete1ExecutionStrategy : IOnceExecutionStrategy<Concrete1ExecutionStrategyRequest, IEfOptions, string>
     {
         private readonly TestDbContext _dbContext;
 
-        public IsolationLevel TransactionIsolationLevel => IsolationLevel.RepeatableRead;
+        public IEfOptions? Options { get; set; } = new EfOptions { IsolationLevel = IsolationLevel.RepeatableRead };
 
         public Concrete1ExecutionStrategy(TestDbContext dbContext)
         {

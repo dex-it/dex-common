@@ -1,19 +1,15 @@
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 
 namespace Dex.Cap.OnceExecutor
 {
     /// <summary>
     /// Once execution strategy contract
     /// </summary>
-    public interface IOnceExecutionStrategy<in TArg, TResult>
+    public interface IOnceExecutionStrategy<in TArg, TOptions, TResult>
+        where TOptions : IOnceExecutorOptions
     {
-        TransactionScopeOption TransactionScopeOption => TransactionScopeOption.Required;
-
-        IsolationLevel TransactionIsolationLevel => IsolationLevel.ReadCommitted;
-        
-        uint TransactionTimeoutInSeconds => 60;
+        public TOptions? Options { get; set; }
 
         /// <summary>
         /// Checks that the execution has already been completed

@@ -7,9 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public sealed class StrategyOnceExecutorEf<TArg, TResult, TExecutionStrategy, TDbContext> : StrategyOnceExecutor<TArg, TResult, TExecutionStrategy>
+    public sealed class StrategyOnceExecutorEf<TArg, TResult, TExecutionStrategy, TDbContext>
+        : StrategyOnceExecutor<TArg, IEfOptions, TResult, TExecutionStrategy>
         where TDbContext : DbContext
-        where TExecutionStrategy : IOnceExecutionStrategy<TArg, TResult>
+        where TExecutionStrategy : class, IOnceExecutionStrategy<TArg, IEfOptions, TResult>
     {
         private readonly TDbContext _dbContext;
 
@@ -23,12 +24,14 @@ namespace Dex.Cap.OnceExecutor.Ef
             Func<CancellationToken, Task<bool>> verifySucceeded,
             CancellationToken cancellationToken)
         {
+            ExecutionStrategy.Options ??= new EfOptions();
+
             return await _dbContext.ExecuteInTransactionScopeAsync(
                     operation,
                     verifySucceeded,
-                    ExecutionStrategy.TransactionScopeOption,
-                    ExecutionStrategy.TransactionIsolationLevel,
-                    ExecutionStrategy.TransactionTimeoutInSeconds,
+                    ExecutionStrategy.Options.TransactionScopeOption,
+                    ExecutionStrategy.Options.IsolationLevel,
+                    ExecutionStrategy.Options.TimeoutInSeconds,
                     cancellationToken)
                 .ConfigureAwait(false);
         }
