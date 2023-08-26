@@ -14,12 +14,13 @@ using Neo4jClient.Transactions;
 namespace Dex.Cap.Outbox.Neo4j
 {
     // ReSharper disable once InconsistentNaming
-    internal class OutboxDataProviderNeo4j : BaseOutboxDataProvider<ITransactionalGraphClient>
+    internal sealed class OutboxDataProviderNeo4j : BaseOutboxDataProvider<ITransactionalGraphClient>
     {
         private readonly ITransactionalGraphClient _graphClient;
         private readonly OutboxOptions _outboxOptions;
 
-        public OutboxDataProviderNeo4j(ITransactionalGraphClient graphClient, IOptions<OutboxOptions> outboxOptions)
+        public OutboxDataProviderNeo4j(ITransactionalGraphClient graphClient, IOptions<OutboxOptions> outboxOptions, IOutboxRetryStrategy retryStrategy)
+            : base(retryStrategy)
         {
             _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));

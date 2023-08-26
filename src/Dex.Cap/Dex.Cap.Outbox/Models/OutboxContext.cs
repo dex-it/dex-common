@@ -5,7 +5,7 @@ using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox.Models
 {
-    internal class OutboxContext<TDbContext, TState> : IOutboxContext<TDbContext, TState>
+    internal sealed class OutboxContext<TDbContext, TState> : IOutboxContext<TDbContext, TState>
     {
         public TDbContext DbContext { get; }
         public TState State { get; }
@@ -21,9 +21,9 @@ namespace Dex.Cap.Outbox.Models
             State = state;
         }
 
-        public async Task EnqueueAsync(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
+        public async Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc, CancellationToken cancellationToken)
         {
-            await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, cancellationToken).ConfigureAwait(false);
+            await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, cancellationToken).ConfigureAwait(false);
         }
     }
 }

@@ -25,7 +25,8 @@ namespace Dex.Cap.Outbox
             await _outboxDataProvider.ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, CancellationToken cancellationToken) where T : IOutboxMessage
+        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc, CancellationToken cancellationToken)
+            where T : IOutboxMessage
         {
             var messageType = message.GetType();
             if (messageType != typeof(EmptyOutboxMessage) && message.MessageId == default)
@@ -36,8 +37,9 @@ namespace Dex.Cap.Outbox
 
             var envelopeId = message.MessageId;
             var msgBody = _serializer.Serialize(messageType, message);
-            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, assemblyQualifiedName, OutboxMessageStatus.New, msgBody);
+            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, assemblyQualifiedName, OutboxMessageStatus.New, msgBody, startAtUtc);
             await _outboxDataProvider.Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
+
             return message.MessageId;
         }
 

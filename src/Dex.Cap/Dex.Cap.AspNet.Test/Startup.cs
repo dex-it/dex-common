@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.AspNetScheduler;
-using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -99,7 +98,7 @@ namespace Dex.Cap.AspNet.Test
                             {
                                 var client = scope2.ServiceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
                                 var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
-                                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" }, CancellationToken.None);
+                                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" });
                                 await db2.SaveChangesAsync();
                             }
 

@@ -4,7 +4,7 @@ using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox
 {
-    public class DefaultOutboxSerializer : IOutboxSerializer
+    internal sealed class DefaultOutboxSerializer : IOutboxSerializer
     {
         private readonly JsonSerializerOptions _options;
 

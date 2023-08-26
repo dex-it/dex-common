@@ -7,7 +7,6 @@
         <PackageVersion>1.9.38</PackageVersion>
     </PropertyGroup>
 
-
     <!--Для NuGet-->
     <PropertyGroup>
         <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/netcore-5/src/Dex.Cap</PackageProjectUrl>
@@ -22,12 +21,12 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
     </ItemGroup>
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <Compile Remove="Neo4j\**" />
+        <Compile Remove="Neo4j\**"/>
         <Compile Update="BaseOnceExecutor.cs">
             <DependentUpon>IOnceExecutor.cs</DependentUpon>
         </Compile>
@@ -37,11 +36,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Remove="Neo4j\**" />
+        <EmbeddedResource Remove="Neo4j\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Neo4j\**" />
+        <None Remove="Neo4j\**"/>
     </ItemGroup>
 
 </Project>
