@@ -1,47 +1,40 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public interface IOnceExecutor<out TContext>
+    public interface IOnceExecutor<in TOptions, out TContext>
+        where TOptions : IOnceExecutorOptions
     {
         Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,
             Func<TContext, CancellationToken, Task> modificator,
             Func<TContext, CancellationToken, Task<TResult?>> selector,
-            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-            uint timeoutInSeconds = 60,
+            TOptions? options = default,
             CancellationToken cancellationToken = default);
 
         Task ExecuteAsync(
             string idempotentKey,
             Func<TContext, CancellationToken, Task> modificator,
-            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-            uint timeoutInSeconds = 60,
+            TOptions? options = default,
             CancellationToken cancellationToken = default);
     }
 
-    public interface IOnceExecutor
+    public interface IOnceExecutor<in TOptions>
+        where TOptions : IOnceExecutorOptions
     {
         Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             Func<CancellationToken, Task<TResult?>> selector,
-            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-            uint timeoutInSeconds = 60,
+            TOptions? options = default,
             CancellationToken cancellationToken = default);
 
         Task ExecuteAsync(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
-            TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-            uint timeoutInSeconds = 60,
+            TOptions? options = default,
             CancellationToken cancellationToken = default);
     }
 }
