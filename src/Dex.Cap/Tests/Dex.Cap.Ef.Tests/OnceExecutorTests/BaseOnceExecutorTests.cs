@@ -5,6 +5,7 @@ using System.Transactions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
+using Dex.Cap.OnceExecutor.Ef;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +42,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
@@ -76,7 +77,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 .BuildServiceProvider();
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
@@ -88,7 +89,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             });
             await dbContext.SaveChangesAsync();
 
-            var xUser = dbContext.Find<TestUser>(user.Id);
+            var xUser = await dbContext.FindAsync<TestUser>(user.Id);
             Assert.IsNotNull(xUser);
 
             ValueTask<EntityEntry<TestUser>> CreateUser(TestDbContext context, TestUser newUser, CancellationToken token)
@@ -105,7 +106,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
             var logger = sp.GetRequiredService<ILogger<BaseOnceExecutorTests>>();
-            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
@@ -140,7 +141,8 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 .BuildServiceProvider();
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var executor = sp.GetRequiredService<IOnceExecutor<TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+            var efOptions = new EfOptions { IsolationLevel = IsolationLevel.ReadCommitted };
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
@@ -152,7 +154,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                     await context.SaveChangesAsync(token);
                 },
                 (context, token) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", token)!,
-                isolationLevel: IsolationLevel.ReadCommitted,
+                efOptions,
                 cancellationToken: CancellationToken.None
             );
 

@@ -39,7 +39,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Dex.Cap.OnceExecutor.LastTransaction", b =>
+            modelBuilder.Entity("Dex.Cap.OnceExecutor.Models.LastTransaction", b =>
                 {
                     b.Property<string>("IdempotentKey")
                         .HasColumnType("text");
@@ -101,6 +101,12 @@ namespace Dex.Cap.Ef.Tests.Migrations
                     b.Property<int>("Retries")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("ScheduledStartIndexing")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("StartAtUtc")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -113,9 +119,7 @@ namespace Dex.Cap.Ef.Tests.Migrations
 
                     b.HasIndex("CreatedUtc");
 
-                    b.HasIndex("Retries");
-
-                    b.HasIndex("Status")
+                    b.HasIndex("ScheduledStartIndexing", "Status", "Retries")
                         .HasFilter("\"Status\" in (0,1)");
 
                     b.ToTable("outbox", "cap");

@@ -24,8 +24,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             const int expected = 4;
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 1" }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 3" }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 1" });
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 3" });
             await SaveChanges(sp);
 
             TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
@@ -47,8 +47,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 Thread.Sleep(2);
             }
 
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 2" }, CancellationToken.None);
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 4" }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 2" });
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 4" });
             await SaveChanges(sp);
 
             Task.WaitAll(tasks.ToArray());

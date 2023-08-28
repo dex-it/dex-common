@@ -2,15 +2,13 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Dex.Cap.OnceExecutor.Models;
 using Neo4jClient.Transactions;
-using TransactionScopeOption = System.Transactions.TransactionScopeOption;
 
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
     // ReSharper disable once InconsistentNaming
-    public class OnceExecutorNeo4j : BaseOnceExecutor<ITransactionalGraphClient>
+    public class OnceExecutorNeo4j : BaseOnceExecutor<INeo4jOptions, ITransactionalGraphClient>
     {
         protected override ITransactionalGraphClient Context { get; }
 
@@ -22,9 +20,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
         protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
-            TransactionScopeOption transactionScopeOption,
-            IsolationLevel isolationLevel,
-            uint timeoutInSeconds,
+            INeo4jOptions? options,
             CancellationToken cancellationToken)
             where TResult : default
         {

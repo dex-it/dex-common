@@ -5,6 +5,8 @@ namespace Dex.Cap.OnceExecutor
 {
     public interface IStrategyOnceExecutor<in TArg, TResult>
     {
-        Task<TResult?> ExecuteAsync(TArg argument, CancellationToken cancellationToken = default);
+        Task<TResult?> ExecuteAsync(
+            TArg argument,
+            CancellationToken cancellationToken = default);
     }
 }

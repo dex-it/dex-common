@@ -18,6 +18,7 @@ namespace Dex.Cap.Outbox
         private const string UserCanceledDbMessage = "Operation canceled due to user request";
         private const string UserCanceledMessageWithId = "Operation canceled due to user request. MessageId: {MessageId}";
         private const string NoMessagesToProcess = "No messages to process";
+
         private readonly IServiceProvider _serviceProvider;
         private readonly IOutboxDataProvider<TDbContext> _dataProvider;
         private readonly IOutboxSerializer _serializer;
@@ -66,7 +67,9 @@ namespace Dex.Cap.Outbox
                                     _logger.LogDebug("Processing job - {Job}", job.Envelope.Id);
                                     _metricCollector.IncProcessJobCount();
                                     var sw = Stopwatch.StartNew();
+
                                     await ProcessJob(job, cts.Token).ConfigureAwait(false);
+
                                     _metricCollector.AddProcessJobSuccessDuration(sw.Elapsed);
                                     _metricCollector.IncProcessJobSuccessCount();
                                     _logger.LogDebug("Job process completed - {Job}", job.Envelope.Id);

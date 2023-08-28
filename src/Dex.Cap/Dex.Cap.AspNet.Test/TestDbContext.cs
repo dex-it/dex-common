@@ -1,4 +1,4 @@
-using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.AspNet.Test

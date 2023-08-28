@@ -1,11 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 
 namespace Dex.Cap.OnceExecutor
 {
-    public abstract class BaseOnceExecutor<TDbContext> : IOnceExecutor<TDbContext>, IOnceExecutor
+    public abstract class BaseOnceExecutor<TOptions, TDbContext> : IOnceExecutor<TOptions, TDbContext>, IOnceExecutor<TOptions>
+        where TOptions : IOnceExecutorOptions
     {
         protected abstract TDbContext Context { get; }
 
@@ -13,9 +13,7 @@ namespace Dex.Cap.OnceExecutor
             string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator,
             Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
-            TransactionScopeOption transactionScopeOption,
-            IsolationLevel isolationLevel,
-            uint timeoutInSeconds,
+            TOptions? options,
             CancellationToken cancellationToken)
         {
             return await ExecuteInTransactionAsync(
@@ -33,57 +31,50 @@ namespace Dex.Cap.OnceExecutor
                         : default;
                 },
                 async token => await IsAlreadyExecutedAsync(idempotentKey, token).ConfigureAwait(false),
-                transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
+                options, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task ExecuteAsync(
             string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator,
-            TransactionScopeOption transactionScopeOption,
-            IsolationLevel isolationLevel,
-            uint timeoutInSeconds,
+            TOptions? options,
             CancellationToken cancellationToken)
         {
-            await ExecuteAsync<int>(idempotentKey, modificator, null, transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken)
-                .ConfigureAwait(false);
+            await ExecuteAsync<int>(idempotentKey, modificator, null, options, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             Func<CancellationToken, Task<TResult?>> selector,
-            TransactionScopeOption transactionScopeOption,
-            IsolationLevel isolationLevel,
-            uint timeoutInSeconds,
+            TOptions? options,
             CancellationToken cancellationToken)
         {
             return await ExecuteAsync(
                 idempotentKey,
                 async (_, token) => await modificator(token).ConfigureAwait(false),
                 async (_, token) => await selector(token).ConfigureAwait(false),
-                transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
+                options,
+                cancellationToken).ConfigureAwait(false);
         }
 
         public async Task ExecuteAsync(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
-            TransactionScopeOption transactionScopeOption,
-            IsolationLevel isolationLevel,
-            uint timeoutInSeconds,
+            TOptions? options,
             CancellationToken cancellationToken)
         {
             await ExecuteAsync(
                 idempotentKey,
                 async (_, token) => await modificator(token).ConfigureAwait(false),
-                transactionScopeOption, isolationLevel, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
+                options,
+                cancellationToken).ConfigureAwait(false);
         }
 
         protected abstract Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
-            TransactionScopeOption transactionScopeOption,
-            IsolationLevel isolationLevel,
-            uint timeoutInSeconds,
+            TOptions? options,
             CancellationToken cancellationToken);
 
         protected abstract Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken);

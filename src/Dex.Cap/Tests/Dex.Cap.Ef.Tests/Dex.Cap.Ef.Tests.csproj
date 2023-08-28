@@ -7,15 +7,16 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Dex.Extensions" Version="1.0.11" />
         <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.12" />
         <PackageReference Include="MassTransit.TestFramework" Version="8.0.12" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17">
-          <TreatAsUsed>true</TreatAsUsed>
+            <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.17">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <TreatAsUsed>true</TreatAsUsed>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
@@ -26,43 +27,44 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
-      <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj" />
-      <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
-      <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
-      <ProjectReference Include="..\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj" />
+        <ProjectReference Include="..\..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
+        <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj" />
+        <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
+        <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
+        <ProjectReference Include="..\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Migrations\" />
+        <Folder Include="Migrations\" />
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="OutboxTests\Handlers\NonIdempotentCreateUserCommandHandler.cs">
-        <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
-      </Compile>
-      <Compile Update="OutboxTests\Handlers\IdempotentCreateUserCommandHandler.cs">
-        <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
-      </Compile>
-      <Compile Update="OnceExecutorTests\Strategies\Concrete1ExecutionStrategy.cs">
-        <DependentUpon>Concrete1ExecutionStrategyRequest.cs</DependentUpon>
-      </Compile>
-      <Compile Update="OnceExecutorTests\Strategies\Concrete2ExecutionStrategy.cs">
-        <DependentUpon>Concrete2ExecutionStrategyRequest.cs</DependentUpon>
-      </Compile>
-      <Compile Update="OnceExecutorTests\Strategies\Concrete3ExecutionStrategy.cs">
-        <DependentUpon>Concrete3ExecutionStrategyRequest.cs</DependentUpon>
-      </Compile>
+        <Compile Update="OutboxTests\Handlers\NonIdempotentCreateUserCommandHandler.cs">
+            <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
+        </Compile>
+        <Compile Update="OutboxTests\Handlers\IdempotentCreateUserCommandHandler.cs">
+            <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
+        </Compile>
+        <Compile Update="OnceExecutorTests\Strategies\Concrete1ExecutionStrategy.cs">
+            <DependentUpon>Concrete1ExecutionStrategyRequest.cs</DependentUpon>
+        </Compile>
+        <Compile Update="OnceExecutorTests\Strategies\Concrete2ExecutionStrategy.cs">
+            <DependentUpon>Concrete2ExecutionStrategyRequest.cs</DependentUpon>
+        </Compile>
+        <Compile Update="OnceExecutorTests\Strategies\Concrete3ExecutionStrategy.cs">
+            <DependentUpon>Concrete3ExecutionStrategyRequest.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="appsettings.json" />
-      <Content Include="appsettings.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-      <None Update="appsettings.local.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <None Remove="appsettings.json" />
+        <Content Include="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <None Update="appsettings.local.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <DependentUpon>appsettings.json</DependentUpon>
+        </None>
     </ItemGroup>
 
 </Project>

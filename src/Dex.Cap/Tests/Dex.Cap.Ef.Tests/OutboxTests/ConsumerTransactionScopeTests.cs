@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
+using Dex.Cap.OnceExecutor.Ef;
 using MassTransit;
 using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -107,9 +108,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
         public class TestMessageConsumer : IConsumer<ITestMessage>
         {
-            private readonly IOnceExecutor<TestDbContext> _executor;
+            private readonly IOnceExecutor<IEfOptions, TestDbContext> _executor;
 
-            public TestMessageConsumer(IOnceExecutor<TestDbContext> executor)
+            public TestMessageConsumer(IOnceExecutor<IEfOptions, TestDbContext> executor)
             {
                 _executor = executor;
             }

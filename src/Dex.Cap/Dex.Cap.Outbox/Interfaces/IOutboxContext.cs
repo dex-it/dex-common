@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,8 +17,9 @@ namespace Dex.Cap.Outbox.Interfaces
         TState State { get; }
 
         /// <summary>
-        /// Publish outbox message to queue. This method don't check Transaction, only append outbox message to change context.
+        /// Publish outbox message to queue.
+        /// This method don't check Transaction, only append outbox message to change context.
         /// </summary>
-        Task EnqueueAsync(IOutboxMessage outboxMessage, CancellationToken cancellationToken);
+        Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default);
     }
 }
