@@ -40,6 +40,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 },
                 CancellationToken.None);
 
+            // IdempotentCreateUserCommandHandler.CountDown = 2;
+
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 

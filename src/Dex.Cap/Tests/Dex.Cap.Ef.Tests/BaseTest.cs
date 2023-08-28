@@ -14,7 +14,7 @@ namespace Dex.Cap.Ef.Tests
         protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
 
         [SetUp]
-        public async Task Setup()
+        public virtual async Task Setup()
         {
             var db = new TestDbContext(DbName);
             await db.Database.EnsureDeletedAsync();

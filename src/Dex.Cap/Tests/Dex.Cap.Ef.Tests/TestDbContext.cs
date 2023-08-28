@@ -12,6 +12,8 @@ namespace Dex.Cap.Ef.Tests
 {
     public class TestDbContext : DbContext
     {
+        public static bool IsRetryStrategy { get; set; } = true;
+
         private static readonly ILoggerFactory LogFactory =
             LoggerFactory.Create(builder =>
             {
@@ -40,7 +42,14 @@ namespace Dex.Cap.Ef.Tests
 
             var connectionString = config.GetConnectionString("DefaultConnection");
             connectionString = connectionString.Replace("_dbName_", _dbName);
-            optionsBuilder.UseNpgsql(connectionString, options => { options.EnableRetryOnFailure(); });
+            optionsBuilder.UseNpgsql(connectionString,
+                options =>
+                {
+                    if (IsRetryStrategy)
+                    {
+                        options.EnableRetryOnFailure();    
+                    }
+                });
 
             optionsBuilder.UseLoggerFactory(LogFactory).EnableSensitiveDataLogging();
         }
