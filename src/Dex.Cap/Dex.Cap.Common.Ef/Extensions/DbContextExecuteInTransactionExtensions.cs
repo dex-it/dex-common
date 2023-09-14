@@ -29,23 +29,16 @@ namespace Dex.Cap.Common.Ef.Extensions
                     if (dbContext.ChangeTracker.HasChanges())
                         throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
 
-                    try
-                    {
-                        var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
-                        using var transactionScope = TransactionScopeHelper.CreateTransactionScope(transactionScopeOption, isolationLevel, timeout);
-                        st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
+                    var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
+                    using var transactionScope = TransactionScopeHelper.CreateTransactionScope(transactionScopeOption, isolationLevel, timeout);
+                    st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
-                        if (context.ChangeTracker.HasChanges())
-                            throw new UnsavedChangesDetectedException(context, "Can't complete action, unsaved changes detected");
+                    if (context.ChangeTracker.HasChanges())
+                        throw new UnsavedChangesDetectedException(context, "Can't complete action, unsaved changes detected");
 
-                        transactionScope.Complete();
+                    transactionScope.Complete();
 
-                        return st.Result;
-                    }
-                    finally
-                    {
-                        context.ChangeTracker.Clear();
-                    }
+                    return st.Result;
                 },
                 async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
                 cancellationToken
