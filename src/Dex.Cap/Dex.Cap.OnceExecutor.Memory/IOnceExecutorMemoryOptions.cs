@@ -3,6 +3,6 @@
 namespace Dex.Cap.OnceExecutor.Memory;
 
 [SuppressMessage("Design", "CA1040:Не используйте пустые интерфейсы")]
-public interface IMemoryOptions : IOnceExecutorOptions
+public interface IOnceExecutorMemoryOptions : IOnceExecutorOptions
 {
 }

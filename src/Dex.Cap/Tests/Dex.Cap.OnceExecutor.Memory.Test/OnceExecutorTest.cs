@@ -12,7 +12,7 @@ public class OnceExecutorTest : BaseTest
     {
         var sp = AddOnceExecutor(5000);
 
-        var executor = sp.GetRequiredService<IOnceExecutor<IMemoryOptions, IDistributedCache>>();
+        var executor = sp.GetRequiredService<IOnceExecutor<IOnceExecutorMemoryOptions, IDistributedCache>>();
 
         var idempotentKey = Guid.NewGuid().ToString("N");
         var toIncrement = 0;
@@ -36,7 +36,7 @@ public class OnceExecutorTest : BaseTest
         const int delay = 500;
         var sp = AddOnceExecutor(delay);
 
-        var executor = sp.GetRequiredService<IOnceExecutor<IMemoryOptions, IDistributedCache>>();
+        var executor = sp.GetRequiredService<IOnceExecutor<IOnceExecutorMemoryOptions, IDistributedCache>>();
         var cache = sp.GetRequiredService<MemoryDistributedCache>();
         var idempotentKey = Guid.NewGuid().ToString("N");
 
