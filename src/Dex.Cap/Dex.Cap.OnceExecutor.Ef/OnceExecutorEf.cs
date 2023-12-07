@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Models;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +17,16 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="operation">Запрещено вызывать SaveChanges</param>
+        /// <param name="verifySucceeded"></param>
+        /// <param name="options"></param>
+        /// <param name="cancellationToken"></param>
+        /// <typeparam name="TResult"></typeparam>
+        /// <returns></returns>
+        protected override async Task<TResult?> ExecuteAndSaveInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
             IEfOptions? options,
@@ -27,7 +35,7 @@ namespace Dex.Cap.OnceExecutor.Ef
         {
             options ??= new EfOptions();
 
-            return await Context.ExecuteInTransactionScopeAsync(
+            return await Context.ExecuteAndSaveInTransactionAsync(
                     operation, verifySucceeded, options.TransactionScopeOption, options.IsolationLevel, options.TimeoutInSeconds, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -39,17 +47,14 @@ namespace Dex.Cap.OnceExecutor.Ef
                 .ConfigureAwait(false);
         }
 
-        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
+        protected override Task AddIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
-            await Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask().ConfigureAwait(false);
-            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            Context.Add(new LastTransaction {IdempotentKey = idempotentKey});
+            return Task.CompletedTask;
         }
 
         protected override Task OnModificationCompletedAsync(CancellationToken cancellationToken)
         {
-            if (Context.ChangeTracker.HasChanges())
-                throw new UnsavedChangesDetectedException(Context, "Can't complete action, unsaved changes detected");
-
             return Task.CompletedTask;
         }
     }

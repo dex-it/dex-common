@@ -11,13 +11,13 @@ namespace Dex.Cap.Ef.Tests
 {
     public abstract class BaseTest
     {
-        protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
+        protected string DbName { get; } = "db_test_1.9.38"; // + Guid.NewGuid().ToString("N");
 
         [SetUp]
         public virtual async Task Setup()
         {
             var db = new TestDbContext(DbName);
-            await db.Database.EnsureDeletedAsync();
+            //await db.Database.EnsureDeletedAsync();
             await db.Database.EnsureCreatedAsync();
             // await db.Database.MigrateAsync();
         }
@@ -26,7 +26,7 @@ namespace Dex.Cap.Ef.Tests
         public async Task TearDown()
         {
             var db = new TestDbContext(DbName);
-            await db.Database.EnsureDeletedAsync();
+            //await db.Database.EnsureDeletedAsync();
         }
 
         protected IServiceCollection InitServiceCollection()

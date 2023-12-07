@@ -47,7 +47,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
-            var firstResult = await executor.ExecuteAsync(stepId, async (context, c) =>
+            var firstResult = await executor.ExecuteAndSaveInTransactionAsync(stepId, async (context, c) =>
                 {
                     await context.Users.AddAsync(user, c);
                     await context.SaveChangesAsync(c);
@@ -55,7 +55,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)!
             );
 
-            var secondResult = await executor.ExecuteAsync(stepId, async (context, c) =>
+            var secondResult = await executor.ExecuteAndSaveInTransactionAsync(stepId, async (context, c) =>
                 {
                     await context.Users.AddAsync(user, c);
                     await context.SaveChangesAsync(c);
@@ -82,7 +82,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
-            await executor.ExecuteAsync(stepId, async (context, token) =>
+            await executor.ExecuteAndSaveInTransactionAsync(stepId, async (context, token) =>
             {
                 await CreateUser(context, user, token);
                 await context.SaveChangesAsync(token);
@@ -113,10 +113,10 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
             try
             {
-                await executor.ExecuteAsync(stepId,
+                await executor.ExecuteAndSaveInTransactionAsync(stepId,
                     (context, token) =>
                     {
-                        return context.ExecuteInTransactionScopeAsync(
+                        return context.ExecuteAndSaveInTransactionAsync(
                             context, async (state, t) =>
                             {
                                 await state.Users.AddAsync(user, t);
@@ -148,7 +148,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
 
             // transaction 1
-            var result = await executor.ExecuteAsync(stepId, async (context, token) =>
+            var result = await executor.ExecuteAndSaveInTransactionAsync(stepId, async (context, token) =>
                 {
                     await context.Users.AddAsync(user, token);
                     await context.SaveChangesAsync(token);

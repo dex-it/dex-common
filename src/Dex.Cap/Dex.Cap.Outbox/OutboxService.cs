@@ -22,7 +22,7 @@ namespace Dex.Cap.Outbox
         {
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            await _outboxDataProvider.ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken).ConfigureAwait(false);
+            await _outboxDataProvider.ExecuteAndSaveInTransactionAsync(correlationId, this, state, action, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc, CancellationToken cancellationToken)

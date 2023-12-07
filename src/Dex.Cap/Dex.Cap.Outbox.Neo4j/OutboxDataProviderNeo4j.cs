@@ -26,7 +26,7 @@ namespace Dex.Cap.Outbox.Neo4j
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
         }
 
-        public override Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<ITransactionalGraphClient> outboxService, TState state,
+        public override Task ExecuteAndSaveInTransactionAsync<TState>(Guid correlationId, IOutboxService<ITransactionalGraphClient> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<ITransactionalGraphClient, TState>, Task> action, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();

@@ -26,7 +26,7 @@ namespace Dex.Cap.OnceExecutor.Ef
         {
             ExecutionStrategy.Options ??= new EfOptions();
 
-            return await _dbContext.ExecuteInTransactionScopeAsync(
+            return await _dbContext.ExecuteAndSaveInTransactionAsync(
                     operation,
                     verifySucceeded,
                     ExecutionStrategy.Options.TransactionScopeOption,

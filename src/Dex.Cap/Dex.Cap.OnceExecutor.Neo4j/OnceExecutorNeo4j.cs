@@ -17,7 +17,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             Context = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
         }
 
-        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
+        protected override async Task<TResult?> ExecuteAndSaveInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
             INeo4jOptions? options,
@@ -58,7 +58,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             return lastTransaction.Any();
         }
 
-        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task AddIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.Cypher
                 .Create($"(last:{nameof(LastTransaction)}" + " {lt})")

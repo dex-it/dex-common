@@ -26,11 +26,11 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "Test", Years = 18 };
 
-            await dbContext.ExecuteInTransactionScopeAsync(
+            await dbContext.ExecuteAndSaveInTransactionAsync(
                 (dbContext, executor),
                 async (state, ct) =>
                 {
-                    await state.executor.ExecuteAsync(stepId, async (context, t) =>
+                    await state.executor.ExecuteAndSaveInTransactionAsync(stepId, async (context, t) =>
                     {
                         await context.Users.AddAsync(user, t);
                         await state.dbContext.SaveChangesAsync(t);
@@ -94,7 +94,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                     (dbContext, executor),
                     async (state, ct) =>
                     {
-                        await state.executor.ExecuteAsync(stepId, (context, token) => context.Users.AddAsync(user, token).AsTask(), cancellationToken: ct);
+                        await state.executor.ExecuteAndSaveInTransactionAsync(stepId, (context, token) => context.Users.AddAsync(user, token).AsTask(), cancellationToken: ct);
                     },
                     (state, ct) => state.dbContext.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
             });
@@ -117,8 +117,8 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                     dbContext,
                     async (context, ct) =>
                     {
-                        await context.ExecuteInTransactionScopeAsync(
-                            async t => // несовместимо с ExecuteInTransactionAsync
+                        await context.ExecuteAndSaveInTransactionAsync(
+                            async t => // несовместимо с ExecuteAndSaveInTransactionAsync
                             {
                                 await context.Users.AddAsync(user, t).AsTask();
                                 await context.SaveChangesAsync(t);
@@ -173,7 +173,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             // An ambient transaction has been detected. The ambient transaction needs to be completed before beginning a transaction on this connection.
             Assert.CatchAsync<InvalidOperationException>(async () =>
             {
-                await dbContext.ExecuteInTransactionScopeAsync(
+                await dbContext.ExecuteAndSaveInTransactionAsync(
                     dbContext,
                     async (context, ct) =>
                     {

@@ -36,39 +36,39 @@ namespace Dex.Cap.Outbox.Ef
             _logger = logger;
         }
 
-        public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="correlationId"></param>
+        /// <param name="outboxService"></param>
+        /// <param name="state"></param>
+        /// <param name="action">Запрещено вызывать SaveChanges</param>
+        /// <param name="cancellationToken"></param>
+        /// <typeparam name="TState"></typeparam>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="UnsavedChangesDetectedException"></exception>
+        public override async Task ExecuteAndSaveInTransactionAsync<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
         {
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            await _dbContext.ExecuteInTransactionScopeAsync(
+            await _dbContext.ExecuteAndSaveInTransactionAsync(
                     (_dbContext, outboxService, state),
                     async (st, ct) =>
                     {
                         var (dbContext, outbox, outerState) = st;
-                        if (dbContext.ChangeTracker.HasChanges())
-                            throw new UnsavedChangesDetectedException(dbContext, "Can't start outbox action, unsaved changes detected");
 
-                        try
+                        var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outbox, dbContext, outerState);
+                        await action(ct, outboxContext).ConfigureAwait(false);
+
+                        // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
+                        var isOutboxMessageExists = dbContext.ChangeTracker.Entries<OutboxEnvelope>()
+                            .Any(x => x.State is EntityState.Added or EntityState.Modified);
+
+                        if (!isOutboxMessageExists) // todo какая цель?
                         {
-                            var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outbox, dbContext, outerState);
-                            await action(ct, outboxContext).ConfigureAwait(false);
-
-                            // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
-                            var isOutboxMessageExists = dbContext.ChangeTracker.Entries<OutboxEnvelope>()
-                                .Any(x => x.State is EntityState.Added or EntityState.Modified);
-
-                            if (!isOutboxMessageExists)
-                            {
-                                await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct).ConfigureAwait(false);
-                            }
-
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                        }
-                        finally
-                        {
-                            dbContext.ChangeTracker.Clear();
+                            await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct).ConfigureAwait(false);
                         }
                     },
                     async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
@@ -116,7 +116,7 @@ namespace Dex.Cap.Outbox.Ef
         /// <exception cref="RetryLimitExceededException"/>
         protected override async Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)
         {
-            await _dbContext.ExecuteInTransactionScopeAsync(
+            await _dbContext.ExecuteAndSaveInTransactionAsync(
                     (_dbContext, lockedJob, _logger),
                     static async (state, ct) =>
                     {
@@ -199,7 +199,7 @@ namespace Dex.Cap.Outbox.Ef
             {
                 var lockedMessage = await TryLockMessage(freeMessage.Id, lockId, cts?.Token ?? default, cancellationToken).ConfigureAwait(false);
 
-                return lockedMessage is { Status: OutboxMessageStatus.New or OutboxMessageStatus.Failed }
+                return lockedMessage is {Status: OutboxMessageStatus.New or OutboxMessageStatus.Failed}
                     ? new OutboxLockedJob(lockedMessage, lockId, timeout, NullableHelper.SetNull(ref cts))
                     : null;
             }
@@ -234,7 +234,7 @@ namespace Dex.Cap.Outbox.Ef
         /// <exception cref="RetryLimitExceededException"/>
         private async Task<OutboxEnvelope?> TryLockMessageCore(Guid freeMessageId, Guid lockId, CancellationToken cancellationToken)
         {
-            var message = await _dbContext.ExecuteInTransactionScopeAsync(
+            var message = await _dbContext.ExecuteAndSaveInTransactionAsync(
                     (_dbContext, freeMessageId, lockId, _logger),
                     static async (state, ct) =>
                     {

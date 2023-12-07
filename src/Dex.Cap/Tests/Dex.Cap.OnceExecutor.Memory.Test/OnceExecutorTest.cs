@@ -22,7 +22,7 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
 
             async void Body(int _)
             {
-                await executor.ExecuteAsync(idempotentKey, (_, _) =>
+                await executor.ExecuteAndSaveInTransactionAsync(idempotentKey, (_, _) =>
                 {
                     toIncrement++;
                     return Task.CompletedTask;
@@ -32,6 +32,7 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
             Parallel.For(0, 1000, body: Body);
             Assert.That(toIncrement, Is.EqualTo(1));
         }
+
 
         [Test]
         public async Task CacheRemoves_AfterBeingExpired()
@@ -43,7 +44,7 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
             var cache = sp.GetRequiredService<MemoryDistributedCache>();
             var idempotentKey = Guid.NewGuid().ToString("N");
 
-            await executor.ExecuteAsync(idempotentKey, (_, _) => Task.CompletedTask);
+            await executor.ExecuteAndSaveInTransactionAsync(idempotentKey, (_, _) => Task.CompletedTask);
             Assert.That(await cache.GetAsync($"lt-{idempotentKey}"), Is.Not.Null);
 
             await Task.Delay(delay);

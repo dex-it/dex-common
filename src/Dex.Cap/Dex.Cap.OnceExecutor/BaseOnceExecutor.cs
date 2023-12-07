@@ -9,19 +9,29 @@ namespace Dex.Cap.OnceExecutor
     {
         protected abstract TDbContext Context { get; }
 
-        public async Task<TResult?> ExecuteAsync<TResult>(
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="idempotentKey"></param>
+        /// <param name="modificator">Запрещено вызывать SaveChanges</param>
+        /// <param name="selector"></param>
+        /// <param name="options"></param>
+        /// <param name="cancellationToken"></param>
+        /// <typeparam name="TResult"></typeparam>
+        /// <returns></returns>
+        public async Task<TResult?> ExecuteAndSaveInTransactionAsync<TResult>(
             string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator,
             Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            return await ExecuteInTransactionAsync(
+            return await ExecuteAndSaveInTransactionAsync(
                 async token =>
                 {
                     if (!await IsAlreadyExecutedAsync(idempotentKey, token).ConfigureAwait(false))
                     {
-                        await SaveIdempotentKeyAsync(idempotentKey, token).ConfigureAwait(false);
+                        await AddIdempotentKeyAsync(idempotentKey, token).ConfigureAwait(false);
                         await modificator(Context, token).ConfigureAwait(false);
                         await OnModificationCompletedAsync(token).ConfigureAwait(false);
                     }
@@ -34,23 +44,23 @@ namespace Dex.Cap.OnceExecutor
                 options, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task ExecuteAsync(
+        public async Task ExecuteAndSaveInTransactionAsync(
             string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            await ExecuteAsync<int>(idempotentKey, modificator, null, options, cancellationToken).ConfigureAwait(false);
+            await ExecuteAndSaveInTransactionAsync<int>(idempotentKey, modificator, null, options, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<TResult?> ExecuteAsync<TResult>(
+        public async Task<TResult?> ExecuteAndSaveInTransactionAsync<TResult>(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             Func<CancellationToken, Task<TResult?>> selector,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            return await ExecuteAsync(
+            return await ExecuteAndSaveInTransactionAsync(
                 idempotentKey,
                 async (_, token) => await modificator(token).ConfigureAwait(false),
                 async (_, token) => await selector(token).ConfigureAwait(false),
@@ -58,20 +68,20 @@ namespace Dex.Cap.OnceExecutor
                 cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task ExecuteAsync(
+        public async Task ExecuteAndSaveInTransactionAsync(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            await ExecuteAsync(
+            await ExecuteAndSaveInTransactionAsync(
                 idempotentKey,
                 async (_, token) => await modificator(token).ConfigureAwait(false),
                 options,
                 cancellationToken).ConfigureAwait(false);
         }
 
-        protected abstract Task<TResult?> ExecuteInTransactionAsync<TResult>(
+        protected abstract Task<TResult?> ExecuteAndSaveInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
             TOptions? options,
@@ -79,7 +89,7 @@ namespace Dex.Cap.OnceExecutor
 
         protected abstract Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken);
 
-        protected abstract Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken);
+        protected abstract Task AddIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken);
 
         protected abstract Task OnModificationCompletedAsync(CancellationToken cancellationToken);
     }

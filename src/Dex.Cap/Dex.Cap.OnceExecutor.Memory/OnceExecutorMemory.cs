@@ -23,7 +23,7 @@ namespace Dex.Cap.OnceExecutor.Memory
 
         protected override TDistributedCache Context { get; }
 
-        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
+        protected override async Task<TResult?> ExecuteAndSaveInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
             IOnceExecutorMemoryOptions? options,
@@ -48,7 +48,7 @@ namespace Dex.Cap.OnceExecutor.Memory
             return await Context.GetAsync(GetKey(idempotentKey), cancellationToken).ConfigureAwait(false) != null;
         }
 
-        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task AddIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             await Context.SetAsync(GetKey(idempotentKey), Array.Empty<byte>(), _defaultCacheEntryOptions.Value, cancellationToken).ConfigureAwait(false);
         }

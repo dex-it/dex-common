@@ -20,7 +20,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             Context = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
+        protected override async Task<TResult?> ExecuteAndSaveInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
             IClickHouseOptions? options,
@@ -56,7 +56,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             }
         }
 
-        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task AddIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             await using var command = Context.CreateCommand($"INSERT INTO {LastTransaction.TableName} SELECT @key, @cd");
             command.Parameters.AddWithValue("key", idempotentKey);

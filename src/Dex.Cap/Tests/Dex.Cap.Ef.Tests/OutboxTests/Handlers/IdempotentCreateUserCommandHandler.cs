@@ -22,7 +22,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
 
         public async Task ProcessMessage(TestUserCreatorCommand message, CancellationToken cancellationToken)
         {
-            await _onceExecutor.ExecuteAsync(
+            await _onceExecutor.ExecuteAndSaveInTransactionAsync(
                 message.MessageId.ToString("N"),
                 async (context, token) =>
                 {

@@ -18,7 +18,17 @@ namespace Dex.Cap.Outbox
             _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
         }
 
-        public abstract Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService,
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="correlationId"></param>
+        /// <param name="outboxService"></param>
+        /// <param name="state"></param>
+        /// <param name="action"></param>
+        /// <param name="cancellationToken"></param>
+        /// <typeparam name="TState"></typeparam>
+        /// <returns></returns>
+        public abstract Task ExecuteAndSaveInTransactionAsync<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService,
             TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
 
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);

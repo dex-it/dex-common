@@ -117,7 +117,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             public async Task Consume(ConsumeContext<ITestMessage> context)
             {
-                await _executor.ExecuteAsync(context.MessageId!.Value.ToString(),
+                await _executor.ExecuteAndSaveInTransactionAsync(context.MessageId!.Value.ToString(),
                     (dbContext, token) => CreateUser(context.Message, dbContext, token));
             }
 

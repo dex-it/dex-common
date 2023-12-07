@@ -25,8 +25,8 @@ namespace Dex.Cap.ClickHouse.Test
             IOnceExecutor<IClickHouseOptions, ClickHouseConnection> executor = new OnceExecutorClickHouse(conn);
 
             var idempotentKey = Guid.NewGuid().ToString("N");
-            await executor.ExecuteAsync(idempotentKey, (connection, token) => connection.TryPingAsync(token));
-            await executor.ExecuteAsync(idempotentKey, (_, _) => throw new NotImplementedException());
+            await executor.ExecuteAndSaveInTransactionAsync(idempotentKey, (connection, token) => connection.TryPingAsync(token));
+            await executor.ExecuteAndSaveInTransactionAsync(idempotentKey, (_, _) => throw new NotImplementedException());
         }
     }
 }
