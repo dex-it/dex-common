@@ -14,6 +14,14 @@ namespace Dex.Cap.OnceExecutor
             TOptions? options = default,
             CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="idempotentKey"></param>
+        /// <param name="modificator"></param>
+        /// <param name="options"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task ExecuteAndSaveInTransactionAsync(
             string idempotentKey,
             Func<TContext, CancellationToken, Task> modificator,

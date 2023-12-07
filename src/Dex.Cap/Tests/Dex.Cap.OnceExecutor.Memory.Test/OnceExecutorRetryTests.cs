@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dex.Cap.Ef.Tests;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor.Ef;
@@ -29,6 +31,30 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
                 async (context, _) =>
                 {
                     context.Add(new TestUser {Id = guid, Name = "BasicTest " + DateTime.Now, Years = 18});
+                    await Task.CompletedTask;
+                }));
+
+            // Assertion
+            Assert.That(await dbContext.Set<TestUser>().AnyAsync(u => u.Id == guid), Is.False);
+        }
+
+        [Test]
+        public async Task BasicWithSelectTest()
+        {
+            var (executor, dbContext) = BuildServices();
+
+            var stepId = Guid.NewGuid().ToString("N");
+            var guid = Guid.NewGuid();
+
+            Assert.ThrowsAsync<RetryLimitExceededException>(async () => await executor.ExecuteAndSaveInTransactionAsync(stepId,
+                async (context, ct) =>
+                {
+                    var firstUser = await context.Set<TestUser>().FirstOrDefaultAsync(ct);
+
+                    context.Add(new TestUser {Id = Guid.NewGuid(), Name = "BasicWithSelectTest2 " + DateTime.Now, Years = 18});
+                    var lastUser = await context.Set<TestUser>().OrderBy(c => c.Name).LastAsync(ct);
+
+                    context.Add(new TestUser {Id = guid, Name = "BasicWithSelectTest " + DateTime.Now, Years = 18});
                     await Task.CompletedTask;
                 }));
 
@@ -129,6 +155,58 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
 
             // Assertion
             Assert.That(await dbContext.Set<TestUser>().AnyAsync(u => u.Id == guid), Is.True);
+        }
+
+        [Test]
+        public async Task ExternalTransactionTest()
+        {
+            var (executor, dbContext) = BuildServices();
+
+            var stepId = Guid.NewGuid().ToString("N");
+            var guid = Guid.NewGuid();
+
+            var strategy = dbContext.Database.CreateExecutionStrategy();
+            var result = await strategy.ExecuteAsync(
+                (guid, stepId, executor),
+                async static (context, st, ct) =>
+                {
+                    var transactionOptions = new TransactionOptions
+                    {
+                        IsolationLevel = IsolationLevel.ReadCommitted,
+                        Timeout = TimeSpan.FromSeconds(60)
+                    };
+
+                    context.ChangeTracker.Clear();
+
+                    // открываем скоуп транзакции или привязываемся к существующему
+                    using (var transactionScope =
+                           new TransactionScope(TransactionScopeOption.Required, transactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        var firstUser = await context.Set<TestUser>().FirstOrDefaultAsync(ct);
+
+                        context.Add(new TestUser {Id = st.guid, Name = "ExternalTransactionTest " + DateTime.Now, Years = 18});
+                        var lastUser = await context.Set<TestUser>().OrderBy(c => c.Name).LastAsync(ct);
+                        await context.SaveChangesAsync(CancellationToken.None);
+
+                        //Assert.ThrowsAsync<TimeoutException>(
+                        await st.executor.ExecuteAndSaveInTransactionAsync(st.stepId,
+                            async (context, _) =>
+                            {
+                                context.Add(new TestUser {Id = Guid.NewGuid(), Name = "ExternalTransactionTest2 " + DateTime.Now, Years = 18});
+                                //await context.SaveChangesAsync(CancellationToken.None);
+                            });
+                        //);
+
+                        // Assertion
+                        Assert.That(await context.Set<TestUser>().AnyAsync(u => u.Id == st.guid), Is.True);
+
+                        transactionScope.Complete();
+                        return st.guid;
+                    }
+                },
+                async static (_, st, ct) => new ExecutionResult<Guid>(await _.Set<TestUser>().AsNoTracking().AnyAsync(u => u.Id == st.guid), st.guid),
+                CancellationToken.None
+            );
         }
 
         [Test]

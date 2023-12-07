@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using IsolationLevel = System.Transactions.IsolationLevel;
 
 namespace Dex.Cap.Common.Ef.Extensions
 {
@@ -43,6 +45,13 @@ namespace Dex.Cap.Common.Ef.Extensions
 
             var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
 
+            // чтобы все чтения были в одном соединении
+            // if (dbContext.Database.GetDbConnection()?.State != ConnectionState.Open)
+            // {
+            //     await dbContext.Database.GetDbConnection().OpenAsync(cancellationToken);
+            //     //await dbContext.Database.OpenConnectionAsync(cancellationToken);
+            // }
+
             var result = await operation(state, cancellationToken).ConfigureAwait(false);
 
             var strategy = dbContext.Database.CreateExecutionStrategy();
@@ -53,7 +62,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                     // открываем скоуп транзакции или привязываемся к существующему
                     using var transactionScope = TransactionScopeHelper.CreateTransactionScope(st.transactionScopeOption, st.isolationLevel, st.timeout);
                     await context.SaveChangesAsync(acceptAllChangesOnSuccess: false, ct).ConfigureAwait(false);
-                    throw new TimeoutException("test");
+                    //throw new TimeoutException("test");
                     transactionScope.Complete();
                     return st.result;
                 },
@@ -61,7 +70,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                 cancellationToken
             ).ConfigureAwait(false);
 
-            // await strategy.ExecuteInTransactionAsync( todo не получится привязаться к внешнему TransactionScope
+            // await strategy.ExecuteInTransactionAsync( //todo не получится привязаться к внешнему TransactionScope
             //     (dbContext, verifySucceeded, state),
             //     operation: async static (st, ct) => await st.dbContext.SaveChangesAsync(acceptAllChangesOnSuccess: false, ct).ConfigureAwait(false),
             //     verifySucceeded: async static (st, ct) => await st.verifySucceeded(st.state, ct).ConfigureAwait(false),
