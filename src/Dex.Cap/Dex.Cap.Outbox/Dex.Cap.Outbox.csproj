@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageVersion>1.5.32</PackageVersion>
         <PackageTags>outbox business-transaction consistency</PackageTags>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->

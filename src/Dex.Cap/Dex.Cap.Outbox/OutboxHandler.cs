@@ -24,15 +24,18 @@ namespace Dex.Cap.Outbox
         private readonly IOutboxSerializer _serializer;
         private readonly IOutboxMetricCollector _metricCollector;
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
+        private readonly OutboxTypeDiscriminator<string> _discriminator;
 
         public OutboxHandler(IServiceProvider serviceProvider, IOutboxDataProvider<TDbContext> dataProvider,
-            IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, ILogger<OutboxHandler<TDbContext>> logger)
+            IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, ILogger<OutboxHandler<TDbContext>> logger,
+            OutboxTypeDiscriminator<string> discriminator)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _metricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
         }
 
         public async Task ProcessAsync(CancellationToken cancellationToken)
@@ -166,7 +169,15 @@ namespace Dex.Cap.Outbox
         /// <exception cref="OutboxException"/>
         private async Task ProcessJobCore(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
-            var messageType = Type.GetType(job.Envelope.MessageType);
+            if (!_discriminator.GetValue(job.Envelope.MessageType, out var assemblyQualifiedName))
+            {
+                if (_discriminator.GetKey(job.Envelope.MessageType, out _))
+                {
+                    assemblyQualifiedName = job.Envelope.MessageType;
+                }
+            }
+
+            var messageType = Type.GetType(assemblyQualifiedName);
             if (messageType == null)
             {
                 ThrowCantResolve(job.Envelope.MessageType);

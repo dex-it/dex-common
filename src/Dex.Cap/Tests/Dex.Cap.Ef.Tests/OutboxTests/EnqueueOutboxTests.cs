@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
+using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
@@ -24,10 +25,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         {
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+                .AddScoped<OutboxTypeDiscriminator<string>>()
                 .BuildServiceProvider();
 
             var logger = sp.GetRequiredService<ILogger<EnqueueOutboxTests>>();
             var outboxService = sp.GetRequiredService<IOutboxService>();
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var correlationId = Guid.NewGuid();
             var messageIds = new List<Guid>();
