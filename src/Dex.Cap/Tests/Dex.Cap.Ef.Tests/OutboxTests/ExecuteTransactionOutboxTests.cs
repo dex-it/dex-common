@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
+using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 using Dex.Outbox.Command.Test;
@@ -25,6 +26,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, IdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Cap.Ef.Tests.OutboxTests.Handlers.TestUserCreatorCommand, Dex.Cap.Ef.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
@@ -63,6 +67,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Cap.Ef.Tests.OutboxTests.Handlers.TestUserCreatorCommand, Dex.Cap.Ef.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
@@ -99,6 +106,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
@@ -129,6 +139,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Cap.Outbox.Models.EmptyOutboxMessage, Dex.Cap.Outbox, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var correlationId = Guid.NewGuid();
@@ -153,6 +166,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
@@ -191,6 +207,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand2>, TestCommand2Handler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            d.Add("2", "Dex.Outbox.Command.Test.TestOutboxCommand2, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
@@ -227,6 +247,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
@@ -266,6 +289,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var services = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = services.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestDelayOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var threads = new HashSet<string>();
             using var ce = new CountdownEvent(3);

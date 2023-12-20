@@ -25,7 +25,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         {
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
-                .AddScoped<OutboxTypeDiscriminator<string>>()
                 .BuildServiceProvider();
 
             var logger = sp.GetRequiredService<ILogger<EnqueueOutboxTests>>();
@@ -75,6 +74,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Cap.Outbox.Models.EmptyOutboxMessage, Dex.Cap.Outbox, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
@@ -111,6 +113,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestErrorOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            
             TestErrorCommandHandler.Reset();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
@@ -145,6 +151,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Cap.Ef.Tests.OutboxTests.Handlers.TestUserCreatorCommand, Dex.Cap.Ef.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var id = Guid.NewGuid();
@@ -176,6 +185,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Cap.Ef.Tests.OutboxTests.Handlers.TestUserCreatorCommand, Dex.Cap.Ef.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
 
@@ -200,6 +212,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            d.Add("2", "Dex.Outbox.Command.Test.TestErrorOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            
             TestErrorCommandHandler.Reset();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
@@ -232,6 +249,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .AddScoped<IOutboxCleanupDataProvider, OutboxCleanupDataProviderEf<TestDbContext>>()
                 .BuildServiceProvider();
+            
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             await outboxService.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" });
@@ -261,6 +281,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
+            
+            var d = serviceProvider.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            
             TestErrorCommandHandler.Reset();
 
             var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.OutboxTests.RetryStrategies;
+using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Extensions;
 using Dex.Cap.Outbox.Interfaces;
@@ -49,6 +50,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 })
                 .AddOptions<OutboxOptions>();
             var serviceProvider = serviceCollection.BuildServiceProvider();
+            
+            var d = serviceProvider.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            d.Add("1", "Dex.Outbox.Command.Test.TestErrorOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             TestErrorCommandHandler.Reset();
 

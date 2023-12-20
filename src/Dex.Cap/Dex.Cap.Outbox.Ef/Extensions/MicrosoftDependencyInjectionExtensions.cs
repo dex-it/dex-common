@@ -17,9 +17,9 @@ namespace Dex.Cap.Outbox.Ef.Extensions
             serviceProvider
                 .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()
                 .AddSingleton<IOutboxStatistic>(provider => provider.GetRequiredService<IOutboxMetricCollector>())
+                .AddSingleton<OutboxTypeDiscriminator<string>>()
                 .AddScoped<IOutboxService<TDbContext>, OutboxService<TDbContext>>()
                 .AddScoped<IOutboxService>(provider => provider.GetRequiredService<IOutboxService<TDbContext>>())
-                .AddScoped<OutboxTypeDiscriminator<string>>()
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
                 .AddScoped<IOutboxDataProvider<TDbContext>, OutboxDataProviderEf<TDbContext>>()
