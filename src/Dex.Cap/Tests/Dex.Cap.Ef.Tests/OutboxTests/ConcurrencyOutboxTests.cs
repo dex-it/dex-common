@@ -21,7 +21,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
             
-            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator>();
             d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var count = 0;

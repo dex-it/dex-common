@@ -1,21 +1,23 @@
-﻿namespace Dex.Cap.Outbox;
+﻿using System;
 
-internal class OutboxTypeDiscriminator<TKey> where TKey : notnull
+namespace Dex.Cap.Outbox;
+
+internal class OutboxTypeDiscriminator
 {
-    private BiDictionary<TKey, string> Discriminator { get; } = new();
+    private BiDictionary<string, string> Discriminator { get; } = new();
 
-    public void Add(TKey key, string value)
+    public void Add(string key, string value)
     {
         Discriminator.Add(key, value);
     }
 
-    public bool GetKey(string value, out TKey key)
+    public bool GetDiscriminator(string type, out string discriminator)
     {
-        return Discriminator.TryGetKey(value, out key);
+        return Discriminator.TryGetKey(type, out discriminator);
     }
 
-    public bool GetValue(TKey key, out string value)
+    public bool GetType(string discriminator, out string type)
     {
-        return Discriminator.TryGetValue(key, out value);
+        return Discriminator.TryGetValue(discriminator, out type);
     }
 }

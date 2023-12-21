@@ -24,11 +24,11 @@ namespace Dex.Cap.Outbox
         private readonly IOutboxSerializer _serializer;
         private readonly IOutboxMetricCollector _metricCollector;
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
-        private readonly OutboxTypeDiscriminator<string> _discriminator;
+        private readonly OutboxTypeDiscriminator _discriminator;
 
         public OutboxHandler(IServiceProvider serviceProvider, IOutboxDataProvider<TDbContext> dataProvider,
             IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, ILogger<OutboxHandler<TDbContext>> logger,
-            OutboxTypeDiscriminator<string> discriminator)
+            OutboxTypeDiscriminator discriminator)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
@@ -169,12 +169,17 @@ namespace Dex.Cap.Outbox
         /// <exception cref="OutboxException"/>
         private async Task ProcessJobCore(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
-            if (!_discriminator.GetValue(job.Envelope.MessageType, out var assemblyQualifiedName))
+            if (!_discriminator.GetType(job.Envelope.MessageType, out var assemblyQualifiedName))
             {
-                if (_discriminator.GetKey(job.Envelope.MessageType, out _))
+                if (_discriminator.GetDiscriminator(job.Envelope.MessageType, out _))
                 {
                     assemblyQualifiedName = job.Envelope.MessageType;
                 }
+            }
+
+            if (assemblyQualifiedName == null)
+            {
+                throw new DiscriminatorResolveTypeException("Discriminator type not found");
             }
 
             var messageType = Type.GetType(assemblyQualifiedName);

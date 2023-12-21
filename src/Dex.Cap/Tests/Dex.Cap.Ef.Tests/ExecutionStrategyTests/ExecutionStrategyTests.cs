@@ -48,7 +48,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
             
-            var d = sp.GetRequiredService<OutboxTypeDiscriminator<string>>();
+            var d = sp.GetRequiredService<OutboxTypeDiscriminator>();
             d.Add("1", "Dex.Cap.Outbox.Models.EmptyOutboxMessage, Dex.Cap.Outbox, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
