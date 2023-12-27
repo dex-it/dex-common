@@ -18,9 +18,15 @@ namespace Dex.Types
             get => _forwardDictionary[key];
             set
             {
-                if (ContainsKey(key))
+                if (_forwardDictionary.TryGetValue(key, out var existingValue))
                 {
+                    if (_reverseDictionary.ContainsKey(value))
+                    {
+                        throw new ArgumentException("Duplicate value in the ReversibleDictionary.");
+                    }
+
                     _forwardDictionary[key] = value;
+                    _reverseDictionary.Remove(existingValue);
                     _reverseDictionary[value] = key;
                 }
                 else
