@@ -5,7 +5,7 @@
 
         <IsPackable>false</IsPackable>
 
-        <RootNamespace>Dec.Types.Test</RootNamespace>
+        <RootNamespace>Dex.Types.Test</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,7 +17,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Dex.Types\Dex.Types.csproj" />
+      <ProjectReference Include="..\..\Dex.Types\Dex.Types.csproj" />
     </ItemGroup>
-
 </Project>

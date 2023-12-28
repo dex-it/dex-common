@@ -5,9 +5,10 @@ using System.Linq;
 
 namespace Dex.Types
 {
-    // bidirectional dictionary for quick access to both key and value
-    // not thread safe
-    public class ReversibleDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    // Allow to use only unique Key and unique Value
+    // Allow fast search over Key or Value 
+    // All methods are not thread safety
+    public sealed class UniqueValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         where TKey : notnull where TValue : notnull
     {
         private readonly Dictionary<TKey, TValue> _forwardDictionary = new Dictionary<TKey, TValue>();
@@ -22,7 +23,8 @@ namespace Dex.Types
                 {
                     if (_reverseDictionary.ContainsKey(value))
                     {
-                        throw new ArgumentException("Duplicate value in the ReversibleDictionary.");
+                        throw new ArgumentException(
+                            $"Duplicate Value [{value}] in the {nameof(UniqueValueDictionary<TKey, TValue>)}.");
                     }
 
                     _forwardDictionary[key] = value;
@@ -46,15 +48,20 @@ namespace Dex.Types
 
         public void Add(TKey key, TValue value)
         {
-            if (!_forwardDictionary.ContainsKey(key) && !_reverseDictionary.ContainsKey(value))
+            if (_forwardDictionary.ContainsKey(key))
             {
-                _forwardDictionary.Add(key, value);
-                _reverseDictionary.Add(value, key);
+                throw new ArgumentException(
+                    $"Duplicate Key [{key}] in the {nameof(UniqueValueDictionary<TKey, TValue>)}.");
             }
-            else
+
+            if (_reverseDictionary.ContainsKey(value))
             {
-                throw new ArgumentException($"Key {key} or value {value} already exists in the ReversibleDictionary.");
+                throw new ArgumentException(
+                    $"Duplicate Value [{value}] in the {nameof(UniqueValueDictionary<TKey, TValue>)}.");
             }
+
+            _forwardDictionary.Add(key, value);
+            _reverseDictionary.Add(value, key);
         }
 
         public void Add(KeyValuePair<TKey, TValue> item)
