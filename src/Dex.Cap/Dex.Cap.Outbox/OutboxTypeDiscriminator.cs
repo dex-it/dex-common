@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Dex.Types;
 
 namespace Dex.Cap.Outbox;
 
 internal class OutboxTypeDiscriminator
 {
-    private BiDictionary<string, string> Discriminator { get; } = new();
+    private UniqueValueDictionary<string, string> Discriminator { get; } = new();
 
     public void Add(string key, string value)
     {
