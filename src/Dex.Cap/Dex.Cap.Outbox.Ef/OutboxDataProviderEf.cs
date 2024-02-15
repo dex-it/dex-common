@@ -256,9 +256,6 @@ namespace Dex.Cap.Outbox.Ef
                         {
                             if (lockedJob != null)
                             {
-                                if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
-                                    throw new InvalidOperationException("database return Unspecified datetime");
-
                                 logger.LogDebug("Attempt to lock the message {MessageId}", freeMessageId);
 
                                 lockedJob.JobDb.LockId = lockId;
