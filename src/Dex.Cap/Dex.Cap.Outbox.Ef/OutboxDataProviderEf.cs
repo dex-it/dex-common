@@ -256,13 +256,10 @@ namespace Dex.Cap.Outbox.Ef
                         {
                             if (lockedJob != null)
                             {
-                                if (lockedJob.DbNow.Kind == DateTimeKind.Unspecified)
-                                    throw new InvalidOperationException("database return Unspecified datetime");
-
                                 logger.LogDebug("Attempt to lock the message {MessageId}", freeMessageId);
 
                                 lockedJob.JobDb.LockId = lockId;
-                                lockedJob.JobDb.LockExpirationTimeUtc = (lockedJob.DbNow + lockedJob.JobDb.LockTimeout).ToUniversalTime();
+                                lockedJob.JobDb.LockExpirationTimeUtc = DateTime.SpecifyKind(lockedJob.DbNow + lockedJob.JobDb.LockTimeout, DateTimeKind.Utc);
 
                                 await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
                                 logger.LogDebug("Message is successfully captured {MessageId}", freeMessageId);
