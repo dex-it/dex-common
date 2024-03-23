@@ -24,11 +24,11 @@ namespace Dex.Cap.Outbox
         private readonly IOutboxSerializer _serializer;
         private readonly IOutboxMetricCollector _metricCollector;
         private readonly ILogger<OutboxHandler<TDbContext>> _logger;
-        private readonly OutboxTypeDiscriminator _discriminator;
+        private readonly IOutboxTypeDiscriminator _discriminator;
 
         public OutboxHandler(IServiceProvider serviceProvider, IOutboxDataProvider<TDbContext> dataProvider,
-            IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, ILogger<OutboxHandler<TDbContext>> logger,
-            OutboxTypeDiscriminator discriminator)
+            IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, IOutboxTypeDiscriminator discriminator,
+            ILogger<OutboxHandler<TDbContext>> logger)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
@@ -167,17 +167,10 @@ namespace Dex.Cap.Outbox
         }
 
         /// <exception cref="OutboxException"/>
+        /// <exception cref="DiscriminatorResolveTypeException"/>
         private async Task ProcessJobCore(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
-            if (!_discriminator.GetType(job.Envelope.MessageType, out var assemblyQualifiedName))
-            {
-                if (_discriminator.GetDiscriminator(job.Envelope.MessageType, out _))
-                {
-                    assemblyQualifiedName = job.Envelope.MessageType;
-                }
-            }
-
-            if (assemblyQualifiedName == null)
+            if (!_discriminator.TryGetType(job.Envelope.MessageType, out var assemblyQualifiedName))
             {
                 throw new DiscriminatorResolveTypeException("Discriminator type not found");
             }

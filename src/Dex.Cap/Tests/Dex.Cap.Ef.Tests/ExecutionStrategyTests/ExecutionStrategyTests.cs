@@ -5,7 +5,6 @@ using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.OnceExecutor.Ef;
-using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,9 +46,6 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
-            
-            var d = sp.GetRequiredService<OutboxTypeDiscriminator>();
-            d.Add("1", "Dex.Cap.Outbox.Models.EmptyOutboxMessage, Dex.Cap.Outbox, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();

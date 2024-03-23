@@ -49,10 +49,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     }
                 })
                 .AddOptions<OutboxOptions>();
+            serviceCollection.AddSingleton<IOutboxTypeDiscriminator, TestDiscriminator>();
             var serviceProvider = serviceCollection.BuildServiceProvider();
-            
-            var d = serviceProvider.GetRequiredService<OutboxTypeDiscriminator>();
-            d.Add("1", "Dex.Outbox.Command.Test.TestErrorOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             TestErrorCommandHandler.Reset();
 

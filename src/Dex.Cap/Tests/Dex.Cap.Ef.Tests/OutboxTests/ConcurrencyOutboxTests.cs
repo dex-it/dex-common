@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 using Dex.Outbox.Command.Test;
@@ -20,9 +19,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
-            
-            var d = sp.GetRequiredService<OutboxTypeDiscriminator>();
-            d.Add("1", "Dex.Outbox.Command.Test.TestOutboxCommand, Dex.Outbox.Command.Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var count = 0;
             const int expected = 4;

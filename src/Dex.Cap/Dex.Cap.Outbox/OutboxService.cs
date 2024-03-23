@@ -11,10 +11,9 @@ namespace Dex.Cap.Outbox
     {
         private readonly IOutboxDataProvider<TDbContext> _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;
-        private readonly OutboxTypeDiscriminator _discriminator;
+        private readonly IOutboxTypeDiscriminator _discriminator;
 
-        public OutboxService(IOutboxDataProvider<TDbContext> outboxDataProvider, IOutboxSerializer serializer,
-            OutboxTypeDiscriminator discriminator)
+        public OutboxService(IOutboxDataProvider<TDbContext> outboxDataProvider, IOutboxSerializer serializer, IOutboxTypeDiscriminator discriminator)
         {
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
@@ -39,7 +38,7 @@ namespace Dex.Cap.Outbox
             var assemblyQualifiedName = messageType.AssemblyQualifiedName;
             if (assemblyQualifiedName == null) throw new InvalidOperationException("Can't resolve assemblyQualifiedName");
 
-            if (!_discriminator.GetDiscriminator(assemblyQualifiedName, out var discriminator))
+            if (!_discriminator.TryGetDiscriminator(assemblyQualifiedName, out var discriminator))
             {
                 throw new DiscriminatorResolveTypeException("Type discriminator not found");
             }

@@ -1,8 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
+using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef.Extensions;
+using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
+using Dex.Outbox.Command.Test;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -40,6 +45,8 @@ namespace Dex.Cap.Ef.Tests
                 .AddOnceExecutor<TestDbContext>()
                 .AddOptions<OutboxOptions>();
 
+            serviceCollection.AddSingleton<IOutboxTypeDiscriminator, TestDiscriminator>();
+
             return serviceCollection;
         }
 
@@ -57,6 +64,21 @@ namespace Dex.Cap.Ef.Tests
         {
             var db = sp.GetRequiredService<TestDbContext>();
             await db.SaveChangesAsync();
+        }
+    }
+
+    internal class TestDiscriminator : BaseOutboxTypeDiscriminator
+    {
+        public TestDiscriminator()
+        {
+            Add(nameof(EmptyOutboxMessage), typeof(EmptyOutboxMessage).AssemblyQualifiedName!);
+
+            Add(nameof(TestUserCreatorCommand), typeof(TestUserCreatorCommand).AssemblyQualifiedName!);
+            Add(nameof(TestOutboxCommand), typeof(TestOutboxCommand).AssemblyQualifiedName!);
+            Add(nameof(TestOutboxCommand2), typeof(TestOutboxCommand2).AssemblyQualifiedName!);
+
+            Add(nameof(TestErrorOutboxCommand), typeof(TestErrorOutboxCommand).AssemblyQualifiedName!);
+            Add(nameof(TestDelayOutboxCommand), typeof(TestDelayOutboxCommand).AssemblyQualifiedName!);
         }
     }
 }
