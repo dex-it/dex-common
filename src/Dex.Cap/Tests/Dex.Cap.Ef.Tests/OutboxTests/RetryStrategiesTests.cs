@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.OutboxTests.RetryStrategies;
-using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Extensions;
 using Dex.Cap.Outbox.Interfaces;
@@ -36,7 +35,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             serviceCollection
                 .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
                 .AddScoped(_ => new TestDbContext("db_test_" + Guid.NewGuid().ToString("N")))
-                .AddOutbox<TestDbContext>((_, configurator) =>
+                .AddOutbox<TestDbContext, TestDiscriminator>((_, configurator) =>
                 {
                     switch (retryStrategy)
                     {

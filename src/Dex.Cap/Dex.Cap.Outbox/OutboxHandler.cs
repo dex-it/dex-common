@@ -100,12 +100,6 @@ namespace Dex.Cap.Outbox
         }
 
         [DoesNotReturn]
-        private static void ThrowCantResolve(string messageType)
-        {
-            throw new OutboxException($"Can't resolve type of message '{messageType}'");
-        }
-
-        [DoesNotReturn]
         private static void ThrowUnableCast(string messageType)
         {
             throw new OutboxException($"Message '{messageType}' are not of '{nameof(IOutboxMessage)}' type");
@@ -170,17 +164,7 @@ namespace Dex.Cap.Outbox
         /// <exception cref="DiscriminatorResolveTypeException"/>
         private async Task ProcessJobCore(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
-            if (!_discriminator.TryGetType(job.Envelope.MessageType, out var assemblyQualifiedName))
-            {
-                throw new DiscriminatorResolveTypeException("Discriminator type not found");
-            }
-
-            var messageType = Type.GetType(assemblyQualifiedName);
-            if (messageType == null)
-            {
-                ThrowCantResolve(job.Envelope.MessageType);
-            }
-
+            var messageType = _discriminator.ResolveType(job.Envelope.MessageType);
             var msg = _serializer.Deserialize(messageType, job.Envelope.Content);
             _logger.LogDebug("Message to processed: {Message}", msg);
 
