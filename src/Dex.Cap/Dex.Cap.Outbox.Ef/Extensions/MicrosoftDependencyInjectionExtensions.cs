@@ -8,13 +8,15 @@ namespace Dex.Cap.Outbox.Ef.Extensions
 {
     public static class MicrosoftDependencyInjectionExtensions
     {
-        public static IServiceCollection AddOutbox<TDbContext>(this IServiceCollection serviceProvider,
+        public static IServiceCollection AddOutbox<TDbContext, TDiscriminator>(this IServiceCollection serviceProvider,
             Action<IServiceProvider, OutboxRetryStrategyConfigurator>? retryStrategyImplementation = null)
             where TDbContext : DbContext
+            where TDiscriminator : class, IOutboxTypeDiscriminator
         {
             if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
 
             serviceProvider
+                .AddSingleton<IOutboxTypeDiscriminator, TDiscriminator>()
                 .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()
                 .AddSingleton<IOutboxStatistic>(provider => provider.GetRequiredService<IOutboxMetricCollector>())
                 .AddScoped<IOutboxService<TDbContext>, OutboxService<TDbContext>>()

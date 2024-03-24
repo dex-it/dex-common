@@ -63,7 +63,7 @@ namespace Dex.Cap.AspNet.Test
 
             services.AddDbContext<TestDbContext>(builder => { builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")); });
 
-            services.AddOutbox<TestDbContext>();
+            services.AddOutbox<TestDbContext, TestDiscriminator>();
             services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
             services.RegisterOutboxScheduler(periodSeconds: 1);
         }

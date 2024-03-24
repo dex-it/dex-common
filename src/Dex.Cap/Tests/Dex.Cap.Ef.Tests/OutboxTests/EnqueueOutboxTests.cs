@@ -107,6 +107,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
                 .BuildServiceProvider();
+
             TestErrorCommandHandler.Reset();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
@@ -196,6 +197,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
                 .BuildServiceProvider();
+
             TestErrorCommandHandler.Reset();
 
             var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
@@ -257,6 +259,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
+
             TestErrorCommandHandler.Reset();
 
             var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
