@@ -35,7 +35,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             serviceCollection
                 .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
                 .AddScoped(_ => new TestDbContext("db_test_" + Guid.NewGuid().ToString("N")))
-                .AddOutbox<TestDbContext>((_, configurator) =>
+                .AddOutbox<TestDbContext, TestDiscriminator>((_, configurator) =>
                 {
                     switch (retryStrategy)
                     {
@@ -48,6 +48,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     }
                 })
                 .AddOptions<OutboxOptions>();
+            serviceCollection.AddSingleton<IOutboxTypeDiscriminator, TestDiscriminator>();
             var serviceProvider = serviceCollection.BuildServiceProvider();
 
             TestErrorCommandHandler.Reset();
