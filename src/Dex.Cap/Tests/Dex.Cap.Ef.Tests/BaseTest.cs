@@ -36,7 +36,7 @@ namespace Dex.Cap.Ef.Tests
 
             serviceCollection
                 .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext>()
+                .AddOutbox<TestDbContext, TestDiscriminator>()
                 .AddOnceExecutor<TestDbContext>()
                 .AddOptions<OutboxOptions>();
 

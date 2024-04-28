@@ -8,6 +8,7 @@ The template ensures that commands will not be lost.
 * Avoids closures.
 * Allows you to set the necessary services in the operation state.
 * Verifying the success of the operation.
+* Discriminate message type, for serialization
 
 ### Basic usage
 ```csharp
