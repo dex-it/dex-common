@@ -28,7 +28,7 @@
         <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Neo4jClient" Version="4.1.26"/>
+        <PackageReference Include="Neo4jClient" Version="5.1.15" />
     </ItemGroup>
 
 </Project>

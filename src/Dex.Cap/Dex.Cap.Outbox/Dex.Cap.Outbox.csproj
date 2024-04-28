@@ -59,7 +59,7 @@
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="5.0.17" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     </ItemGroup>
 
     <ItemGroup>
