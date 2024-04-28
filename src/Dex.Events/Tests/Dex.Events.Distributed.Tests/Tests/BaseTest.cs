@@ -29,7 +29,7 @@ namespace Dex.Events.Distributed.Tests.Tests
 
         protected IServiceCollection InitServiceCollection()
         {
-            var sc = new ServiceCollection()
+            var sc = new Microsoft.Extensions.DependencyInjection.ServiceCollection()
                 .AddLogging(builder =>
                 {
                     builder.AddDebug();

@@ -4,7 +4,7 @@
         <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.1.2</PackageVersion>
+        <PackageVersion>1.1.3</PackageVersion>
         <PackageTags>distributed events</PackageTags>
     </PropertyGroup>
 
@@ -23,8 +23,7 @@
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Dex.Extensions" Version="1.0.11" />
-      <PackageReference Include="MassTransit" Version="8.0.9" />
-      <PackageReference Include="MassTransit.Abstractions" Version="8.0.9" />
+      <PackageReference Include="Dex.MassTransit.Rabbit" Version="1.2.30" />
       <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     </ItemGroup>
     <!--/Для NuGet-->
