@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
-using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

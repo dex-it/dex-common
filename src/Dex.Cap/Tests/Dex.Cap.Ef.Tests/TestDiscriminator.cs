@@ -1,6 +1,5 @@
 ﻿using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox;
-using Dex.Cap.Outbox.Models;
 using Dex.Outbox.Command.Test;
 
 namespace Dex.Cap.Ef.Tests
