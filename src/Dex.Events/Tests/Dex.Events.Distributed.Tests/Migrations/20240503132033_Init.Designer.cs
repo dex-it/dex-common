@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dex.Events.Distributed.Tests.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20221003111707_AddCorrId")]
-    partial class AddCorrId
+    [Migration("20240503132033_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -51,6 +51,7 @@ namespace Dex.Events.Distributed.Tests.Migrations
                         .HasComment("Preventive timeout (maximum lifetime of actuality 'LockId')");
 
                     b.Property<Guid?>("LockId")
+                        .IsConcurrencyToken()
                         .HasColumnType("uuid")
                         .HasComment("Idempotency key (unique key of the thread that captured the lock)");
 
@@ -67,6 +68,12 @@ namespace Dex.Events.Distributed.Tests.Migrations
                     b.Property<int>("Retries")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("ScheduledStartIndexing")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("StartAtUtc")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -79,9 +86,8 @@ namespace Dex.Events.Distributed.Tests.Migrations
 
                     b.HasIndex("CreatedUtc");
 
-                    b.HasIndex("Retries");
-
-                    b.HasIndex("Status");
+                    b.HasIndex("ScheduledStartIndexing", "Status", "Retries")
+                        .HasFilter("\"Status\" in (0,1)");
 
                     b.ToTable("outbox", "cap");
                 });

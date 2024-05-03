@@ -4,7 +4,7 @@
         <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.9.36</PackageVersion>
+        <PackageVersion>1.9.37</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -30,7 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dex.Neo4J" Version="1.1.26"/>
+        <PackageReference Include="Dex.Neo4J" Version="1.1.27" />
         <PackageReference Include="Neo4jClient" Version="5.1.15" />
     </ItemGroup>
 

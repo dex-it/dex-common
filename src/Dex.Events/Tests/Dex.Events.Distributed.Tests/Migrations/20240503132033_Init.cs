@@ -11,19 +11,6 @@ namespace Dex.Events.Distributed.Tests.Migrations
                 name: "cap");
 
             migrationBuilder.CreateTable(
-                name: "last_transaction",
-                schema: "cap",
-                columns: table => new
-                {
-                    IdempotentKey = table.Column<Guid>(type: "uuid", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_last_transaction", x => x.IdempotentKey);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "outbox",
                 schema: "cap",
                 columns: table => new
@@ -38,6 +25,9 @@ namespace Dex.Events.Distributed.Tests.Migrations
                     Error = table.Column<string>(type: "text", nullable: true),
                     CreatedUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Updated = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StartAtUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    ScheduledStartIndexing = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     LockTimeout = table.Column<TimeSpan>(type: "interval", nullable: false, defaultValue: new TimeSpan(0, 0, 0, 30, 0), comment: "Maximum allowable blocking time"),
                     LockId = table.Column<Guid>(type: "uuid", nullable: true, comment: "Idempotency key (unique key of the thread that captured the lock)"),
                     LockExpirationTimeUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: true, comment: "Preventive timeout (maximum lifetime of actuality 'LockId')")
@@ -61,10 +51,10 @@ namespace Dex.Events.Distributed.Tests.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_last_transaction_Created",
+                name: "IX_outbox_CorrelationId",
                 schema: "cap",
-                table: "last_transaction",
-                column: "Created");
+                table: "outbox",
+                column: "CorrelationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_outbox_CreatedUtc",
@@ -73,16 +63,11 @@ namespace Dex.Events.Distributed.Tests.Migrations
                 column: "CreatedUtc");
 
             migrationBuilder.CreateIndex(
-                name: "IX_outbox_Retries",
+                name: "IX_outbox_ScheduledStartIndexing_Status_Retries",
                 schema: "cap",
                 table: "outbox",
-                column: "Retries");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_outbox_Status",
-                schema: "cap",
-                table: "outbox",
-                column: "Status");
+                columns: new[] { "ScheduledStartIndexing", "Status", "Retries" },
+                filter: "\"Status\" in (0,1)");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Name",
@@ -93,10 +78,6 @@ namespace Dex.Events.Distributed.Tests.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "last_transaction",
-                schema: "cap");
-
             migrationBuilder.DropTable(
                 name: "outbox",
                 schema: "cap");
