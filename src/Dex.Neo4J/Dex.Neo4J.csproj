@@ -5,7 +5,7 @@
         <PackageTags>dex; buffer</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.1.26</PackageVersion>
+        <PackageVersion>1.1.27</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -25,7 +25,7 @@
 
     <ItemGroup>
         <PackageReference Include="Dex.Extensions" Version="1.0.11" />
-        <PackageReference Include="Neo4jClient" Version="5.1.2" />
+        <PackageReference Include="Neo4jClient" Version="5.1.15" />
     </ItemGroup>
 
     <ItemGroup>

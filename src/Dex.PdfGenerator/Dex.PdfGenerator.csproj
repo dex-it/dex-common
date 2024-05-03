@@ -4,7 +4,7 @@
         <PackageTags>dex;pdf generator tools</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.0.26</PackageVersion>
+        <PackageVersion>1.0.27</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -24,7 +24,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.RazorPages" Version="2.2.5" />
-        <PackageReference Include="RazorLight" Version="2.3.0" />
+        <PackageReference Include="RazorLight" Version="2.3.1" />
         <PackageReference Include="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1" />
     </ItemGroup>
     <ItemGroup>

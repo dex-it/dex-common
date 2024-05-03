@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Dex.Cap.Ef.Tests;
 using Dex.Cap.OnceExecutor.Memory.Extensions;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +7,7 @@ using NUnit.Framework;
 
 namespace Dex.Cap.OnceExecutor.Memory.Test
 {
-    public class OnceExecutorTest : BaseTest
+    public class OnceExecutorTest
     {
         [Test]
         public void ExecuteAsync_MultipleParallelActionsCalled_ModificatorCalledOnce()
@@ -50,9 +49,9 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
             Assert.That(await cache.GetAsync($"lt-{idempotentKey}"), Is.Null);
         }
 
-        private ServiceProvider AddOnceExecutor(int timeout)
+        private static ServiceProvider AddOnceExecutor(int timeout)
         {
-            return InitServiceCollection()
+            return new ServiceCollection()
                 .AddOnceExecutor<MemoryDistributedCache>(
                     x => { x.SizeLimit = 100; },
                     y => { y.AbsoluteExpirationRelativeToNow = TimeSpan.FromMilliseconds(timeout); })

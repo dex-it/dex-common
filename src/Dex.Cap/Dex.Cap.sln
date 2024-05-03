@@ -30,6 +30,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{66F062FC-EE13-4EAE-B5ED-D5528108E6FF}"
 	ProjectSection(SolutionItems) = preProject
 		..\.editorconfig = ..\.editorconfig
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Cap.AspNet.Test", "Dex.Cap.AspNet.Test\Dex.Cap.AspNet.Test.csproj", "{B4988997-828F-40FE-8DE7-12A03C43FC28}"
