@@ -54,12 +54,13 @@ namespace Dex.Cap.AspNet.Test
                     });
 
             // add telemetry exporter
-            services.AddOpenTelemetryMetrics(builder =>
-            {
-                builder.SetResourceBuilder(resourceBuilder);
-                builder.AddConsoleExporter();
-                builder.AddMeter("outbox"); // sample to export
-            });
+            services.AddOpenTelemetry()
+                .ConfigureResource(
+                    builder =>
+                    {
+                        builder.AddService("outbox"); // sample to export
+                    }).WithMetrics(builder => builder.AddConsoleExporter());
+
 
             services.AddDbContext<TestDbContext>(builder => { builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")); });
 
