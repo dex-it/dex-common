@@ -1,46 +1,46 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <Version>2.1.30</Version>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <Version>2.1.31</Version>
+    </PropertyGroup>
 
-  <!--Для NuGet-->
-  <PropertyGroup>
-    <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Authors>dex team</Authors>
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
-  </PropertyGroup>
-  <!--/Для NuGet-->
+    <!--Для NuGet-->
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>dex team</Authors>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
+    </PropertyGroup>
+    <!--/Для NuGet-->
 
-  <!-- Source debugging -->
-  <ItemGroup>
-    <PackageReference Include="MassTransit" Version="8.0.9" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-  </ItemGroup>
+    <!-- Source debugging -->
+    <ItemGroup>
+        <PackageReference Include="MassTransit"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Dex.Extensions" Version="1.0.11" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.9" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Dex.Extensions"/>
+        <PackageReference Include="MassTransit.RabbitMQ"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Dex.MassTransit.Rabbit.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="Dex.MassTransit.Rabbit.xml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj" />
-    <ProjectReference Include="..\Dex.MassTransit\Dex.MassTransit.csproj" />
-  </ItemGroup>
-  
+    <ItemGroup>
+        <ProjectReference Include="..\Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj"/>
+        <ProjectReference Include="..\Dex.MassTransit\Dex.MassTransit.csproj"/>
+    </ItemGroup>
+
 </Project>
