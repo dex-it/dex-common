@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>2.3.8</PackageVersion>
+        <PackageVersion>2.3.9</PackageVersion>
         <PackageTags>shared exceptions, extentions and helpers</PackageTags>
     </PropertyGroup>
 
@@ -23,8 +23,8 @@
     </PropertyGroup>
     <!--/Для NuGet-->
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.29" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" />
     </ItemGroup>
 
 </Project>

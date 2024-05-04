@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-        <PackageVersion>2.3.28</PackageVersion>
+        <PackageVersion>2.3.30</PackageVersion>
         <PackageTags>outbox business-transaction consistency NEO4J implementation</PackageTags>
     </PropertyGroup>
     <!--Для NuGet-->
@@ -19,12 +19,12 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <!--Для NuGet-->
-    
+
     <ItemGroup>
-        <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
+        <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Neo4jClient" Version="5.1.15" />
+        <PackageReference Include="Neo4jClient"/>
     </ItemGroup>
 
 </Project>

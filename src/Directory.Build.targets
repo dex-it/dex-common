@@ -1,0 +1,63 @@
+<Project>
+
+  <PropertyGroup>
+    <FrameworkVersion>6.0.20</FrameworkVersion>
+    <EntityFrameworkVersion>6.0.29</EntityFrameworkVersion>
+    <ExtensionsVersion>[8.0.0,8.0.4]</ExtensionsVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--build related-->
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+
+    <!--tests -->
+    <PackageReference Update="coverlet.collector" Version="6.0.2" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Update="NUnit" Version="3.14.0" />
+    <PackageReference Update="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Update="NUnit.Analyzers" Version="4.2.0" />
+
+    <!--microsoft extensions -->
+    <PackageReference Update="Microsoft.Extensions.*" Version="$(ExtensionsVersion)" />
+    <PackageReference Update="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
+
+    <PackageReference Update="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.4" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+    <PackageReference Update="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
+
+    
+    <!--misc -->
+    <PackageReference Update="Npgsql" Version="6.0.10" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.22" />
+    <PackageReference Update="Neo4jClient" Version="5.1.15" />
+    
+    <!--https://github.com/IdentityServer/IdentityServer4/issues/4285-->
+    <PackageReference Update="System.IdentityModel.Tokens.Jwt" Version="5.6.0" />
+    <PackageReference Update="System.Security.Principal.Windows" Version="4.7.0" />
+    <PackageReference Update="AutoMapper" Version="[12.0.1, 13)" />
+    
+    <!--microsoft asp.net core -->
+    <PackageReference Update="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="3.1.32" />
+    <PackageReference Update="Microsoft.AspNetCore.TestHost" Version="$(FrameworkVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Identity" Version="$(FrameworkVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(FrameworkVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(FrameworkVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Authentication.Certificate" Version="$(FrameworkVersion)"/>
+    
+    <!--microsoft entity framework -->
+    <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkVersion)" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Relational" Version="$(EntityFrameworkVersion)" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkVersion)" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.InMemory" Version="$(EntityFrameworkVersion)" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EntityFrameworkVersion)" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkVersion)" PrivateAssets="All" />
+
+    <!--dex libs -->
+	<PackageReference Update="Dex.Types" Version="1.0.26" />
+	<PackageReference Update="Dex.Extensions" Version="1.0.11" />
+	<PackageReference Update="Dex.Neo4J" Version="1.1.27" />
+
+
+  </ItemGroup>
+</Project>
