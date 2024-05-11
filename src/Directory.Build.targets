@@ -30,7 +30,7 @@
 
     
     <!--misc -->
-    <PackageReference Update="Npgsql" Version="6.0.10" />
+    <PackageReference Update="Npgsql" Version="8.0.3" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
     <PackageReference Update="Neo4jClient" Version="5.1.15" />
     <PackageReference Update="MassTransit*" Version="8.2.2" />
@@ -48,7 +48,7 @@
     <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkVersion)" PrivateAssets="All" />
 
     <!--dex libs -->
-	<PackageReference Update="Dex.Types" Version="1.0.30" />
+	<PackageReference Update="Dex.Types" Version="1.0.26" />
 	<PackageReference Update="Dex.Extensions" Version="1.0.30" />
 	<PackageReference Update="Dex.Neo4J" Version="1.1.30" />
 
