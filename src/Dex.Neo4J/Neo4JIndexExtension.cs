@@ -1,6 +1,5 @@
 using System;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Threading.Tasks;
 using Dex.Extensions;
 using Neo4jClient;
@@ -27,7 +26,7 @@ namespace Dex.Neo4J
 
             var propList = new[]
             {
-                selector.GetPropertyInfo().Name, 
+                selector.GetPropertyInfo().Name,
                 selector2.GetPropertyInfo().Name
             };
             return CreateIndexFromProps<T>(graphClient, propList);
@@ -38,10 +37,8 @@ namespace Dex.Neo4J
             if (graphClient == null) throw new ArgumentNullException(nameof(graphClient));
             if (propList == null) throw new ArgumentNullException(nameof(propList));
 
-            var text = "INDEX ON :" + typeof(T).Name + "(" + string.Join(",", propList) + ")"; 
+            var text = "INDEX ON :" + typeof(T).Name + "(" + string.Join(",", propList) + ")";
             return graphClient.Cypher.Create(text).ExecuteWithoutResultsAsync();
         }
-        
-
     }
 }

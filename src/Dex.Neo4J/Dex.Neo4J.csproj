@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>1.0</InformationalVersion>
-        <PackageVersion>1.1.30</PackageVersion>
+        <PackageVersion>1.1.31</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -27,7 +27,6 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <PackageReference Include="Dex.Extensions" Version="1.0.11" />
         <PackageReference Include="Neo4jClient" Version="5.1.15" />
     </ItemGroup>
 
@@ -35,6 +34,14 @@
         <Compile Update="BaseGraphFTIndexProvider.cs">
             <DependentUpon>IGraphFTIndexProvider.cs</DependentUpon>
         </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
     </ItemGroup>
 
 </Project>
