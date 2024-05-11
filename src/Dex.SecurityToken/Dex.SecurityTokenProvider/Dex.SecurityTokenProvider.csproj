@@ -5,8 +5,11 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>default</LangVersion>
-        <PackageVersion>2.2.7</PackageVersion>
         <PackageTags>security token management, dataprotection</PackageTags>
+        <InformationalVersion>6.0</InformationalVersion>
+        <PackageVersion>6.0.0</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->

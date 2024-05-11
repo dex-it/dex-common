@@ -4,7 +4,10 @@
         <PackageTags>dex;pdf generator tools</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.0.26</PackageVersion>
+        <InformationalVersion>1.0</InformationalVersion>
+        <PackageVersion>1.0.30</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->

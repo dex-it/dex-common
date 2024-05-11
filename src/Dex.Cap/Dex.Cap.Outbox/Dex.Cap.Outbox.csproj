@@ -4,8 +4,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <Nullable>enable</Nullable>
-        <PackageVersion>2.5.30</PackageVersion>
         <PackageTags>outbox business-transaction consistency</PackageTags>
+        <InformationalVersion>6.0</InformationalVersion>
+        <PackageVersion>6.0.0</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->

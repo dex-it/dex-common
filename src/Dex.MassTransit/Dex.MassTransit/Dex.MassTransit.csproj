@@ -3,7 +3,10 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
-        <Version>1.2.30</Version>
+        <InformationalVersion>1.0</InformationalVersion>
+        <PackageVersion>1.2.30</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -20,7 +23,7 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Dex.Extensions" Version="1.0.11" />
+      <PackageReference Include="Dex.Extensions" />
     </ItemGroup>
     <!--/Для NuGet-->
 </Project>

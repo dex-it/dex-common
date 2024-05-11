@@ -4,8 +4,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>2.3.9</PackageVersion>
         <PackageTags>shared exceptions, extentions and helpers</PackageTags>
+        <InformationalVersion>6.0</InformationalVersion>
+        <PackageVersion>6.0.0</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
