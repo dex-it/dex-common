@@ -4,8 +4,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <Nullable>enable</Nullable>
-        <PackageVersion>2.5.10</PackageVersion>
         <PackageTags>outbox business-transaction consistency</PackageTags>
+        <InformationalVersion>6.0</InformationalVersion>
+        <PackageVersion>6.0.0</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -22,15 +25,15 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Dex.Types" Version="1.0.26" />
-        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="6.0.12" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
+        <PackageReference Include="Dex.Types"/>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
+        <PackageReference Include="System.Diagnostics.DiagnosticSource"/>
     </ItemGroup>
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <Compile Remove="Outbox\Neo4j\**" />
+        <Compile Remove="Outbox\Neo4j\**"/>
         <Compile Update="OutboxHandler.cs">
             <DependentUpon>IOutboxHandler.cs</DependentUpon>
         </Compile>
@@ -49,20 +52,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Remove="Outbox\Neo4j\**" />
+        <EmbeddedResource Remove="Outbox\Neo4j\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Outbox\Neo4j\**" />
+        <None Remove="Outbox\Neo4j\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
-        <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
+        <ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj"/>
     </ItemGroup>
 
 </Project>

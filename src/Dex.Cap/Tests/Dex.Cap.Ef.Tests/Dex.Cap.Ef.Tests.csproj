@@ -7,35 +7,35 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.12" />
-        <PackageReference Include="MassTransit.TestFramework" Version="8.0.12" />
-        <PackageReference Include="Dex.Extensions" Version="1.0.11" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12">
+        <PackageReference Include="MassTransit.RabbitMQ"/>
+        <PackageReference Include="MassTransit.TestFramework"/>
+        <PackageReference Include="Dex.Extensions"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore">
             <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.12">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
-        <PackageReference Include="NUnit" Version="3.13.3" />
-        <PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+        <PackageReference Include="NUnit"/>
+        <PackageReference Include="NUnit3TestAdapter"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj" />
-        <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj" />
-        <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
-        <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj" />
-        <ProjectReference Include="..\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj" />
+        <ProjectReference Include="..\..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj"/>
+        <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj"/>
+        <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj"/>
+        <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
+        <ProjectReference Include="..\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Migrations\" />
+        <Folder Include="Migrations\"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -57,7 +57,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="appsettings.json" />
+        <None Remove="appsettings.json"/>
         <Content Include="appsettings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>

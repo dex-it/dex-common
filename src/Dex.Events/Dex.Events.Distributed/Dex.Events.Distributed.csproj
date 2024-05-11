@@ -4,8 +4,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>2.1.0</PackageVersion>
         <PackageTags>distributed events</PackageTags>
+        <InformationalVersion>6.0</InformationalVersion>
+        <PackageVersion>6.0.0</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -22,20 +25,20 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Dex.Extensions" Version="1.0.11" />
-      <PackageReference Include="MassTransit" Version="8.0.9" />
-      <PackageReference Include="MassTransit.Abstractions" Version="8.0.9" />
-      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+        <PackageReference Include="Dex.Extensions"/>
+        <PackageReference Include="MassTransit"/>
+        <PackageReference Include="MassTransit.Abstractions"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
     <!--/Для NuGet-->
 
     <ItemGroup>
-      <Compile Update="DistributedEventHandler.cs">
-        <DependentUpon>IDistributedEventHandler.cs</DependentUpon>
-      </Compile>
-      <Compile Update="DistributedEventRaiser.cs">
-        <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
-      </Compile>
+        <Compile Update="DistributedEventHandler.cs">
+            <DependentUpon>IDistributedEventHandler.cs</DependentUpon>
+        </Compile>
+        <Compile Update="DistributedEventRaiser.cs">
+            <DependentUpon>IDistributedEventRaiser.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>

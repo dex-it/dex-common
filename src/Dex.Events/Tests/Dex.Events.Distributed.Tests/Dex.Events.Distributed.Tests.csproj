@@ -7,7 +7,7 @@
 
     <ItemGroup>
         <PackageReference Include="Dex.Cap.Outbox.Ef" Version="2.3.5" />
-        <PackageReference Include="Dex.MassTransit.Rabbit" Version="2.1.28" />
+        <PackageReference Include="Dex.MassTransit.Rabbit" Version="2.1.30" />
         <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12">
           <TreatAsUsed>true</TreatAsUsed>
