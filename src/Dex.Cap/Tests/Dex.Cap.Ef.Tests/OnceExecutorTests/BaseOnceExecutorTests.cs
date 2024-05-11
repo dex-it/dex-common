@@ -24,15 +24,15 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
 
-            Assert.CatchAsync<DbUpdateException>(async () =>
+            Assert.Catch<DbUpdateException>(() =>
             {
                 var user = new TestUser { Name = "DoubleInsertTest", Years = 18 };
 
-                await dbContext.Users.AddAsync(user);
-                await dbContext.SaveChangesAsync();
+                dbContext.Users.Add(user);
+                dbContext.SaveChanges();
 
-                await dbContext.Users.AddAsync(user);
-                await dbContext.SaveChangesAsync();
+                dbContext.Users.Add(user);
+                dbContext.SaveChanges();
             });
         }
 
