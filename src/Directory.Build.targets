@@ -3,7 +3,7 @@
   <PropertyGroup>
     <FrameworkVersion>8.0.4</FrameworkVersion>
     <EntityFrameworkVersion>8.0.4</EntityFrameworkVersion>
-    <ExtensionsVersion>[8.0.0,8.0.4]</ExtensionsVersion>
+    <ExtensionsVersion>[8.0.0,9.0.0)</ExtensionsVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +31,7 @@
     
     <!--misc -->
     <PackageReference Update="Npgsql" Version="8.0.3" />
-    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     <PackageReference Update="Neo4jClient" Version="5.1.15" />
     <PackageReference Update="MassTransit*" Version="8.2.2" />
     <PackageReference Update="MassTransit.TestFramework" Version="8.0.12" />
@@ -50,7 +50,7 @@
     <!--dex libs -->
 	<PackageReference Update="Dex.Types" Version="1.0.26" />
 	<PackageReference Update="Dex.Extensions" Version="1.0.30" />
-	<PackageReference Update="Dex.Neo4J" Version="1.1.30" />
+	<PackageReference Update="Dex.Neo4J" Version="1.1.31" />
 
 
   </ItemGroup>
