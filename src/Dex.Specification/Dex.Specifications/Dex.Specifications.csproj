@@ -1,42 +1,45 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <PackageTags>dex;specifications</PackageTags>
-    <Nullable>enable</Nullable>
-    <Version>1.1.15</Version>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <PackageTags>dex;specifications</PackageTags>
+        <Nullable>enable</Nullable>
+        <InformationalVersion>1.0</InformationalVersion>
+        <PackageVersion>1.1.30</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
+    </PropertyGroup>
 
-  <!--Для NuGet-->
-  <PropertyGroup>
-    <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Specification</PackageProjectUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Authors>dex team</Authors>
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
-  </PropertyGroup>
-  <!--/Для NuGet-->
+    <!--Для NuGet-->
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Specification</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>dex team</Authors>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
+    </PropertyGroup>
+    <!--/Для NuGet-->
 
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\.editorconfig" Link=".editorconfig"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0"/>
+    </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
+    <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+        <Reference Include="System"/>
+        <Reference Include="Microsoft.CSharp"/>
+    </ItemGroup>
 
 </Project>

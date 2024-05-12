@@ -9,6 +9,7 @@
   <ItemGroup>
     <!--build related-->
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Update="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" PrivateAssets="All" />
 
     <!--tests -->
     <PackageReference Update="coverlet.collector" Version="6.0.2" />

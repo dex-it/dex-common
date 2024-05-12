@@ -100,3 +100,8 @@ var executor = serviceProvider.GetRequiredService<IStrategyOnceExecutor<Concrete
 
 var result = await executor.ExecuteAsync(request, CancellationToken.None);
 ```
+### Breaking Changes
+Dex.Cap.Outbox.Ef - 1.9.x: Add discriminator. Before use, you must implement type discriminator logic (IOutboxTypeDiscriminator).
+
+public static IServiceCollection AddOutbox<TDbContext, TDiscriminator>(this IServiceCollection serviceProvider,
+Action<IServiceProvider, OutboxRetryStrategyConfigurator>? retryStrategyImplementation = null)

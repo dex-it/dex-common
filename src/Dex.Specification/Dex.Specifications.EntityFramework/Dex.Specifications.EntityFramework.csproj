@@ -3,7 +3,10 @@
     <PropertyGroup>
         <PackageTags>dex;specifications;entityframework</PackageTags>
         <TargetFramework>net8.0</TargetFramework>
-        <Version>2.1.11</Version>
+        <InformationalVersion>8.0</InformationalVersion>
+        <PackageVersion>8.0.0</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
     <!--Для NuGet-->
     <PropertyGroup>
