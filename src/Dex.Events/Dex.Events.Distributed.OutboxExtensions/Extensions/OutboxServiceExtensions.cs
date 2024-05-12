@@ -19,7 +19,7 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
             DistributedBaseEventParams outboxMessage, CancellationToken cancellationToken = default)
             where TBus : IBus
         {
-            if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
+            ArgumentNullException.ThrowIfNull(outboxService);
 
             var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage);
             await outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken: cancellationToken).ConfigureAwait(false);

@@ -23,7 +23,7 @@ namespace Dex.Events.Distributed.OutboxExtensions
 
         public OutboxDistributedEventMessage(DistributedBaseEventParams outboxMessage)
         {
-            if (outboxMessage == null) throw new ArgumentNullException(nameof(outboxMessage));
+            ArgumentNullException.ThrowIfNull(outboxMessage);
 
             var messageType = outboxMessage.GetType();
             var eventParams = JsonSerializer.Serialize(outboxMessage, messageType);

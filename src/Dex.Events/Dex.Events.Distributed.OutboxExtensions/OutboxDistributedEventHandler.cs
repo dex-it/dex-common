@@ -9,14 +9,10 @@ using MassTransit;
 
 namespace Dex.Events.Distributed.OutboxExtensions
 {
-    public sealed class OutboxDistributedEventHandler<TBus> : IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>> where TBus : IBus
+    public sealed class OutboxDistributedEventHandler<TBus>(TBus bus) : IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>>
+        where TBus : IBus
     {
-        private readonly TBus _bus;
-
-        public OutboxDistributedEventHandler(TBus bus)
-        {
-            _bus = bus;
-        }
+        private readonly TBus _bus = bus;
 
         public async Task ProcessMessage(OutboxDistributedEventMessage<TBus> message, CancellationToken cancellationToken)
         {
@@ -24,7 +20,7 @@ namespace Dex.Events.Distributed.OutboxExtensions
             // - in the first method, the type is defined by typeof(T)
             // - in the second method, the type is defined by GetType()
 
-            if (message == null) throw new ArgumentNullException(nameof(message));
+            ArgumentNullException.ThrowIfNull(message);
 
             var eventParams = JsonSerializer.Deserialize(message.EventParams, Type.GetType(message.EventParamsType)!);
             await _bus.Publish(eventParams!, cancellationToken).ConfigureAwait(false);

@@ -5,8 +5,8 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>outbox distributed events</PackageTags>
-        <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.0</PackageVersion>
+        <InformationalVersion>8.0</InformationalVersion>
+        <PackageVersion>8.0.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -25,7 +25,7 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Dex.Cap.Outbox" Version="6.0.0" />
+      <PackageReference Include="Dex.Cap.Outbox" Version="8.0.0" />
       <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
     </ItemGroup>
     <!--/Для NuGet-->
