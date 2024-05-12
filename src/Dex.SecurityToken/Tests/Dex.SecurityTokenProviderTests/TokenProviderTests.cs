@@ -17,15 +17,10 @@ namespace Dex.SecurityTokenProviderTests
 {
     public class TokenProviderTests
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceProvider _serviceProvider = BuildServiceProvider();
         private const string TestAudience = "TestAudience";
 
         private const bool UseDistributedCache = true;
-
-        public TokenProviderTests()
-        {
-            _serviceProvider = BuildServiceProvider();
-        }
 
         [Fact]
         public async Task CreateTokenAsUrlAsyncTest()
@@ -41,9 +36,9 @@ namespace Dex.SecurityTokenProviderTests
             var tokenData = await tokenProvider.GetTokenDataFromUrlAsync<TestUserToken>(token);
 
             //Assert
-            Assert.Equal(tokenData.UserId, userToken.UserId);
-            Assert.Equal(tokenData.Audience, userToken.Audience);
-            Assert.Equal(tokenData.Audience, TestAudience);
+            Assert.Equal(userToken.UserId, tokenData.UserId);
+            Assert.Equal(userToken.Audience, tokenData.Audience);
+            Assert.Equal(TestAudience, tokenData.Audience);
         }
 
         [Fact]
