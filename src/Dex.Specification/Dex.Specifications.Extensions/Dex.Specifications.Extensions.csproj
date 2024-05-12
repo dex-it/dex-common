@@ -3,6 +3,10 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <Version>1.1.15</Version>
+        <InformationalVersion>1.0</InformationalVersion>
+        <PackageVersion>1.1.15</PackageVersion>
+        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
+        <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
     <!--Для NuGet-->
     <PropertyGroup>

@@ -49,7 +49,7 @@
 
     <!--dex libs -->
 	<PackageReference Update="Dex.Types" Version="1.0.26" />
-	<PackageReference Update="Dex.Extensions" Version="1.0.11" />
+	<PackageReference Update="Dex.Extensions" Version="1.0.30" />
 	<PackageReference Update="Dex.Neo4J" Version="1.1.27" />
 
 
