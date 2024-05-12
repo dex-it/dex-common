@@ -1,5 +1,5 @@
 using System;
-using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Events.Distributed.Tests.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

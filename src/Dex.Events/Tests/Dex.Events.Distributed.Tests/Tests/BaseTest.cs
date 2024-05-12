@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Ef.Extensions;
+using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,9 +37,10 @@ namespace Dex.Events.Distributed.Tests.Tests
                     builder.SetMinimumLevel(LogLevel.Debug);
                 })
                 .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext>();
+                .AddOutbox<TestDbContext, TestDiscriminator>();
 
             sc.AddOptions<OutboxOptions>().Configure(options => options.ProcessorDelay = TimeSpan.FromMilliseconds(100));
+            sc.AddSingleton<IOutboxTypeDiscriminator, TestDiscriminator>();
 
             return sc;
         }

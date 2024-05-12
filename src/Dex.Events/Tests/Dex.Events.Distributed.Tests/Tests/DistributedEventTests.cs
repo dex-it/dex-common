@@ -190,7 +190,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = outboxContext.State.Entity;
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
                     await outboxContext.RaiseDistributedEventAsync(new OnUserAdded { CustomerId = entity.Id }, token);
                 }, CancellationToken.None);
 
@@ -235,7 +235,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = outboxContext.State.Entity;
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
                     await outboxContext.RaiseDistributedEventAsync(new OnUserAdded { CustomerId = entity.Id }, token);
                 }, CancellationToken.None);
 
@@ -274,7 +274,7 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = outboxContext.State.Entity;
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, token);
+                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
                     await outboxContext.RaiseDistributedEventAsync(new OnUserAdded { CustomerId = entity.Id }, token);
                     await outboxContext.RaiseDistributedEventAsync<IExternalBus>(new OnUserAdded { CustomerId = entity.Id }, token);
                 }, CancellationToken.None);

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Dex.Specifications.Extensions;
-using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using Dex.TestDomain;
 using DbContext = Dex.TestDomain.DbContext;
