@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
-using Dex.Cap.Outbox.Helpers;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
@@ -83,13 +78,12 @@ namespace Dex.Cap.Outbox.Ef
 
         /// <exception cref="OperationCanceledException"/>
         /// <exception cref="RetryLimitExceededException"/>
-        public override async IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs([EnumeratorCancellation] CancellationToken cancellationToken)
+        public override async Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken)
         {
-            var outboxEnvelopes = await GetFreeMessages(_outboxOptions.MessagesToProcess, cancellationToken).ConfigureAwait(false);
-            foreach (var envelope in outboxEnvelopes)
-            {
-                yield return new OutboxLockedJob(envelope);
-            }
+            var outboxEnvelopes = await GetFreeMessages(_outboxOptions.MessagesToProcess, cancellationToken)
+                .ConfigureAwait(false);
+
+            return outboxEnvelopes.Select(x => (IOutboxLockedJob)new OutboxLockedJob(x)).ToArray();
         }
 
         public override Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
@@ -97,7 +91,7 @@ namespace Dex.Cap.Outbox.Ef
             return dbContext.Database.CreateExecutionStrategy()
                 .ExecuteAsync(async () =>
                 {
-                    var t = await dbContext.Database
+                    await using var t = await dbContext.Database
                         .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, cancellationToken)
                         .ConfigureAwait(false);
 
@@ -143,11 +137,12 @@ namespace Dex.Cap.Outbox.Ef
                         .ConfigureAwait(false);
 
                     await t.CommitAsync(cancellationToken).ConfigureAwait(false);
-                    
+
                     foreach (var envelope in fetched)
                     {
                         dbContext.Entry(envelope).State = EntityState.Detached;
                     }
+
                     return fetched;
                 });
         }

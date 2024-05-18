@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Jobs;
@@ -12,13 +11,13 @@ namespace Dex.Cap.Outbox.Interfaces
         Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
     }
-    
+
     internal interface IOutboxDataProvider
     {
         Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
         Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
 
-        IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs(CancellationToken cancellationToken);
+        Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken);
         Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null);
         Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken);
 

@@ -37,60 +37,50 @@ namespace Dex.Cap.Outbox
         {
             _logger.LogDebug("Outbox processor has been started");
 
-            var enumerable = _dataProvider.GetWaitingJobs(cancellationToken);
-            var enumerator = enumerable.GetAsyncEnumerator(cancellationToken);
-            try
+            var jobs = await _dataProvider.GetWaitingJobs(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (jobs.Length > 0)
             {
-                _metricCollector.IncProcessCount();
-                if (await enumerator.MoveNextAsync().ConfigureAwait(false))
+                foreach (var job in jobs)
                 {
-                    do
+                    try
                     {
-                        var job = enumerator.Current;
-                        try
+                        _metricCollector.IncProcessCount();
+
+                        using var activity = new Activity($"Process outbox message: {job.Envelope.Id}");
+                        activity.AddBaggage("Type", job.Envelope.MessageType);
+                        activity.AddBaggage("MessageId", job.Envelope.Id.ToString());
+
+                        if (!string.IsNullOrEmpty(job.Envelope.ActivityId))
                         {
-                            using (var activity = new Activity($"Process outbox message: {job.Envelope.Id}"))
-                            {
-                                activity.AddBaggage("Type", job.Envelope.MessageType);
-                                activity.AddBaggage("MessageId", job.Envelope.Id.ToString());
-
-                                if (!string.IsNullOrEmpty(job.Envelope.ActivityId))
-                                {
-                                    activity.SetParentId(job.Envelope.ActivityId!);
-                                }
-
-                                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken))
-                                {
-                                    activity.Start();
-                                    _logger.LogDebug("Processing job - {Job}", job.Envelope.Id);
-                                    _metricCollector.IncProcessJobCount();
-                                    var sw = Stopwatch.StartNew();
-
-                                    await ProcessJob(job, cts.Token).ConfigureAwait(false);
-
-                                    _metricCollector.AddProcessJobSuccessDuration(sw.Elapsed);
-                                    _metricCollector.IncProcessJobSuccessCount();
-                                    _logger.LogDebug("Job process completed - {Job}", job.Envelope.Id);
-                                    activity.Stop();
-                                }
-                            }
+                            activity.SetParentId(job.Envelope.ActivityId!);
                         }
-                        finally
-                        {
-                            job.Dispose();
-                        }
-                    } while (await enumerator.MoveNextAsync().ConfigureAwait(false));
-                }
-                else
-                {
-                    _metricCollector.IncEmptyProcessCount();
-                    _logger.LogDebug(NoMessagesToProcess);
+
+                        using var cts = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken, cancellationToken);
+
+                        activity.Start();
+                        _logger.LogDebug("Processing job - {Job}", job.Envelope.Id);
+                        _metricCollector.IncProcessJobCount();
+                        var sw = Stopwatch.StartNew();
+
+                        await ProcessJob(job, cts.Token).ConfigureAwait(false);
+
+                        _metricCollector.AddProcessJobSuccessDuration(sw.Elapsed);
+                        _metricCollector.IncProcessJobSuccessCount();
+                        _logger.LogDebug("Job process completed - {Job}", job.Envelope.Id);
+                        activity.Stop();
+                    }
+                    finally
+                    {
+                        _logger.LogDebug("Outbox processor completed");
+                    }
                 }
             }
-            finally
+            else
             {
-                await enumerator.DisposeAsync().ConfigureAwait(false);
-                _logger.LogDebug("Outbox processor completed");
+                _metricCollector.IncEmptyProcessCount();
+                _logger.LogDebug(NoMessagesToProcess);
             }
         }
 
@@ -137,21 +127,19 @@ namespace Dex.Cap.Outbox
         private async Task UnlockJobOnUserCancel(IOutboxLockedJob job)
         {
             // Несмотря на запрос отмены пользователем, нам лучше освободить блокировку задачи за разумно малое время.
-            using (var linked = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken))
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(job.LockToken);
+            linked.CancelAfter(1_000);
+            try
             {
-                linked.CancelAfter(1_000);
-                try
-                {
-                    await _dataProvider.JobFail(job, linked.Token, UserCanceledDbMessage).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested)
-                {
-                    _logger.LogError("Could not release the message for 1 second after the user cancellation request. MessageId: {MessageId}", job.Envelope.Id);
-                }
-                catch (OperationCanceledException)
-                {
-                    // У блокировки истекло время жизни. Можно считать что освобождение выполнено успешно.
-                }
+                await _dataProvider.JobFail(job, linked.Token, UserCanceledDbMessage).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested)
+            {
+                _logger.LogError("Could not release the message for 1 second after the user cancellation request. MessageId: {MessageId}", job.Envelope.Id);
+            }
+            catch (OperationCanceledException)
+            {
+                // У блокировки истекло время жизни. Можно считать что освобождение выполнено успешно.
             }
         }
 

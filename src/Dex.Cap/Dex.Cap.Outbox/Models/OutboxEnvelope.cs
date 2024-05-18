@@ -15,7 +15,6 @@ namespace Dex.Cap.Outbox.Models
 
         public OutboxEnvelope(Guid id, Guid correlationId, string messageType, string content, DateTime? startAtUtc, TimeSpan? lockTimeout)
         {
-            ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
             ArgumentOutOfRangeException.ThrowIfEqual(correlationId, Guid.Empty);
             ArgumentException.ThrowIfNullOrEmpty(messageType);
             ArgumentException.ThrowIfNullOrEmpty(content);

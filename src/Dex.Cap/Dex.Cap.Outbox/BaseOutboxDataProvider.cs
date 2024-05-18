@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
@@ -9,14 +8,9 @@ using Dex.Cap.Outbox.Options;
 
 namespace Dex.Cap.Outbox
 {
-    internal abstract class BaseOutboxDataProvider<TDbContext> : IOutboxDataProvider<TDbContext>
+    internal abstract class BaseOutboxDataProvider<TDbContext>(IOutboxRetryStrategy retryStrategy) : IOutboxDataProvider<TDbContext>
     {
-        private readonly IOutboxRetryStrategy _retryStrategy;
-
-        protected BaseOutboxDataProvider(IOutboxRetryStrategy retryStrategy)
-        {
-            _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
-        }
+        private readonly IOutboxRetryStrategy _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
 
         public abstract Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService,
             TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
@@ -26,7 +20,7 @@ namespace Dex.Cap.Outbox
 
         // Job management
 
-        public abstract IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs(CancellationToken cancellationToken);
+        public abstract Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken);
 
         public virtual async Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null,
             Exception? exception = null)
