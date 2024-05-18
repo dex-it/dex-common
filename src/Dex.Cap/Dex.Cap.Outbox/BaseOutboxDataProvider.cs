@@ -31,7 +31,7 @@ namespace Dex.Cap.Outbox
         public virtual async Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null,
             Exception? exception = null)
         {
-            if (outboxJob == null) throw new ArgumentNullException(nameof(outboxJob));
+            ArgumentNullException.ThrowIfNull(outboxJob);
 
             outboxJob.Envelope.Status = OutboxMessageStatus.Failed;
             outboxJob.Envelope.Updated = DateTime.UtcNow;
@@ -49,7 +49,7 @@ namespace Dex.Cap.Outbox
 
         public virtual async Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken)
         {
-            if (outboxJob == null) throw new ArgumentNullException(nameof(outboxJob));
+            ArgumentNullException.ThrowIfNull(outboxJob);
 
             outboxJob.Envelope.Status = OutboxMessageStatus.Succeeded;
             outboxJob.Envelope.Updated = DateTime.UtcNow;

@@ -12,31 +12,26 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox
 {
-    internal sealed class OutboxHandler<TDbContext> : IOutboxHandler
+    internal sealed class OutboxHandler<TDbContext>(
+        IServiceProvider serviceProvider,
+        IOutboxDataProvider<TDbContext> dataProvider,
+        IOutboxSerializer serializer,
+        IOutboxMetricCollector metricCollector,
+        IOutboxTypeDiscriminator discriminator,
+        ILogger<OutboxHandler<TDbContext>> logger)
+        : IOutboxHandler
     {
         private const string LockTimeoutMessage = "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}";
         private const string UserCanceledDbMessage = "Operation canceled due to user request";
         private const string UserCanceledMessageWithId = "Operation canceled due to user request. MessageId: {MessageId}";
         private const string NoMessagesToProcess = "No messages to process";
 
-        private readonly IServiceProvider _serviceProvider;
-        private readonly IOutboxDataProvider<TDbContext> _dataProvider;
-        private readonly IOutboxSerializer _serializer;
-        private readonly IOutboxMetricCollector _metricCollector;
-        private readonly ILogger<OutboxHandler<TDbContext>> _logger;
-        private readonly IOutboxTypeDiscriminator _discriminator;
-
-        public OutboxHandler(IServiceProvider serviceProvider, IOutboxDataProvider<TDbContext> dataProvider,
-            IOutboxSerializer serializer, IOutboxMetricCollector metricCollector, IOutboxTypeDiscriminator discriminator,
-            ILogger<OutboxHandler<TDbContext>> logger)
-        {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-            _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            _metricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
-        }
+        private readonly IServiceProvider _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        private readonly IOutboxDataProvider<TDbContext> _dataProvider = dataProvider ?? throw new ArgumentNullException(nameof(dataProvider));
+        private readonly IOutboxSerializer _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+        private readonly IOutboxMetricCollector _metricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
+        private readonly IOutboxTypeDiscriminator _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
+        private readonly ILogger<OutboxHandler<TDbContext>> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         public async Task ProcessAsync(CancellationToken cancellationToken)
         {
