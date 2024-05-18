@@ -80,13 +80,13 @@ namespace Dex.Cap.Outbox.Ef
         /// <exception cref="RetryLimitExceededException"/>
         public override async Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken)
         {
-            var outboxEnvelopes = await GetFreeMessages(_outboxOptions.MessagesToProcess, cancellationToken)
+            var outboxEnvelopes = await GetFreeMessages(cancellationToken)
                 .ConfigureAwait(false);
 
             return outboxEnvelopes.Select(x => (IOutboxLockedJob)new OutboxLockedJob(x)).ToArray();
         }
 
-        public override Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
+        public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
         {
             return dbContext.Database.CreateExecutionStrategy()
                 .ExecuteAsync(async () =>
@@ -95,27 +95,8 @@ namespace Dex.Cap.Outbox.Ef
                         .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, cancellationToken)
                         .ConfigureAwait(false);
 
-                    var cScheduledStartIndexing = nameof(OutboxEnvelope.ScheduledStartIndexing);
-                    var cRetries = nameof(OutboxEnvelope.Retries);
-                    var cStatus = nameof(OutboxEnvelope.Status);
-                    var cLockId = nameof(OutboxEnvelope.LockId);
-                    var cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
-                    var cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
-
-                    var sql = $@"
-                        SELECT * 
-                        FROM cap.outbox
-                        WHERE ""{cScheduledStartIndexing}"" IS NOT NULL
-                          AND ""{cRetries}"" < {_outboxOptions.Retries}
-                          AND (""{cStatus}"" = {OutboxMessageStatus.New:D} OR ""{cStatus}"" = {OutboxMessageStatus.Failed:D})
-                          AND (""{cLockId}"" IS NULL OR ""{cLockExpirationTimeUtc}"" IS NULL OR ""{cLockExpirationTimeUtc}"" < CURRENT_TIMESTAMP)
-                          AND CURRENT_TIMESTAMP >= ""{cStartAtUtc}""
-                        ORDER BY ""{cScheduledStartIndexing}""
-                        LIMIT {limit}
-                        FOR UPDATE SKIP LOCKED;";
-
                     var fetched = await dbContext.Set<OutboxEnvelope>()
-                        .FromSqlRaw(sql)
+                        .FromSqlRaw(GenerateSpecificSql())
                         .ToArrayAsync(cancellationToken)
                         .ConfigureAwait(false);
 
@@ -157,6 +138,7 @@ namespace Dex.Cap.Outbox.Ef
             return dbContext.Set<OutboxEnvelope>()
                 .Count(o => o.Retries < _outboxOptions.Retries && o.Status != OutboxMessageStatus.Succeeded);
         }
+
 
         // private
 
@@ -221,6 +203,36 @@ namespace Dex.Cap.Outbox.Ef
 
             static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
                 x => x.Id == messageId && x.LockId == lockId && (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
+        }
+
+        // TODO вынести в провайдер
+        private string GenerateSpecificSql()
+        {
+            var providerName = dbContext.Database.ProviderName;
+            if (providerName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+            {
+                const string cScheduledStartIndexing = nameof(OutboxEnvelope.ScheduledStartIndexing);
+                const string cRetries = nameof(OutboxEnvelope.Retries);
+                const string cStatus = nameof(OutboxEnvelope.Status);
+                const string cLockId = nameof(OutboxEnvelope.LockId);
+                const string cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
+                const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
+
+                var sql = $@"
+                        SELECT * 
+                        FROM {NameConst.SchemaName}.{NameConst.TableName}
+                        WHERE ""{cScheduledStartIndexing}"" IS NOT NULL
+                          AND ""{cRetries}"" < {_outboxOptions.Retries}
+                          AND (""{cStatus}"" = {OutboxMessageStatus.New:D} OR ""{cStatus}"" = {OutboxMessageStatus.Failed:D})
+                          AND (""{cLockId}"" IS NULL OR ""{cLockExpirationTimeUtc}"" IS NULL OR ""{cLockExpirationTimeUtc}"" < CURRENT_TIMESTAMP)
+                          AND CURRENT_TIMESTAMP >= ""{cStartAtUtc}""
+                        ORDER BY ""{cScheduledStartIndexing}""
+                        LIMIT {_outboxOptions.MessagesToProcess}
+                        FOR UPDATE SKIP LOCKED;";
+                return sql;
+            }
+
+            throw new NotSupportedException($"Provider {providerName}, not supported by GenerateSpecificSql()");
         }
     }
 }

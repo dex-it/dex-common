@@ -57,7 +57,7 @@ namespace Dex.Cap.Outbox
 
         protected abstract Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken);
 
-        public abstract Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken);
+        public abstract Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken token);
 
         public abstract int GetFreeMessagesCount();
     }
