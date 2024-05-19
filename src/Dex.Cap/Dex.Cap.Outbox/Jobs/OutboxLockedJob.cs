@@ -14,7 +14,10 @@ namespace Dex.Cap.Outbox.Jobs
         internal OutboxLockedJob(OutboxEnvelope envelope)
         {
             Envelope = envelope;
-            Timeout = envelope.LockTimeout.Add(TimeSpan.FromSeconds(10));
+            Timeout = envelope.LockTimeout.Add(-TimeSpan.FromSeconds(5));
+
+            if (Timeout < TimeSpan.Zero) 
+                ArgumentOutOfRangeException.ThrowIfLessThan(Timeout, TimeSpan.FromSeconds(5));
 
             _cts = new CancellationTokenSource();
             _cts.CancelAfter(Timeout);

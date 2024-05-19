@@ -35,7 +35,7 @@ namespace Dex.Cap.Outbox
             var envelopeId = message.MessageId;
             var msgBody = _serializer.Serialize(messageType, message);
             var discriminator = _discriminator.ResolveDiscriminator(messageType);
-            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc);
+            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc, lockTimeout);
             await _outboxDataProvider.Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
 
             return message.MessageId;

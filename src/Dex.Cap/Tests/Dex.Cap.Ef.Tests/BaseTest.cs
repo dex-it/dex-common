@@ -54,10 +54,11 @@ namespace Dex.Cap.Ef.Tests
             });
         }
 
+        protected static TestDbContext GetDb(IServiceProvider sp) => sp.GetRequiredService<TestDbContext>();
+
         protected static async Task SaveChanges(IServiceProvider sp)
         {
-            var db = sp.GetRequiredService<TestDbContext>();
-            await db.SaveChangesAsync();
+            await GetDb(sp).SaveChangesAsync();
         }
     }
 }

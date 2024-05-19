@@ -19,6 +19,12 @@ namespace Dex.Cap.Outbox.Models
             ArgumentException.ThrowIfNullOrEmpty(messageType);
             ArgumentException.ThrowIfNullOrEmpty(content);
 
+            if (lockTimeout.HasValue)
+                ArgumentOutOfRangeException.ThrowIfLessThan(lockTimeout.Value, TimeSpan.FromSeconds(10));
+
+            if (startAtUtc.HasValue)
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(startAtUtc.Value, DateTime.UtcNow);
+
             Id = id;
             CorrelationId = correlationId;
             Status = OutboxMessageStatus.New;

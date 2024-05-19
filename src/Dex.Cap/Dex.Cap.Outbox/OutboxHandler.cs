@@ -105,6 +105,7 @@ namespace Dex.Cap.Outbox
                 // Истекло время аренды блокировки.
             {
                 _logger.LogError(LockTimeoutMessage, job.Envelope.Id);
+                await _dataProvider.JobFail(job, default, "Lock is expired").ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested && cancellationToken.IsCancellationRequested)
                 // Пользователь запросил отмену.
@@ -116,12 +117,12 @@ namespace Dex.Cap.Outbox
             catch (OutboxException ex)
             {
                 _logger.LogError(ex, "EnvelopeID: {MessageId} ", job.Envelope.Id);
-                await _dataProvider.JobFail(job, cancellationToken, ex.Message).ConfigureAwait(false);
+                await _dataProvider.JobFail(job, default, ex.Message).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process {MessageId}", job.Envelope.Id);
-                await _dataProvider.JobFail(job, cancellationToken, ex.Message, ex).ConfigureAwait(false);
+                await _dataProvider.JobFail(job, default, ex.Message, ex).ConfigureAwait(false);
             }
         }
 

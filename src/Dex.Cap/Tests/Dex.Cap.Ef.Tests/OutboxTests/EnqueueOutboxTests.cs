@@ -9,6 +9,7 @@ using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
+using Dex.Extensions;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -283,6 +284,52 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             Assert.AreEqual(expectedStatus, envelope.Status);
 
             Assert.AreEqual(expectedCount, count);
+        }
+
+        [Test]
+        public Task LockTimeoutExceededProcessingTimeTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+
+            var correlationId = Guid.NewGuid();
+            var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
+
+            Assert.CatchAsync<ArgumentOutOfRangeException>(async () =>
+            {
+                // LockTimeout must be greater 10sec
+                await outboxService.EnqueueAsync(correlationId, command, lockTimeout: 9.Seconds());
+            });
+
+            return Task.CompletedTask;
+        }
+
+        [Test]
+        public async Task LargeProcessingTimeLockTimeoutExceededTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+
+            var correlationId = Guid.NewGuid();
+            var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
+            // реальное время на выполнение будет 10-5=5сек, 5сек - отведено на завершение операции и нивилирование конкуренции
+            var id = await outboxService.EnqueueAsync(correlationId, command, lockTimeout: 10.Seconds());
+            await SaveChanges(sp);
+
+            // run
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            var e = await GetDb(sp).Set<OutboxEnvelope>().FindAsync(id);
+            Assert.AreEqual(1, e.Retries);
+            Assert.AreEqual(OutboxMessageStatus.Failed, e.Status);
         }
     }
 }

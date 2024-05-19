@@ -295,7 +295,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             sw.Stop();
 
             Assert.AreEqual(num, threads.Distinct().Count());
-            Assert.LessOrEqual(1, (int)sw.Elapsed.TotalSeconds);
+            Assert.LessOrEqual((int)sw.Elapsed.TotalSeconds, 1);
 
             return;
 
