@@ -13,8 +13,6 @@ namespace Dex.Cap.Ef.Tests
     {
         protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
 
-        protected int MessageToProcessLimit { get; } = 10;
-
         [SetUp]
         public virtual async Task Setup()
         {
@@ -31,7 +29,7 @@ namespace Dex.Cap.Ef.Tests
             await db.Database.EnsureDeletedAsync();
         }
 
-        protected IServiceCollection InitServiceCollection()
+        protected IServiceCollection InitServiceCollection(int messageToProcessLimit = 10)
         {
             var serviceCollection = new ServiceCollection();
             AddLogging(serviceCollection);
@@ -41,7 +39,7 @@ namespace Dex.Cap.Ef.Tests
                 .AddOutbox<TestDbContext, TestDiscriminator>()
                 .AddOnceExecutor<TestDbContext>()
                 .AddOptions<OutboxOptions>()
-                .Configure(options => options.MessagesToProcess = MessageToProcessLimit);
+                .Configure(options => options.MessagesToProcess = messageToProcessLimit);
 
             return serviceCollection;
         }
