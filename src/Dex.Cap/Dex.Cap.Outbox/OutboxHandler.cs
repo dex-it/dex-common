@@ -74,6 +74,7 @@ namespace Dex.Cap.Outbox
                     finally
                     {
                         _logger.LogDebug("Outbox processor completed");
+                        job.Dispose();
                     }
                 }
             }
@@ -155,7 +156,7 @@ namespace Dex.Cap.Outbox
             {
                 if (msg is not EmptyOutboxMessage)
                 {
-                    await ProcessOutboxMessageCore(outboxMessage, cancellationToken).ConfigureAwait(false);
+                    await ProcessOutboxMessageScoped(outboxMessage, cancellationToken).ConfigureAwait(false);
                 }
 
                 await _dataProvider.JobSucceed(job, cancellationToken).ConfigureAwait(false);
@@ -167,7 +168,7 @@ namespace Dex.Cap.Outbox
             }
         }
 
-        private async Task ProcessOutboxMessageCore(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
+        private async Task ProcessOutboxMessageScoped(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var handlerFactory = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();

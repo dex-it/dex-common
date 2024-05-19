@@ -10,10 +10,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler
     {
         public static IServiceCollection RegisterOutboxScheduler(this IServiceCollection services, int periodSeconds = 30, int cleanupDays = 30)
         {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
+            ArgumentNullException.ThrowIfNull(services);
 
             if (periodSeconds <= 0)
             {
@@ -24,15 +21,16 @@ namespace Dex.Cap.Outbox.AspNetScheduler
             {
                 throw new ArgumentOutOfRangeException(nameof(cleanupDays), cleanupDays, "Should be a positive number");
             }
-            
+
             services.AddHealthChecks()
                 .AddCheck<OutboxHealthCheck>("outbox-scheduler");
 
             services
-                .AddSingleton(new OutboxHandlerOptions()
+                .AddSingleton(new OutboxHandlerOptions
                 {
                     Period = TimeSpan.FromSeconds(periodSeconds),
-                    CleanupOlderThan = TimeSpan.FromDays(cleanupDays)
+                    CleanupOlderThan = TimeSpan.FromDays(cleanupDays),
+                    CleanupInterval = TimeSpan.FromHours(1)
                 })
                 .AddScoped<IOutboxCleanerHandler, OutboxCleanerHandler>()
                 .AddHostedService<OutboxHandlerBackgroundService>()

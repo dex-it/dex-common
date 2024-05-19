@@ -13,31 +13,37 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class ConcurrencyOutboxTests : BaseTest
     {
-        [Test]
-        public async Task MultipleOutboxHandlersRunTest()
+        [TestCase(1, 10)]
+        [TestCase(1, 10)]
+        [TestCase(10, 10)]
+        [TestCase(1, 1000)]
+        [TestCase(10, 1000)]
+        public async Task MultipleOutboxHandlersRunTest(int messageLimitProcess, int messageCount)
         {
-            var sp = InitServiceCollection()
+            var sp = InitServiceCollection(messageLimitProcess)
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
             var count = 0;
-            const int expected = 4;
+            TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
+
+            // init messages before 
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 1" });
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 3" });
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 2" });
             await SaveChanges(sp);
 
-            TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-
+            // run handlers
+            const int handlerCount = 16;
             var tasks = new List<Task>();
-            for (var i = 0; i < 30; i++)
+            for (var i = 0; i < handlerCount; i++)
             {
                 tasks.Add(Task.Run(async () =>
                 {
                     using var scope = sp.CreateScope();
                     var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
-                    while (count < expected)
+                    while (count < messageCount)
                     {
                         await handler.ProcessAsync();
                         await Task.Delay(50);
@@ -47,10 +53,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 Thread.Sleep(2);
             }
 
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 2" });
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 4" });
+            // add extra messages
+            for (var i = 2; i < messageCount; i++)
+            {
+                await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - " + i });
+            }
+
             await SaveChanges(sp);
 
+            // wait for complete
             Task.WaitAll(tasks.ToArray());
 
             TestContext.WriteLine("TestCompleted:" + count);
@@ -58,7 +69,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
             var envelopes = db.Set<OutboxEnvelope>().ToArray();
             Assert.IsTrue(envelopes.All(x => x.Status == OutboxMessageStatus.Succeeded && x.Retries == 1));
-            Assert.AreEqual(expected, count);
+            Assert.AreEqual(messageCount, count);
         }
     }
 }
