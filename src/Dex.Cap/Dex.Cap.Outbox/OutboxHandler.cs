@@ -149,6 +149,8 @@ namespace Dex.Cap.Outbox
         /// <exception cref="DiscriminatorResolveTypeException"/>
         private async Task ProcessJobCore(IOutboxLockedJob job, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var messageType = _discriminator.ResolveType(job.Envelope.MessageType);
             var msg = _serializer.Deserialize(messageType, job.Envelope.Content);
             _logger.LogDebug("Message to processed: {Message}", msg);
@@ -171,6 +173,8 @@ namespace Dex.Cap.Outbox
 
         private async Task ProcessOutboxMessageScoped(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             using var scope = _serviceProvider.CreateScope();
             var handlerFactory = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandlerFactory>();
             var handler = handlerFactory.GetMessageHandler(outboxMessage);

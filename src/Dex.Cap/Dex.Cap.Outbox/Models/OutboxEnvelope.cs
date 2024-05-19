@@ -23,7 +23,7 @@ namespace Dex.Cap.Outbox.Models
                 ArgumentOutOfRangeException.ThrowIfLessThan(lockTimeout.Value, TimeSpan.FromSeconds(10));
 
             if (startAtUtc.HasValue)
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(startAtUtc.Value, DateTime.UtcNow);
+                ArgumentOutOfRangeException.ThrowIfLessThan(startAtUtc.Value, DateTime.UtcNow.AddHours(-1));
 
             Id = id;
             CorrelationId = correlationId;

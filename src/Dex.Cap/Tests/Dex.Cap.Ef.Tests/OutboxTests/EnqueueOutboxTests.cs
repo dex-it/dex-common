@@ -286,8 +286,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             Assert.AreEqual(expectedCount, count);
         }
 
-        [Test]
-        public Task LockTimeoutExceededProcessingTimeTest()
+        [Test(Description = "Нельзя задать LockTimeout меньше 10сек")]
+        public Task CantSetLockTimeoutLess10SecTest()
         {
             var sp = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
@@ -307,7 +307,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             return Task.CompletedTask;
         }
 
-        [Test]
+        [Test(Description = "Сообщение не может быть обработанно, т.к. на него нужно больше времени чем предусматривает LockTimeout")]
         public async Task LargeProcessingTimeLockTimeoutExceededTest()
         {
             var sp = InitServiceCollection()
@@ -330,6 +330,41 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var e = await GetDb(sp).Set<OutboxEnvelope>().FindAsync(id);
             Assert.AreEqual(1, e.Retries);
             Assert.AreEqual(OutboxMessageStatus.Failed, e.Status);
+        }
+
+        [Test(Description = "Обработка нескольких сообщений общей продолжительностью больше чем LockTimeout, " +
+                            "приведет к отмене обработки задач за пределами кванта времени")]
+        public async Task LargeProcessingTimeSeveralMessagesTest()
+        {
+            var sp = InitServiceCollection(5)
+                .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+
+            var correlationId = Guid.NewGuid();
+            var id1 = await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = "delay test-1", DelayMsec = 2_000 },
+                lockTimeout: 10.Seconds());
+            var id2 = await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = "delay test-2", DelayMsec = 2_000 },
+                lockTimeout: 10.Seconds());
+            var id3 = await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = "delay test-3", DelayMsec = 5_000 },
+                lockTimeout: 10.Seconds());
+            await SaveChanges(sp);
+
+            // run
+            var sw = Stopwatch.StartNew();
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            var envelopes = await GetDb(sp).Set<OutboxEnvelope>().ToArrayAsync();
+
+            Assert.AreEqual(OutboxMessageStatus.Succeeded, envelopes.First(x => x.Id == id1).Status);
+            Assert.AreEqual(OutboxMessageStatus.Succeeded, envelopes.First(x => x.Id == id2).Status);
+            Assert.AreEqual(OutboxMessageStatus.Failed, envelopes.First(x => x.Id == id3).Status);
+
+            // проверяем что обработка закончилась сразу по прошествии LockTimeout для всех выбранных сообщений
+            Assert.Less(sw.Elapsed, TimeSpan.FromSeconds(2 + 2 + 5));
         }
     }
 }
