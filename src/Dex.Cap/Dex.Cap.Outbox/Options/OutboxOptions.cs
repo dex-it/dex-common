@@ -16,7 +16,7 @@ namespace Dex.Cap.Outbox.Options
         
         /// <summary>
         /// Count of messages, fetched and locked by the OutboxHandler from database, by the one cycle
-        /// Please note that the time to process all selected messages will begin from the moment they are selected.
+        /// Please note that the time to process ALL selected messages will begin from the moment they are selected.
         /// </summary>
         public int MessagesToProcess { get; set; } = 1;
     }
