@@ -88,36 +88,29 @@ namespace Dex.Cap.Outbox.Ef
 
         public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
         {
-            return dbContext.Database.CreateExecutionStrategy()
-                .ExecuteAsync(async () =>
+            var lockId = Guid.NewGuid(); // Ключ идемпотентности.
+            return dbContext.ExecuteInTransactionScopeAsync(new { LockId = lockId }, async (state, token) =>
                 {
-                    await using var t = await dbContext.Database
-                        .BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted, cancellationToken)
-                        .ConfigureAwait(false);
-
                     var fetched = await dbContext.Set<OutboxEnvelope>()
                         .FromSqlRaw(GenerateSpecificSql())
-                        .ToArrayAsync(cancellationToken)
+                        .ToArrayAsync(token)
                         .ConfigureAwait(false);
 
                     if (fetched.Length == 0) return fetched;
 
-                    var lockId = Guid.NewGuid(); // Ключ идемпотентности.
                     var dbTime = await dbContext.Set<OutboxEnvelope>()
-                        .Select(_ => new { UtcNow = DateTime.UtcNow })
-                        .FirstAsync(cancellationToken)
+                        .Select(_ => new { DateTime.UtcNow })
+                        .FirstAsync(token)
                         .ConfigureAwait(false);
 
                     foreach (var envelope in fetched)
                     {
-                        envelope.LockId = lockId;
+                        envelope.LockId = state.LockId;
                         envelope.LockExpirationTimeUtc = DateTime.SpecifyKind(dbTime.UtcNow + envelope.LockTimeout, DateTimeKind.Utc);
                     }
 
-                    await dbContext.SaveChangesAsync(cancellationToken)
+                    await dbContext.SaveChangesAsync(token)
                         .ConfigureAwait(false);
-
-                    await t.CommitAsync(cancellationToken).ConfigureAwait(false);
 
                     foreach (var envelope in fetched)
                     {
@@ -125,7 +118,12 @@ namespace Dex.Cap.Outbox.Ef
                     }
 
                     return fetched;
-                });
+                },
+                (state, token) => dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.CorrelationId == state.LockId, token),
+                TransactionScopeOption.RequiresNew,
+                IsolationLevel.ReadCommitted,
+                20,
+                cancellationToken: cancellationToken);
         }
 
         public override async Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
