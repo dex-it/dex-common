@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Options;
+using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -29,17 +30,22 @@ namespace Dex.Cap.Ef.Tests
             await db.Database.EnsureDeletedAsync();
         }
 
-        protected IServiceCollection InitServiceCollection(int messageToProcessLimit = 10)
+        protected IServiceCollection InitServiceCollection(int messageToProcessLimit = 10, int parallelLimit = 2,
+            Action<OutboxRetryStrategyConfigurator>? strategyConfigure = null)
         {
             var serviceCollection = new ServiceCollection();
             AddLogging(serviceCollection);
 
             serviceCollection
                 .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext, TestDiscriminator>()
+                .AddOutbox<TestDbContext, TestDiscriminator>((provider, configurator) => { strategyConfigure?.Invoke(configurator); })
                 .AddOnceExecutor<TestDbContext>()
                 .AddOptions<OutboxOptions>()
-                .Configure(options => options.MessagesToProcess = messageToProcessLimit);
+                .Configure(options =>
+                {
+                    options.MessagesToProcess = messageToProcessLimit;
+                    options.ConcurrencyLimit = parallelLimit;
+                });
 
             return serviceCollection;
         }

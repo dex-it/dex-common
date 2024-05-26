@@ -13,7 +13,7 @@ namespace Dex.Cap.Outbox.Ef.Extensions
             where TDbContext : DbContext
             where TDiscriminator : class, IOutboxTypeDiscriminator
         {
-            if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
+            ArgumentNullException.ThrowIfNull(serviceProvider);
 
             serviceProvider
                 .AddSingleton<IOutboxTypeDiscriminator, TDiscriminator>()
@@ -22,6 +22,7 @@ namespace Dex.Cap.Outbox.Ef.Extensions
                 .AddScoped<IOutboxService<TDbContext>, OutboxService<TDbContext>>()
                 .AddScoped<IOutboxService>(provider => provider.GetRequiredService<IOutboxService<TDbContext>>())
                 .AddScoped<IOutboxHandler, OutboxHandler<TDbContext>>()
+                .AddScoped<IOutboxJobHandler, OutboxJobHandler<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
                 .AddScoped<IOutboxDataProvider<TDbContext>, OutboxDataProviderEf<TDbContext>>()
                 .AddScoped<IOutboxDataProvider>(provider => provider.GetRequiredService<IOutboxDataProvider<TDbContext>>())

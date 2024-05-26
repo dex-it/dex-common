@@ -13,13 +13,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class ConcurrencyOutboxTests : BaseTest
     {
-        [TestCase(1, 10)]
-        [TestCase(10, 10)]
-        [TestCase(1, 1000)]
-        [TestCase(10, 1000)]
-        public async Task MultipleOutboxHandlersRunTest(int messageLimitProcess, int messageCount)
+        [TestCase(1, 1, 10)]
+        [TestCase(10, 1, 10)]
+        [TestCase(1, 1, 1000)]
+        [TestCase(1, 10, 1000)]
+        [TestCase(10, 10, 1000)]
+        [TestCase(100, 10, 1000)]
+        public async Task MultipleOutboxHandlersRunTest(int messageLimitProcess, int concurrentLimit, int messageCount)
         {
-            var sp = InitServiceCollection(messageLimitProcess)
+            var sp = InitServiceCollection(messageLimitProcess, concurrentLimit)
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
