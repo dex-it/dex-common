@@ -92,7 +92,7 @@ namespace Dex.Cap.Outbox.Ef
                 .ExecuteAsync(async () =>
                 {
                     await using var t = await dbContext.Database
-                        .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, cancellationToken)
+                        .BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted, cancellationToken)
                         .ConfigureAwait(false);
 
                     var fetched = await dbContext.Set<OutboxEnvelope>()

@@ -14,6 +14,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
     public class ConcurrencyOutboxTests : BaseTest
     {
         [TestCase(1, 1, 10)]
+        [TestCase(1, 1, 100)]
         [TestCase(10, 1, 10)]
         [TestCase(1, 1, 1000)]
         [TestCase(1, 10, 1000)]
