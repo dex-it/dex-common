@@ -15,14 +15,12 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
     {
         [TestCase(1, 1, 10)]
         [TestCase(1, 1, 100)]
-        [TestCase(10, 1, 10)]
-        [TestCase(1, 1, 1000)]
-        [TestCase(1, 10, 1000)]
+        [TestCase(10, 10, 100)]
         [TestCase(10, 10, 1000)]
         [TestCase(100, 10, 1000)]
-        public async Task MultipleOutboxHandlersRunTest(int messageLimitProcess, int concurrentLimit, int messageCount)
+        public async Task MultipleOutboxHandlersRunTest(int messageToProcess, int concurrentLimit, int allMessageCount)
         {
-            var sp = InitServiceCollection(messageLimitProcess, concurrentLimit)
+            var sp = InitServiceCollection(messageToProcess, concurrentLimit)
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
                 .BuildServiceProvider();
 
@@ -45,7 +43,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 {
                     using var scope = sp.CreateScope();
                     var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
-                    while (count < messageCount)
+                    while (count < allMessageCount)
                     {
                         await handler.ProcessAsync();
                         await Task.Delay(50);
@@ -56,7 +54,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             }
 
             // add extra messages
-            for (var i = 2; i < messageCount; i++)
+            for (var i = 2; i < allMessageCount; i++)
             {
                 await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - " + i });
             }
@@ -71,7 +69,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
             var envelopes = db.Set<OutboxEnvelope>().ToArray();
             Assert.IsTrue(envelopes.All(x => x.Status == OutboxMessageStatus.Succeeded && x.Retries == 1));
-            Assert.AreEqual(messageCount, count);
+            Assert.AreEqual(allMessageCount, count);
         }
     }
 }

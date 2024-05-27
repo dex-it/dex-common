@@ -21,7 +21,7 @@ namespace Dex.Cap.Outbox.Options
         public int MessagesToProcess { get; set; } = 1;
 
         /// <summary>
-        /// Degree of parallel executions
+        /// Degree of parallel executions. Recommendation ConcurrencyLimit must be <= MessagesToProcess.
         /// </summary>
         public int ConcurrencyLimit { get; set; } = 1;
     }
