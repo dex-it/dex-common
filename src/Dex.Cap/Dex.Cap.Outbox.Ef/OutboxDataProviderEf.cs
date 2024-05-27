@@ -24,7 +24,7 @@ namespace Dex.Cap.Outbox.Ef
         IOutboxRetryStrategy retryStrategy) : BaseOutboxDataProvider<TDbContext>(retryStrategy)
         where TDbContext : DbContext
     {
-        private readonly OutboxOptions _outboxOptions = outboxOptions.Value;
+        private OutboxOptions Options => outboxOptions.Value;
 
         public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
@@ -122,7 +122,7 @@ namespace Dex.Cap.Outbox.Ef
                 (state, token) => dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.CorrelationId == state.LockId, token),
                 TransactionScopeOption.RequiresNew,
                 IsolationLevel.ReadCommitted,
-                20,
+                (uint)Options.GetFreeMessagesTimeout.TotalSeconds,
                 cancellationToken: cancellationToken);
         }
 
@@ -134,7 +134,7 @@ namespace Dex.Cap.Outbox.Ef
         public override int GetFreeMessagesCount()
         {
             return dbContext.Set<OutboxEnvelope>()
-                .Count(o => o.Retries < _outboxOptions.Retries && o.Status != OutboxMessageStatus.Succeeded);
+                .Count(o => o.Retries < Options.Retries && o.Status != OutboxMessageStatus.Succeeded);
         }
 
 
@@ -220,12 +220,12 @@ namespace Dex.Cap.Outbox.Ef
                         SELECT * 
                         FROM {NameConst.SchemaName}.{NameConst.TableName}
                         WHERE ""{cScheduledStartIndexing}"" IS NOT NULL
-                          AND ""{cRetries}"" < {_outboxOptions.Retries}
+                          AND ""{cRetries}"" < {Options.Retries}
                           AND (""{cStatus}"" = {OutboxMessageStatus.New:D} OR ""{cStatus}"" = {OutboxMessageStatus.Failed:D})
                           AND (""{cLockId}"" IS NULL OR ""{cLockExpirationTimeUtc}"" IS NULL OR ""{cLockExpirationTimeUtc}"" < CURRENT_TIMESTAMP)
                           AND CURRENT_TIMESTAMP >= ""{cStartAtUtc}""
                         ORDER BY ""{cScheduledStartIndexing}""
-                        LIMIT {_outboxOptions.MessagesToProcess}
+                        LIMIT {Options.MessagesToProcess}
                         FOR UPDATE SKIP LOCKED;";
                 return sql;
             }

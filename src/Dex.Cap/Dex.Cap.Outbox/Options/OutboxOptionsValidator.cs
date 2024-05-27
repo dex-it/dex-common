@@ -17,14 +17,24 @@ namespace Dex.Cap.Outbox.Options
                 return ValidateOptionsResult.Fail("Retries should be greater than 0 and less than 10000");
             }
 
-            if (options.ProcessorDelay < TimeSpan.FromSeconds(1) || options.ProcessorDelay > TimeSpan.FromHours(1))
+            if (options.MessagesToProcess is <= 0 or > 100)
             {
-                return ValidateOptionsResult.Fail("ProcessorDelay should be greater or equal 1 second and less than 1 hour");
+                return ValidateOptionsResult.Fail("MessagesToProcess should be greater than 0 and less than 100");
             }
 
-            if (options.MessagesToProcess is <= 0 or > 10_000)
+            if (options.ConcurrencyLimit is <= 0 or > 100)
             {
-                return ValidateOptionsResult.Fail("MessagesToProcess should be greater than 0 and less than 10_000");
+                return ValidateOptionsResult.Fail("ConcurrencyLimit should be greater than 0 and less than 100");
+            }
+
+            if (options.ConcurrencyLimit > options.MessagesToProcess)
+            {
+                return ValidateOptionsResult.Fail("ConcurrencyLimit can't be greater than MessagesToProcess");
+            }
+
+            if (options.GetFreeMessagesTimeout < TimeSpan.FromSeconds(1))
+            {
+                return ValidateOptionsResult.Fail("GetFreeMessagesTimeout can't be less 1 second");
             }
 
             return ValidateOptionsResult.Success;

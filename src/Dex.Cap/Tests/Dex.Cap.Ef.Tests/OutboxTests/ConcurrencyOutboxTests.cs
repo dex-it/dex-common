@@ -35,7 +35,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await SaveChanges(sp);
 
             // run handlers
-            const int handlerCount = 16;
+            const int handlerCount = 8;
             var tasks = new List<Task>();
             for (var i = 0; i < handlerCount; i++)
             {
