@@ -42,7 +42,7 @@ namespace Dex.Cap.Outbox.Models
         [Key] public Guid Id { get; set; }
 
         /// <summary>
-        /// Полное имя типа сообщения, AssemblyQualifiedName.
+        /// Тип сообщения
         /// </summary>
         [Required]
         public string MessageType { get; set; }
