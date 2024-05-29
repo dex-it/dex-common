@@ -26,7 +26,7 @@ internal class OutboxJobHandler<TDbContext>(
     IOutboxTypeDiscriminator discriminator,
     IOutboxMessageHandlerFactory handlerFactory,
     TDbContext dbContext,
-    ILogger<OutboxHandler<TDbContext>> logger) : IOutboxJobHandler
+    ILogger<OutboxJobHandler<TDbContext>> logger) : IOutboxJobHandler
     where TDbContext : DbContext
 {
     private const string LockTimeoutMessage = "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}";

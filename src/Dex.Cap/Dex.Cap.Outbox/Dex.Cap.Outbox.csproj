@@ -34,7 +34,7 @@
 
     <ItemGroup>
         <Compile Remove="Outbox\Neo4j\**"/>
-        <Compile Update="OutboxHandler.cs">
+        <Compile Update="MainLoopOutboxHandler.cs">
             <DependentUpon>IOutboxHandler.cs</DependentUpon>
         </Compile>
         <Compile Update="OutboxService.cs">

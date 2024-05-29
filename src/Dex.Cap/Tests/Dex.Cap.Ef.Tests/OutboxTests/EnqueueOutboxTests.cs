@@ -127,7 +127,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 await Task.Delay(100);
             }
 
-            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var dbContext = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
             var envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(2, envelope.Retries);
             Assert.AreEqual(OutboxMessageStatus.Succeeded, envelope.Status);
@@ -156,7 +156,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // assert
-            var db = sp.GetRequiredService<TestDbContext>();
+            var scope = sp.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
             var envelopes = await db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).ToArrayAsync();
 
             var failed = envelopes.Single(x => x.Status == OutboxMessageStatus.Failed);
@@ -279,7 +280,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 await Task.Delay(100);
             }
 
-            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var dbContext = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
             var envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(expectedStatus, envelope.Status);
 
@@ -327,7 +328,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            var e = await GetDb(sp).Set<OutboxEnvelope>().FindAsync(id);
+            using var scope = sp.CreateScope();
+            var e = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FindAsync(id);
             Assert.AreEqual(1, e.Retries);
             Assert.AreEqual(OutboxMessageStatus.Failed, e.Status);
         }
@@ -357,7 +359,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            var envelopes = await GetDb(sp).Set<OutboxEnvelope>().ToArrayAsync();
+            using var scope = sp.CreateScope();
+            var envelopes = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().ToArrayAsync();
 
             Assert.AreEqual(OutboxMessageStatus.Succeeded, envelopes.First(x => x.Id == id1).Status);
             Assert.AreEqual(OutboxMessageStatus.Succeeded, envelopes.First(x => x.Id == id2).Status);

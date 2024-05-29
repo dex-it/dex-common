@@ -52,7 +52,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            using var scope = sp.CreateScope();
+            envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(OutboxMessageStatus.Succeeded, envelope.Status);
         }
 
@@ -88,7 +89,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            using var scope = sp.CreateScope();
+            envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(OutboxMessageStatus.Failed, envelope.Status);
         }
 

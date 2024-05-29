@@ -46,7 +46,10 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 await Task.Delay(100);
             }
 
-            var envelope = await GetDb(serviceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            // check
+
+            using var scope = serviceProvider.CreateScope();
+            var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(expectedStatus, envelope.Status);
             Assert.AreEqual(expectedCount, count);
         }

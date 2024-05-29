@@ -66,9 +66,12 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             TestContext.WriteLine("TestCompleted:" + count);
 
-            var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
+            // check
+
+            using var scope = sp.CreateScope();
+            var db = GetDb(scope.ServiceProvider);
             var envelopes = db.Set<OutboxEnvelope>().ToArray();
-            Assert.IsTrue(envelopes.All(x => x.Status == OutboxMessageStatus.Succeeded && x.Retries == 1));
+            Assert.IsTrue(envelopes.All(x => x is { Status: OutboxMessageStatus.Succeeded, Retries: 1 }));
             Assert.AreEqual(allMessageCount, count);
         }
     }

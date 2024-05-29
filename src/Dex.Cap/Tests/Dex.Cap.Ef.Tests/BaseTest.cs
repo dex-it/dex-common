@@ -12,7 +12,7 @@ namespace Dex.Cap.Ef.Tests
 {
     public abstract class BaseTest
     {
-        protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
+        protected string DbName { get; } = "db_test_" + DateTime.Now.Ticks;
 
         [SetUp]
         public virtual async Task Setup()
@@ -60,7 +60,10 @@ namespace Dex.Cap.Ef.Tests
             });
         }
 
-        protected static TestDbContext GetDb(IServiceProvider sp) => sp.GetRequiredService<TestDbContext>();
+        protected static TestDbContext GetDb(IServiceProvider sp)
+        {
+            return sp.GetRequiredService<TestDbContext>();
+        }
 
         protected static async Task SaveChanges(IServiceProvider sp)
         {
