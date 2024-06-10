@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MediatR" Version="12.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Audit.Contracts\Dex.Audit.Contracts.csproj" />
+      <ProjectReference Include="..\Dex.Audit.Domain\Dex.Audit.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
