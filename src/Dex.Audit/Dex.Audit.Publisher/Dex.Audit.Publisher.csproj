@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Audit.Contracts\Dex.Audit.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dex.Extensions" Version="1.0.30" />
+      <PackageReference Include="Dex.MassTransit" Version="1.2.30" />
+      <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.4" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
+      <PackageReference Include="StackExchange.Redis.Extensions.AspNetCore" Version="10.2.0" />
+    </ItemGroup>
+
+</Project>
