@@ -1,4 +1,4 @@
-namespace Dex.Audit.Domain.Models.AuditEvent;
+namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
 /// Информация о получателе объекта события аудита.

@@ -1,5 +1,3 @@
-using Dex.Audit.Domain.Enums;
-
 namespace Dex.Audit.Contracts.Messages;
 
 /// <summary>
@@ -10,7 +8,7 @@ public class AuditEventBaseInfo
     /// <summary>
     /// Тип события аудита
     /// </summary>
-    public AuditEventType EventType { get; }
+    public string EventType { get; }
 
     /// <summary>
     /// Объект сообщения аудита
@@ -34,7 +32,7 @@ public class AuditEventBaseInfo
     /// <param name="eventObject">Объект события аудита</param>
     /// <param name="message">Текст сообщения о событии</param>
     /// <param name="success">Результат (успех/отказ) действия</param>
-    public AuditEventBaseInfo(AuditEventType eventType, string? eventObject, string? message, bool success)
+    public AuditEventBaseInfo(string eventType, string? eventObject, string? message, bool success)
     {
         EventType = eventType;
         EventObject = eventObject;

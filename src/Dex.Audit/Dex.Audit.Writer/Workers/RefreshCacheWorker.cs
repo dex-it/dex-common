@@ -1,4 +1,4 @@
-using Dex.Audit.Domain.Models;
+using Dex.Audit.Domain.Entities;
 using Dex.Audit.Persistence;
 using Dex.Audit.Writer.Options;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +69,7 @@ internal sealed class RefreshCacheWorker : BackgroundService
 
         foreach (AuditSettings setting in auditSettings)
         {
-            await redisDatabase.AddAsync(setting.EventType.ToString(), setting, refreshInterval);
+            await redisDatabase.AddAsync(setting.EventType, setting, refreshInterval);
         }
 
         _logger.LogInformation("Кэш успешно обновлен");
