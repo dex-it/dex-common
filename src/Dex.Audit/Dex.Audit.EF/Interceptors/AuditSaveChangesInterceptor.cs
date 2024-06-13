@@ -1,12 +1,13 @@
+using Dex.Audit.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Dex.Audit.Publisher.Interceptors;
+namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
 /// Интерсептор аудита, отвечающий за перехват изменений контекста базы данных и отправку записей аудита
 /// </summary>
-public class AuditSaveChangesInterceptor : SaveChangesInterceptor
+internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
 {
     private readonly IInterceptionAndSendingEntriesService _interceptionAndSendingEntriesService;
 
@@ -20,7 +21,22 @@ public class AuditSaveChangesInterceptor : SaveChangesInterceptor
     }
 
     /// <inheritdoc/>
-    public async override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData,
+    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+    {
+        _interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
+        return base.SavingChanges(eventData, result);
+    }
+
+    /// <inheritdoc/>
+    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result,
+        CancellationToken cancellationToken = default)
+    {
+        _interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
+        return base.SavingChangesAsync(eventData, result, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData,
         int result,
         CancellationToken cancellationToken = default)
     {
@@ -42,14 +58,6 @@ public class AuditSaveChangesInterceptor : SaveChangesInterceptor
         }
 
         await base.SaveChangesFailedAsync(eventData, cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result,
-        CancellationToken cancellationToken = default)
-    {
-        _interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
-        return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
     private static bool CheckTransaction(DbContext? dbContext)

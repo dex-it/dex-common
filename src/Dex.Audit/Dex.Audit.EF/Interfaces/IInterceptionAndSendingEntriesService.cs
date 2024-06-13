@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace Dex.Audit.Publisher.Interceptors;
+namespace Dex.Audit.EF.Interfaces;
 
 /// <summary>
 /// Представляет сервис для перехвата и отправки записей аудита.
