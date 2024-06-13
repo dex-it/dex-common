@@ -1,12 +1,13 @@
 using System.Text;
 using Dex.Audit.Contracts.Interfaces;
 using Dex.Audit.Contracts.Messages;
+using Dex.Audit.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.Audit.Publisher.Interceptors;
+namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
 /// Сервис для перехвата и отправки записей аудита.

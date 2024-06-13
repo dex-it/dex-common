@@ -1,12 +1,13 @@
 using System.Data.Common;
+using Dex.Audit.EF.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Dex.Audit.Publisher.Interceptors;
+namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
 /// Интерсептор для перехвата коммита транзакции в базе данных
 /// </summary>
-public class AuditTransactionInterceptor : DbTransactionInterceptor
+internal class AuditTransactionInterceptor : DbTransactionInterceptor
 {
     private readonly IInterceptionAndSendingEntriesService _interceptionAndSendingEntriesService;
 
