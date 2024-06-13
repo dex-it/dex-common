@@ -161,7 +161,7 @@ public class AuditEventMessage : IConsumer
     /// <summary>
     /// Тип события аудита
     /// </summary>
-    public AuditEventType EventType { get; set; }
+    public string EventType { get; set; }
 
     /// <summary>
     /// Минимальный уровень важности события для записи, указанный на стороне источника события

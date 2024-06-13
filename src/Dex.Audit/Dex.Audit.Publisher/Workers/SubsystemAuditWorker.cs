@@ -1,7 +1,6 @@
 using System.Reflection;
 using Dex.Audit.Contracts.Interfaces;
 using Dex.Audit.Contracts.Messages;
-using Dex.Audit.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -29,7 +28,7 @@ public class SubsystemAuditWorker : IHostedService
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        return AuditSubsystemEventAsync(AuditEventType.StartSubsystem, "Начало работы подсистемы", cancellationToken);
+        return AuditSubsystemEventAsync("StartSubsystem", "Начало работы подсистемы", cancellationToken);
     }
 
     /// <summary>
@@ -38,7 +37,7 @@ public class SubsystemAuditWorker : IHostedService
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        return AuditSubsystemEventAsync(AuditEventType.ShutdownSubsystem, "Окончание работы подсистемы", cancellationToken);
+        return AuditSubsystemEventAsync("ShutdownSubsystem", "Окончание работы подсистемы", cancellationToken);
     }
 
     /// <summary>
@@ -47,7 +46,7 @@ public class SubsystemAuditWorker : IHostedService
     /// <param name="eventType">Тип события аудита</param>
     /// <param name="description">Описание события</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    private async Task AuditSubsystemEventAsync(AuditEventType eventType, string description, CancellationToken cancellationToken)
+    private async Task AuditSubsystemEventAsync(string eventType, string description, CancellationToken cancellationToken)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
         IAuditManager auditManager = scope.ServiceProvider.GetRequiredService<IAuditManager>();

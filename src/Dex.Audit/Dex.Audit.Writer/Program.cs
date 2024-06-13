@@ -1,4 +1,3 @@
-using Dex.Audit.Writer;
 using Dex.Audit.Writer.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
