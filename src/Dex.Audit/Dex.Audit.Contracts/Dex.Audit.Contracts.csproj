@@ -10,8 +10,4 @@
       <ProjectReference Include="..\Dex.Audit.Domain\Dex.Audit.Domain.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="MassTransit.Abstractions" Version="8.2.2" />
-    </ItemGroup>
-
 </Project>

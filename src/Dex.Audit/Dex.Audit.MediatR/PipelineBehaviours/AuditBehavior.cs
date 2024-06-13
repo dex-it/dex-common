@@ -39,6 +39,9 @@ public sealed class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
         try
         {
             response = await next();
+
+            await _auditManager.ProcessAuditEventAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, true),
+                cancellationToken);
         }
         catch
         {
@@ -48,9 +51,7 @@ public sealed class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
             throw;
         }
 
-        await _auditManager.ProcessAuditEventAsync(
-            new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, response.Success),
-            cancellationToken);
+        
 
         return response;
     }
