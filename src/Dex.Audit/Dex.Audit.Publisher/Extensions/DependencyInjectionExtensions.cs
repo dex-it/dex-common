@@ -1,9 +1,7 @@
 using Dex.Audit.Contracts.Interfaces;
 using Dex.Audit.Contracts.Options;
-using Dex.Audit.Publisher.Interceptors;
 using Dex.Audit.Publisher.Services;
 using Dex.Audit.Publisher.Workers;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,19 +24,6 @@ public static class DependencyInjectionExtensions
             .AddScoped<IAuditManager, AuditManager>()
             .AddScoped(typeof(IAuditEventConfigurator), typeof(TAuditEventConfigurator))
             .Configure<AuditEventOptions>(opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));
-
-        return services;
-    }
-
-    /// <summary>
-    /// Добавляет AuditInterceptor
-    /// </summary>
-    public static IServiceCollection AddAuditInterceptors(this IServiceCollection services)
-    {
-        services
-            .AddScoped<IInterceptionAndSendingEntriesService, InterceptionAndSendingEntriesService>()
-            .AddScoped<IInterceptor, AuditTransactionInterceptor>()
-            .AddScoped<IInterceptor, AuditSaveChangesInterceptor>();
 
         return services;
     }

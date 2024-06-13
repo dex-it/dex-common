@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="AutoMapper" Version="13.0.1" />
       <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0" />
+      <PackageReference Include="Serilog" Version="4.0.0" />
       <PackageReference Include="StackExchange.Redis.Extensions.Core" Version="10.2.0" />
       <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2" />
       <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2" />

@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Persistence", "De
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Writer", "Dex.Audit.Writer\Dex.Audit.Writer.csproj", "{4964558F-B31B-4379-A3C0-EFBF0F4C012F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.EF", "Dex.Audit.EF\Dex.Audit.EF.csproj", "{EBF57B76-87EE-4F95-9F53-3DA973561AA4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,9 @@ Global
 		{4964558F-B31B-4379-A3C0-EFBF0F4C012F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4964558F-B31B-4379-A3C0-EFBF0F4C012F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4964558F-B31B-4379-A3C0-EFBF0F4C012F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBF57B76-87EE-4F95-9F53-3DA973561AA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBF57B76-87EE-4F95-9F53-3DA973561AA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBF57B76-87EE-4F95-9F53-3DA973561AA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBF57B76-87EE-4F95-9F53-3DA973561AA4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
