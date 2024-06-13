@@ -5,7 +5,7 @@ using System.Reflection;
 using Dex.Audit.Contracts.Interfaces;
 using Dex.Audit.Contracts.Messages;
 using Dex.Audit.Contracts.Options;
-using Dex.Audit.Domain.Models.AuditEvent;
+using Dex.Audit.Domain.ValueObjects;
 using Microsoft.Extensions.Options;
 
 namespace Dex.Audit.Publisher.Services;
@@ -51,7 +51,7 @@ public class BaseAuditEventConfigurator : IAuditEventConfigurator
             Start = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
             SourceGmtDate = DateTime.UtcNow,
             EventType = auditEventBaseInfo.EventType,
-            EventName = auditEventBaseInfo.EventType.ToString(),
+            EventName = auditEventBaseInfo.EventType,
             EventObject = auditEventBaseInfo.EventObject,
             Message = auditEventBaseInfo.Message,
             IsSuccess = auditEventBaseInfo.Success

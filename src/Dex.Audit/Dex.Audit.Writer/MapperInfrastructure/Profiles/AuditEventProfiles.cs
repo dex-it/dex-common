@@ -1,6 +1,6 @@
 using AutoMapper;
 using Dex.Audit.Contracts.Messages;
-using Dex.Audit.Domain.Models.AuditEvent;
+using Dex.Audit.Domain.Entities;
 
 namespace Dex.Audit.Writer.MapperInfrastructure.Profiles;
 

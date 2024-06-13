@@ -1,8 +1,6 @@
 using AutoMapper;
 using Dex.Audit.Contracts.Messages;
-using Dex.Audit.Domain.Enums;
-using Dex.Audit.Domain.Models;
-using Dex.Audit.Domain.Models.AuditEvent;
+using Dex.Audit.Domain.Entities;
 using Dex.Audit.Persistence;
 using MassTransit;
 using StackExchange.Redis.Extensions.Core.Abstractions;
@@ -40,7 +38,7 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
     /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки</param>
     public async Task Consume(ConsumeContext<AuditEventMessage> context)
     {
-        AuditEventType eventType = context.Message.EventType;
+        string eventType = context.Message.EventType;
         string? sourceIp = context.Message.SourceIpAddress;
 
         _logger.LogInformation("Начало обработки сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
@@ -51,7 +49,7 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
 
             if (context.Message.AuditSettingsId is null)
             {
-                AuditSettings? auditSettings = await _redisDatabase.GetAsync<AuditSettings>(eventType.ToString());
+                AuditSettings? auditSettings = await _redisDatabase.GetAsync<AuditSettings>(eventType);
 
                 if (auditSettings is null)
                 {

@@ -1,7 +1,7 @@
 using Dex.Audit.Contracts.Interfaces;
 using Dex.Audit.Contracts.Messages;
 using Dex.Audit.Contracts.Options;
-using Dex.Audit.Domain.Models;
+using Dex.Audit.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis.Extensions.Core.Abstractions;
@@ -46,7 +46,7 @@ internal sealed class AuditManager : IAuditManager
     {
         try
         {
-            AuditSettings? auditSettings = await _redisDatabase.GetAsync<AuditSettings>(eventBaseInfo.EventType.ToString());
+            AuditSettings? auditSettings = await _redisDatabase.GetAsync<AuditSettings>(eventBaseInfo.EventType);
 
             if (auditSettings is not null && auditSettings.SeverityLevel < _auditEventOptions.MinSeverityLevel)
             {
