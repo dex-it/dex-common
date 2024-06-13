@@ -1,4 +1,6 @@
-namespace Dex.Audit.Domain.Models.AuditEvent;
+using Dex.Audit.Domain.ValueObjects;
+
+namespace Dex.Audit.Domain.Entities;
 
 /// <summary>
 /// Событие аудита.

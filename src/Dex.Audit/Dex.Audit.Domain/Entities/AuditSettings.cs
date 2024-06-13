@@ -1,6 +1,6 @@
 using Dex.Audit.Domain.Enums;
 
-namespace Dex.Audit.Domain.Models;
+namespace Dex.Audit.Domain.Entities;
 
 /// <summary>
 /// Настройки событий аудита.
@@ -15,7 +15,7 @@ public class AuditSettings
     /// <summary>
     /// Тип события.
     /// </summary>
-    public AuditEventType EventType { get; set; }
+    public string EventType { get; set; }
 
     /// <summary>
     /// Уровень важности события.

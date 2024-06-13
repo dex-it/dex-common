@@ -1,5 +1,4 @@
-﻿using Dex.Audit.Domain.Models;
-using Dex.Audit.Domain.Models.AuditEvent;
+﻿using Dex.Audit.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Audit.Persistence;

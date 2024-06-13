@@ -1,7 +1,6 @@
 using System.Text;
 using Dex.Audit.Contracts.Interfaces;
 using Dex.Audit.Contracts.Messages;
-using Dex.Audit.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -12,7 +11,7 @@ namespace Dex.Audit.Publisher.Interceptors;
 /// <summary>
 /// Сервис для перехвата и отправки записей аудита.
 /// </summary>
-internal sealed class InterceptionAndSendingEntriesService : IInterceptionAndSendingEntriesService
+public class InterceptionAndSendingEntriesService : IInterceptionAndSendingEntriesService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly List<EntryHelper> _entryHelpers = new();
@@ -57,7 +56,7 @@ internal sealed class InterceptionAndSendingEntriesService : IInterceptionAndSen
             
         foreach (EntryHelper entryHelper in _entryHelpers)
         {
-            AuditEventType eventType = GetEventType(entryHelper.State);
+            string eventType = GetEventType(entryHelper.State);
             PropertyValues currentValues = entryHelper.CurrentValues;
             PropertyValues originalValues = entryHelper.State == EntityState.Added ? currentValues : entryHelper.OriginalValues;
             string message = FormAuditMessage(entryHelper.Entry, eventType, currentValues, originalValues);
@@ -69,20 +68,20 @@ internal sealed class InterceptionAndSendingEntriesService : IInterceptionAndSen
         _entryHelpers.Clear();
     }
 
-    private AuditEventType GetEventType(EntityState entityState)
+    protected virtual string GetEventType(EntityState entityState)
     {
-        AuditEventType eventType = entityState switch
+        string eventType = entityState switch
         {
-            EntityState.Modified => AuditEventType.ObjectChanged,
-            EntityState.Added => AuditEventType.ObjectCreated,
-            EntityState.Deleted => AuditEventType.ObjectDeleted,
-            _ => AuditEventType.None
+            EntityState.Modified => "ObjectChanged",
+            EntityState.Added => "ObjectCreated",
+            EntityState.Deleted => "ObjectDeleted",
+            _ => "None"
         };
 
         return eventType;
     }
 
-    private string FormAuditMessage(object entity, AuditEventType eventType, PropertyValues currentValues, PropertyValues originalValues)
+    private string FormAuditMessage(object entity, string eventType, PropertyValues currentValues, PropertyValues originalValues)
     {
         StringBuilder messageBuilder = new();
         messageBuilder.AppendLine($"Тип события аудита: {eventType}");

@@ -1,4 +1,3 @@
-using Dex.Audit.Domain.Enums;
 using MediatR;
 
 namespace Dex.Audit.MediatR.Requests;
@@ -12,7 +11,7 @@ public interface IAuditRequest<out TResponse> : IRequest<TResponse>
     /// <summary>
     /// Тип события аудита
     /// </summary>
-    public AuditEventType EventType { get; }
+    public string EventType { get; }
 
     /// <summary>
     /// Объект события аудита

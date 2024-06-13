@@ -1,4 +1,5 @@
-using Dex.Audit.Domain.Models.AuditEvent;
+using Dex.Audit.Domain.Entities;
+using Dex.Audit.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
