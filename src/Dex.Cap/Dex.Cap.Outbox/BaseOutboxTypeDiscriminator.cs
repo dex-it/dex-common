@@ -27,7 +27,7 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
 
     public string ResolveDiscriminator(Type type)
     {
-        if (type == null) throw new ArgumentNullException(nameof(type));
+        ArgumentNullException.ThrowIfNull(type);
 
         if (!Discriminator.TryGetKey(type, out var discriminator))
         {
@@ -39,7 +39,7 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
 
     public Type ResolveType(string discriminator)
     {
-        if (discriminator == null) throw new ArgumentNullException(nameof(discriminator));
+        ArgumentNullException.ThrowIfNull(discriminator);
 
         if (!Discriminator.TryGetValue(discriminator, out var type))
         {

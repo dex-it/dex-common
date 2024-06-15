@@ -15,10 +15,7 @@ namespace Dex.Cap.Outbox
 
         public IOutboxMessageHandler GetMessageHandler(IOutboxMessage outboxMessage)
         {
-            if (outboxMessage == null)
-            {
-                throw new ArgumentNullException(nameof(outboxMessage));
-            }
+            ArgumentNullException.ThrowIfNull(outboxMessage);
 
             var type = outboxMessage.GetType();
             var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(type);

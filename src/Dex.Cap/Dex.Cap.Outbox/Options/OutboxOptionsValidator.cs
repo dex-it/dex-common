@@ -5,7 +5,7 @@ namespace Dex.Cap.Outbox.Options
 {
     public class OutboxOptionsValidator : IValidateOptions<OutboxOptions>
     {
-        public ValidateOptionsResult Validate(string name, OutboxOptions? options)
+        public ValidateOptionsResult Validate(string? name, OutboxOptions? options)
         {
             if (options == null)
             {

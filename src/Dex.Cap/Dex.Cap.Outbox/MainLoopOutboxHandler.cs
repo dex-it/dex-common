@@ -74,7 +74,7 @@ namespace Dex.Cap.Outbox
                     job.Dispose();
                     semaphore.Release();
                 }
-            });
+            }).ToArray();
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }

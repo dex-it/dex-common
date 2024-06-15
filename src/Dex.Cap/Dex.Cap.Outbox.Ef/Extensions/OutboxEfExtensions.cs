@@ -11,7 +11,7 @@ namespace Dex.Cap.Outbox.Ef.Extensions
         /// <exception cref="ArgumentNullException"></exception>
         public static void OutboxModelCreating(this ModelBuilder modelBuilder)
         {
-            if (modelBuilder == null) throw new ArgumentNullException(nameof(modelBuilder));
+            ArgumentNullException.ThrowIfNull(modelBuilder);
 
             modelBuilder.Entity<Models.OutboxEnvelope>()
                 .HasIndex(o => o.CreatedUtc);
