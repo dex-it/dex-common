@@ -9,7 +9,7 @@ namespace Dex.Cap.OnceExecutor.Ef.Extensions
         public static IServiceCollection AddOnceExecutor<TDbContext>(this IServiceCollection serviceProvider)
             where TDbContext : DbContext
         {
-            if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
+            ArgumentNullException.ThrowIfNull(serviceProvider);
 
             return serviceProvider
                 .AddScoped(typeof(IOnceExecutor<IEfOptions, TDbContext>), typeof(OnceExecutorEf<TDbContext>))
@@ -20,7 +20,7 @@ namespace Dex.Cap.OnceExecutor.Ef.Extensions
             where TDbContext : DbContext
             where TExecutionStrategy : IOnceExecutionStrategy<TArg, IEfOptions, TResult>
         {
-            if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
+            ArgumentNullException.ThrowIfNull(serviceProvider);
 
             return serviceProvider
                 .AddScoped(typeof(IOnceExecutionStrategy<TArg, IEfOptions, TResult>), typeof(TExecutionStrategy))

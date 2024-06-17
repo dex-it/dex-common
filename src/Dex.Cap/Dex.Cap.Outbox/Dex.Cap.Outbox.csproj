@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>outbox business-transaction consistency</PackageTags>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.0</PackageVersion>
+        <PackageVersion>6.0.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -34,7 +34,7 @@
 
     <ItemGroup>
         <Compile Remove="Outbox\Neo4j\**"/>
-        <Compile Update="OutboxHandler.cs">
+        <Compile Update="MainLoopOutboxHandler.cs">
             <DependentUpon>IOutboxHandler.cs</DependentUpon>
         </Compile>
         <Compile Update="OutboxService.cs">

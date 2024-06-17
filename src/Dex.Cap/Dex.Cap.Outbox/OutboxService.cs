@@ -12,38 +12,42 @@ namespace Dex.Cap.Outbox
         private readonly IOutboxSerializer _serializer;
         private readonly IOutboxTypeDiscriminator _discriminator;
 
-        public OutboxService(IOutboxDataProvider<TDbContext> outboxDataProvider, IOutboxSerializer serializer, IOutboxTypeDiscriminator discriminator)
+        public OutboxService(
+            IOutboxDataProvider<TDbContext> outboxDataProvider,
+            IOutboxSerializer serializer,
+            IOutboxTypeDiscriminator discriminator)
         {
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
         }
 
-        public async Task ExecuteOperationAsync<TState>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken = default)
+        public Task ExecuteOperationAsync<TState>(Guid correlationId, TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action,
+            CancellationToken cancellationToken = default)
         {
-            if (action == null) throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
-            await _outboxDataProvider.ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken).ConfigureAwait(false);
+            return _outboxDataProvider.ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken);
         }
 
-        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc, CancellationToken cancellationToken)
+        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null, TimeSpan? lockTimeout = null,
+            CancellationToken cancellationToken = default)
             where T : IOutboxMessage
         {
             var messageType = message.GetType();
-            if (messageType != typeof(EmptyOutboxMessage) && message.MessageId == default)
+            if (messageType != typeof(EmptyOutboxMessage) && message.MessageId == Guid.Empty)
                 throw new InvalidOperationException("MessageId can't be empty");
 
             var envelopeId = message.MessageId;
             var msgBody = _serializer.Serialize(messageType, message);
             var discriminator = _discriminator.ResolveDiscriminator(messageType);
-            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, OutboxMessageStatus.New, msgBody, startAtUtc);
+            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc, lockTimeout);
             await _outboxDataProvider.Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
 
             return message.MessageId;
         }
 
-        public async Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken)
+        public async Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken = default)
         {
             return await _outboxDataProvider.IsExists(correlationId, cancellationToken).ConfigureAwait(false);
         }

@@ -27,7 +27,7 @@ internal sealed class OnceExecutorMemory<TDistributedCache> : BaseOnceExecutor<I
         CancellationToken cancellationToken)
         where TResult : default
     {
-        if (operation == null) throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try

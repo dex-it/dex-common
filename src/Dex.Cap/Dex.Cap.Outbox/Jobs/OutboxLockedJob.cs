@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using Dex.Cap.Outbox.Helpers;
 using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox.Jobs
@@ -10,30 +9,36 @@ namespace Dex.Cap.Outbox.Jobs
     /// </summary>
     internal sealed class OutboxLockedJob : IOutboxLockedJob
     {
-        private CancellationTokenSource? _cts;
-        private bool _disposed;
+        private readonly CancellationTokenSource _cts;
 
-        internal OutboxLockedJob(OutboxEnvelope envelope, Guid lockId, TimeSpan timeout, CancellationTokenSource? cts)
+        internal OutboxLockedJob(OutboxEnvelope envelope)
         {
-            _cts = cts;
-            LockToken = cts?.Token ?? CancellationToken.None;
             Envelope = envelope;
-            LockId = lockId;
-            Timeout = timeout;
+            Timeout = envelope.LockTimeout.Add(-TimeSpan.FromSeconds(5));
+
+            if (Timeout < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(Timeout), "Timeout cannot be less than zero.");
+            }
+
+            if (Timeout < TimeSpan.FromSeconds(5))
+            {
+                throw new ArgumentOutOfRangeException(nameof(Timeout), "Timeout must be at least 5 seconds.");
+            }
+
+            _cts = new CancellationTokenSource();
+            _cts.CancelAfter(Timeout);
+            LockToken = _cts.Token;
         }
 
         public OutboxEnvelope Envelope { get; }
-        public Guid LockId { get; }
+        public Guid LockId => Envelope.LockId!.Value;
         public TimeSpan Timeout { get; }
         public CancellationToken LockToken { get; }
 
         public void Dispose()
         {
-            if (!_disposed)
-            {
-                _disposed = true;
-                NullableHelper.SetNull(ref _cts)?.Dispose();
-            }
+            _cts.Dispose();
         }
     }
 }

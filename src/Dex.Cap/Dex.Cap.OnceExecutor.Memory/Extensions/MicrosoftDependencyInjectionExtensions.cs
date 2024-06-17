@@ -11,7 +11,7 @@ public static class MicrosoftDependencyInjectionExtensions
         Action<MemoryDistributedCacheOptions> globalCacheOptions, Action<DistributedCacheEntryOptions> entryOptions)
         where TDistributedCache : class, IDistributedCache
     {
-        if (services == null) throw new ArgumentNullException(nameof(services));
+        ArgumentNullException.ThrowIfNull(services);
 
         services.AddOptions();
         services.Configure(entryOptions);
