@@ -10,22 +10,18 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
 {
-    internal sealed class OutboxHandlerBackgroundService : BackgroundService
+    // Инжектим только синглтоны.
+    internal sealed class OutboxHandlerBackgroundService(
+        IServiceScopeFactory scopeFactory,
+        OutboxHandlerOptions options,
+        ILogger<OutboxHandlerBackgroundService> logger)
+        : BackgroundService
     {
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger _logger;
-        private readonly OutboxHandlerOptions _options;
+        private readonly IServiceScopeFactory _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+        private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        private readonly OutboxHandlerOptions _options = options ?? throw new ArgumentNullException(nameof(options));
         private const string ServiceNameIsStatus = "Background service '{ServiceName}' is {Status}";
         private const string TypeName = nameof(OutboxHandlerBackgroundService);
-
-        // Инжектим только синглтоны.
-        public OutboxHandlerBackgroundService(IServiceScopeFactory scopeFactory, OutboxHandlerOptions options,
-            ILogger<OutboxHandlerBackgroundService> logger)
-        {
-            _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-        }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

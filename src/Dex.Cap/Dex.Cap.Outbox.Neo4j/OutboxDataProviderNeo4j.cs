@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
@@ -14,17 +12,14 @@ using Neo4jClient.Transactions;
 namespace Dex.Cap.Outbox.Neo4j
 {
     // ReSharper disable once InconsistentNaming
-    internal sealed class OutboxDataProviderNeo4j : BaseOutboxDataProvider<ITransactionalGraphClient>
+    internal sealed class OutboxDataProviderNeo4j(
+        ITransactionalGraphClient graphClient,
+        IOptions<OutboxOptions> outboxOptions,
+        IOutboxRetryStrategy retryStrategy)
+        : BaseOutboxDataProvider<ITransactionalGraphClient>(retryStrategy)
     {
-        private readonly ITransactionalGraphClient _graphClient;
-        private readonly OutboxOptions _outboxOptions;
-
-        public OutboxDataProviderNeo4j(ITransactionalGraphClient graphClient, IOptions<OutboxOptions> outboxOptions, IOutboxRetryStrategy retryStrategy)
-            : base(retryStrategy)
-        {
-            _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
-            _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
-        }
+        private readonly ITransactionalGraphClient _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
+        private readonly OutboxOptions _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
 
         public override Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<ITransactionalGraphClient> outboxService, TState state,
             Func<CancellationToken, IOutboxContext<ITransactionalGraphClient, TState>, Task> action, CancellationToken cancellationToken)
@@ -47,26 +42,14 @@ namespace Dex.Cap.Outbox.Neo4j
             throw new NotImplementedException();
         }
 
-        public override async IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs([EnumeratorCancellation] CancellationToken cancellationToken)
+        public override async Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken)
         {
-            var outboxes = await GetFreeMessages(_outboxOptions.MessagesToProcess, cancellationToken);
-
-            foreach (var o in outboxes)
-            {
-                yield return new OutboxLockedJob(o, default, TimeSpan.FromSeconds(30), cts: null);
-            }
-        }
-
-        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope, CancellationToken cancellationToken)
-        {
-            await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
-                .WithParam("id", outboxEnvelope.Envelope.Id)
-                .Set("o = {outbox}").WithParam("outbox", outboxEnvelope)
-                .ExecuteWithoutResultsAsync();
+            var outboxes = await GetFreeMessages(cancellationToken);
+            return outboxes.Select(x => (IOutboxLockedJob)new OutboxLockedJob(x)).ToArray();
         }
 
         /// <exception cref="OperationCanceledException"/>
-        public override async Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
         {
             const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
             const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
@@ -76,7 +59,7 @@ namespace Dex.Cap.Outbox.Neo4j
                 .AndWhere((OutboxEnvelope o) => o.Status == failedStatus || o.Status == newStatus)
                 .Return<OutboxEnvelope>("o")
                 .OrderBy("o.Created")
-                .Limit(limit)
+                .Limit(_outboxOptions.MessagesToProcess)
                 .ResultsAsync;
 
             return potentialFree.ToArray();
@@ -85,6 +68,14 @@ namespace Dex.Cap.Outbox.Neo4j
         public override int GetFreeMessagesCount()
         {
             throw new NotImplementedException();
+        }
+
+        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope, CancellationToken cancellationToken)
+        {
+            await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
+                .WithParam("id", outboxEnvelope.Envelope.Id)
+                .Set("o = {outbox}").WithParam("outbox", outboxEnvelope)
+                .ExecuteWithoutResultsAsync();
         }
     }
 }

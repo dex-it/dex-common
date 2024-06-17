@@ -6,28 +6,26 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    internal sealed class OutboxService<TDbContext> : IOutboxService<TDbContext>
+    internal sealed class OutboxService<TDbContext>(
+        IOutboxDataProvider<TDbContext> outboxDataProvider,
+        IOutboxSerializer serializer,
+        IOutboxTypeDiscriminator discriminator) : IOutboxService<TDbContext>
     {
-        private readonly IOutboxDataProvider<TDbContext> _outboxDataProvider;
-        private readonly IOutboxSerializer _serializer;
-        private readonly IOutboxTypeDiscriminator _discriminator;
-
-        public OutboxService(IOutboxDataProvider<TDbContext> outboxDataProvider, IOutboxSerializer serializer, IOutboxTypeDiscriminator discriminator)
-        {
+        private readonly IOutboxDataProvider<TDbContext>
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
-        }
 
-        public async Task ExecuteOperationAsync<TState>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken = default)
+        private readonly IOutboxSerializer _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+        private readonly IOutboxTypeDiscriminator _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
+
+        public Task ExecuteOperationAsync<TState>(Guid correlationId, TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action,
+            CancellationToken cancellationToken = default)
         {
-            if (action == null) throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
-            await _outboxDataProvider.ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken).ConfigureAwait(false);
+            return _outboxDataProvider.ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken);
         }
 
-        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc, CancellationToken cancellationToken)
+        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc, TimeSpan? lockTimeout, CancellationToken cancellationToken)
             where T : IOutboxMessage
         {
             var messageType = message.GetType();
@@ -37,7 +35,7 @@ namespace Dex.Cap.Outbox
             var envelopeId = message.MessageId;
             var msgBody = _serializer.Serialize(messageType, message);
             var discriminator = _discriminator.ResolveDiscriminator(messageType);
-            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, OutboxMessageStatus.New, msgBody, startAtUtc);
+            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc, lockTimeout);
             await _outboxDataProvider.Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
 
             return message.MessageId;

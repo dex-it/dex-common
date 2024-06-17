@@ -5,28 +5,44 @@ using System.Diagnostics;
 
 namespace Dex.Cap.Outbox.Models
 {
-    [Table("outbox", Schema = "cap")]
+    [Table(NameConst.TableName, Schema = NameConst.SchemaName)]
     public class OutboxEnvelope
     {
-        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, OutboxMessageStatus status, string content, DateTime? startAtUtc = null)
+        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, string content, DateTime? startAtUtc = null)
+            : this(id, correlationId, messageType, content, startAtUtc, null)
         {
-            var startDateUtc = startAtUtc ?? DateTime.UtcNow;
+        }
+
+        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, string content, DateTime? startAtUtc, TimeSpan? lockTimeout)
+        {
+            ArgumentOutOfRangeException.ThrowIfEqual(correlationId, Guid.Empty);
+            ArgumentException.ThrowIfNullOrEmpty(messageType);
+            ArgumentException.ThrowIfNullOrEmpty(content);
+
+            if (lockTimeout.HasValue)
+                ArgumentOutOfRangeException.ThrowIfLessThan(lockTimeout.Value, TimeSpan.FromSeconds(10));
+
+            if (startAtUtc.HasValue)
+                ArgumentOutOfRangeException.ThrowIfLessThan(startAtUtc.Value, DateTime.UtcNow.AddHours(-1));
 
             Id = id;
             CorrelationId = correlationId;
-            MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
-            Status = status;
-            Content = content ?? throw new ArgumentNullException(nameof(content));
+            Status = OutboxMessageStatus.New;
+            MessageType = messageType;
+            Content = content;
+
+            var startDateUtc = startAtUtc ?? DateTime.UtcNow;
             StartAtUtc = startDateUtc;
             ScheduledStartIndexing = startDateUtc;
+
+            LockTimeout = lockTimeout ?? TimeSpan.FromSeconds(30);
             ActivityId = Activity.Current?.Id;
         }
 
-        [Key]
-        public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
         /// <summary>
-        /// Полное имя типа сообщения, AssemblyQualifiedName.
+        /// Тип сообщения
         /// </summary>
         [Required]
         public string MessageType { get; set; }
@@ -63,13 +79,11 @@ namespace Dex.Cap.Outbox.Models
         /// </summary>
         public string? Error { get; set; }
 
-        [Required]
-        public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
+        [Required] public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 
         public DateTime? Updated { get; set; }
 
-        [Required]
-        public Guid CorrelationId { get; set; }
+        [Required] public Guid CorrelationId { get; set; }
 
         public DateTime? StartAtUtc { get; set; }
 
@@ -82,7 +96,7 @@ namespace Dex.Cap.Outbox.Models
         /// </summary>
         /// <remarks>Должен быть больше 10 секунд.</remarks>
         [Required]
-        public TimeSpan LockTimeout { get; set; } = TimeSpan.FromSeconds(30);
+        public TimeSpan LockTimeout { get; set; }
 
         /// <summary>
         /// Уникальный ключ потока который захватил блокировку и только он имеет право освободить блокировку (ключ идемпотентности).

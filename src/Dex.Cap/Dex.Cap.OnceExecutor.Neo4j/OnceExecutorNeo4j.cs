@@ -24,7 +24,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
             CancellationToken cancellationToken)
             where TResult : default
         {
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            ArgumentNullException.ThrowIfNull(operation);
 
             TResult? result;
             var t = Context.BeginTransaction();

@@ -9,6 +9,7 @@ using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
+using Dex.Extensions;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -126,7 +127,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 await Task.Delay(100);
             }
 
-            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var dbContext = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
             var envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(2, envelope.Retries);
             Assert.AreEqual(OutboxMessageStatus.Succeeded, envelope.Status);
@@ -155,7 +156,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // assert
-            var db = sp.GetRequiredService<TestDbContext>();
+            var scope = sp.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
             var envelopes = await db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).ToArrayAsync();
 
             var failed = envelopes.Single(x => x.Status == OutboxMessageStatus.Failed);
@@ -278,11 +280,94 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 await Task.Delay(100);
             }
 
-            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var dbContext = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
             var envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(expectedStatus, envelope.Status);
 
             Assert.AreEqual(expectedCount, count);
+        }
+
+        [Test(Description = "Нельзя задать LockTimeout меньше 10сек")]
+        public Task CantSetLockTimeoutLess10SecTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+
+            var correlationId = Guid.NewGuid();
+            var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
+
+            Assert.CatchAsync<ArgumentOutOfRangeException>(async () =>
+            {
+                // LockTimeout must be greater 10sec
+                await outboxService.EnqueueAsync(correlationId, command, lockTimeout: 9.Seconds());
+            });
+
+            return Task.CompletedTask;
+        }
+
+        [Test(Description = "Сообщение не может быть обработанно, т.к. на него нужно больше времени чем предусматривает LockTimeout")]
+        public async Task LargeProcessingTimeLockTimeoutExceededTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+
+            var correlationId = Guid.NewGuid();
+            var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
+            // реальное время на выполнение будет 10-5=5сек, 5сек - отведено на завершение операции и нивилирование конкуренции
+            var id = await outboxService.EnqueueAsync(correlationId, command, lockTimeout: 10.Seconds());
+            await SaveChanges(sp);
+
+            // run
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            using var scope = sp.CreateScope();
+            var e = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FindAsync(id);
+            Assert.AreEqual(1, e.Retries);
+            Assert.AreEqual(OutboxMessageStatus.Failed, e.Status);
+        }
+
+        [Test(Description = "Обработка нескольких сообщений общей продолжительностью больше чем LockTimeout, " +
+                            "приведет к отмене обработки задач за пределами кванта времени")]
+        public async Task LargeProcessingTimeSeveralMessagesTest()
+        {
+            var sp = InitServiceCollection(5)
+                .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+
+            var correlationId = Guid.NewGuid();
+            var id1 = await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = "delay test-1", DelayMsec = 2_000 },
+                lockTimeout: 10.Seconds());
+            var id2 = await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = "delay test-2", DelayMsec = 2_000 },
+                lockTimeout: 10.Seconds());
+            var id3 = await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = "delay test-3", DelayMsec = 5_000 },
+                lockTimeout: 10.Seconds());
+            await SaveChanges(sp);
+
+            // run
+            var sw = Stopwatch.StartNew();
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            using var scope = sp.CreateScope();
+            var envelopes = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().ToArrayAsync();
+
+            Assert.AreEqual(OutboxMessageStatus.Succeeded, envelopes.First(x => x.Id == id1).Status);
+            Assert.AreEqual(OutboxMessageStatus.Succeeded, envelopes.First(x => x.Id == id2).Status);
+            Assert.AreEqual(OutboxMessageStatus.Failed, envelopes.First(x => x.Id == id3).Status);
+
+            // проверяем что обработка закончилась сразу по прошествии LockTimeout для всех выбранных сообщений
+            Assert.Less(sw.Elapsed, TimeSpan.FromSeconds(2 + 2 + 5));
         }
     }
 }

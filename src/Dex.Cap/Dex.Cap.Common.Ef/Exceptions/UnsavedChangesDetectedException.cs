@@ -20,7 +20,7 @@ namespace Dex.Cap.Common.Ef.Exceptions
 
         public UnsavedChangesDetectedException(DbContext dbContext, string message) : base(message)
         {
-            if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+            ArgumentNullException.ThrowIfNull(dbContext);
 
             var entries = dbContext.ChangeTracker.Entries()
                 .Where(e => e.State != EntityState.Unchanged)
