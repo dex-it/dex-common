@@ -1,6 +1,6 @@
 using System.Text;
-using Dex.Audit.Contracts.Interfaces;
-using Dex.Audit.Contracts.Messages;
+using Dex.Audit.Client.Interfaces;
+using Dex.Audit.Client.Messages;
 using Dex.Audit.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
