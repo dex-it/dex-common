@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Dex.Audit.Contracts\Dex.Audit.Contracts.csproj" />
+      <ProjectReference Include="..\Dex.Audit.Client\Dex.Audit.Client.csproj" />
     </ItemGroup>
 
 </Project>
