@@ -1,5 +1,5 @@
-using Dex.Audit.Contracts.Interfaces;
-using Dex.Audit.Contracts.Messages;
+using Dex.Audit.Client.Interfaces;
+using Dex.Audit.Client.Messages;
 using Dex.Audit.MediatR.Requests;
 using Dex.Audit.MediatR.Responses;
 using MediatR;
