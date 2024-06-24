@@ -59,18 +59,18 @@ internal sealed class RefreshCacheWorker : BackgroundService
     private async Task UpdateCache(CancellationToken cancellationToken)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
-        IAuditRepository context = scope.ServiceProvider.GetRequiredService<IAuditRepository>();
-        IAuditSettingsRepository redisDatabase = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
+        IAuditRepository auditRepository = scope.ServiceProvider.GetRequiredService<IAuditRepository>();
+        IAuditSettingsRepository auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
 
         _logger.LogInformation("Выполняется операция обновления настроек аудита в кэше");
 
         TimeSpan refreshInterval = _options.RefreshInterval;
 
-        List<AuditSettings> auditSettings = await context.GetAllSettingsAsync(cancellationToken);
+        IEnumerable<AuditSettings> auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken);
 
         foreach (AuditSettings setting in auditSettings)
         {
-            await redisDatabase.AddAsync(setting.EventType, setting, refreshInterval);
+            await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval);
         }
 
         _logger.LogInformation("Кэш успешно обновлен");

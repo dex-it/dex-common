@@ -54,7 +54,7 @@ public class BaseAuditEventConfigurator : IAuditEventConfigurator
             EventName = auditEventBaseInfo.EventType,
             EventObject = auditEventBaseInfo.EventObject,
             Message = auditEventBaseInfo.Message,
-            IsSuccess = auditEventBaseInfo.Success
+            IsSuccess = auditEventBaseInfo.IsSuccess
         };
     }
 

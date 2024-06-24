@@ -23,7 +23,7 @@ public class AuditEventBaseInfo
     /// <summary>
     /// Результат (успех/отказ) действия
     /// </summary>
-    public bool Success { get; }
+    public bool IsSuccess { get; }
 
     /// <summary>
     /// Инициализирует новый экземпляр класса <see cref="AuditEventBaseInfo"/> 
@@ -31,12 +31,12 @@ public class AuditEventBaseInfo
     /// <param name="eventType">Тип события аудита</param>
     /// <param name="eventObject">Объект события аудита</param>
     /// <param name="message">Текст сообщения о событии</param>
-    /// <param name="success">Результат (успех/отказ) действия</param>
-    public AuditEventBaseInfo(string eventType, string? eventObject, string? message, bool success)
+    /// <param name="isSuccess">Результат (успех/отказ) действия</param>
+    public AuditEventBaseInfo(string eventType, string? eventObject, string? message, bool isSuccess)
     {
         EventType = eventType;
         EventObject = eventObject;
         Message = message;
-        Success = success;
+        IsSuccess = isSuccess;
     }
 }

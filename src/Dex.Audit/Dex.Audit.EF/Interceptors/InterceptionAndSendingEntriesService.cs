@@ -12,15 +12,10 @@ namespace Dex.Audit.EF.Interceptors;
 /// <summary>
 /// Сервис для перехвата и отправки записей аудита.
 /// </summary>
-public class InterceptionAndSendingEntriesService : IInterceptionAndSendingEntriesService
+public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvider)
+    : IInterceptionAndSendingEntriesService
 {
-    private readonly IServiceProvider _serviceProvider;
     private readonly List<EntryHelper> _entryHelpers = new();
-
-    public InterceptionAndSendingEntriesService(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
 
     /// <summary>
     /// Перехватывает записи аудита из контекста изменений
@@ -53,8 +48,8 @@ public class InterceptionAndSendingEntriesService : IInterceptionAndSendingEntri
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task SendInterceptedEntriesAsync(bool isSuccess, CancellationToken cancellationToken = default)
     {
-        IAuditManager auditManager = _serviceProvider.GetRequiredService<IAuditManager>();
-            
+        IAuditManager auditManager = serviceProvider.GetRequiredService<IAuditManager>();
+
         foreach (EntryHelper entryHelper in _entryHelpers)
         {
             string eventType = GetEventType(entryHelper.State);
@@ -110,23 +105,23 @@ public class InterceptionAndSendingEntriesService : IInterceptionAndSendingEntri
 internal readonly struct EntryHelper
 {
     /// <summary>
-    /// Объект сущности, информация из которого будет использована для отправки
+    /// Объект сущности, информация из которого будет использована для отправки.
     /// </summary>
     /// <remarks>Используется в связи с тем, что Id генерируется БД на моменте SavedChanges</remarks>
     public readonly object Entry;
 
     /// <summary>
-    /// Текущие значения свойств сущности
+    /// Текущие значения свойств сущности.
     /// </summary>
     public readonly PropertyValues CurrentValues;
 
     /// <summary>
-    /// Исходные значения свойств сущности
+    /// Исходные значения свойств сущности.
     /// </summary>
     public readonly PropertyValues OriginalValues;
 
     /// <summary>
-    /// EntityState на момент SavingChanges
+    /// EntityState на момент SavingChanges.
     /// </summary>
     public readonly EntityState State;
 

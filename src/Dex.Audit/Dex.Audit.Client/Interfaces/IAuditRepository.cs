@@ -6,5 +6,5 @@ public interface IAuditRepository
 {
     Task AddAuditEventAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default);
 
-    Task<List<AuditSettings>> GetAllSettingsAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<AuditSettings>> GetAllSettingsAsync(CancellationToken cancellationToken);
 }
