@@ -1,12 +1,14 @@
 using Dex.Audit.Client.Interfaces;
 using Dex.Audit.Client.Options;
 using Dex.Audit.Domain.Entities;
+using Dex.Audit.Server.Interfaces;
+using Dex.Audit.Server.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Dex.Audit.Client.Workers;
+namespace Dex.Audit.Server.Workers;
 
 /// <summary>
 /// Фоновая служба для обновления кэша
