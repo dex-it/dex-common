@@ -2,7 +2,7 @@ using AutoMapper;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Domain.Entities;
 
-namespace Dex.Audit.Client.Mapping;
+namespace Dex.Audit.Server.Mapping;
 
 /// <summary>
 /// Настройки профиля маппинга для моделей, связанных с событиями аудита

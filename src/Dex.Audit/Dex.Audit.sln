@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Tests", "Tests\De
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.EF.NpgSql", "Dex.Audit.EF.NpgSql\Dex.Audit.EF.NpgSql.csproj", "{DBDC821C-2893-45B1-8513-9A418117D3C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Server", "Dex.Audit.Server\Dex.Audit.Server.csproj", "{610B8978-4629-4938-BA22-12C49D863D1E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +62,9 @@ Global
 		{DBDC821C-2893-45B1-8513-9A418117D3C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DBDC821C-2893-45B1-8513-9A418117D3C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DBDC821C-2893-45B1-8513-9A418117D3C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{610B8978-4629-4938-BA22-12C49D863D1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{610B8978-4629-4938-BA22-12C49D863D1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{610B8978-4629-4938-BA22-12C49D863D1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{610B8978-4629-4938-BA22-12C49D863D1E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
