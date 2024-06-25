@@ -13,10 +13,11 @@ public static class DependencyInjectionExtensions
     /// <summary>
     /// Добавляет AuditInterceptor
     /// </summary>
-    public static IServiceCollection AddAuditInterceptors(this IServiceCollection services)
+    public static IServiceCollection AddAuditInterceptors<TInterceptionAndSendingEntriesService>(this IServiceCollection services)
+        where TInterceptionAndSendingEntriesService : IInterceptionAndSendingEntriesService
     {
         services
-            .AddScoped<IInterceptionAndSendingEntriesService, InterceptionAndSendingEntriesService>()
+            .AddScoped(typeof(IInterceptionAndSendingEntriesService), typeof(TInterceptionAndSendingEntriesService))
             .AddScoped<IDbTransactionInterceptor, AuditTransactionInterceptor>()
             .AddScoped<ISaveChangesInterceptor, AuditSaveChangesInterceptor>();
 

@@ -66,8 +66,6 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
                 {
                     return;
                 }
-
-                auditEvent.AuditSettingsId = auditSettings.Id;
             }
 
             SetDestinationDate(auditEvent);

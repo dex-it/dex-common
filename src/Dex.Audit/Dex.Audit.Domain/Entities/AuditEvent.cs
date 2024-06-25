@@ -46,14 +46,4 @@ public class AuditEvent
     /// Краткое наименование события.
     /// </summary>
     public string EventName { get; set; }
-
-    /// <summary>
-    /// Внешний ключ к настройкам события.
-    /// </summary>
-    public int AuditSettingsId { get; set; }
-
-    /// <summary>
-    /// Настройки события аудита.
-    /// </summary>
-    public AuditSettings AuditSettings { get; set; }
 }
