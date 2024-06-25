@@ -12,7 +12,6 @@ public class AuditEventProfiles : Profile
     public AuditEventProfiles()
     {
         CreateMap<AuditEventMessage, AuditEvent>()
-            .ForMember(dest => dest.AuditSettings, opt => opt.Ignore())
             .ForPath(dest => dest.Source.GmtDate, opt => opt.MapFrom(src => src.SourceGmtDate))
             .ForPath(dest => dest.Source.Protocol, opt => opt.MapFrom(src => src.SourceProtocol))
             .ForPath(dest => dest.Source.Port, opt => opt.MapFrom(src => src.SourcePort))
@@ -36,7 +35,6 @@ public class AuditEventProfiles : Profile
             .ForPath(dest => dest.Destination.AddressInfo.IpAddress, opt => opt.MapFrom(src => src.DestinationIpAddress))
             .ForPath(dest => dest.Destination.AddressInfo.MacAddress, opt => opt.MapFrom(src => src.DestinationMacAddress))
             .ForPath(dest => dest.Destination.AddressInfo.DnsName, opt => opt.MapFrom(src => src.DestinationDnsName))
-            .ForPath(dest => dest.Destination.AddressInfo.Host, opt => opt.MapFrom(src => src.DestinationHost))
-            .ForPath(dest => dest.AuditSettingsId, opt => opt.MapFrom(src => src.AuditSettingsId));
+            .ForPath(dest => dest.Destination.AddressInfo.Host, opt => opt.MapFrom(src => src.DestinationHost));
     }
 }
