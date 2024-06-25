@@ -1,10 +1,12 @@
 using Dex.Audit.Client.Interfaces;
 using Dex.Audit.Client.Options;
-using Dex.Audit.Client.Services;
+using Dex.Audit.Server.Interfaces;
+using Dex.Audit.Server.Options;
+using Dex.Audit.Server.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.Audit.Client.Extensions;
+namespace Dex.Audit.Server.Extensions;
 
 /// <summary>
 /// Статический класс, который содержит методы расширения для конфигурации зависимостей
@@ -14,18 +16,17 @@ public static class DependencyInjectionExtensions
     /// <summary>
     /// Добавляет необходимые для работы аудита зависимости
     /// </summary>
-    public static IServiceCollection AddAuditClient<TAuditEventConfigurator, TAuditSettingsRepository>(
+    public static IServiceCollection AddAuditServer<TAuditRepository, TAuditSettingsRepository>(
         this IServiceCollection services,
         IConfiguration configuration)
-        where TAuditEventConfigurator : class, IAuditEventConfigurator
+        where TAuditRepository : class, IAuditRepository
         where TAuditSettingsRepository : class, IAuditSettingsRepository
     {
         services
-            .AddScoped<IAuditPublisher, AuditPublisherRabbit>()
-            .AddScoped<IAuditManager, AuditManager>()
-            .AddScoped(typeof(IAuditEventConfigurator), typeof(TAuditEventConfigurator))
+            .AddScoped(typeof(IAuditRepository), typeof(TAuditRepository))
             .AddScoped(typeof(IAuditSettingsRepository), typeof(TAuditSettingsRepository))
-            .Configure<AuditEventOptions>(opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));
+            .AddHostedService<RefreshCacheWorker>()
+            .Configure<AuditCacheOptions>(opts => configuration.GetSection(nameof(AuditCacheOptions)).Bind(opts));;
 
         return services;
     }

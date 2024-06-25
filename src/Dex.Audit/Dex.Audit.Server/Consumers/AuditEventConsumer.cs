@@ -2,10 +2,11 @@ using AutoMapper;
 using Dex.Audit.Client.Interfaces;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Domain.Entities;
+using Dex.Audit.Server.Interfaces;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Audit.Client.Consumers;
+namespace Dex.Audit.Server.Consumers;
 
 /// <summary>
 /// Обработчик аудиторских событий, полученных через шину сообщений
