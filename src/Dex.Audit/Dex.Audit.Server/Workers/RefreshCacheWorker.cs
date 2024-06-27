@@ -1,5 +1,4 @@
 using Dex.Audit.Client.Interfaces;
-using Dex.Audit.Client.Options;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Server.Interfaces;
 using Dex.Audit.Server.Options;
