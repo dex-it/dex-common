@@ -125,7 +125,7 @@ public static class LoggerExtensions
         string? message,
         params object?[] args)
     {
-        logger.Log(logLevel, new EventId(int.MaxValue, eventType), null, message, args);
+        logger.Log(logLevel, new EventId(10_000_000, eventType), null, message, args);
     }
 
     public static void LogAudit(
@@ -136,6 +136,6 @@ public static class LoggerExtensions
         string? message,
         params object?[] args)
     {
-        logger.Log(logLevel, new EventId(int.MaxValue, eventType), exception, message, args);
+        logger.Log(logLevel, new EventId(10_000_000, eventType), exception, message, args);
     }
 }
