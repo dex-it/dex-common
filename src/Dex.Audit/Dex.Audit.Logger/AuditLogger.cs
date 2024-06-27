@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Logger;
 
+/// <summary>
+/// Логгер, для аудиремых логов.
+/// </summary>
 internal class AuditLogger : ILogger
 {
     private readonly JsonSerializerOptions _options = new()
