@@ -5,6 +5,12 @@ namespace Dex.Audit.Logger.Extensions;
 
 public static class DependencyInjectionExtensions
 {
+    /// <summary>
+    /// Добавить аудируемые логи.
+    /// </summary>
+    /// <param name="builder"><see cref="ILoggingBuilder"/></param>
+    /// <param name="dispose">Освобождать ли ресурсы средствами DI.</param>
+    /// <returns></returns>
     public static ILoggingBuilder AddAuditLogger(this ILoggingBuilder builder, bool dispose = false)
     {
         ArgumentNullException.ThrowIfNull(builder);
