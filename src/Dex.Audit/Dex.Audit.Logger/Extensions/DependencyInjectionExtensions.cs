@@ -8,16 +8,17 @@ public static class DependencyInjectionExtensions
     public static ILoggingBuilder AddAuditLogger(this ILoggingBuilder builder, bool dispose = false)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.Services.AddSingleton<ILoggerProvider, AuditLoggerProvider>(_ => new AuditLoggerProvider());
 
-        // if (dispose)
-        // {
-        //     builder.Services.AddSingleton<ILoggerProvider, AuditLoggerProvider>(_ => new AuditLoggerProvider());
-        // }
-        // else
-        // {
-        //     builder.AddProvider(new AuditLoggerProvider());
-        // }
+        if (dispose)
+        {
+            builder.Services.AddSingleton<ILoggerProvider, AuditLoggerProvider>(_ => new AuditLoggerProvider());
+        }
+        else
+        {
+            builder.AddProvider(new AuditLoggerProvider());
+        }
+
+        builder.AddFilter<AuditLoggerProvider>(_ => true).SetMinimumLevel(LogLevel.Trace);
 
         builder.Services.AddHostedService<AuditLoggerReader>();
 
