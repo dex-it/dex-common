@@ -11,9 +11,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AutoMapper" Version="13.0.1" />
-        <PackageReference Include="Dex.Extensions" Version="1.0.30"/>
-        <PackageReference Include="Dex.MassTransit" Version="1.2.30"/>
         <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0"/>

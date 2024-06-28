@@ -8,12 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Dex.Audit.Server.Extensions;
 
 /// <summary>
-/// Статический класс, который содержит методы расширения для конфигурации зависимостей
+/// Статический класс, который содержит методы расширения для конфигурации зависимостей.
 /// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавляет необходимые для работы аудита зависимости
+    /// Добавляет необходимые для работы аудита зависимости.
     /// </summary>
     public static IServiceCollection AddAuditServer<TAuditRepository, TAuditSettingsRepository>(
         this IServiceCollection services,
