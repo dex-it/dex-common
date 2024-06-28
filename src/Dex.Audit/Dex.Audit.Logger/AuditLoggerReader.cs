@@ -4,7 +4,11 @@ using Microsoft.Extensions.Hosting;
 
 namespace Dex.Audit.Logger;
 
-internal class AuditLoggerReader(IServiceProvider serviceScopeFactory) : BackgroundService 
+/// <summary>
+/// Фоновая служба для чтения и отправки событий в очередь из <see cref="AuditLogger.BaseInfoChannel"/>.
+/// </summary>
+/// <param name="serviceScopeFactory"><see cref="IServiceProvider"/></param>
+internal sealed class AuditLoggerReader(IServiceProvider serviceScopeFactory) : BackgroundService 
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
