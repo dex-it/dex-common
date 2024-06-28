@@ -1,7 +1,7 @@
-using AutoMapper;
 using Dex.Audit.Client.Interfaces;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Domain.Entities;
+using Dex.Audit.Domain.ValueObjects;
 using Dex.Audit.Server.Interfaces;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -9,38 +9,34 @@ using Microsoft.Extensions.Logging;
 namespace Dex.Audit.Server.Consumers;
 
 /// <summary>
-/// Обработчик аудиторских событий, полученных через шину сообщений
+/// Обработчик аудиторских событий, полученных через шину сообщений.
 /// </summary>
 public class AuditEventConsumer : IConsumer<AuditEventMessage>
 {
-    private readonly IMapper _mapper;
     private readonly IAuditRepository _auditRepository;
     private readonly IAuditSettingsRepository _auditSettingsRepository;
     private readonly ILogger<AuditEventConsumer> _logger;
 
     /// <summary>
-    /// Создает новый экземпляр класса <see cref="AuditEventConsumer"/>
+    /// Создает новый экземпляр класса <see cref="AuditEventConsumer"/>.
     /// </summary>
-    /// <param name="auditSettingsRepository"><see cref="IAuditSettingsRepository"/></param>
-    /// <param name="mapper"><see cref="IMapper"/></param>
-    /// <param name="auditRepository"><see cref="IAuditRepository"/></param>
-    /// <param name="logger"><see cref="ILogger"/></param>
+    /// <param name="auditSettingsRepository"><see cref="IAuditSettingsRepository"/>.</param>
+    /// <param name="auditRepository"><see cref="IAuditRepository"/>.</param>
+    /// <param name="logger"><see cref="ILogger"/>.</param>
     public AuditEventConsumer(
-        IMapper mapper,
         IAuditRepository auditRepository,
         ILogger<AuditEventConsumer> logger,
         IAuditSettingsRepository auditSettingsRepository)
     {
-        _mapper = mapper;
         _auditRepository = auditRepository;
         _logger = logger;
         _auditSettingsRepository = auditSettingsRepository;
     }
 
     /// <summary>
-    /// Метод для обработки аудиторских событий, полученных через шину сообщений
+    /// Метод для обработки аудиторских событий, полученных через шину сообщений.
     /// </summary>
-    /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки</param>
+    /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки.</param>
     public async Task Consume(ConsumeContext<AuditEventMessage> context)
     {
         string eventType = context.Message.EventType;
@@ -50,7 +46,7 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
 
         try
         {
-            AuditEvent? auditEvent = _mapper.Map<AuditEvent>(context.Message);
+            AuditEvent auditEvent = MapAuditEventFromMessage(context.Message);
 
             if (context.Message.AuditSettingsId is null)
             {
@@ -79,6 +75,64 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
             _logger.LogError(ex, "Возникла ошибка при обработке сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
             throw;
         }
+    }
+
+    private static AuditEvent MapAuditEventFromMessage(AuditEventMessage message)
+    {
+        return new AuditEvent
+        {
+            ExternalId = message.ExternalId,
+            EventCode = message.EventCode,
+            Source = new Source
+            {
+                Device = new Device
+                {
+                    Vendor = message.DeviceVendor,
+                    Version = message.DeviceVersion,
+                    Product = message.DeviceProduct,
+                    ProcessName = message.DeviceProcessName,
+                    EventClassId = message.DeviceEventClassId
+                },
+                UserDetails = new UserDetails
+                {
+                    User = message.SourceUser,
+                    UserDomain = message.SourceUserDomain
+                },
+                AddressInfo = new AddressInfo
+                {
+                    IpAddress = message.SourceIpAddress,
+                    MacAddress = message.SourceMacAddress,
+                    DnsName = message.SourceDnsName,
+                    Host = message.SourceHost
+                },
+                Port = message.SourcePort,
+                Protocol = message.SourceProtocol,
+                Start = message.Start,
+                GmtDate = message.SourceGmtDate
+            },
+            Destination = new Destination
+            {
+                UserDetails = new UserDetails
+                {
+                    User = message.DestinationUser,
+                    UserDomain = message.DestinationDomain
+                },
+                AddressInfo = new AddressInfo
+                {
+                    IpAddress = message.DestinationIpAddress,
+                    MacAddress = message.DestinationMacAddress,
+                    DnsName = message.DestinationDnsName,
+                    Host = message.DestinationHost
+                },
+                Port = message.DestinationPort,
+                End = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+                GmtDate = message.DestinationGmtDate
+            },
+            EventObject = message.EventObject ?? string.Empty,
+            Message = message.Message ?? string.Empty,
+            IsSuccess = message.IsSuccess,
+            EventName = message.EventName ?? string.Empty
+        };
     }
 
     private static void SetDestinationDate(AuditEvent auditEvent)

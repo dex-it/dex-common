@@ -226,7 +226,7 @@ public static class LoggerExtensions
         string? message,
         params object?[] args)
     {
-        logger.Log(logLevel, new EventId(10_000_000, eventType), null, message, args);
+        logger.Log(logLevel, new EventId(AuditLoggerConstants.AuditEventId, eventType), null, message, args);
     }
 
     /// <summary>
@@ -246,6 +246,6 @@ public static class LoggerExtensions
         string? message,
         params object?[] args)
     {
-        logger.Log(logLevel, new EventId(10_000_000, eventType), exception, message, args);
+        logger.Log(logLevel, new EventId(AuditLoggerConstants.AuditEventId, eventType), exception, message, args);
     }
 }

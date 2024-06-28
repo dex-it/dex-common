@@ -3,7 +3,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Logger;
 
-public class AuditLoggerProvider : ILoggerProvider
+/// <summary>
+/// Провайдер <see cref="AuditLogger"/>.
+/// </summary>
+internal sealed class AuditLoggerProvider : ILoggerProvider
 {
     private bool _disposedValue;
     private readonly ConcurrentDictionary<string, AuditLogger> _loggers = new();
@@ -21,7 +24,7 @@ public class AuditLoggerProvider : ILoggerProvider
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (_disposedValue)
         {

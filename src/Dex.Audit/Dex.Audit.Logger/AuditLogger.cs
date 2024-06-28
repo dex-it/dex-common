@@ -22,7 +22,7 @@ internal class AuditLogger : ILogger
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        if (eventId.Id != 10_000_000 || string.IsNullOrEmpty(eventId.Name)) return;
+        if (eventId.Id != AuditLoggerConstants.AuditEventId || string.IsNullOrEmpty(eventId.Name)) return;
 
         bool failure = logLevel is LogLevel.Critical or LogLevel.Error or LogLevel.Warning;
 
