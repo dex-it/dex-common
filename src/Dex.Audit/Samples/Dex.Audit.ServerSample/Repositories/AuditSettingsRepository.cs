@@ -3,7 +3,7 @@ using Dex.Audit.Client.Interfaces;
 using Dex.Audit.Domain.Entities;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Dex.Audit.ClientSample.Repositories;
+namespace Dex.Audit.ServerSample.Repositories;
 
 public class AuditSettingsRepository(IDistributedCache distributedCache) : IAuditSettingsRepository
 {

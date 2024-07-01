@@ -1,13 +1,13 @@
 ﻿using System.Text.Json.Serialization;
-using Dex.Audit.Client.Extensions;
-using Dex.Audit.Client.Messages;
-using Dex.Audit.Client.Services;
-using Dex.Audit.ClientSample.Repositories;
-using Dex.Audit.Logger.Extensions;
+using Dex.Audit.Server.Consumers;
+using Dex.Audit.Server.Extensions;
+using Dex.Audit.ServerSample.Context;
+using Dex.Audit.ServerSample.Repositories;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
+using MassTransit.Configuration;
 
-namespace Dex.Audit.ClientSample.Extensions;
+namespace Dex.Audit.ServerSample.Extensions;
 
 /// <summary>
 /// Расширение регистрации сервисов и пайплайна
@@ -30,8 +30,8 @@ public static class HostingExtensions
         var services = builder.Services;
 
         services.AddDistributedMemoryCache();
+        services.AddDbContext<AuditServerDbContext>();
 
-        services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger(builder.Configuration));
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
         services.AddControllers()
@@ -40,13 +40,14 @@ public static class HostingExtensions
                 var enumConverter = new JsonStringEnumConverter();
                 opts.JsonSerializerOptions.Converters.Add(enumConverter);
             });
-        services.AddAuditClient<BaseAuditEventConfigurator, AuditSettingsRepository>(builder.Configuration);
+        services.AddAuditServer<AuditRepository, AuditSettingsRepository>(builder.Configuration);
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
         services.AddMassTransit(x =>
         {
+            x.RegisterConsumer<AuditEventConsumer>();
+
             x.RegisterBus((context, configurator) =>
             {
-                context.RegisterSendEndPoint<AuditEventMessage>();
                 configurator.ConfigureEndpoints(context);
             });
         });
@@ -63,18 +64,6 @@ public static class HostingExtensions
     {
         app.UseSwagger().UseSwaggerUI();
         app.MapControllers();
-        app.MapGet(
-            "/Logger", 
-            (
-                ILogger<Program> logger,
-                LogLevel logLevel,
-                string eventType,
-                string message,
-                string messageParameters
-            ) =>
-            {
-                logger.LogAudit(logLevel, eventType, message, messageParameters);
-            });
 
         return app;
     }

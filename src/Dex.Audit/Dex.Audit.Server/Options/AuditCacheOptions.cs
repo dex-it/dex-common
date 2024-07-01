@@ -6,7 +6,7 @@ namespace Dex.Audit.Server.Options;
 public class AuditCacheOptions
 {
     /// <summary>
-    /// Интервал для обновления кэша (в минутах)
+    /// Интервал для обновления кэша (в минутах).
     /// </summary>
     public TimeSpan RefreshInterval { get; set; }
 }
