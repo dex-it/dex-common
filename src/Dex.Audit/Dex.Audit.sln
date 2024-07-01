@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{8322
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.ClientSample", "Samples\Dex.Audit.ClientSample\Dex.Audit.ClientSample.csproj", "{1C71B877-1870-40A1-83AF-1D7A544EE2F9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.ServerSample", "Samples\Dex.Audit.ServerSample\Dex.Audit.ServerSample.csproj", "{16E9C908-24C1-4050-B341-E54A2E10F240}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,7 @@ Global
 		{8AE85B1C-B1C3-45C5-826C-B6BAEA18F09D} = {8743080D-020F-4420-9CF4-23F99CEA2A1B}
 		{63D7582C-F657-41EB-B6BB-BBE8FCD9C901} = {8743080D-020F-4420-9CF4-23F99CEA2A1B}
 		{1C71B877-1870-40A1-83AF-1D7A544EE2F9} = {8322BDAD-4AB4-4C30-9413-2E9DB390009B}
+		{16E9C908-24C1-4050-B341-E54A2E10F240} = {8322BDAD-4AB4-4C30-9413-2E9DB390009B}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{E723B18D-1DA1-4A87-A136-EDDA51B2EC55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -75,5 +78,9 @@ Global
 		{1C71B877-1870-40A1-83AF-1D7A544EE2F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C71B877-1870-40A1-83AF-1D7A544EE2F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C71B877-1870-40A1-83AF-1D7A544EE2F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16E9C908-24C1-4050-B341-E54A2E10F240}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16E9C908-24C1-4050-B341-E54A2E10F240}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16E9C908-24C1-4050-B341-E54A2E10F240}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16E9C908-24C1-4050-B341-E54A2E10F240}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
