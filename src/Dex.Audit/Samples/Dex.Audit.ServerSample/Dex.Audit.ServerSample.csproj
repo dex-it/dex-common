@@ -7,10 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Dex.Audit.Logger\Dex.Audit.Logger.csproj"/>
+        <ProjectReference Include="..\..\Dex.Audit.EF.NpgSql\Dex.Audit.EF.NpgSql.csproj" />
+        <ProjectReference Include="..\..\Dex.Audit.Server\Dex.Audit.Server.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6"/>
         <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2"/>
