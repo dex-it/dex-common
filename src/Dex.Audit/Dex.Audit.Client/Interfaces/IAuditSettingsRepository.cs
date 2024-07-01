@@ -9,5 +9,5 @@ public interface IAuditSettingsRepository
 {
     Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default);
 
-    Task AddAsync(string settingEventType, AuditSettings setting, TimeSpan refreshInterval, CancellationToken cancellationToken = default);
+    Task AddAsync(string settingEventType, AuditSettings settings, TimeSpan refreshInterval, CancellationToken cancellationToken = default);
 }

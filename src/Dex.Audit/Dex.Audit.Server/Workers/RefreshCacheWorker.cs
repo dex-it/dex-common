@@ -57,7 +57,7 @@ internal sealed class RefreshCacheWorker : BackgroundService
     /// Обновить записи в кэше
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    private async Task UpdateCache(CancellationToken cancellationToken)
+    private async Task UpdateCache(CancellationToken cancellationToken = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
         IAuditRepository auditRepository = scope.ServiceProvider.GetRequiredService<IAuditRepository>();
@@ -71,7 +71,7 @@ internal sealed class RefreshCacheWorker : BackgroundService
 
         foreach (AuditSettings setting in auditSettings)
         {
-            await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval);
+            await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval, cancellationToken);
         }
 
         _logger.LogInformation("Кэш успешно обновлен");

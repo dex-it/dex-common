@@ -10,7 +10,7 @@ public class AuditSettingsRepository : IAuditSettingsRepository
         return new AuditSettings();
     }
 
-    public Task AddAsync(string settingEventType, AuditSettings setting, TimeSpan refreshInterval,
+    public Task AddAsync(string settingEventType, AuditSettings settings, TimeSpan refreshInterval,
         CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;
