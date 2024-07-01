@@ -32,7 +32,7 @@ public sealed class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
     /// <param name="request">Запрос, который будет обработан.</param>
     /// <param name="next">Делегат для выполнения следующего обработчика в пайплайне.</param>
     /// <param name="cancellationToken"> <see cref="CancellationToken"/>.</param>
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken = default)
     {
         TResponse response;
 
