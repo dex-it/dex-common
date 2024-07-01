@@ -20,5 +20,5 @@ public interface IAuditRepository
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     /// <returns></returns>
-    Task<IEnumerable<AuditSettings>> GetAllSettingsAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<AuditSettings>> GetAllSettingsAsync(CancellationToken cancellationToken = default);
 }
