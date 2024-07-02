@@ -33,9 +33,9 @@ public class BaseAuditEventConfigurator : IAuditEventConfigurator
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task<AuditEventMessage> ConfigureAuditEventAsync(AuditEventBaseInfo auditEventBaseInfo, CancellationToken cancellationToken = default)
     {
-        AddressInfo sourceAddress = await GetSourceAddressAsync(cancellationToken);
-        Device deviceInfo = await GetDeviceInfoAsync(cancellationToken);
-        UserDetails userDetails = await GetUserDetailsAsync(cancellationToken);
+        var sourceAddress = await GetSourceAddressAsync(cancellationToken);
+        var deviceInfo = await GetDeviceInfoAsync(cancellationToken);
+        var userDetails = await GetUserDetailsAsync(cancellationToken);
 
         return new AuditEventMessage
         {
@@ -48,7 +48,7 @@ public class BaseAuditEventConfigurator : IAuditEventConfigurator
             SourceMacAddress = sourceAddress.MacAddress,
             SourceDnsName = sourceAddress.DnsName,
             SourceHost = sourceAddress.Host,
-            Start = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+            Start = DateTime.UtcNow,
             SourceGmtDate = DateTime.UtcNow,
             EventType = auditEventBaseInfo.EventType,
             EventName = auditEventBaseInfo.EventType,
@@ -64,7 +64,7 @@ public class BaseAuditEventConfigurator : IAuditEventConfigurator
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     protected virtual async Task<AddressInfo> GetSourceAddressAsync(CancellationToken cancellationToken = default)
     {
-        string dnsName = Dns.GetHostName();
+        var dnsName = Dns.GetHostName();
 
         return new AddressInfo
         {
@@ -81,7 +81,7 @@ public class BaseAuditEventConfigurator : IAuditEventConfigurator
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     protected virtual Task<Device> GetDeviceInfoAsync(CancellationToken cancellationToken = default)
     {
-        Assembly? assembly = Assembly.GetEntryAssembly();
+        var assembly = Assembly.GetEntryAssembly();
 
         return Task.FromResult(new Device
         {

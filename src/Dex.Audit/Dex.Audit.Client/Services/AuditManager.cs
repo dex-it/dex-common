@@ -49,7 +49,7 @@ internal sealed class AuditManager : IAuditManager
     {
         try
         {
-            AuditSettings? auditSettings = await _auditSettingsRepository
+            var auditSettings = await _auditSettingsRepository
                 .GetAsync(eventBaseInfo.EventType, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -58,7 +58,7 @@ internal sealed class AuditManager : IAuditManager
                 return;
             }
 
-            AuditEventMessage auditEvent = await _auditEventConfigurator.ConfigureAuditEventAsync(eventBaseInfo, cancellationToken);
+            var auditEvent = await _auditEventConfigurator.ConfigureAuditEventAsync(eventBaseInfo, cancellationToken);
             auditEvent.SourceMinSeverityLevel = _auditEventOptions.MinSeverityLevel;
             auditEvent.AuditSettingsId = auditSettings?.Id;
 

@@ -30,7 +30,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
                 !_entryHelpers.Exists(entryHelper =>
                     ReferenceEquals(entry.Entity, entryHelper.Entry)));
 
-        foreach (EntityEntry entry in entityEntries)
+        foreach (var entry in entityEntries)
         {
             _entryHelpers
                 .Add(new EntryHelper(
@@ -48,14 +48,14 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task SendInterceptedEntriesAsync(bool isSuccess, CancellationToken cancellationToken = default)
     {
-        IAuditManager auditManager = serviceProvider.GetRequiredService<IAuditManager>();
+        var auditManager = serviceProvider.GetRequiredService<IAuditManager>();
 
-        foreach (EntryHelper entryHelper in _entryHelpers)
+        foreach (var entryHelper in _entryHelpers)
         {
-            string eventType = GetEventType(entryHelper.State);
-            PropertyValues currentValues = entryHelper.CurrentValues;
-            PropertyValues originalValues = entryHelper.State == EntityState.Added ? currentValues : entryHelper.OriginalValues;
-            string message = FormAuditMessage(entryHelper.Entry, eventType, currentValues, originalValues);
+            var eventType = GetEventType(entryHelper.State);
+            var currentValues = entryHelper.CurrentValues;
+            var originalValues = entryHelper.State == EntityState.Added ? currentValues : entryHelper.OriginalValues;
+            var message = FormAuditMessage(entryHelper.Entry, eventType, currentValues, originalValues);
 
             await auditManager.ProcessAuditEventAsync(new AuditEventBaseInfo(eventType, entryHelper.Entry.GetType().ToString(), message, isSuccess),
                 cancellationToken);
@@ -66,7 +66,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
 
     protected virtual string GetEventType(EntityState entityState)
     {
-        string eventType = entityState switch
+        var eventType = entityState switch
         {
             EntityState.Modified => "ObjectChanged",
             EntityState.Added => "ObjectCreated",
@@ -92,7 +92,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
 
     private void AppendPropertyValues(PropertyValues values, StringBuilder messageBuilder)
     {
-        foreach (IProperty property in values.Properties)
+        foreach (var property in values.Properties)
         {
             messageBuilder.AppendLine($"{property.Name}: {values[property]}");
         }

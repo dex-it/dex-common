@@ -24,7 +24,7 @@ internal class AuditLogger : ILogger
     {
         if (eventId.Id != AuditLoggerConstants.AuditEventId || string.IsNullOrEmpty(eventId.Name)) return;
 
-        bool failure = logLevel is LogLevel.Critical or LogLevel.Error or LogLevel.Warning;
+        var failure = logLevel is LogLevel.Critical or LogLevel.Error or LogLevel.Warning;
 
         BaseInfoChannel.Writer.TryWrite(new AuditEventBaseInfo(
             eventId.Name,
