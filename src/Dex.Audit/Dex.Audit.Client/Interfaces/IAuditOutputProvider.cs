@@ -5,7 +5,7 @@ namespace Dex.Audit.Client.Interfaces;
 /// <summary>
 /// Определяет метод для публикации аудиторских событий
 /// </summary>
-public interface IAuditPublisher
+internal interface IAuditOutputProvider
 {
     /// <summary>
     /// Асинхронно публикует аудиторское событие

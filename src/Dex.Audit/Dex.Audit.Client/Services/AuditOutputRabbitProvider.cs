@@ -5,17 +5,17 @@ using MassTransit;
 namespace Dex.Audit.Client.Services;
 
 /// <summary>
-/// Реализация интерфейса <see cref="IAuditPublisher"/>, которая осуществляет публикацию аудиторских событий через RabbitMQ
+/// Реализация интерфейса <see cref="IAuditOutputProvider"/>, которая осуществляет публикацию аудиторских событий через RabbitMQ
 /// </summary>
-internal sealed class AuditPublisherRabbit : IAuditPublisher
+internal sealed class AuditOutputRabbitProvider : IAuditOutputProvider
 {
     private readonly ISendEndpointProvider _sendEndpoint;
 
     /// <summary>
-    /// Создает новый экземпляр класса <see cref="AuditPublisherRabbit"/>
+    /// Создает новый экземпляр класса <see cref="AuditOutputRabbitProvider"/>
     /// </summary>
     /// <param name="sendEndpoint">Конечная точка для публикации сообщений</param>
-    public AuditPublisherRabbit(ISendEndpointProvider sendEndpoint)
+    public AuditOutputRabbitProvider(ISendEndpointProvider sendEndpoint)
     {
         _sendEndpoint = sendEndpoint;
     }

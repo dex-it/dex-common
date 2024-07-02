@@ -11,7 +11,7 @@ namespace Dex.Audit.Server.Consumers;
 /// <summary>
 /// Обработчик аудиторских событий, полученных через шину сообщений.
 /// </summary>
-public class AuditEventConsumer : IConsumer<AuditEventMessage>
+public class AuditEventConsumer : IConsumer<Batch<AuditEventMessage>>
 {
     private readonly IAuditRepository _auditRepository;
     private readonly IAuditSettingsRepository _auditSettingsRepository;
@@ -37,43 +37,45 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
     /// Метод для обработки аудиторских событий, полученных через шину сообщений.
     /// </summary>
     /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки.</param>
-    public async Task Consume(ConsumeContext<AuditEventMessage> context)
+    public async Task Consume(ConsumeContext<Batch<AuditEventMessage>> context)
     {
-        var eventType = context.Message.EventType;
-        var sourceIp = context.Message.SourceIpAddress;
-
-        _logger.LogInformation("Начало обработки сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
-
-        try
+        foreach (var message in context.Message)
         {
-            var auditEvent = MapAuditEventFromMessage(context.Message);
+            var eventType = message.Message.EventType;
+            var sourceIp = message.Message.SourceIpAddress;
 
-            if (context.Message.AuditSettingsId is null)
+            _logger.LogInformation("Начало обработки сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
+
+            try
             {
-                var auditSettings = await _auditSettingsRepository.GetAsync(eventType);
+                var auditEvent = MapAuditEventFromMessage(message.Message);
 
-                if (auditSettings is null)
+                if (message.Message.AuditSettingsId is null)
                 {
-                    _logger.LogWarning("Не удалось получить из кэша настройки для события типа [{EventType}]", eventType);
-                    throw new Exception(nameof(auditSettings));
+                    var auditSettings = await _auditSettingsRepository.GetAsync(eventType);
+
+                    if (auditSettings is null)
+                    {
+                        _logger.LogWarning("Не удалось получить из кэша настройки для события типа [{EventType}]", eventType);
+                        throw new Exception(nameof(auditSettings));
+                    }
+
+                    if (auditSettings.SeverityLevel < message.Message.SourceMinSeverityLevel)
+                    {
+                        return;
+                    }
                 }
 
-                if (auditSettings.SeverityLevel < context.Message.SourceMinSeverityLevel)
-                {
-                    return;
-                }
+                SetDestinationDate(auditEvent);
+
+                await _auditRepository.AddAuditEventAsync(auditEvent, context.CancellationToken);
+
+                _logger.LogInformation("Сообщение аудита [{EventType}] от [{SourceIp}] успешно обработано", eventType, sourceIp);
             }
-
-            SetDestinationDate(auditEvent);
-
-            await _auditRepository.AddAuditEventAsync(auditEvent, context.CancellationToken);
-
-            _logger.LogInformation("Сообщение аудита [{EventType}] от [{SourceIp}] успешно обработано", eventType, sourceIp);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Возникла ошибка при обработке сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
-            throw;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Возникла ошибка при обработке сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
+            }
         }
     }
 

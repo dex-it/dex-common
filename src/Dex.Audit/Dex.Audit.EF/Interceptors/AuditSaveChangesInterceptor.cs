@@ -40,7 +40,7 @@ internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
         int result,
         CancellationToken cancellationToken = default)
     {
-        if (CheckTransaction(eventData.Context))
+        if (CheckIfTransactionExists(eventData.Context))
         {
             await _interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken);
         }
@@ -52,7 +52,7 @@ internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
     public override async Task SaveChangesFailedAsync(DbContextErrorEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        if (CheckTransaction(eventData.Context))
+        if (CheckIfTransactionExists(eventData.Context))
         {
             await _interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(false, cancellationToken);
         }
@@ -60,7 +60,7 @@ internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
         await base.SaveChangesFailedAsync(eventData, cancellationToken);
     }
 
-    private static bool CheckTransaction(DbContext? dbContext)
+    private static bool CheckIfTransactionExists(DbContext? dbContext)
     {
         if (dbContext is null)
         {

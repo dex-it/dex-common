@@ -15,15 +15,15 @@ public sealed class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
     where TRequest : IAuditRequest<TResponse>
     where TResponse : IAuditResponse
 {
-    private readonly IAuditManager _auditManager;
+    private readonly IAuditWriter _auditWriter;
 
     /// <summary>
     /// Инициализирует новый экземпляр класса <see cref="AuditBehavior{TRequest, TResponse}"/>.
     /// </summary>
-    /// <param name="auditManager">Менеджер аудита, используемый для выполнения операций аудита.</param>
-    public AuditBehavior(IAuditManager auditManager)
+    /// <param name="auditWriter">Менеджер аудита, используемый для выполнения операций аудита.</param>
+    public AuditBehavior(IAuditWriter auditWriter)
     {
-        _auditManager = auditManager;
+        _auditWriter = auditWriter;
     }
 
     /// <summary>
@@ -40,12 +40,12 @@ public sealed class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
         {
             response = await next();
 
-            await _auditManager.ProcessAuditEventAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, true),
+            await _auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, true),
                 cancellationToken);
         }
         catch
         {
-            await _auditManager.ProcessAuditEventAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, false),
+            await _auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, false),
                 cancellationToken);
 
             throw;
