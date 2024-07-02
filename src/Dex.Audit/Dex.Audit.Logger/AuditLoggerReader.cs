@@ -20,7 +20,7 @@ internal sealed class AuditLoggerReader(
     {
         using var scope = serviceScopeFactory.CreateScope();
 
-        var auditManager = scope.ServiceProvider.GetRequiredService<IAuditManager>();
+        var auditManager = scope.ServiceProvider.GetRequiredService<IAuditWriter>();
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -33,7 +33,7 @@ internal sealed class AuditLoggerReader(
                     continue;
                 }
 
-                await auditManager.ProcessAuditEventAsync(auditEventBaseInfo, cancellationToken).ConfigureAwait(false);
+                await auditManager.WriteAsync(auditEventBaseInfo, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception exception)
             {
