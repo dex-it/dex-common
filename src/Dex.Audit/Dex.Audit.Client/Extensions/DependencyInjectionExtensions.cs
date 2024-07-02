@@ -3,6 +3,7 @@ using Dex.Audit.Client.Options;
 using Dex.Audit.Client.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using AuditWriter = Dex.Audit.Client.Services.AuditWriter;
 
 namespace Dex.Audit.Client.Extensions;
 
@@ -21,8 +22,8 @@ public static class DependencyInjectionExtensions
         where TAuditSettingsRepository : class, IAuditSettingsRepository
     {
         services
-            .AddScoped<IAuditPublisher, AuditPublisherRabbit>()
-            .AddScoped<IAuditManager, AuditManager>()
+            .AddScoped<IAuditOutputProvider, AuditOutputRabbitProvider>()
+            .AddScoped<AuditWriter, AuditWriter>()
             .AddScoped(typeof(IAuditEventConfigurator), typeof(TAuditEventConfigurator))
             .AddScoped(typeof(IAuditSettingsRepository), typeof(TAuditSettingsRepository))
             .Configure<AuditEventOptions>(opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));

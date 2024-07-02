@@ -1,7 +1,6 @@
 using Dex.Audit.Client.Interfaces;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Client.Options;
-using Dex.Audit.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -10,30 +9,30 @@ namespace Dex.Audit.Client.Services;
 /// <summary>
 /// Класс для управления событиями аудита
 /// </summary>
-internal sealed class AuditManager : IAuditManager
+internal sealed class AuditWriter : IAuditWriter
 {
-    private readonly IAuditPublisher _auditPublisher;
+    private readonly IAuditOutputProvider _auditOutputProvider;
     private readonly AuditEventOptions _auditEventOptions;
     private readonly IAuditEventConfigurator _auditEventConfigurator;
     private readonly IAuditSettingsRepository _auditSettingsRepository;
-    private readonly ILogger<AuditManager> _logger;
+    private readonly ILogger<AuditWriter> _logger;
 
     /// <summary>
-    /// Инициализирует новый экземпляр класса <see cref="AuditManager"/>
+    /// Инициализирует новый экземпляр класса <see cref="AuditWriter"/>
     /// </summary>
-    /// <param name="auditPublisher"><see cref="IAuditPublisher"/></param>
+    /// <param name="auditOutputProvider"><see cref="IAuditOutputProvider"/></param>
     /// <param name="auditEventConfigurator"><see cref="IAuditEventConfigurator"/></param>
     /// <param name="auditSettingsRepository"><see cref="IAuditSettingsRepository"/></param>
     /// <param name="auditEventOptions"><see cref="AuditEventOptions"/></param>
     /// <param name="logger"><see cref="ILogger{TCategoryName}"/></param>
-    public AuditManager(
-        IAuditPublisher auditPublisher,
+    public AuditWriter(
+        IAuditOutputProvider auditOutputProvider,
         IAuditEventConfigurator auditEventConfigurator,
         IOptions<AuditEventOptions> auditEventOptions,
         IAuditSettingsRepository auditSettingsRepository,
-        ILogger<AuditManager> logger)
+        ILogger<AuditWriter> logger)
     {
-        _auditPublisher = auditPublisher;
+        _auditOutputProvider = auditOutputProvider;
         _auditEventConfigurator = auditEventConfigurator;
         _auditSettingsRepository = auditSettingsRepository;
         _logger = logger;
@@ -45,7 +44,7 @@ internal sealed class AuditManager : IAuditManager
     /// </summary>
     /// <param name="eventBaseInfo">Базовая информация о событии аудита</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public async Task ProcessAuditEventAsync(AuditEventBaseInfo eventBaseInfo, CancellationToken cancellationToken = default)
+    public async Task WriteAsync(AuditEventBaseInfo eventBaseInfo, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -62,7 +61,7 @@ internal sealed class AuditManager : IAuditManager
             auditEvent.SourceMinSeverityLevel = _auditEventOptions.MinSeverityLevel;
             auditEvent.AuditSettingsId = auditSettings?.Id;
 
-            await _auditPublisher.PublishEventAsync(auditEvent, cancellationToken);
+            await _auditOutputProvider.PublishEventAsync(auditEvent, cancellationToken);
         }
         catch (Exception ex)
         {

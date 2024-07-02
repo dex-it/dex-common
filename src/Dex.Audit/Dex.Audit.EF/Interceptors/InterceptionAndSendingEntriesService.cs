@@ -4,7 +4,6 @@ using Dex.Audit.Client.Messages;
 using Dex.Audit.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.Audit.EF.Interceptors;
@@ -48,7 +47,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task SendInterceptedEntriesAsync(bool isSuccess, CancellationToken cancellationToken = default)
     {
-        var auditManager = serviceProvider.GetRequiredService<IAuditManager>();
+        var auditManager = serviceProvider.GetRequiredService<IAuditWriter>();
 
         foreach (var entryHelper in _entryHelpers)
         {
@@ -57,7 +56,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
             var originalValues = entryHelper.State == EntityState.Added ? currentValues : entryHelper.OriginalValues;
             var message = FormAuditMessage(entryHelper.Entry, eventType, currentValues, originalValues);
 
-            await auditManager.ProcessAuditEventAsync(new AuditEventBaseInfo(eventType, entryHelper.Entry.GetType().ToString(), message, isSuccess),
+            await auditManager.WriteAsync(new AuditEventBaseInfo(eventType, entryHelper.Entry.GetType().ToString(), message, isSuccess),
                 cancellationToken);
         }
 
