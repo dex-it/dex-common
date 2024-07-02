@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Dex.Audit.EF.NpgSql\Dex.Audit.EF.NpgSql.csproj" />
+        <ProjectReference Include="..\..\Dex.Audit.EF\Dex.Audit.EF.csproj" />
         <ProjectReference Include="..\..\Dex.Audit.Server\Dex.Audit.Server.csproj"/>
     </ItemGroup>
 
