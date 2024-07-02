@@ -1,5 +1,5 @@
 ﻿using Dex.Audit.Domain.Entities;
-using Dex.Audit.EF.NpgSql.EntityConfiguration;
+using Dex.Audit.EF.EntityConfiguration;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Audit.ServerSample.Context;

@@ -59,17 +59,17 @@ internal sealed class RefreshCacheWorker : BackgroundService
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     private async Task UpdateCache(CancellationToken cancellationToken = default)
     {
-        using IServiceScope scope = _scopeFactory.CreateScope();
-        IAuditRepository auditRepository = scope.ServiceProvider.GetRequiredService<IAuditRepository>();
-        IAuditSettingsRepository auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
+        using var scope = _scopeFactory.CreateScope();
+        var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditRepository>();
+        var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
 
         _logger.LogInformation("Выполняется операция обновления настроек аудита в кэше");
 
-        TimeSpan refreshInterval = _options.RefreshInterval;
+        var refreshInterval = _options.RefreshInterval;
 
         IEnumerable<AuditSettings> auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken);
 
-        foreach (AuditSettings setting in auditSettings)
+        foreach (var setting in auditSettings)
         {
             await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval, cancellationToken);
         }
