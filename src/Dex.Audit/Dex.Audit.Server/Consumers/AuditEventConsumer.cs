@@ -39,18 +39,18 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
     /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки.</param>
     public async Task Consume(ConsumeContext<AuditEventMessage> context)
     {
-        string eventType = context.Message.EventType;
-        string? sourceIp = context.Message.SourceIpAddress;
+        var eventType = context.Message.EventType;
+        var sourceIp = context.Message.SourceIpAddress;
 
         _logger.LogInformation("Начало обработки сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
 
         try
         {
-            AuditEvent auditEvent = MapAuditEventFromMessage(context.Message);
+            var auditEvent = MapAuditEventFromMessage(context.Message);
 
             if (context.Message.AuditSettingsId is null)
             {
-                AuditSettings? auditSettings = await _auditSettingsRepository.GetAsync(eventType);
+                var auditSettings = await _auditSettingsRepository.GetAsync(eventType);
 
                 if (auditSettings is null)
                 {
@@ -125,7 +125,7 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
                     Host = message.DestinationHost
                 },
                 Port = message.DestinationPort,
-                End = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+                End = DateTime.UtcNow,
                 GmtDate = message.DestinationGmtDate
             },
             EventObject = message.EventObject ?? string.Empty,
@@ -144,7 +144,7 @@ public class AuditEventConsumer : IConsumer<AuditEventMessage>
 
         if (auditEvent.Destination.End == DateTime.MinValue)
         {
-            auditEvent.Destination.End = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            auditEvent.Destination.End = DateTime.UtcNow;
         }
     }
 }
