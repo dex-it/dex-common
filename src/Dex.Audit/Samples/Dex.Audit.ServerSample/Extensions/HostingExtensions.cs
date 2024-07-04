@@ -49,14 +49,7 @@ public static class HostingExtensions
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
         services.AddMassTransit(busRegistrationConfigurator =>
         {
-            busRegistrationConfigurator.AddConsumer<AuditEventConsumer>(
-            //     cfg =>
-            // {
-            //     cfg.Options<BatchOptions>(options =>
-            //         options.SetMessageLimit(100).SetTimeLimit(ms: 1).SetTimeLimitStart(BatchTimeLimitStart.FromLast)//.GroupBy<AuditEventMessage, string>(consumeContext => consumeContext.Message.EventType)
-            //             .SetConcurrencyLimit(10));
-            // }
-                );
+            busRegistrationConfigurator.AddConsumer<AuditEventConsumer>();
 
             busRegistrationConfigurator.RegisterBus((context, configurator) =>
             {

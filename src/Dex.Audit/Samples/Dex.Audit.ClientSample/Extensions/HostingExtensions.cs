@@ -2,11 +2,13 @@
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Client.Services;
-using Dex.Audit.ClientSample.Models;
+using Dex.Audit.ClientSample.Comands.Logging;
 using Dex.Audit.ClientSample.Repositories;
 using Dex.Audit.Logger.Extensions;
+using Dex.Audit.MediatR.PipelineBehaviours;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.System.Text.Json;
@@ -55,6 +57,13 @@ public static class HostingExtensions
 
         AddStackExchangeRedis(services, builder.Configuration);
 
+        services.AddTransient(typeof(AuditBehavior<,>), typeof(AuditBehavior<,>));
+        services.AddMediatR(configuration =>
+        {
+            configuration.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+            configuration.AddBehavior(typeof(IPipelineBehavior<,>),typeof(AuditBehavior<,>));
+        });
+
         return builder.Build();
     }
 
@@ -76,12 +85,12 @@ public static class HostingExtensions
         app.MapControllers();
         app.MapPost(
             "/Logger", 
-            (
-                [FromServices] ILogger<Program> logger,
-                [FromBody] CreateLoggableEvent loggableEvent
+            async (
+                [FromServices] IMediator mediator,
+                [FromBody] AddAuditableLogCommand addAuditableLogCommand
             ) =>
             {
-                logger.LogAudit(loggableEvent.LogLevel, loggableEvent.EventType, loggableEvent.Message, loggableEvent.MessageParameters);
+                await mediator.Send(addAuditableLogCommand);
             });
 
         return app;
