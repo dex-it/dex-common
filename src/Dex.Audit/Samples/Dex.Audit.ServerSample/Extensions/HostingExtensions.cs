@@ -1,11 +1,17 @@
 ﻿using System.Text.Json.Serialization;
+using Dex.Audit.Client.Messages;
+using Dex.Audit.Domain.Entities;
+using Dex.Audit.Domain.Enums;
 using Dex.Audit.Server.Consumers;
 using Dex.Audit.Server.Extensions;
 using Dex.Audit.ServerSample.Context;
 using Dex.Audit.ServerSample.Repositories;
+using Dex.Extensions;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
-using MassTransit.Configuration;
+using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis.Extensions.Core.Configuration;
+using StackExchange.Redis.Extensions.System.Text.Json;
 
 namespace Dex.Audit.ServerSample.Extensions;
 
@@ -29,7 +35,6 @@ public static class HostingExtensions
 
         var services = builder.Services;
 
-        services.AddDistributedMemoryCache();
         services.AddDbContext<AuditServerDbContext>();
 
         services.AddEndpointsApiExplorer();
@@ -42,17 +47,52 @@ public static class HostingExtensions
             });
         services.AddAuditServer<AuditRepository, AuditSettingsRepository>(builder.Configuration);
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
-        services.AddMassTransit(x =>
+        services.AddMassTransit(busRegistrationConfigurator =>
         {
-            x.RegisterConsumer<AuditEventConsumer>();
+            busRegistrationConfigurator.AddConsumer<AuditEventConsumer>(
+            //     cfg =>
+            // {
+            //     cfg.Options<BatchOptions>(options =>
+            //         options.SetMessageLimit(100).SetTimeLimit(ms: 1).SetTimeLimitStart(BatchTimeLimitStart.FromLast)//.GroupBy<AuditEventMessage, string>(consumeContext => consumeContext.Message.EventType)
+            //             .SetConcurrencyLimit(10));
+            // }
+                );
 
-            x.RegisterBus((context, configurator) =>
+            busRegistrationConfigurator.RegisterBus((context, configurator) =>
             {
+                configurator.ReceiveEndpoint(nameof(AuditEventMessage), endpointConfigurator =>
+                {
+                    // the transport must be configured to deliver at least the batch message limit
+                    endpointConfigurator.PrefetchCount = 600;
+
+                    endpointConfigurator.Batch<AuditEventMessage>(b =>
+                    {
+                        b.MessageLimit = 500;
+                        b.TimeLimit = TimeSpan.FromSeconds(1);
+
+                        b.Consumer<AuditEventConsumer, AuditEventMessage>(context);
+
+                        b.ConcurrencyLimit = 1;
+                    });
+
+                    // retry
+                    endpointConfigurator.UseMessageRetry(retryConfigurator =>
+                        retryConfigurator.SetRetryPolicy(filter => filter.Interval(2, 1.Seconds())));
+                });
                 configurator.ConfigureEndpoints(context);
             });
         });
 
+        AddStackExchangeRedis(services, builder.Configuration);
+
         return builder.Build();
+    }
+
+    private static void AddStackExchangeRedis(IServiceCollection services, ConfigurationManager builderConfiguration)
+    {
+        var redisConfiguration = new RedisConfiguration();
+        builderConfiguration.GetSection(nameof(RedisConfiguration)).Bind(redisConfiguration);
+        services.AddStackExchangeRedisExtensions<SystemTextJsonSerializer>(redisConfiguration);
     }
 
     /// <summary>
@@ -64,6 +104,21 @@ public static class HostingExtensions
     {
         app.UseSwagger().UseSwaggerUI();
         app.MapControllers();
+        app.MapPost(
+            "/Settings", 
+            async (AuditServerDbContext context,
+                string eventType,
+                AuditEventSeverityLevel severityLevel
+            ) =>
+            {
+                context.AuditSettings.Add(new AuditSettings() { EventType = eventType, SeverityLevel = severityLevel });
+                await context.SaveChangesAsync();
+            });
+        app.MapGet(
+            "/Events", 
+            async (AuditServerDbContext context
+            ) => await context.AuditEvents.ToListAsync());
+
 
         return app;
     }

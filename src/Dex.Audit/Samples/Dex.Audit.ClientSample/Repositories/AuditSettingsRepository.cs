@@ -1,23 +1,19 @@
-﻿using System.Text.Json;
-using Dex.Audit.Client.Interfaces;
+﻿using Dex.Audit.Client.Interfaces;
 using Dex.Audit.Domain.Entities;
-using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis.Extensions.Core.Abstractions;
 
 namespace Dex.Audit.ClientSample.Repositories;
 
-public class AuditSettingsRepository(IDistributedCache distributedCache) : IAuditSettingsRepository
+public class AuditSettingsRepository(IRedisDatabase redisDatabase) : IAuditSettingsRepository
 {
     public async Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default)
     {
-        var eventBytes = await distributedCache.GetAsync(eventType, cancellationToken);
-        if (eventBytes == null) return null;
-        var auditSettings = JsonSerializer.Deserialize<AuditSettings>(eventBytes);
-        return auditSettings;
+        return await redisDatabase.GetAsync<AuditSettings>(eventType);
     }
 
     public async Task AddAsync(string settingEventType, AuditSettings settings, TimeSpan refreshInterval,
         CancellationToken cancellationToken = default)
     {
-        await distributedCache.SetStringAsync(settingEventType, JsonSerializer.Serialize(settings), cancellationToken);
+        await redisDatabase.AddAsync(settingEventType, settings, refreshInterval);
     }
 }
