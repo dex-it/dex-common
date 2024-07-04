@@ -13,19 +13,9 @@ namespace Dex.Audit.Client.Services;
 /// <summary>
 /// Базовый конфигуратор события аудита
 /// </summary>
-public class BaseAuditEventConfigurator : IAuditEventConfigurator
+/// <param name="auditEventOptions">Настройки события аудита.</param>
+public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOptions) : IAuditEventConfigurator
 {
-    private readonly AuditEventOptions _auditEventOptions;
-
-    /// <summary>
-    /// Инициализирует новый экземпляр класса <see cref="BaseAuditEventConfigurator"/>.
-    /// </summary>
-    /// <param name="auditEventOptions">Настройки события аудита.</param>
-    public BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOptions)
-    {
-        _auditEventOptions = auditEventOptions.Value;
-    }
-
     /// <summary>
     /// Конфигурирует сообщение аудита для отправки
     /// </summary>
@@ -85,7 +75,7 @@ public class BaseAuditEventConfigurator : IAuditEventConfigurator
 
         return Task.FromResult(new Device
         {
-            Vendor = _auditEventOptions.SystemName, Version = assembly?.GetName().Version?.ToString(), ProcessName = assembly?.GetName().Name
+            Vendor = auditEventOptions.Value.SystemName, Version = assembly?.GetName().Version?.ToString(), ProcessName = assembly?.GetName().Name
         });
     }
 

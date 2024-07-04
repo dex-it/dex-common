@@ -11,21 +11,11 @@ namespace Dex.Audit.MediatR.PipelineBehaviours;
 /// </summary>
 /// <typeparam name="TRequest">Тип запроса, который должен реализовать интерфейс <see cref="IAuditRequest{TResponse}"/>.</typeparam>
 /// <typeparam name="TResponse">Тип ответа, который должен реализовать интерфейс <see cref="IAuditResponse"/>.</typeparam>
-public sealed class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+/// <param name="auditWriter">Менеджер аудита, используемый для выполнения операций аудита.</param>
+public sealed class AuditBehavior<TRequest, TResponse>(IAuditWriter auditWriter) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IAuditRequest<TResponse>
     where TResponse : IAuditResponse
 {
-    private readonly IAuditWriter _auditWriter;
-
-    /// <summary>
-    /// Инициализирует новый экземпляр класса <see cref="AuditBehavior{TRequest, TResponse}"/>.
-    /// </summary>
-    /// <param name="auditWriter">Менеджер аудита, используемый для выполнения операций аудита.</param>
-    public AuditBehavior(IAuditWriter auditWriter)
-    {
-        _auditWriter = auditWriter;
-    }
-
     /// <summary>
     /// Обрабатывает запрос и добавляет аудит в пайплайн обработки запросов.
     /// </summary>
@@ -40,18 +30,16 @@ public sealed class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
         {
             response = await next();
 
-            await _auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, true),
+            await auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, true),
                 cancellationToken);
         }
         catch
         {
-            await _auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, false),
+            await auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, false),
                 cancellationToken);
 
             throw;
         }
-
-        
 
         return response;
     }

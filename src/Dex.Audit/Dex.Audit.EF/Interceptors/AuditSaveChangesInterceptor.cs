@@ -7,23 +7,13 @@ namespace Dex.Audit.EF.Interceptors;
 /// <summary>
 /// Интерсептор аудита, отвечающий за перехват изменений контекста базы данных и отправку записей аудита
 /// </summary>
-internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
+/// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита</param>
+internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService) : SaveChangesInterceptor
 {
-    private readonly IInterceptionAndSendingEntriesService _interceptionAndSendingEntriesService;
-
-    /// <summary>
-    /// Инициализирует новый экземпляр класса <see cref="AuditSaveChangesInterceptor"/>.
-    /// </summary>
-    /// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита</param>
-    public AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService)
-    {
-        _interceptionAndSendingEntriesService = interceptionAndSendingEntriesService;
-    }
-
     /// <inheritdoc/>
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
-        _interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
+        interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
         return base.SavingChanges(eventData, result);
     }
 
@@ -31,7 +21,7 @@ internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        _interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
+        interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
@@ -42,7 +32,7 @@ internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
     {
         if (CheckIfTransactionExists(eventData.Context))
         {
-            await _interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken);
+            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken);
         }
 
         return await base.SavedChangesAsync(eventData, result, cancellationToken);
@@ -54,7 +44,7 @@ internal class AuditSaveChangesInterceptor : SaveChangesInterceptor
     {
         if (CheckIfTransactionExists(eventData.Context))
         {
-            await _interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(false, cancellationToken);
+            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(false, cancellationToken);
         }
 
         await base.SaveChangesFailedAsync(eventData, cancellationToken);
