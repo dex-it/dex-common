@@ -1,11 +1,12 @@
 using Dex.Audit.Domain.Enums;
+using MassTransit;
 
 namespace Dex.Audit.Client.Messages;
 
 /// <summary>
 /// Контракт сообщения о событии аудита
 /// </summary>
-public class AuditEventMessage
+public class AuditEventMessage : IConsumer
 {
     /// <summary>
     ///  ID строки о событии ИБ в рамках одного журнала АС

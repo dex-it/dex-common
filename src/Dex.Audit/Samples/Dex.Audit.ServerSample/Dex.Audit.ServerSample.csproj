@@ -15,6 +15,9 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6"/>
         <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0"/>
         <PackageReference Include="StackExchange.Redis" Version="2.8.0" />
+        <PackageReference Include="StackExchange.Redis.Extensions.AspNetCore" Version="10.2.0" />
+        <PackageReference Include="StackExchange.Redis.Extensions.Core" Version="10.2.0" />
+        <PackageReference Include="StackExchange.Redis.Extensions.System.Text.Json" Version="10.2.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.2"/>
