@@ -27,7 +27,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
             CancellationToken cancellationToken)
             where TResult : default
         {
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            ArgumentNullException.ThrowIfNull(operation);
 
             return await operation(cancellationToken).ConfigureAwait(false);
         }

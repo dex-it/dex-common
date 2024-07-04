@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Options;
+using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -11,7 +12,7 @@ namespace Dex.Cap.Ef.Tests
 {
     public abstract class BaseTest
     {
-        protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
+        protected string DbName { get; } = "db_test_" + DateTime.Now.Ticks;
 
         [SetUp]
         public virtual async Task Setup()
@@ -29,16 +30,22 @@ namespace Dex.Cap.Ef.Tests
             await db.Database.EnsureDeletedAsync();
         }
 
-        protected IServiceCollection InitServiceCollection()
+        protected IServiceCollection InitServiceCollection(int messageToProcessLimit = 10, int parallelLimit = 2,
+            Action<OutboxRetryStrategyConfigurator>? strategyConfigure = null)
         {
             var serviceCollection = new ServiceCollection();
             AddLogging(serviceCollection);
 
             serviceCollection
                 .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext, TestDiscriminator>()
+                .AddOutbox<TestDbContext, TestDiscriminator>((provider, configurator) => { strategyConfigure?.Invoke(configurator); })
                 .AddOnceExecutor<TestDbContext>()
-                .AddOptions<OutboxOptions>();
+                .AddOptions<OutboxOptions>()
+                .Configure(options =>
+                {
+                    options.MessagesToProcess = messageToProcessLimit;
+                    options.ConcurrencyLimit = parallelLimit;
+                });
 
             return serviceCollection;
         }
@@ -53,10 +60,14 @@ namespace Dex.Cap.Ef.Tests
             });
         }
 
+        protected static TestDbContext GetDb(IServiceProvider sp)
+        {
+            return sp.GetRequiredService<TestDbContext>();
+        }
+
         protected static async Task SaveChanges(IServiceProvider sp)
         {
-            var db = sp.GetRequiredService<TestDbContext>();
-            await db.SaveChangesAsync();
+            await GetDb(sp).SaveChangesAsync();
         }
     }
 }

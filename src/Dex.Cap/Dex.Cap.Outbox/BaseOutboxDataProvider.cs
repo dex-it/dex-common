@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
@@ -26,12 +25,12 @@ namespace Dex.Cap.Outbox
 
         // Job management
 
-        public abstract IAsyncEnumerable<IOutboxLockedJob> GetWaitingJobs(CancellationToken cancellationToken);
+        public abstract Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken);
 
         public virtual async Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null,
             Exception? exception = null)
         {
-            if (outboxJob == null) throw new ArgumentNullException(nameof(outboxJob));
+            ArgumentNullException.ThrowIfNull(outboxJob);
 
             outboxJob.Envelope.Status = OutboxMessageStatus.Failed;
             outboxJob.Envelope.Updated = DateTime.UtcNow;
@@ -49,7 +48,7 @@ namespace Dex.Cap.Outbox
 
         public virtual async Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken)
         {
-            if (outboxJob == null) throw new ArgumentNullException(nameof(outboxJob));
+            ArgumentNullException.ThrowIfNull(outboxJob);
 
             outboxJob.Envelope.Status = OutboxMessageStatus.Succeeded;
             outboxJob.Envelope.Updated = DateTime.UtcNow;
@@ -63,7 +62,7 @@ namespace Dex.Cap.Outbox
 
         protected abstract Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken);
 
-        public abstract Task<OutboxEnvelope[]> GetFreeMessages(int limit, CancellationToken cancellationToken);
+        public abstract Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken);
 
         public abstract int GetFreeMessagesCount();
     }

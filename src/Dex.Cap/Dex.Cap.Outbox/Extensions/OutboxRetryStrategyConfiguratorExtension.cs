@@ -7,7 +7,7 @@ namespace Dex.Cap.Outbox.Extensions
     {
         public static void UseOutboxIncrementalRetryStrategy(this OutboxRetryStrategyConfigurator configurator, TimeSpan interval)
         {
-            if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+            ArgumentNullException.ThrowIfNull(configurator);
 
             configurator.RetryStrategy = new IncrementalOutboxRetryStrategy(interval);
         }

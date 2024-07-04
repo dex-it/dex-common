@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.Model;
@@ -17,8 +18,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 {
     public class ExecuteTransactionOutboxTests : BaseTest
     {
-        private static readonly AsyncLocal<string> AsyncLocal = new();
-
         [Test]
         public async Task IdempotentRetryExecutionContextTest1()
         {
@@ -53,7 +52,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            using var scope = sp.CreateScope();
+            envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(OutboxMessageStatus.Succeeded, envelope.Status);
         }
 
@@ -89,7 +89,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            envelope = await dbContext.Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            using var scope = sp.CreateScope();
+            envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(OutboxMessageStatus.Failed, envelope.Status);
         }
 
@@ -261,58 +262,53 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public async Task SimpleRunTestMultiThreaded()
+        public async Task ParallelProcessingMessagesTest()
         {
-            var services = InitServiceCollection()
+            // set process limit to 1
+            var services = InitServiceCollection(1)
                 .AddScoped<IOutboxMessageHandler<TestDelayOutboxCommand>, TestDelayCommandHandler>()
                 .BuildServiceProvider();
 
-            var threads = new HashSet<string>();
+            var threads = new ConcurrentBag<string>();
             using var ce = new CountdownEvent(3);
 
-            TestDelayCommandHandler.OnProcess += (_, _) =>
+            TestDelayCommandHandler.OnProcess += (_, c) =>
             {
-                lock (threads)
-                {
-                    threads.Add(AsyncLocal.Value!);
-                }
-
-                // ReSharper disable once AccessToDisposedClosure
+                threads.Add(c.Args);
                 ce.Signal();
             };
 
-            const string arg1 = "hello world1";
-            const string arg2 = "hello world2";
-            const string arg3 = "hello world3";
+            var num = 0;
+            var correlationId = Guid.NewGuid();
 
             var outboxService = services.GetRequiredService<IOutboxService<TestDbContext>>();
-            var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = arg1, DelayMsec = 5_000 });
-            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = arg2, DelayMsec = 5_000 });
-            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = arg3, DelayMsec = 5_000 });
+            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
+            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
+            await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
             await SaveChanges(services);
 
-            async void ThreadEntry(string arg)
-            {
-                lock (threads)
-                {
-                    AsyncLocal.Value = arg;
-                }
+            var sw = Stopwatch.StartNew();
+            ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
+            ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
+            ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
 
+            // wait for countdown
+            ce.Wait();
+            sw.Stop();
+
+            Assert.AreEqual(num, threads.Distinct().Count());
+            Assert.LessOrEqual((int)sw.Elapsed.TotalSeconds, 1);
+
+            return;
+
+            async void RunOutboxHandler()
+            {
                 using var scope = services.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
                 await handler.ProcessAsync();
             }
 
-            var sw = Stopwatch.StartNew();
-            ThreadPool.QueueUserWorkItem(_ => ThreadEntry(arg1));
-            ThreadPool.QueueUserWorkItem(_ => ThreadEntry(arg2));
-            ThreadPool.QueueUserWorkItem(_ => ThreadEntry(arg3));
-            ce.Wait();
-            sw.Stop();
-
-            Assert.AreEqual(5, (int)sw.Elapsed.TotalSeconds);
-            Assert.AreEqual(3, threads.Count);
+            string GetId() => (num++).ToString("D");
         }
     }
 }

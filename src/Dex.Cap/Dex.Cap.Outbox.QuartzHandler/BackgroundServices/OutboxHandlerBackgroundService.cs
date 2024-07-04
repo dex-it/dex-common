@@ -10,22 +10,25 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
 {
+    // Инжектим только синглтоны.
     internal sealed class OutboxHandlerBackgroundService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _logger;
         private readonly OutboxHandlerOptions _options;
-        private const string ServiceNameIsStatus = "Background service '{ServiceName}' is {Status}";
-        private const string TypeName = nameof(OutboxHandlerBackgroundService);
 
-        // Инжектим только синглтоны.
-        public OutboxHandlerBackgroundService(IServiceScopeFactory scopeFactory, OutboxHandlerOptions options,
+        public OutboxHandlerBackgroundService(
+            IServiceScopeFactory scopeFactory,
+            OutboxHandlerOptions options,
             ILogger<OutboxHandlerBackgroundService> logger)
         {
             _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
+
+        private const string ServiceNameIsStatus = "Background service '{ServiceName}' is {Status}";
+        private const string TypeName = nameof(OutboxHandlerBackgroundService);
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -63,9 +66,9 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
                 await service.ProcessAsync(cancellationToken);
                 logger.LogDebug("Outbox handler finished");
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException ex) when (cancellationToken.IsCancellationRequested)
             {
-                logger.LogDebug("Outbox handler was interrupted by stopping of host process");
+                logger.LogDebug(ex, "Outbox handler was interrupted by stopping of host process");
                 throw;
             }
             catch (Exception ex)

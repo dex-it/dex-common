@@ -30,8 +30,8 @@
 
     
     <!--misc -->
-    <PackageReference Update="Npgsql" Version="6.0.10" />
-    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.22" />
+    <PackageReference Update="Npgsql" Version="6.0.11" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.29" />
     <PackageReference Update="Neo4jClient" Version="5.1.15" />
     <PackageReference Update="MassTransit*" Version="8.2.2" />
     <PackageReference Update="MassTransit.TestFramework" Version="8.0.12" />

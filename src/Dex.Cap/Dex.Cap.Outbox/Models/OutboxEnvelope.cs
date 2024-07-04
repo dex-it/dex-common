@@ -5,20 +5,52 @@ using System.Diagnostics;
 
 namespace Dex.Cap.Outbox.Models
 {
-    [Table("outbox", Schema = "cap")]
+    [Table(NameConst.TableName, Schema = NameConst.SchemaName)]
     public class OutboxEnvelope
     {
-        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, OutboxMessageStatus status, string content, DateTime? startAtUtc = null)
+        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, string content, DateTime? startAtUtc = null)
+            : this(id, correlationId, messageType, content, startAtUtc, null)
         {
-            var startDateUtc = startAtUtc ?? DateTime.UtcNow;
+        }
+
+        public OutboxEnvelope(Guid id, Guid correlationId, string messageType, string content, DateTime? startAtUtc, TimeSpan? lockTimeout)
+        {
+            if (correlationId == Guid.Empty)
+            {
+                throw new ArgumentOutOfRangeException(nameof(correlationId), "Correlation ID cannot be an empty GUID.");
+            }
+
+            if (string.IsNullOrEmpty(messageType))
+            {
+                throw new ArgumentException("Message type cannot be null or empty.", nameof(messageType));
+            }
+
+            if (string.IsNullOrEmpty(content))
+            {
+                throw new ArgumentException("Message type cannot be null or empty.", nameof(content));
+            }
+
+            if (lockTimeout.HasValue && lockTimeout.Value < TimeSpan.FromSeconds(10))
+            {
+                throw new ArgumentOutOfRangeException(nameof(lockTimeout), "Lock timeout must be at least 10 seconds.");
+            }
+
+            if (startAtUtc.HasValue && startAtUtc.Value < DateTime.UtcNow.AddHours(-1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(startAtUtc), "The start time must be no earlier than one hour ago.");
+            }
 
             Id = id;
             CorrelationId = correlationId;
-            MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
-            Status = status;
-            Content = content ?? throw new ArgumentNullException(nameof(content));
+            Status = OutboxMessageStatus.New;
+            MessageType = messageType;
+            Content = content;
+
+            var startDateUtc = startAtUtc ?? DateTime.UtcNow;
             StartAtUtc = startDateUtc;
             ScheduledStartIndexing = startDateUtc;
+
+            LockTimeout = lockTimeout ?? TimeSpan.FromSeconds(30);
             ActivityId = Activity.Current?.Id;
         }
 
@@ -26,7 +58,7 @@ namespace Dex.Cap.Outbox.Models
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Полное имя типа сообщения, AssemblyQualifiedName.
+        /// Тип сообщения
         /// </summary>
         [Required]
         public string MessageType { get; set; }
@@ -82,7 +114,7 @@ namespace Dex.Cap.Outbox.Models
         /// </summary>
         /// <remarks>Должен быть больше 10 секунд.</remarks>
         [Required]
-        public TimeSpan LockTimeout { get; set; } = TimeSpan.FromSeconds(30);
+        public TimeSpan LockTimeout { get; set; }
 
         /// <summary>
         /// Уникальный ключ потока который захватил блокировку и только он имеет право освободить блокировку (ключ идемпотентности).

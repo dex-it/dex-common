@@ -21,9 +21,9 @@ namespace Dex.Cap.Outbox.Models
             State = state;
         }
 
-        public async Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc, CancellationToken cancellationToken)
+        public async Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default)
         {
-            await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, cancellationToken).ConfigureAwait(false);
+            await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken).ConfigureAwait(false);
         }
     }
 }
