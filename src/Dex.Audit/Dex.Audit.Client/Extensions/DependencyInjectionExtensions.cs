@@ -23,7 +23,7 @@ public static class DependencyInjectionExtensions
     {
         services
             .AddScoped<IAuditOutputProvider, AuditOutputRabbitProvider>()
-            .AddScoped<AuditWriter, AuditWriter>()
+            .AddScoped<IAuditWriter, AuditWriter>()
             .AddScoped(typeof(IAuditEventConfigurator), typeof(TAuditEventConfigurator))
             .AddScoped(typeof(IAuditSettingsRepository), typeof(TAuditSettingsRepository))
             .Configure<AuditEventOptions>(opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));

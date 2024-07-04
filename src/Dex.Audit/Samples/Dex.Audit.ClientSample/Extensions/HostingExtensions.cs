@@ -2,10 +2,14 @@
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Client.Services;
+using Dex.Audit.ClientSample.Models;
 using Dex.Audit.ClientSample.Repositories;
 using Dex.Audit.Logger.Extensions;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
+using Microsoft.AspNetCore.Mvc;
+using StackExchange.Redis.Extensions.Core.Configuration;
+using StackExchange.Redis.Extensions.System.Text.Json;
 
 namespace Dex.Audit.ClientSample.Extensions;
 
@@ -29,8 +33,6 @@ public static class HostingExtensions
 
         var services = builder.Services;
 
-        services.AddDistributedMemoryCache();
-
         services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger(builder.Configuration));
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -51,7 +53,16 @@ public static class HostingExtensions
             });
         });
 
+        AddStackExchangeRedis(services, builder.Configuration);
+
         return builder.Build();
+    }
+
+    private static void AddStackExchangeRedis(IServiceCollection services, ConfigurationManager builderConfiguration)
+    {
+        var redisConfiguration = new RedisConfiguration();
+        builderConfiguration.GetSection(nameof(RedisConfiguration)).Bind(redisConfiguration);
+        services.AddStackExchangeRedisExtensions<SystemTextJsonSerializer>(redisConfiguration);
     }
 
     /// <summary>
@@ -63,17 +74,14 @@ public static class HostingExtensions
     {
         app.UseSwagger().UseSwaggerUI();
         app.MapControllers();
-        app.MapGet(
+        app.MapPost(
             "/Logger", 
             (
-                ILogger<Program> logger,
-                LogLevel logLevel,
-                string eventType,
-                string message,
-                string messageParameters
+                [FromServices] ILogger<Program> logger,
+                [FromBody] CreateLoggableEvent loggableEvent
             ) =>
             {
-                logger.LogAudit(logLevel, eventType, message, messageParameters);
+                logger.LogAudit(loggableEvent.LogLevel, loggableEvent.EventType, loggableEvent.Message, loggableEvent.MessageParameters);
             });
 
         return app;
