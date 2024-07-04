@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Dex.Audit.Logger\Dex.Audit.Logger.csproj"/>
+        <ProjectReference Include="..\..\Dex.Audit.MediatR\Dex.Audit.MediatR.csproj" />
     </ItemGroup>
 
     <ItemGroup>
