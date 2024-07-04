@@ -11,28 +11,13 @@ namespace Dex.Audit.Server.Consumers;
 /// <summary>
 /// Обработчик аудиторских событий, полученных через шину сообщений.
 /// </summary>
-public class AuditEventConsumer : IConsumer<Batch<AuditEventMessage>>
+/// <param name="auditRepository"><see cref="IAuditRepository"/>.</param>
+/// <param name="logger"><see cref="ILogger"/>.</param>
+/// <param name="auditSettingsRepository"><see cref="IAuditSettingsRepository"/>.</param>
+public class AuditEventConsumer(IAuditRepository auditRepository,
+    ILogger<AuditEventConsumer> logger,
+    IAuditSettingsRepository auditSettingsRepository) : IConsumer<Batch<AuditEventMessage>>
 {
-    private readonly IAuditRepository _auditRepository;
-    private readonly IAuditSettingsRepository _auditSettingsRepository;
-    private readonly ILogger<AuditEventConsumer> _logger;
-
-    /// <summary>
-    /// Создает новый экземпляр класса <see cref="AuditEventConsumer"/>.
-    /// </summary>
-    /// <param name="auditSettingsRepository"><see cref="IAuditSettingsRepository"/>.</param>
-    /// <param name="auditRepository"><see cref="IAuditRepository"/>.</param>
-    /// <param name="logger"><see cref="ILogger"/>.</param>
-    public AuditEventConsumer(
-        IAuditRepository auditRepository,
-        ILogger<AuditEventConsumer> logger,
-        IAuditSettingsRepository auditSettingsRepository)
-    {
-        _auditRepository = auditRepository;
-        _logger = logger;
-        _auditSettingsRepository = auditSettingsRepository;
-    }
-
     /// <summary>
     /// Метод для обработки аудиторских событий, полученных через шину сообщений.
     /// </summary>
@@ -44,7 +29,7 @@ public class AuditEventConsumer : IConsumer<Batch<AuditEventMessage>>
             var eventType = message.Message.EventType;
             var sourceIp = message.Message.SourceIpAddress;
 
-            _logger.LogInformation("Начало обработки сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
+            logger.LogInformation("Начало обработки сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
 
             try
             {
@@ -52,11 +37,11 @@ public class AuditEventConsumer : IConsumer<Batch<AuditEventMessage>>
 
                 if (message.Message.AuditSettingsId is null)
                 {
-                    var auditSettings = await _auditSettingsRepository.GetAsync(eventType);
+                    var auditSettings = await auditSettingsRepository.GetAsync(eventType);
 
                     if (auditSettings is null)
                     {
-                        _logger.LogWarning("Не удалось получить из кэша настройки для события типа [{EventType}]", eventType);
+                        logger.LogWarning("Не удалось получить из кэша настройки для события типа [{EventType}]", eventType);
                         throw new Exception(nameof(auditSettings));
                     }
 
@@ -68,13 +53,13 @@ public class AuditEventConsumer : IConsumer<Batch<AuditEventMessage>>
 
                 SetDestinationDate(auditEvent);
 
-                await _auditRepository.AddAuditEventAsync(auditEvent, context.CancellationToken);
+                await auditRepository.AddAuditEventAsync(auditEvent, context.CancellationToken);
 
-                _logger.LogInformation("Сообщение аудита [{EventType}] от [{SourceIp}] успешно обработано", eventType, sourceIp);
+                logger.LogInformation("Сообщение аудита [{EventType}] от [{SourceIp}] успешно обработано", eventType, sourceIp);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Возникла ошибка при обработке сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
+                logger.LogError(ex, "Возникла ошибка при обработке сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
             }
         }
     }

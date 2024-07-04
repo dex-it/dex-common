@@ -12,25 +12,14 @@ namespace Dex.Audit.Server.Workers;
 /// <summary>
 /// Фоновая служба для обновления кэша
 /// </summary>
-internal sealed class RefreshCacheWorker : BackgroundService
+/// <param name="logger">Логгер для записи информации о работе фоновой службы</param>
+/// <param name="scopeFactory">Провайдер для создания области служб</param>
+/// <param name="options">Настройки кэширования</param>
+internal sealed class RefreshCacheWorker(
+    ILogger<RefreshCacheWorker> logger,
+    IServiceScopeFactory scopeFactory,
+    IOptions<AuditCacheOptions> options) : BackgroundService
 {
-    private readonly ILogger<RefreshCacheWorker> _logger;
-    private readonly AuditCacheOptions _options;
-    private readonly IServiceScopeFactory _scopeFactory;
-
-    /// <summary>
-    /// Создает новый экземпляр класса <see cref="RefreshCacheWorker"/>
-    /// </summary>
-    /// <param name="logger">Логгер для записи информации о работе фоновой службы</param>
-    /// <param name="scopeFactory">Провайдер для создания области служб</param>
-    /// <param name="options">Настройки кэширования</param>
-    public RefreshCacheWorker(ILogger<RefreshCacheWorker> logger, IServiceScopeFactory scopeFactory, IOptions<AuditCacheOptions> options)
-    {
-        _logger = logger;
-        _scopeFactory = scopeFactory;
-        _options = options.Value;
-    }
-
     /// <summary>
     /// Метод, который будет выполняться асинхронно в фоновом режиме
     /// </summary>
@@ -41,15 +30,15 @@ internal sealed class RefreshCacheWorker : BackgroundService
         {
             try
             {
-                _logger.LogInformation("Служба обновления кеша аудита начала работу");
+                logger.LogInformation("Служба обновления кеша аудита начала работу");
                 await UpdateCache(stoppingToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Возникла ошибка при обновлении кеша аудита");
+                logger.LogError(ex, "Возникла ошибка при обновлении кеша аудита");
             }
 
-            await Task.Delay(_options.RefreshInterval, stoppingToken);
+            await Task.Delay(options.Value.RefreshInterval, stoppingToken);
         }
     }
 
@@ -59,13 +48,13 @@ internal sealed class RefreshCacheWorker : BackgroundService
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     private async Task UpdateCache(CancellationToken cancellationToken = default)
     {
-        using var scope = _scopeFactory.CreateScope();
+        using var scope = scopeFactory.CreateScope();
         var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditRepository>();
         var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
 
-        _logger.LogInformation("Выполняется операция обновления настроек аудита в кэше");
+        logger.LogInformation("Выполняется операция обновления настроек аудита в кэше");
 
-        var refreshInterval = _options.RefreshInterval;
+        var refreshInterval = options.Value.RefreshInterval;
 
         IEnumerable<AuditSettings> auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken);
 
@@ -74,6 +63,6 @@ internal sealed class RefreshCacheWorker : BackgroundService
             await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval, cancellationToken);
         }
 
-        _logger.LogInformation("Кэш успешно обновлен");
+        logger.LogInformation("Кэш успешно обновлен");
     }
 }
