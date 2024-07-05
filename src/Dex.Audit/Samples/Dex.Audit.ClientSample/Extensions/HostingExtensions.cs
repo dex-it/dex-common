@@ -2,14 +2,21 @@
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Client.Services;
+using Dex.Audit.ClientSample.Comands.EFCore.AddUser;
+using Dex.Audit.ClientSample.Comands.EFCore.DeleteUser;
+using Dex.Audit.ClientSample.Comands.EFCore.UpdateUser;
 using Dex.Audit.ClientSample.Comands.Logging;
+using Dex.Audit.ClientSample.Context;
+using Dex.Audit.ClientSample.Context.Interceptors;
 using Dex.Audit.ClientSample.Repositories;
+using Dex.Audit.EF.Extensions;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.PipelineBehaviours;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.System.Text.Json;
 
@@ -34,6 +41,12 @@ public static class HostingExtensions
             .AddEnvironmentVariables();
 
         var services = builder.Services;
+
+        services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
+        {
+            opt.AddInterceptors(serviceProvider.GetRequiredService<ISaveChangesInterceptor>(), serviceProvider.GetRequiredService<IDbTransactionInterceptor>());
+        });
+        services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
 
         services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger(builder.Configuration));
         services.AddEndpointsApiExplorer();
@@ -87,10 +100,37 @@ public static class HostingExtensions
             "/Logger", 
             async (
                 [FromServices] IMediator mediator,
-                [FromBody] AddAuditableLogCommand addAuditableLogCommand
+                [FromBody] AddAuditableLogCommand request
             ) =>
             {
-                await mediator.Send(addAuditableLogCommand);
+                await mediator.Send(request);
+            });
+        app.MapPost(
+            "/Users", 
+            async (
+                [FromServices] IMediator mediator,
+                [FromBody] AddUserCommand request
+            ) =>
+            {
+                await mediator.Send(request);
+            });
+        app.MapPut(
+            "/Users", 
+            async (
+                [FromServices] IMediator mediator,
+                [FromBody] UpdateUserCommand request
+            ) =>
+            {
+                await mediator.Send(request);
+            });
+        app.MapDelete(
+            "/Users", 
+            async (
+                [FromServices] IMediator mediator,
+                [FromBody] DeleteUserCommand request
+            ) =>
+            {
+                await mediator.Send(request);
             });
 
         return app;
