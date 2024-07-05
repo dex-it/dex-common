@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
-/// Интерсептор для перехвата коммита транзакции в базе данных
+/// Интерсептор для перехвата коммита транзакции в базе данных.
 /// </summary>
-/// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита</param>
-internal class AuditTransactionInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService) : DbTransactionInterceptor
+/// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита.</param>
+internal class AuditTransactionInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService) : DbTransactionInterceptor, IAuditDbTransactionInterceptor
 {
     /// <inheritdoc/>
     public override InterceptionResult TransactionCommitting(DbTransaction transaction, TransactionEventData eventData,
