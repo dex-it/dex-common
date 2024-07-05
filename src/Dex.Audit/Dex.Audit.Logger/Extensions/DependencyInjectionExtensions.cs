@@ -33,6 +33,7 @@ public static class DependencyInjectionExtensions
         builder.AddFilter<AuditLoggerProvider>(_ => true).SetMinimumLevel(LogLevel.Trace);
 
         builder.Services.AddHostedService<AuditLoggerReader>();
+
         builder.Services.Configure<AuditLoggerOptions>(opts =>
             configuration.GetSection(nameof(AuditLoggerOptions)).Bind(opts));
 

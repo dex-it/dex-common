@@ -28,15 +28,15 @@ public sealed class AuditBehavior<TRequest, TResponse>(IAuditWriter auditWriter)
 
         try
         {
-            response = await next();
+            response = await next().ConfigureAwait(false);
 
             await auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, true),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
         }
         catch
         {
             await auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, false),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             throw;
         }

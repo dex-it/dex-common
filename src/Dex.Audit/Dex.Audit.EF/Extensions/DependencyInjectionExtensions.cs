@@ -1,6 +1,5 @@
 using Dex.Audit.EF.Interceptors;
 using Dex.Audit.EF.Interfaces;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.Audit.EF.Extensions;
@@ -14,7 +13,7 @@ public static class DependencyInjectionExtensions
     /// Добавляет AuditInterceptor
     /// </summary>
     public static IServiceCollection AddAuditInterceptors<TInterceptionAndSendingEntriesService>(this IServiceCollection services)
-        where TInterceptionAndSendingEntriesService : IInterceptionAndSendingEntriesService
+        where TInterceptionAndSendingEntriesService : class, IInterceptionAndSendingEntriesService
     {
         services
             .AddScoped(typeof(IInterceptionAndSendingEntriesService), typeof(TInterceptionAndSendingEntriesService))
