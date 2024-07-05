@@ -7,11 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Dex.Audit.EF\Dex.Audit.EF.csproj" />
         <ProjectReference Include="..\..\Dex.Audit.Logger\Dex.Audit.Logger.csproj"/>
         <ProjectReference Include="..\..\Dex.Audit.MediatR\Dex.Audit.MediatR.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6"/>
         <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0"/>
         <PackageReference Include="StackExchange.Redis" Version="2.8.0" />
         <PackageReference Include="StackExchange.Redis.Extensions.AspNetCore" Version="10.2.0" />
