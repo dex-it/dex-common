@@ -32,7 +32,7 @@ internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService
     {
         if (CheckIfTransactionExists(eventData.Context))
         {
-            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken);
+            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken).ConfigureAwait(false);
         }
 
         return await base.SavedChangesAsync(eventData, result, cancellationToken);
@@ -44,10 +44,10 @@ internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService
     {
         if (CheckIfTransactionExists(eventData.Context))
         {
-            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(false, cancellationToken);
+            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(false, cancellationToken).ConfigureAwait(false);
         }
 
-        await base.SaveChangesFailedAsync(eventData, cancellationToken);
+        await base.SaveChangesFailedAsync(eventData, cancellationToken).ConfigureAwait(false);
     }
 
     private static bool CheckIfTransactionExists(DbContext? dbContext)

@@ -57,7 +57,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
             var message = FormAuditMessage(entryHelper.Entry, eventType, currentValues, originalValues);
 
             await auditManager.WriteAsync(new AuditEventBaseInfo(eventType, entryHelper.Entry.GetType().ToString(), message, isSuccess),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
         }
 
         _entryHelpers.Clear();

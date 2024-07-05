@@ -31,14 +31,14 @@ internal sealed class RefreshCacheWorker(
             try
             {
                 logger.LogInformation("Служба обновления кеша аудита начала работу");
-                await UpdateCache(stoppingToken);
+                await UpdateCache(stoppingToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Возникла ошибка при обновлении кеша аудита");
             }
 
-            await Task.Delay(options.Value.RefreshInterval, stoppingToken);
+            await Task.Delay(options.Value.RefreshInterval, stoppingToken).ConfigureAwait(false);
         }
     }
 
@@ -56,11 +56,11 @@ internal sealed class RefreshCacheWorker(
 
         var refreshInterval = options.Value.RefreshInterval;
 
-        IEnumerable<AuditSettings> auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken);
+        IEnumerable<AuditSettings> auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var setting in auditSettings)
         {
-            await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval, cancellationToken);
+            await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval, cancellationToken).ConfigureAwait(false);
         }
 
         logger.LogInformation("Кэш успешно обновлен");

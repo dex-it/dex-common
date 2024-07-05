@@ -23,9 +23,9 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task<AuditEventMessage> ConfigureAuditEventAsync(AuditEventBaseInfo auditEventBaseInfo, CancellationToken cancellationToken = default)
     {
-        var sourceAddress = await GetSourceAddressAsync(cancellationToken);
-        var deviceInfo = await GetDeviceInfoAsync(cancellationToken);
-        var userDetails = await GetUserDetailsAsync(cancellationToken);
+        var sourceAddress = await GetSourceAddressAsync(cancellationToken).ConfigureAwait(false);
+        var deviceInfo = await GetDeviceInfoAsync(cancellationToken).ConfigureAwait(false);
+        var userDetails = await GetUserDetailsAsync(cancellationToken).ConfigureAwait(false);
 
         return new AuditEventMessage
         {
@@ -60,7 +60,7 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
         {
             DnsName = dnsName,
             MacAddress = GetMacAddress(),
-            IpAddress = await GetLocalIpAsync(dnsName, cancellationToken),
+            IpAddress = await GetLocalIpAsync(dnsName, cancellationToken).ConfigureAwait(false),
             Host = Environment.MachineName
         };
     }
@@ -100,7 +100,7 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
 
     private static async Task<string?> GetLocalIpAsync(string dnsHostName, CancellationToken cancellationToken = default)
     {
-        IPAddress[] localIPs = await Dns.GetHostAddressesAsync(dnsHostName, cancellationToken);
+        IPAddress[] localIPs = await Dns.GetHostAddressesAsync(dnsHostName, cancellationToken).ConfigureAwait(false);
         return localIPs.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork)?.ToString();
     }
 }

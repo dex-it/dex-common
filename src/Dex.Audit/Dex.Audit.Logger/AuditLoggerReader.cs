@@ -40,7 +40,7 @@ internal sealed class AuditLoggerReader(
                 logger.LogError(exception, "An error occured while trying to read auditable events: {Message}", exception.Message);
             }
 
-            await Task.Delay(options.Value.ReadEventsInterval, cancellationToken);
+            await Task.Delay(options.Value.ReadEventsInterval, cancellationToken).ConfigureAwait(false);
         }
     }
 }
