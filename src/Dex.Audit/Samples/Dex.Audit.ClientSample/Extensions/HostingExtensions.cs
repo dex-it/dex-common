@@ -10,6 +10,7 @@ using Dex.Audit.ClientSample.Context;
 using Dex.Audit.ClientSample.Context.Interceptors;
 using Dex.Audit.ClientSample.Repositories;
 using Dex.Audit.EF.Extensions;
+using Dex.Audit.EF.Interfaces;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.PipelineBehaviours;
 using Dex.MassTransit.Rabbit;
@@ -44,7 +45,7 @@ public static class HostingExtensions
 
         services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
         {
-            opt.AddInterceptors(serviceProvider.GetRequiredService<ISaveChangesInterceptor>(), serviceProvider.GetRequiredService<IDbTransactionInterceptor>());
+            opt.AddInterceptors(serviceProvider.GetRequiredService<IAuditSaveChangesInterceptor>(), serviceProvider.GetRequiredService<IAuditDbTransactionInterceptor>());
         });
         services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
 
