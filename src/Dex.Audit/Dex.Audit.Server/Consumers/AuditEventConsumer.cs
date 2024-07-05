@@ -37,7 +37,7 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
 
                 if (message.Message.AuditSettingsId is null)
                 {
-                    var auditSettings = await auditSettingsRepository.GetAsync(eventType);
+                    var auditSettings = await auditSettingsRepository.GetAsync(eventType).ConfigureAwait(false);
 
                     if (auditSettings is null)
                     {
@@ -53,7 +53,7 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
 
                 SetDestinationDate(auditEvent);
 
-                await auditRepository.AddAuditEventAsync(auditEvent, context.CancellationToken);
+                await auditRepository.AddAuditEventAsync(auditEvent, context.CancellationToken).ConfigureAwait(false);
 
                 logger.LogInformation("Сообщение аудита [{EventType}] от [{SourceIp}] успешно обработано", eventType, sourceIp);
             }

@@ -23,7 +23,7 @@ internal class AuditTransactionInterceptor(IInterceptionAndSendingEntriesService
         InterceptionResult result, CancellationToken cancellationToken = default)
     {
         interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
-        return await base.TransactionCommittingAsync(transaction, eventData, result, cancellationToken);
+        return await base.TransactionCommittingAsync(transaction, eventData, result, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -37,7 +37,7 @@ internal class AuditTransactionInterceptor(IInterceptionAndSendingEntriesService
     public override async Task TransactionCommittedAsync(DbTransaction transaction, TransactionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken);
-        await base.TransactionCommittedAsync(transaction, eventData, cancellationToken);
+        await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken).ConfigureAwait(false);
+        await base.TransactionCommittedAsync(transaction, eventData, cancellationToken).ConfigureAwait(false);
     }
 }

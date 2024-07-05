@@ -39,11 +39,11 @@ internal sealed class AuditWriter(
                 return;
             }
 
-            var auditEvent = await auditEventConfigurator.ConfigureAuditEventAsync(eventBaseInfo, cancellationToken);
+            var auditEvent = await auditEventConfigurator.ConfigureAuditEventAsync(eventBaseInfo, cancellationToken).ConfigureAwait(false);
             auditEvent.SourceMinSeverityLevel = auditEventOptions.Value.MinSeverityLevel;
             auditEvent.AuditSettingsId = auditSettings?.Id;
 
-            await auditOutputProvider.PublishEventAsync(auditEvent, cancellationToken);
+            await auditOutputProvider.PublishEventAsync(auditEvent, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

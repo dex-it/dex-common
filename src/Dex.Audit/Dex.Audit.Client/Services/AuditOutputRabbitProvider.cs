@@ -17,6 +17,6 @@ internal sealed class AuditOutputRabbitProvider(ISendEndpointProvider sendEndpoi
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task PublishEventAsync(AuditEventMessage auditEvent, CancellationToken cancellationToken = default)
     {
-        await sendEndpoint.Send(auditEvent, cancellationToken);
+        await sendEndpoint.Send(auditEvent, cancellationToken).ConfigureAwait(false);
     }
 }
