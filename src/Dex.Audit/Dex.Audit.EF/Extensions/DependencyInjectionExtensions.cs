@@ -18,8 +18,8 @@ public static class DependencyInjectionExtensions
     {
         services
             .AddScoped(typeof(IInterceptionAndSendingEntriesService), typeof(TInterceptionAndSendingEntriesService))
-            .AddScoped<IDbTransactionInterceptor, AuditTransactionInterceptor>()
-            .AddScoped<ISaveChangesInterceptor, AuditSaveChangesInterceptor>();
+            .AddScoped<IAuditDbTransactionInterceptor, AuditTransactionInterceptor>()
+            .AddScoped<IAuditSaveChangesInterceptor, AuditSaveChangesInterceptor>();
 
         return services;
     }

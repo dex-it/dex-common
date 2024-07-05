@@ -22,7 +22,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
     /// <param name="entries">Коллекция записей аудита</param>
     public void InterceptEntries(IEnumerable<EntityEntry> entries)
     {
-        IEnumerable<EntityEntry> entityEntries = entries
+        var entityEntries = entries
             .Where(entry =>
                 entry.Entity is IAuditEntity &&
                 entry.State != EntityState.Unchanged &&

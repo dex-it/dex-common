@@ -8,7 +8,7 @@ namespace Dex.Audit.EF.Interceptors;
 /// Интерсептор аудита, отвечающий за перехват изменений контекста базы данных и отправку записей аудита
 /// </summary>
 /// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита</param>
-internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService) : SaveChangesInterceptor
+internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService) : SaveChangesInterceptor, IAuditSaveChangesInterceptor
 {
     /// <inheritdoc/>
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
