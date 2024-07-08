@@ -26,8 +26,10 @@ namespace Dex.Cap.Outbox.Ef
 
             var stamp = DateTime.UtcNow.Subtract(olderThan);
 
-            var sql = "delete from cap.outbox where \"Id\" in (select \"Id\" from cap.outbox " +
-                      $"where cap.outbox.\"CreatedUtc\" < '{stamp:u}' and \"Status\" = {status} order by \"CreatedUtc\" limit {limit})";
+            var schema = _dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite" ? string.Empty : "cap.";
+            
+            var sql = $"delete from {schema}outbox where \"Id\" in (select \"Id\" from {schema}outbox " +
+                      $"where {schema}outbox.\"CreatedUtc\" < '{stamp:u}' and \"Status\" = {status} order by \"CreatedUtc\" limit {limit})";
 
             _logger.LogDebug("SQL: {DeleteSqlCommandText}", sql);
 
