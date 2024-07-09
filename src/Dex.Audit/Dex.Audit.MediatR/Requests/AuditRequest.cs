@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MediatR;
 
 namespace Dex.Audit.MediatR.Requests;
@@ -6,20 +7,23 @@ namespace Dex.Audit.MediatR.Requests;
 /// Интерфейс для запросов аудита, которые возвращают результат типа <typeparamref name="TResponse"/>.
 /// </summary>
 /// <typeparam name="TResponse">Тип результата запроса.</typeparam>
-public interface IAuditRequest<out TResponse> : IRequest<TResponse>
+public abstract class AuditRequest<TResponse> : IRequest<TResponse>
 {
     /// <summary>
     /// Тип события аудита.
     /// </summary>
-    public string EventType { get; }
+    [JsonIgnore]
+    public virtual string EventType { get; } = nameof(TResponse);
 
     /// <summary>
     /// Объект события аудита.
     /// </summary>
-    public string EventObject { get; }
+    [JsonIgnore]
+    public virtual string EventObject { get; } = nameof(TResponse);
 
     /// <summary>
     /// Сообщение события аудита.
     /// </summary>
-    public string Message { get; }
+    [JsonIgnore]
+    public virtual string Message { get; } = nameof(TResponse);
 }

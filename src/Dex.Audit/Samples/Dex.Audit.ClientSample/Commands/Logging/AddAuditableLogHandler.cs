@@ -1,7 +1,7 @@
 ﻿using Dex.Audit.Logger.Extensions;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Comands.Logging;
+namespace Dex.Audit.ClientSample.Commands.Logging;
 
 public class AddAuditableLogHandler(ILogger<AddAuditableLogHandler> logger) : IRequestHandler<AddAuditableLogCommand, AddAuditableLogResponse>
 {

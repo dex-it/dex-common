@@ -1,7 +1,7 @@
 ﻿using Dex.Audit.ClientSample.Context;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Comands.EFCore.UpdateUser;
+namespace Dex.Audit.ClientSample.Commands.EFCore.UpdateUser;
 
 public class UpdateUserHandler(ClientSampleContext context) : IRequestHandler<UpdateUserCommand, UpdateUserResponse>
 {

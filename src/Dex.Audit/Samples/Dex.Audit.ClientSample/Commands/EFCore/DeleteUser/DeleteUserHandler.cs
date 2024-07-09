@@ -1,7 +1,7 @@
 ﻿using Dex.Audit.ClientSample.Context;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Comands.EFCore.DeleteUser;
+namespace Dex.Audit.ClientSample.Commands.EFCore.DeleteUser;
 
 public class DeleteUserHandler(ClientSampleContext context) : IRequestHandler<DeleteUserCommand, DeleteUserResponse>
 {

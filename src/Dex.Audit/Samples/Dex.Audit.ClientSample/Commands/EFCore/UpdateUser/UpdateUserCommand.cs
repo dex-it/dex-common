@@ -1,18 +1,10 @@
-﻿using System.Text.Json.Serialization;
-using Dex.Audit.MediatR.Requests;
+﻿using Dex.Audit.MediatR.Requests;
 
-namespace Dex.Audit.ClientSample.Comands.EFCore.UpdateUser;
+namespace Dex.Audit.ClientSample.Commands.EFCore.UpdateUser;
 
-public class UpdateUserCommand : IAuditRequest<UpdateUserResponse>
+public class UpdateUserCommand : AuditRequest<UpdateUserResponse>
 {
-    [JsonIgnore]
-    public string EventType { get; } = nameof(UpdateUserCommand);
-
-    [JsonIgnore]
-    public string EventObject { get; } = nameof(UpdateUserCommand);
-
-    [JsonIgnore]
-    public string Message { get; } = "User added";
+    public override string Message { get; } = "User added";
 
     /// <summary>
     /// Идентификатор пользователя.

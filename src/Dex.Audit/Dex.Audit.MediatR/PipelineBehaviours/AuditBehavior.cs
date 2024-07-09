@@ -9,11 +9,11 @@ namespace Dex.Audit.MediatR.PipelineBehaviours;
 /// <summary>
 /// Представляет поведение аудита для использования в пайплайнах обработки запросов.
 /// </summary>
-/// <typeparam name="TRequest">Тип запроса, который должен реализовать интерфейс <see cref="IAuditRequest{TResponse}"/>.</typeparam>
+/// <typeparam name="TRequest">Тип запроса, который должен реализовать интерфейс <see cref="AuditRequest{TResponse}"/>.</typeparam>
 /// <typeparam name="TResponse">Тип ответа, который должен реализовать интерфейс <see cref="IAuditResponse"/>.</typeparam>
 /// <param name="auditWriter">Менеджер аудита, используемый для выполнения операций аудита.</param>
 public sealed class AuditBehavior<TRequest, TResponse>(IAuditWriter auditWriter) : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IAuditRequest<TResponse>
+    where TRequest : AuditRequest<TResponse>
     where TResponse : IAuditResponse
 {
     /// <summary>
