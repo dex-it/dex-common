@@ -22,7 +22,7 @@ public static class DependencyInjectionExtensions
         where TAuditSettingsRepository : class, IAuditSettingsRepository
     {
         services
-            .AddScoped<IAuditOutputProvider, AuditOutputRabbitProvider>()
+            .AddScoped<IAuditOutputProvider, AuditOutputProvider>()
             .AddScoped<IAuditWriter, AuditWriter>()
             .AddScoped(typeof(IAuditEventConfigurator), typeof(TAuditEventConfigurator))
             .AddScoped(typeof(IAuditSettingsRepository), typeof(TAuditSettingsRepository))

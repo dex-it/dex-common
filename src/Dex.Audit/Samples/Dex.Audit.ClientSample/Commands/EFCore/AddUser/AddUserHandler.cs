@@ -2,7 +2,7 @@
 using Dex.Audit.ClientSample.Entities;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Comands.EFCore.AddUser;
+namespace Dex.Audit.ClientSample.Commands.EFCore.AddUser;
 
 public class AddUserHandler(ClientSampleContext context) : IRequestHandler<AddUserCommand, AddUserResponse>
 {

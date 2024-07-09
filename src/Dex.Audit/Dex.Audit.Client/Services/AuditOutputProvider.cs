@@ -8,7 +8,7 @@ namespace Dex.Audit.Client.Services;
 /// Реализация интерфейса <see cref="IAuditOutputProvider"/>, которая осуществляет публикацию аудиторских событий через RabbitMQ
 /// </summary>
 /// <param name="sendEndpoint">Конечная точка для публикации сообщений</param>
-internal sealed class AuditOutputRabbitProvider(ISendEndpointProvider sendEndpoint) : IAuditOutputProvider
+internal sealed class AuditOutputProvider(ISendEndpointProvider sendEndpoint) : IAuditOutputProvider
 {
     /// <summary>
     /// Публикует аудиторское событие через RabbitMQ

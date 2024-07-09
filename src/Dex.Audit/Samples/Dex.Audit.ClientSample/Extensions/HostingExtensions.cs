@@ -2,10 +2,10 @@
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Messages;
 using Dex.Audit.Client.Services;
-using Dex.Audit.ClientSample.Comands.EFCore.AddUser;
-using Dex.Audit.ClientSample.Comands.EFCore.DeleteUser;
-using Dex.Audit.ClientSample.Comands.EFCore.UpdateUser;
-using Dex.Audit.ClientSample.Comands.Logging;
+using Dex.Audit.ClientSample.Commands.EFCore.AddUser;
+using Dex.Audit.ClientSample.Commands.EFCore.DeleteUser;
+using Dex.Audit.ClientSample.Commands.EFCore.UpdateUser;
+using Dex.Audit.ClientSample.Commands.Logging;
 using Dex.Audit.ClientSample.Context;
 using Dex.Audit.ClientSample.Context.Interceptors;
 using Dex.Audit.ClientSample.Repositories;
