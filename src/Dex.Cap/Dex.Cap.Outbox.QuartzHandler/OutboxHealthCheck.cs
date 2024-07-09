@@ -26,7 +26,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler
 
             return Task.FromResult(isHealthy
                 ? HealthCheckResult.Healthy("A healthy result.")
-                : HealthCheckResult.Degraded($"The Outbox service is unhealthy. Last processed job was at {lastCycle}."));
+                : HealthCheckResult.Degraded($"The Outbox service is degraded. Last processed job was at {lastCycle}."));
         }
     }
 }
