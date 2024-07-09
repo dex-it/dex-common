@@ -24,49 +24,62 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
     /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки.</param>
     public async Task Consume(ConsumeContext<Batch<AuditEventMessage>> context)
     {
-        foreach (var message in context.Message)
+        try
         {
-            var eventType = message.Message.EventType;
-            var sourceIp = message.Message.SourceIpAddress;
+            var unMappedAuditEvents = await GetRelevantAuditMessages(context).ConfigureAwait(false);
 
-            logger.LogInformation("Начало обработки сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
+            var auditEvents = unMappedAuditEvents.Select(MapAuditEventFromMessage);
 
-            try
-            {
-                var auditEvent = MapAuditEventFromMessage(message.Message);
-
-                if (message.Message.AuditSettingsId is null)
-                {
-                    var auditSettings = await auditSettingsRepository.GetAsync(eventType).ConfigureAwait(false);
-
-                    if (auditSettings is null)
-                    {
-                        logger.LogWarning("Не удалось получить из кэша настройки для события типа [{EventType}]", eventType);
-                        throw new Exception(nameof(auditSettings));
-                    }
-
-                    if (auditSettings.SeverityLevel < message.Message.SourceMinSeverityLevel)
-                    {
-                        return;
-                    }
-                }
-
-                SetDestinationDate(auditEvent);
-
-                await auditRepository.AddAuditEventAsync(auditEvent, context.CancellationToken).ConfigureAwait(false);
-
-                logger.LogInformation("Сообщение аудита [{EventType}] от [{SourceIp}] успешно обработано", eventType, sourceIp);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Возникла ошибка при обработке сообщения аудита [{EventType}] от [{SourceIp}]", eventType, sourceIp);
-            }
+            await auditRepository.AddAuditEventsRangeAsync(auditEvents, context.CancellationToken).ConfigureAwait(false);
         }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Возникла ошибка при обработке сообщений аудита.");
+        }
+    }
+
+    private async Task<IEnumerable<AuditEventMessage>> GetRelevantAuditMessages(ConsumeContext<Batch<AuditEventMessage>> context)
+    {
+        var auditMessages = context.Message.Select(consumeContext => consumeContext.Message).ToArray();
+
+        var auditEventMessages = auditMessages.ToHashSet();
+
+        foreach (var message in auditMessages.Where(consumeContext => consumeContext.AuditSettingsId is null))
+        {
+            var eventType = message.EventType;
+            var sourceIp = message.SourceIpAddress;
+
+            var auditSettings = await auditSettingsRepository.GetAsync(eventType).ConfigureAwait(false);
+
+            if (auditSettings is null)
+            {
+                logger.LogWarning("Не удалось получить из кэша настройки для события типа [{EventType}]", eventType);
+
+                auditEventMessages.Remove(message);
+
+                continue;
+            }
+
+            if (auditSettings.SeverityLevel >= message.SourceMinSeverityLevel)
+            {
+                continue;
+            }
+
+            logger.LogWarning(
+                "Минимальный уровень источника [{SourceSeverityLevel}], указанный во время отправки сообщение аудита [{EventType}] от [{SourceIp}] не соотвествует актуальному в кэше [{CurrentSeverityLevel}].",
+                message.SourceMinSeverityLevel,
+                eventType,
+                sourceIp,auditSettings.SeverityLevel);
+
+            auditEventMessages.Remove(message);
+        }
+
+        return auditEventMessages;
     }
 
     private static AuditEvent MapAuditEventFromMessage(AuditEventMessage message)
     {
-        return new AuditEvent
+        var auditEvent = new AuditEvent
         {
             ExternalId = message.ExternalId,
             EventCode = message.EventCode,
@@ -120,6 +133,10 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
             IsSuccess = message.IsSuccess,
             EventName = message.EventName ?? string.Empty
         };
+
+        SetDestinationDate(auditEvent);
+
+        return auditEvent;
     }
 
     private static void SetDestinationDate(AuditEvent auditEvent)

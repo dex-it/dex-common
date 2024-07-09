@@ -10,10 +10,10 @@ public interface IAuditRepository
     /// <summary>
     /// Добавить событие.
     /// </summary>
-    /// <param name="auditEvent">Событие.</param>
+    /// <param name="auditEvents">Событие.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     /// <returns></returns>
-    Task AddAuditEventAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default);
+    Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Получить все настройки.

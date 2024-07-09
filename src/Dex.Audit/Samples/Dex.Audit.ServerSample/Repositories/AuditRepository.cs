@@ -7,9 +7,9 @@ namespace Dex.Audit.ServerSample.Repositories;
 
 public class AuditRepository(AuditServerDbContext serverDbContext) : IAuditRepository
 {
-    public async Task AddAuditEventAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default)
+    public async Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default)
     {
-        await serverDbContext.AddAsync(auditEvent, cancellationToken);
+        await serverDbContext.AddRangeAsync(auditEvents, cancellationToken);
         await serverDbContext.SaveChangesAsync(cancellationToken);
     }
 
