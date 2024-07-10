@@ -4,6 +4,8 @@ namespace Dex.Audit.ClientSample.Commands.EFCore.UpdateUser;
 
 public class UpdateUserCommand : AuditRequest<UpdateUserResponse>
 {
+    public override string EventType { get; } = nameof(UpdateUserCommand);
+    public override string EventObject { get; } = nameof(UpdateUserCommand);
     public override string Message { get; } = "User added";
 
     /// <summary>

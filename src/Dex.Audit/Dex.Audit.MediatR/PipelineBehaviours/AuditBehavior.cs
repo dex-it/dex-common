@@ -30,17 +30,22 @@ public sealed class AuditBehavior<TRequest, TResponse>(IAuditWriter auditWriter)
         {
             response = await next().ConfigureAwait(false);
 
-            await auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, true),
-                cancellationToken).ConfigureAwait(false);
+            await WriteAuditAsync(request, true, cancellationToken).ConfigureAwait(false);
         }
         catch
         {
-            await auditWriter.WriteAsync(new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, false),
-                cancellationToken).ConfigureAwait(false);
+            await WriteAuditAsync(request, false, cancellationToken).ConfigureAwait(false);
 
             throw;
         }
 
         return response;
+    }
+
+    private async Task WriteAuditAsync(AuditRequest<TResponse> request, bool success, CancellationToken cancellationToken)
+    {
+        await auditWriter.WriteAsync(
+            new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, success),
+            cancellationToken).ConfigureAwait(false);
     }
 }

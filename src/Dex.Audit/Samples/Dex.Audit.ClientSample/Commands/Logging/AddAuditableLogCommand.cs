@@ -5,6 +5,8 @@ namespace Dex.Audit.ClientSample.Commands.Logging;
 
 public class AddAuditableLogCommand : AuditRequest<AddAuditableLogResponse>
 {
+    public override string EventType { get; } = nameof(AddAuditableLogCommand);
+    public override string EventObject { get; } = nameof(AddAuditableLogCommand);
     public override string Message { get; } = "Auditable log added";
 
     public required string LogEventName { get; set; }
