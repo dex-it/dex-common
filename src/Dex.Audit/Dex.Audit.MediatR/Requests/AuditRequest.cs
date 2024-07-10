@@ -13,17 +13,17 @@ public abstract class AuditRequest<TResponse> : IRequest<TResponse>
     /// Тип события аудита.
     /// </summary>
     [JsonIgnore]
-    public virtual string EventType { get; } = nameof(TResponse);
+    public abstract string EventType { get; }
 
     /// <summary>
     /// Объект события аудита.
     /// </summary>
     [JsonIgnore]
-    public virtual string EventObject { get; } = nameof(TResponse);
+    public abstract string EventObject { get; }
 
     /// <summary>
     /// Сообщение события аудита.
     /// </summary>
     [JsonIgnore]
-    public virtual string Message { get; } = nameof(TResponse);
+    public abstract string Message { get; }
 }
