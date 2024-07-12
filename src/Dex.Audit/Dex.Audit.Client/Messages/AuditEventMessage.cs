@@ -1,5 +1,4 @@
 using Dex.Audit.Domain.Enums;
-using MassTransit;
 
 namespace Dex.Audit.Client.Messages;
 
