@@ -100,7 +100,7 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
 
     private static async Task<string?> GetLocalIpAsync(string dnsHostName, CancellationToken cancellationToken = default)
     {
-        IPAddress[] localIPs = await Dns.GetHostAddressesAsync(dnsHostName, cancellationToken).ConfigureAwait(false);
+        var localIPs = await Dns.GetHostAddressesAsync(dnsHostName, cancellationToken).ConfigureAwait(false);
         return localIPs.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork)?.ToString();
     }
 }
