@@ -1,5 +1,4 @@
 using Dex.Audit.Client.Interfaces;
-using Dex.Audit.Domain.Entities;
 using Dex.Audit.Server.Interfaces;
 using Dex.Audit.Server.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,7 +55,7 @@ internal sealed class RefreshCacheWorker(
 
         var refreshInterval = options.Value.RefreshInterval;
 
-        IEnumerable<AuditSettings> auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken).ConfigureAwait(false);
+        var auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var setting in auditSettings)
         {
