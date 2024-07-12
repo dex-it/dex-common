@@ -6,7 +6,7 @@ namespace Dex.Audit.Client.Messages;
 /// <summary>
 /// Контракт сообщения о событии аудита
 /// </summary>
-public class AuditEventMessage : IConsumer
+public class AuditEventMessage
 {
     /// <summary>
     ///  ID строки о событии ИБ в рамках одного журнала АС
