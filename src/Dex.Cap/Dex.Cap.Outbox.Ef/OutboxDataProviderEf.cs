@@ -198,17 +198,18 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
     private string GenerateFetchPlatformSpecificSql(Guid lockId)
     {
         var providerName = _dbContext.Database.ProviderName;
-        if (providerName == "Npgsql.EntityFrameworkCore.PostgreSQL")
-        {
-            const string cScheduledStartIndexing = nameof(OutboxEnvelope.ScheduledStartIndexing);
-            const string cRetries = nameof(OutboxEnvelope.Retries);
-            const string cStatus = nameof(OutboxEnvelope.Status);
-            const string cLockId = nameof(OutboxEnvelope.LockId);
-            const string cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
-            const string cLockTimeout = nameof(OutboxEnvelope.LockTimeout);
-            const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
+        
+        const string cScheduledStartIndexing = nameof(OutboxEnvelope.ScheduledStartIndexing);
+        const string cRetries = nameof(OutboxEnvelope.Retries);
+        const string cStatus = nameof(OutboxEnvelope.Status);
+        const string cLockId = nameof(OutboxEnvelope.LockId);
+        const string cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
+        const string cLockTimeout = nameof(OutboxEnvelope.LockTimeout);
+        const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
 
-            var sql = $@"
+        return providerName switch
+        {
+            "Npgsql.EntityFrameworkCore.PostgreSQL" => $@"
                 WITH cte AS (
                     SELECT ""Id""
                     FROM {NameConst.SchemaName}.{NameConst.TableName}
@@ -228,10 +229,26 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
                 FROM cte
                 WHERE oe.""Id"" = cte.""Id""
                 RETURNING oe.*;
-            ";
-            return sql;
-        }
-
-        throw new NotSupportedException($"The provider {providerName} is not supported.");
+            ",
+            "Microsoft.EntityFrameworkCore.Sqlite" => $@"
+                WITH cte AS (
+                    SELECT ""Id""
+                    FROM {NameConst.TableName}
+                    WHERE ""{cScheduledStartIndexing}"" IS NOT NULL
+                      AND CURRENT_TIMESTAMP >= ""{cStartAtUtc}""
+                      AND ""{cRetries}"" < {_outboxOptions.Retries}
+                      AND (""{cStatus}"" = {OutboxMessageStatus.New:D} OR ""{cStatus}"" = {OutboxMessageStatus.Failed:D})
+                      AND (""{cLockId}"" IS NULL OR ""{cLockExpirationTimeUtc}"" IS NULL OR ""{cLockExpirationTimeUtc}"" < CURRENT_TIMESTAMP)
+                    ORDER BY ""{cScheduledStartIndexing}""
+                    LIMIT {_outboxOptions.MessagesToProcess}
+            )
+            UPDATE {NameConst.TableName}
+            SET 
+                ""{cLockId}"" = '{lockId:D}',
+                ""{cLockExpirationTimeUtc}"" = CURRENT_TIMESTAMP + ""{cLockTimeout}""
+            WHERE ""Id"" IN (SELECT ""Id"" FROM cte);
+            ",
+            _ => throw new NotSupportedException($"The provider {providerName} is not supported.")
+        };
     }
 }
