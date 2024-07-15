@@ -1,5 +1,5 @@
-using Dex.Audit.Client.Interfaces;
-using Dex.Audit.Client.Messages;
+using Dex.Audit.Client.Abstractions.Interfaces;
+using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.ValueObjects;
 using Dex.Audit.Server.Interfaces;

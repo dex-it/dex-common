@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Unicode;
 using System.Threading.Channels;
-using Dex.Audit.Client.Messages;
+using Dex.Audit.Client.Abstractions.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Logger;

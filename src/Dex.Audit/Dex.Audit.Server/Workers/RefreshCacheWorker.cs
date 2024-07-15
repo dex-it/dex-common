@@ -1,4 +1,4 @@
-using Dex.Audit.Client.Interfaces;
+using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Server.Interfaces;
 using Dex.Audit.Server.Options;
 using Microsoft.Extensions.DependencyInjection;
