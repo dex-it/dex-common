@@ -1,4 +1,4 @@
-namespace Dex.Audit.Client.Messages;
+namespace Dex.Audit.Client.Abstractions.Messages;
 
 /// <summary>
 /// Базовая информация о событии аудита

@@ -1,6 +1,6 @@
-using Dex.Audit.Client.Messages;
+using Dex.Audit.Client.Abstractions.Messages;
 
-namespace Dex.Audit.Client.Interfaces;
+namespace Dex.Audit.Client.Abstractions.Interfaces;
 
 /// <summary>
 /// Интерфейс для конфигурации событий аудита

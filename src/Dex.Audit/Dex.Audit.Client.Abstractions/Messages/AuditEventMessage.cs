@@ -1,6 +1,6 @@
 using Dex.Audit.Domain.Enums;
 
-namespace Dex.Audit.Client.Messages;
+namespace Dex.Audit.Client.Abstractions.Messages;
 
 /// <summary>
 /// Контракт сообщения о событии аудита

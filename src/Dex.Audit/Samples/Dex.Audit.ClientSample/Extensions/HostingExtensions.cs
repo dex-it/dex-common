@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
+using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Client.Extensions;
-using Dex.Audit.Client.Messages;
 using Dex.Audit.Client.Services;
 using Dex.Audit.ClientSample.Commands.EFCore.AddUser;
 using Dex.Audit.ClientSample.Commands.EFCore.DeleteUser;

@@ -1,5 +1,5 @@
-using Dex.Audit.Client.Interfaces;
-using Dex.Audit.Client.Messages;
+using Dex.Audit.Client.Abstractions.Interfaces;
+using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Client.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using Dex.Audit.Client.Messages;
+using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
 using Dex.Audit.Server.Consumers;
