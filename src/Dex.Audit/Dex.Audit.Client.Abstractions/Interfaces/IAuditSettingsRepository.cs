@@ -1,6 +1,6 @@
 ﻿using Dex.Audit.Domain.Entities;
 
-namespace Dex.Audit.Client.Interfaces;
+namespace Dex.Audit.Client.Abstractions.Interfaces;
 
 /// <summary>
 /// Репозиторий настроек
