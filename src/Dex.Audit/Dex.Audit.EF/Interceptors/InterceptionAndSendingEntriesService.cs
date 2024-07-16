@@ -14,7 +14,7 @@ namespace Dex.Audit.EF.Interceptors;
 public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvider)
     : IInterceptionAndSendingEntriesService
 {
-    private readonly List<EntryHelper> _entryHelpers = new();
+    private readonly List<EntryHelper> _entryHelpers = [];
 
     /// <summary>
     /// Перехватывает записи аудита из контекста изменений
@@ -76,7 +76,7 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
         return eventType;
     }
 
-    private string FormAuditMessage(object entity, string eventType, PropertyValues currentValues, PropertyValues originalValues)
+    private static string FormAuditMessage(object entity, string eventType, PropertyValues currentValues, PropertyValues originalValues)
     {
         StringBuilder messageBuilder = new();
         messageBuilder.AppendLine($"Тип события аудита: {eventType}");
@@ -89,46 +89,48 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
         return messageBuilder.ToString();
     }
 
-    private void AppendPropertyValues(PropertyValues values, StringBuilder messageBuilder)
+    private static void AppendPropertyValues(PropertyValues values, StringBuilder messageBuilder)
     {
         foreach (var property in values.Properties)
         {
             messageBuilder.AppendLine($"{property.Name}: {values[property]}");
         }
     }
-}
-
-/// <summary>
-/// Структура для хранения данных EntityEntry
-/// </summary>
-internal readonly struct EntryHelper
-{
-    /// <summary>
-    /// Объект сущности, информация из которого будет использована для отправки.
-    /// </summary>
-    /// <remarks>Используется в связи с тем, что Id генерируется БД на моменте SavedChanges</remarks>
-    public readonly object Entry;
 
     /// <summary>
-    /// Текущие значения свойств сущности.
+    /// Структура для хранения данных EntityEntry
     /// </summary>
-    public readonly PropertyValues CurrentValues;
-
-    /// <summary>
-    /// Исходные значения свойств сущности.
-    /// </summary>
-    public readonly PropertyValues OriginalValues;
-
-    /// <summary>
-    /// EntityState на момент SavingChanges.
-    /// </summary>
-    public readonly EntityState State;
-
-    public EntryHelper(object entry, EntityState state, PropertyValues currentValues, PropertyValues originalValues)
+    /// <param name="entry">Объект сущности, информация из которого будет использована для отправки.</param>
+    /// <param name="state">EntityState на момент SavingChanges.</param>
+    /// <param name="currentValues">Текущие значения свойств сущности.</param>
+    /// <param name="originalValues">Исходные значения свойств сущности.</param>
+    private readonly struct EntryHelper(
+        object entry,
+        EntityState state,
+        PropertyValues currentValues,
+        PropertyValues originalValues)
     {
-        Entry = entry;
-        State = state;
-        CurrentValues = currentValues;
-        OriginalValues = originalValues;
+        /// <summary>
+        /// Объект сущности, информация из которого будет использована для отправки.
+        /// </summary>
+        /// <remarks>Используется в связи с тем, что Id генерируется БД на моменте SavedChanges</remarks>
+        public readonly object Entry = entry;
+
+        /// <summary>
+        /// EntityState на момент SavingChanges.
+        /// </summary>
+        public readonly EntityState State = state;
+
+        /// <summary>
+        /// Текущие значения свойств сущности.
+        /// </summary>
+        public readonly PropertyValues CurrentValues = currentValues;
+
+        /// <summary>
+        /// Исходные значения свойств сущности.
+        /// </summary>
+        public readonly PropertyValues OriginalValues = originalValues;
     }
 }
+
+
