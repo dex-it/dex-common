@@ -2,7 +2,7 @@ using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.ValueObjects;
-using Dex.Audit.Server.Interfaces;
+using Dex.Audit.Server.Abstractions.Interfaces;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
