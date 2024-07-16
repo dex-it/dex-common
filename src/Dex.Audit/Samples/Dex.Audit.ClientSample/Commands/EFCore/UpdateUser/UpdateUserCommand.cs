@@ -16,15 +16,15 @@ public class UpdateUserCommand : AuditRequest<UpdateUserResponse>
     /// <summary>
     /// ФИО пользователя.
     /// </summary>
-    public string Fullname { get; set; }
+    public string? Fullname { get; set; }
 
     /// <summary>
     /// Имя пользователя.
     /// </summary>
-    public string UserName { get; set; }
+    public string? UserName { get; set; }
 
     /// <summary>
     /// Адрес e-mail.
     /// </summary>
-    public string Email { get; set; }
+    public string? Email { get; set; }
 }

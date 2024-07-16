@@ -2,4 +2,4 @@
 
 namespace Dex.Audit.ClientSample.Commands.EFCore.AddUser;
 
-public class AddUserResponse(int Id) : IAuditResponse;
+public record AddUserResponse(int Id) : IAuditResponse;

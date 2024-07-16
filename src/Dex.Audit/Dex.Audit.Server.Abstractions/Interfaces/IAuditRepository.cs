@@ -1,6 +1,6 @@
 ﻿using Dex.Audit.Domain.Entities;
 
-namespace Dex.Audit.Server.Interfaces;
+namespace Dex.Audit.Server.Abstractions.Interfaces;
 
 /// <summary>
 /// Репозиторий постоянного хранилища.

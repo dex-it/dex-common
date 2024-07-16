@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.ServerSample", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Client.Abstractions", "Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj", "{EC511908-1BFC-4886-9D3A-168525486E8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Server.Abstractions", "Dex.Audit.Server.Abstractions\Dex.Audit.Server.Abstractions.csproj", "{4EC2C515-0272-43A3-9C56-A82BE87AC42C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -82,5 +84,9 @@ Global
 		{EC511908-1BFC-4886-9D3A-168525486E8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC511908-1BFC-4886-9D3A-168525486E8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC511908-1BFC-4886-9D3A-168525486E8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EC2C515-0272-43A3-9C56-A82BE87AC42C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EC2C515-0272-43A3-9C56-A82BE87AC42C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EC2C515-0272-43A3-9C56-A82BE87AC42C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EC2C515-0272-43A3-9C56-A82BE87AC42C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

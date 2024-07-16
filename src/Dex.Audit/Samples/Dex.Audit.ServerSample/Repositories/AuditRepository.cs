@@ -1,5 +1,5 @@
 ﻿using Dex.Audit.Domain.Entities;
-using Dex.Audit.Server.Interfaces;
+using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.ServerSample.Context;
 using Microsoft.EntityFrameworkCore;
 

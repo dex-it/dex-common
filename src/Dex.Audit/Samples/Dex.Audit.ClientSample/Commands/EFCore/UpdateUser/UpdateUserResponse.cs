@@ -2,4 +2,4 @@
 
 namespace Dex.Audit.ClientSample.Commands.EFCore.UpdateUser;
 
-public class UpdateUserResponse(int Id) : IAuditResponse;
+public record UpdateUserResponse(int Id) : IAuditResponse;
