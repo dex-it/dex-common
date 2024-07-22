@@ -1,10 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>10</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.1</PackageVersion>
+        <PackageVersion>6.0.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -30,20 +32,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dex.Extensions"/>
-        <PackageReference Include="MassTransit"/>
-        <PackageReference Include="MassTransit.RabbitMQ"/>
+        <PackageReference Include="Dex.Cap.OnceExecutor" Version="6.0.0" />
+        <PackageReference Include="Dex.Cap.OnceExecutor.Ef" Version="6.0.0" />
+        <PackageReference Include="Dex.Cap.Outbox" Version="6.0.2" />
+        <PackageReference Include="MassTransit.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Dex.MassTransit.Rabbit.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj"/>
-        <ProjectReference Include="..\Dex.MassTransit\Dex.MassTransit.csproj"/>
+        <ProjectReference Include="..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj"/>
     </ItemGroup>
 
 </Project>
