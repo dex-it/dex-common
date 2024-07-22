@@ -1,17 +1,17 @@
 using Dex.Cap.Outbox.Interfaces;
 using MassTransit;
 
-namespace Dex.MassTransit.Outbox.Extensions.Outbox;
+namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
 /// <summary>
 /// Автоматически публикует объект, из аутбокса в очередь, заинтересованные сервисы могут получать эти события
 /// </summary>
 /// <typeparam name="T">Объект события</typeparam>
-public class GenericMassTransitPublisher<T> : IOutboxMessageHandler<T> where T : IConsumer, IOutboxMessage
+public class PublisherOutboxHandler<T> : IOutboxMessageHandler<T> where T : IConsumer, IOutboxMessage
 {
     private readonly IPublishEndpoint _publishEndpoint;
 
-    public GenericMassTransitPublisher(IPublishEndpoint publishEndpoint)
+    public PublisherOutboxHandler(IPublishEndpoint publishEndpoint)
     {
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
     }

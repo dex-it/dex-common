@@ -5,7 +5,7 @@ using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.MassTransit.Outbox.Extensions.Outbox;
+namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
 /// <summary>
 /// Идемпотентный обработчик сообщений аутбокса

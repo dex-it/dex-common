@@ -8,7 +8,7 @@ using Dex.MassTransit.Rabbit;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.MassTransit.Outbox.Extensions.Consumers;
+namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
 /// <summary>
 /// Гарантирует только одно выполнение, в случае повтора просто выходит без ошибок.

@@ -37,7 +37,7 @@ conf.AddConsumer<CustomConsumer>(configurator => configurator.UseDefaultConfigur
 
 # Shared.Outbox
 
-## GenericMassTransitPublisher
+## PublisherOutboxHandler
 
 Автоматически публикует объект, из аутбокса в очередь, заинтересованные сервисы могут получать эти события.
 
@@ -45,7 +45,7 @@ conf.AddConsumer<CustomConsumer>(configurator => configurator.UseDefaultConfigur
 ```csharp
 services.AddOutbox<AppDbContext>();
 
-services.AddScoped(typeof(IOutboxMessageHandler<>), typeof(GenericMassTransitPublisher<>));
+services.AddScoped(typeof(IOutboxMessageHandler<>), typeof(PublisherOutboxHandler<>));
 ```
 
 ## IdempotentOutboxHandler

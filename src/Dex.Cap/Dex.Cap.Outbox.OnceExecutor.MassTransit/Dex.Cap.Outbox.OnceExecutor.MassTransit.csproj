@@ -13,7 +13,7 @@
 
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -32,15 +32,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dex.Cap.OnceExecutor" Version="6.0.0" />
-        <PackageReference Include="Dex.Cap.OnceExecutor.Ef" Version="6.0.0" />
-        <PackageReference Include="Dex.Cap.Outbox" Version="6.0.2" />
-        <PackageReference Include="MassTransit.Abstractions"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <ProjectReference Include="..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj"/>
+        <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj"/>
+        <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
+        <ProjectReference Include="..\..\Dex.MassTransit\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj"/>
+        <PackageReference Include="MassTransit.Abstractions"/>
     </ItemGroup>
 
 </Project>
