@@ -1,7 +1,6 @@
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Options;
-using Dex.Audit.Server.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,7 +23,6 @@ public static class DependencyInjectionExtensions
         services
             .AddScoped(typeof(IAuditRepository), typeof(TAuditRepository))
             .AddScoped(typeof(IAuditSettingsRepository), typeof(TAuditSettingsRepository))
-            .AddHostedService<RefreshCacheWorker>()
             .Configure<AuditCacheOptions>(opts => configuration.GetSection(nameof(AuditCacheOptions)).Bind(opts));
 
         return services;
