@@ -75,7 +75,9 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
 
         return Task.FromResult(new Device
         {
-            Vendor = auditEventOptions.Value.SystemName, Version = assembly?.GetName().Version?.ToString(), ProcessName = assembly?.GetName().Name
+            Vendor = auditEventOptions.Value.SystemName,
+            Version = assembly?.GetName().Version?.ToString(),
+            ProcessName = assembly?.GetName().Name
         });
     }
 
@@ -90,12 +92,10 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
 
     private static string? GetMacAddress()
     {
-        return
-        (
-            from nic in NetworkInterface.GetAllNetworkInterfaces()
-            where nic.OperationalStatus == OperationalStatus.Up
-            select nic.GetPhysicalAddress().ToString()
-        ).FirstOrDefault();
+        return NetworkInterface.GetAllNetworkInterfaces()
+            .Where(nic => nic.OperationalStatus == OperationalStatus.Up)
+            .Select(nic => nic.GetPhysicalAddress().ToString())
+            .FirstOrDefault();
     }
 
     private static async Task<string?> GetLocalIpAsync(string dnsHostName, CancellationToken cancellationToken = default)

@@ -9,6 +9,7 @@ using Dex.Audit.ClientSample.Commands.Logging;
 using Dex.Audit.ClientSample.Context;
 using Dex.Audit.ClientSample.Context.Interceptors;
 using Dex.Audit.ClientSample.Repositories;
+using Dex.Audit.ClientSample.Workers;
 using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Dex.Audit.Logger.Extensions;
@@ -76,6 +77,8 @@ public static class HostingExtensions
             configuration.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
             configuration.AddBehavior(typeof(IPipelineBehavior<,>),typeof(AuditBehavior<,>));
         });
+
+        services.AddHostedService<SubsystemAuditWorker>();
 
         return builder.Build();
     }
