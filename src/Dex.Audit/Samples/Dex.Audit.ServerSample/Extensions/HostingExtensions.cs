@@ -6,6 +6,7 @@ using Dex.Audit.Server.Consumers;
 using Dex.Audit.Server.Extensions;
 using Dex.Audit.ServerSample.Context;
 using Dex.Audit.ServerSample.Repositories;
+using Dex.Audit.ServerSample.Workers;
 using Dex.Extensions;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
@@ -77,6 +78,8 @@ public static class HostingExtensions
         });
 
         AddStackExchangeRedis(services, builder.Configuration);
+
+        services.AddHostedService<RefreshCacheWorker>();
 
         return builder.Build();
     }
