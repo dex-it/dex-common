@@ -15,5 +15,5 @@ public class AuditEventOptions
     /// <summary>
     /// Название системы инициатора события
     /// </summary>
-    public string SystemName { get; set; }
+    public required string SystemName { get; set; }
 }

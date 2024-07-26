@@ -15,7 +15,7 @@ public class AuditSettings
     /// <summary>
     /// Тип события.
     /// </summary>
-    public string EventType { get; set; }
+    public required string EventType { get; set; }
 
     /// <summary>
     /// Уровень важности события.

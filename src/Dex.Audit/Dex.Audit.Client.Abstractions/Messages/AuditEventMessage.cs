@@ -160,7 +160,7 @@ public class AuditEventMessage
     /// <summary>
     /// Тип события аудита.
     /// </summary>
-    public string EventType { get; set; }
+    public required string EventType { get; set; }
 
     /// <summary>
     /// Минимальный уровень важности события для записи, указанный на стороне источника события.

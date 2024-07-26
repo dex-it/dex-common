@@ -66,7 +66,7 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
             }
 
             logger.LogWarning(
-                "Минимальный уровень источника [{SourceSeverityLevel}], указанный во время отправки сообщение аудита [{EventType}] от [{SourceIp}] не соотвествует актуальному в кэше [{CurrentSeverityLevel}].",
+                "Минимальный уровень источника [{SourceSeverityLevel}], указанный во время отправки сообщение аудита [{EventType}] от [{SourceIp}] не соответствует актуальному в кэше [{CurrentSeverityLevel}].",
                 message.SourceMinSeverityLevel,
                 eventType,
                 sourceIp,auditSettings.SeverityLevel);
