@@ -66,9 +66,6 @@ public static class MassTransitConfigurator
                     }
                 });
 
-            mqBusFactoryConfigurator.AutoDelete = false;
-            mqBusFactoryConfigurator.Durable = true;
-
             // enable activity tracer for all consumers
             if (EnableConsumerTracer)
                 mqBusFactoryConfigurator.LinkActivityTracingContext();
