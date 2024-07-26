@@ -20,22 +20,22 @@ public class AuditEvent
     /// <summary>
     /// Информация об источнике события.
     /// </summary>
-    public Source Source { get; set; }
+    public required Source Source { get; set; }
 
     /// <summary>
     /// Информация о получателе объекта события.
     /// </summary>
-    public Destination Destination { get; set; }
+    public required Destination Destination { get; set; }
 
     /// <summary>
     /// Объект события 
     /// </summary>
-    public string EventObject { get; set; }
+    public required string EventObject { get; set; }
 
     /// <summary>
     /// Текст сообщения.
     /// </summary>
-    public string Message { get; set; }
+    public required string Message { get; set; }
 
     /// <summary>
     /// Результат (успех/отказ).
@@ -45,5 +45,5 @@ public class AuditEvent
     /// <summary>
     /// Краткое наименование события.
     /// </summary>
-    public string EventName { get; set; }
+    public required string EventName { get; set; }
 }
