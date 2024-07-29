@@ -13,7 +13,7 @@ public class AuditEventConfiguration : IEntityTypeConfiguration<AuditEvent>
 
     public void Configure(EntityTypeBuilder<AuditEvent> builder)
     {
-        builder.ToTable("AuditEvents").HasKey(e => e.ExternalId);
+        builder.ToTable("AuditEvents").HasKey(e => e.Id);
 
         builder.OwnsOne(root => root.Source, source =>
         {
