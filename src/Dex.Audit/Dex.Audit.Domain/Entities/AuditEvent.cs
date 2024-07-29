@@ -10,7 +10,7 @@ public class AuditEvent
     /// <summary>
     ///  Идентификатор строки о событии ИБ в рамках одного журнала АС.
     /// </summary>
-    public long ExternalId { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Код события в журнале АС.

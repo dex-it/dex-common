@@ -10,7 +10,7 @@ public class AuditSettings
     /// <summary>
     /// Идентификатор настройки события.
     /// </summary>
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Тип события.
