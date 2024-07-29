@@ -18,7 +18,6 @@ public class AuditServerDbContext : DbContext
     {
         modelBuilder.ApplyConfiguration(new AuditEventConfiguration());
 
-        modelBuilder.Entity<AuditEvent>().HasKey(e => e.ExternalId);
         modelBuilder.Entity<AuditSettings>().HasKey(s => s.Id);
     }
 }

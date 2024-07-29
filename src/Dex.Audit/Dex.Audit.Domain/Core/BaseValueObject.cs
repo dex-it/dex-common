@@ -14,8 +14,8 @@ public abstract class BaseValueObject
     /// </summary>
     /// <param name="obj">Объект</param>
     /// <returns>Булево значение результата сравнения</returns>
-    /// <remarks>Использует для сравнение метод GetHashCode()</remarks>
-    public override bool Equals(object obj)
+    /// <remarks>Использует для сравнения метод GetHashCode()</remarks>
+    public override bool Equals(object? obj)
     {
         if (obj is null)
         {

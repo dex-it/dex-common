@@ -8,11 +8,6 @@ namespace Dex.Audit.Client.Abstractions.Messages;
 public class AuditEventMessage
 {
     /// <summary>
-    ///  ID строки о событии ИБ в рамках одного журнала АС.
-    /// </summary>
-    public long ExternalId { get; set; }
-
-    /// <summary>
     /// Название АС-источника информации о событии.
     /// </summary>
     public string? DeviceVendor { get; set; }
@@ -170,5 +165,5 @@ public class AuditEventMessage
     /// <summary>
     /// Id настройки аудита.
     /// </summary>
-    public int? AuditSettingsId { get; set; }
+    public Guid? AuditSettingsId { get; set; }
 }

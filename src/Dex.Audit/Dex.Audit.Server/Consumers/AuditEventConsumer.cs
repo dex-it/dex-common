@@ -81,7 +81,6 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
     {
         var auditEvent = new AuditEvent
         {
-            ExternalId = message.ExternalId,
             EventCode = message.EventCode,
             Source = new Source
             {
