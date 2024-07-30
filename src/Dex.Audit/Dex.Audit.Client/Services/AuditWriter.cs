@@ -11,14 +11,14 @@ namespace Dex.Audit.Client.Services;
 /// </summary>
 /// <param name="auditOutputProvider"><see cref="IAuditOutputProvider"/></param>
 /// <param name="auditEventConfigurator"><see cref="IAuditEventConfigurator"/></param>
-/// <param name="auditSettingsRepository"><see cref="IAuditSettingsRepository"/></param>
+/// <param name="auditCacheRepository"><see cref="IAuditCacheRepository"/></param>
 /// <param name="auditEventOptions"><see cref="AuditEventOptions"/></param>
 /// <param name="logger"><see cref="ILogger{TCategoryName}"/></param>
 internal sealed class AuditWriter(
     IAuditOutputProvider auditOutputProvider,
     IAuditEventConfigurator auditEventConfigurator,
     IOptions<AuditEventOptions> auditEventOptions,
-    IAuditSettingsRepository auditSettingsRepository,
+    IAuditCacheRepository auditCacheRepository,
     ILogger<AuditWriter> logger) : IAuditWriter
 {
     /// <summary>
@@ -30,7 +30,7 @@ internal sealed class AuditWriter(
     {
         try
         {
-            var auditSettings = await auditSettingsRepository
+            var auditSettings = await auditCacheRepository
                 .GetAsync(eventBaseInfo.EventType, cancellationToken)
                 .ConfigureAwait(false);
 

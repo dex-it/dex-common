@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Audit.ServerSample.Repositories;
 
-public class AuditRepository(AuditServerDbContext serverDbContext) : IAuditRepository
+public class AuditPersistentRepository(AuditServerDbContext serverDbContext) : IAuditPersistentRepository
 {
     public async Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default)
     {

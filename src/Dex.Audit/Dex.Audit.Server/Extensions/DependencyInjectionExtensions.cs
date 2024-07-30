@@ -17,12 +17,12 @@ public static class DependencyInjectionExtensions
     public static IServiceCollection AddAuditServer<TAuditRepository, TAuditSettingsRepository>(
         this IServiceCollection services,
         IConfiguration configuration)
-        where TAuditRepository : class, IAuditRepository
-        where TAuditSettingsRepository : class, IAuditSettingsRepository
+        where TAuditRepository : class, IAuditPersistentRepository
+        where TAuditSettingsRepository : class, IAuditCacheRepository
     {
         services
-            .AddScoped(typeof(IAuditRepository), typeof(TAuditRepository))
-            .AddScoped(typeof(IAuditSettingsRepository), typeof(TAuditSettingsRepository))
+            .AddScoped(typeof(IAuditPersistentRepository), typeof(TAuditRepository))
+            .AddScoped(typeof(IAuditCacheRepository), typeof(TAuditSettingsRepository))
             .Configure<AuditCacheOptions>(opts => configuration.GetSection(nameof(AuditCacheOptions)).Bind(opts));
 
         return services;

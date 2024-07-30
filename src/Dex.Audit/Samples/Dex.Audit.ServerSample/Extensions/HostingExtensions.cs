@@ -46,7 +46,7 @@ public static class HostingExtensions
                 var enumConverter = new JsonStringEnumConverter();
                 opts.JsonSerializerOptions.Converters.Add(enumConverter);
             });
-        services.AddAuditServer<AuditRepository, AuditSettingsRepository>(builder.Configuration);
+        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
         services.AddMassTransit(busRegistrationConfigurator =>
         {

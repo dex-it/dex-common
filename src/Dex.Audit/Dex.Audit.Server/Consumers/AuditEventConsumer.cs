@@ -11,12 +11,12 @@ namespace Dex.Audit.Server.Consumers;
 /// <summary>
 /// Обработчик аудиторских событий, полученных через шину сообщений.
 /// </summary>
-/// <param name="auditRepository"><see cref="IAuditRepository"/>.</param>
+/// <param name="auditPersistentRepository"><see cref="IAuditPersistentRepository"/>.</param>
 /// <param name="logger"><see cref="ILogger"/>.</param>
-/// <param name="auditSettingsRepository"><see cref="IAuditSettingsRepository"/>.</param>
-public class AuditEventConsumer(IAuditRepository auditRepository,
+/// <param name="auditCacheRepository"><see cref="IAuditCacheRepository"/>.</param>
+public class AuditEventConsumer(IAuditPersistentRepository auditPersistentRepository,
     ILogger<AuditEventConsumer> logger,
-    IAuditSettingsRepository auditSettingsRepository) : IConsumer<Batch<AuditEventMessage>>
+    IAuditCacheRepository auditCacheRepository) : IConsumer<Batch<AuditEventMessage>>
 {
     /// <summary>
     /// Метод для обработки аудиторских событий, полученных через шину сообщений.
@@ -30,7 +30,7 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
 
             var auditEvents = unMappedAuditEvents.Select(MapAuditEventFromMessage);
 
-            await auditRepository.AddAuditEventsRangeAsync(auditEvents, context.CancellationToken).ConfigureAwait(false);
+            await auditPersistentRepository.AddAuditEventsRangeAsync(auditEvents, context.CancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -49,7 +49,7 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
             var eventType = message.EventType;
             var sourceIp = message.SourceIpAddress;
 
-            var auditSettings = await auditSettingsRepository.GetAsync(eventType).ConfigureAwait(false);
+            var auditSettings = await auditCacheRepository.GetAsync(eventType).ConfigureAwait(false);
 
             if (auditSettings is null)
             {
