@@ -13,9 +13,9 @@ public class AuditEvent
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Код события в журнале АС.
+    /// Тип события.
     /// </summary>
-    public string? EventCode { get; set; }
+    public required string EventType { get; set; }
 
     /// <summary>
     /// Информация об источнике события.
@@ -41,9 +41,4 @@ public class AuditEvent
     /// Результат (успех/отказ).
     /// </summary>
     public bool IsSuccess { get; set; }
-
-    /// <summary>
-    /// Краткое наименование события.
-    /// </summary>
-    public required string EventName { get; set; }
 }
