@@ -45,8 +45,8 @@ internal sealed class RefreshCacheWorker(
     private async Task UpdateCache(CancellationToken cancellationToken = default)
     {
         using var scope = scopeFactory.CreateScope();
-        var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditRepository>();
-        var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
+        var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditPersistentRepository>();
+        var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditCacheRepository>();
 
         logger.LogInformation("Выполняется операция обновления настроек аудита в кэше");
 
@@ -56,7 +56,7 @@ internal sealed class RefreshCacheWorker(
 
         foreach (var setting in auditSettings)
         {
-            await auditSettingsRepository.AddAsync(setting.EventType, setting, refreshInterval, cancellationToken).ConfigureAwait(false);
+            await auditSettingsRepository.AddAsync(setting, refreshInterval, cancellationToken).ConfigureAwait(false);
         }
 
         logger.LogInformation("Кэш успешно обновлен");

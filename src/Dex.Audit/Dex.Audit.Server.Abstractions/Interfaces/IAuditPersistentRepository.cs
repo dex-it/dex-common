@@ -5,7 +5,7 @@ namespace Dex.Audit.Server.Abstractions.Interfaces;
 /// <summary>
 /// Репозиторий постоянного хранилища.
 /// </summary>
-public interface IAuditRepository
+public interface IAuditPersistentRepository
 {
     /// <summary>
     /// Добавить событие.
