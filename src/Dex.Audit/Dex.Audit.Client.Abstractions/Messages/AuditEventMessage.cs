@@ -88,11 +88,6 @@ public class AuditEventMessage
     public long? DeviceEventClassId { get; set; }
 
     /// <summary>
-    /// Код события в журнале АС.
-    /// </summary>
-    public string? EventCode { get; set; }
-
-    /// <summary>
     /// Порт на стороне источника.
     /// </summary>
     public string? SourcePort { get; set; }
@@ -146,11 +141,6 @@ public class AuditEventMessage
     /// Результат (успех/отказ).
     /// </summary>
     public bool IsSuccess { get; set; }
-
-    /// <summary>
-    /// Краткое наименование события.
-    /// </summary>
-    public string? EventName { get; set; }
 
     /// <summary>
     /// Тип события аудита.

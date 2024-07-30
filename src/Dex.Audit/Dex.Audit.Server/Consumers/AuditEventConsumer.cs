@@ -81,7 +81,7 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
     {
         var auditEvent = new AuditEvent
         {
-            EventCode = message.EventCode,
+            EventType = message.EventType,
             Source = new Source
             {
                 Device = new Device
@@ -129,8 +129,7 @@ public class AuditEventConsumer(IAuditRepository auditRepository,
             },
             EventObject = message.EventObject ?? string.Empty,
             Message = message.Message ?? string.Empty,
-            IsSuccess = message.IsSuccess,
-            EventName = message.EventName ?? string.Empty
+            IsSuccess = message.IsSuccess
         };
 
         SetDestinationDate(auditEvent);

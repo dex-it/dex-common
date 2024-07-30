@@ -41,7 +41,6 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
             Start = DateTime.UtcNow,
             SourceGmtDate = DateTime.UtcNow,
             EventType = auditEventBaseInfo.EventType,
-            EventName = auditEventBaseInfo.EventType,
             EventObject = auditEventBaseInfo.EventObject,
             Message = auditEventBaseInfo.Message,
             IsSuccess = auditEventBaseInfo.IsSuccess
