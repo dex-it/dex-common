@@ -4,16 +4,16 @@ using StackExchange.Redis.Extensions.Core.Abstractions;
 
 namespace Dex.Audit.ClientSample.Repositories;
 
-public class AuditSettingsRepository(IRedisDatabase redisDatabase) : IAuditSettingsRepository
+public class AuditCacheRepository(IRedisDatabase redisDatabase) : IAuditCacheRepository
 {
     public async Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default)
     {
         return await redisDatabase.GetAsync<AuditSettings>(eventType);
     }
 
-    public async Task AddAsync(string settingEventType, AuditSettings settings, TimeSpan refreshInterval,
+    public async Task AddAsync(AuditSettings settings, TimeSpan expiresIn,
         CancellationToken cancellationToken = default)
     {
-        await redisDatabase.AddAsync(settingEventType, settings, refreshInterval);
+        await redisDatabase.AddAsync(settings.EventType, settings, expiresIn);
     }
 }
