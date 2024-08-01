@@ -1,6 +1,7 @@
 using System.Reflection;
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Client.Abstractions.Messages;
+using Dex.Audit.Sample.Domain.Enums;
 
 namespace Dex.Audit.ClientSample.Workers;
 
@@ -26,7 +27,7 @@ public class SubsystemAuditWorker : IHostedService
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        return AuditSubsystemEventAsync("StartSubsystem", "Начало работы подсистемы", cancellationToken);
+        return AuditSubsystemEventAsync(AuditEventType.StartSystem.ToString(), "Начало работы подсистемы", cancellationToken);
     }
 
     /// <summary>
@@ -35,7 +36,7 @@ public class SubsystemAuditWorker : IHostedService
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        return AuditSubsystemEventAsync("ShutdownSubsystem", "Окончание работы подсистемы", cancellationToken);
+        return AuditSubsystemEventAsync(AuditEventType.ShutdownSystem.ToString(), "Окончание работы подсистемы", cancellationToken);
     }
 
     /// <summary>
