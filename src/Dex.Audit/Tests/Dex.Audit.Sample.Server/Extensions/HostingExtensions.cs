@@ -2,6 +2,7 @@
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
+using Dex.Audit.Sample.Domain.Repositories;
 using Dex.Audit.Server.Consumers;
 using Dex.Audit.Server.Extensions;
 using Dex.Audit.ServerSample.Context;
@@ -28,6 +29,7 @@ public static class HostingExtensions
     /// <returns>Web application</returns>
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        // Base
         var environmentName = builder.Environment.EnvironmentName;
         builder.Configuration
             .AddJsonFile("appsettings.local.json", true, true)
@@ -35,8 +37,6 @@ public static class HostingExtensions
             .AddEnvironmentVariables();
 
         var services = builder.Services;
-
-        services.AddDbContext<AuditServerDbContext>();
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -46,8 +46,12 @@ public static class HostingExtensions
                 var enumConverter = new JsonStringEnumConverter();
                 opts.JsonSerializerOptions.Converters.Add(enumConverter);
             });
-        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
+        AddStackExchangeRedis(services, builder.Configuration);
+
+        // Server
+        services.AddDbContext<AuditServerDbContext>();
+        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
         services.AddMassTransit(busRegistrationConfigurator =>
         {
             busRegistrationConfigurator.AddConsumer<AuditEventConsumer>();
@@ -76,9 +80,6 @@ public static class HostingExtensions
                 configurator.ConfigureEndpoints(context);
             });
         });
-
-        AddStackExchangeRedis(services, builder.Configuration);
-
         services.AddHostedService<RefreshCacheWorker>();
 
         return builder.Build();

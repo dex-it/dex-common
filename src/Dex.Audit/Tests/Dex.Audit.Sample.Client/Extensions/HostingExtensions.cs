@@ -8,12 +8,12 @@ using Dex.Audit.ClientSample.Commands.EFCore.UpdateUser;
 using Dex.Audit.ClientSample.Commands.Logging;
 using Dex.Audit.ClientSample.Context;
 using Dex.Audit.ClientSample.Context.Interceptors;
-using Dex.Audit.ClientSample.Repositories;
 using Dex.Audit.ClientSample.Workers;
 using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.PipelineBehaviours;
+using Dex.Audit.Sample.Domain.Repositories;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using MediatR;
@@ -35,6 +35,7 @@ public static class HostingExtensions
     /// <returns>Web application</returns>
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        // Base
         var environmentName = builder.Environment.EnvironmentName;
         builder.Configuration
             .AddJsonFile("appsettings.local.json", true, true)
@@ -43,13 +44,6 @@ public static class HostingExtensions
 
         var services = builder.Services;
 
-        services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
-        {
-            opt.AddInterceptors(serviceProvider.GetRequiredService<IAuditSaveChangesInterceptor>(), serviceProvider.GetRequiredService<IAuditDbTransactionInterceptor>());
-        });
-        services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
-
-        services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger(builder.Configuration));
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
         services.AddControllers()
@@ -58,8 +52,19 @@ public static class HostingExtensions
                 var enumConverter = new JsonStringEnumConverter();
                 opts.JsonSerializerOptions.Converters.Add(enumConverter);
             });
-        services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(builder.Configuration);
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
+        AddStackExchangeRedis(services, builder.Configuration);
+
+        // Client
+        services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(builder.Configuration);
+        services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
+        services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
+        {
+            opt.AddInterceptors(
+                serviceProvider.GetRequiredService<IAuditSaveChangesInterceptor>(),
+                serviceProvider.GetRequiredService<IAuditDbTransactionInterceptor>());
+        });
+        services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger(builder.Configuration));
         services.AddMassTransit(x =>
         {
             x.RegisterBus((context, configurator) =>
@@ -68,9 +73,6 @@ public static class HostingExtensions
                 configurator.ConfigureEndpoints(context);
             });
         });
-
-        AddStackExchangeRedis(services, builder.Configuration);
-
         services.AddTransient(typeof(AuditBehavior<,>), typeof(AuditBehavior<,>));
         services.AddMediatR(configuration =>
         {
@@ -78,6 +80,7 @@ public static class HostingExtensions
             configuration.AddBehavior(typeof(IPipelineBehavior<,>),typeof(AuditBehavior<,>));
         });
 
+        // Additional
         services.AddHostedService<SubsystemAuditWorker>();
 
         return builder.Build();
