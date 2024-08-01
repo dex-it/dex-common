@@ -1,7 +1,4 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Unicode;
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 using Dex.Audit.Client.Abstractions.Messages;
 using Microsoft.Extensions.Logging;
 
@@ -12,12 +9,6 @@ namespace Dex.Audit.Logger;
 /// </summary>
 internal class AuditLogger : ILogger
 {
-    private readonly JsonSerializerOptions _options = new()
-    {
-        Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic),
-        WriteIndented = true
-    };
-
     internal static readonly Channel<AuditEventBaseInfo> BaseInfoChannel = Channel.CreateBounded<AuditEventBaseInfo>(new BoundedChannelOptions(Int32.MaxValue));
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
@@ -28,7 +19,7 @@ internal class AuditLogger : ILogger
 
         BaseInfoChannel.Writer.TryWrite(new AuditEventBaseInfo(
             eventId.Name,
-            JsonSerializer.Serialize(state, _options),
+            nameof(Log),
             formatter(state, exception),
             !failure));
     }

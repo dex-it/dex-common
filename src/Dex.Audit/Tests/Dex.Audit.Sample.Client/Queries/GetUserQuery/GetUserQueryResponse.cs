@@ -1,14 +1,7 @@
-﻿using Dex.Audit.MediatR.Requests;
-using Dex.Audit.Sample.Domain.Enums;
+﻿namespace Dex.Audit.ClientSample.Queries.GetUserQuery;
 
-namespace Dex.Audit.ClientSample.Commands.EFCore.UpdateUser;
-
-public class UpdateUserCommand : AuditRequest<UpdateUserResponse>
+public class GetUserQueryResponse
 {
-    public override string EventType { get; } = AuditEventType.ObjectChanged.ToString();
-    public override string EventObject { get; } = nameof(UpdateUserCommand);
-    public override string Message { get; } = "User updated";
-
     /// <summary>
     /// Идентификатор пользователя.
     /// </summary>

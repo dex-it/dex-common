@@ -1,9 +1,12 @@
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Options;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Dex.Audit.ServerSample.Workers;
+namespace Dex.Audit.Server.Workers;
 
 /// <summary>
 /// Фоновая служба для обновления кэша.
@@ -11,7 +14,7 @@ namespace Dex.Audit.ServerSample.Workers;
 /// <param name="logger">Логгер для записи информации о работе фоновой службы.</param>
 /// <param name="scopeFactory">Провайдер для создания области служб.</param>
 /// <param name="options">Настройки кэширования.</param>
-internal sealed class RefreshCacheWorker(
+public sealed class RefreshCacheWorker(
     ILogger<RefreshCacheWorker> logger,
     IServiceScopeFactory scopeFactory,
     IOptions<AuditCacheOptions> options) : BackgroundService
