@@ -1,4 +1,5 @@
 ﻿using Dex.Audit.EF.Interceptors;
+using Dex.Audit.Sample.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Audit.ClientSample.Context.Interceptors;
@@ -9,9 +10,9 @@ public class CustomInterceptionAndSendingEntriesService(IServiceProvider service
     {
         var eventType = entityState switch
         {
-            EntityState.Modified => "EntityUpdated",
-            EntityState.Added => "EntityCreated",
-            EntityState.Deleted => "EntityDeleted",
+            EntityState.Modified => AuditEventType.ObjectChanged.ToString(),
+            EntityState.Added => AuditEventType.ObjectCreated.ToString(),
+            EntityState.Deleted => AuditEventType.ObjectDeleted.ToString(),
             _ => "None"
         };
 
