@@ -4,11 +4,13 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Dex.Audit.ServerSample</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\Dex.Audit.EF\Dex.Audit.EF.csproj" />
         <ProjectReference Include="..\..\Dex.Audit.Server\Dex.Audit.Server.csproj"/>
+        <ProjectReference Include="..\Dex.Audit.Sample.Domain\Dex.Audit.Sample.Domain.csproj" />
     </ItemGroup>
 
     <ItemGroup>

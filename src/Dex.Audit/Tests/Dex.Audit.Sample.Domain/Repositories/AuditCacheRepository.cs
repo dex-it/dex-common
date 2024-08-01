@@ -2,7 +2,7 @@
 using Dex.Audit.Domain.Entities;
 using StackExchange.Redis.Extensions.Core.Abstractions;
 
-namespace Dex.Audit.ServerSample.Repositories;
+namespace Dex.Audit.Sample.Domain.Repositories;
 
 public class AuditCacheRepository(IRedisDatabase redisDatabase) : IAuditCacheRepository
 {
