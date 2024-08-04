@@ -72,11 +72,11 @@ namespace Dex.MassTransit.Sample.Consumer
                             // recieve endpoint
 
                             // создается очередь которая будет использована всеми консьмерами которые хотят получать события HelloMessageDto
-                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator);
+                            context.RegisterReceiveEndpoint<HelloMessageDto, HelloConsumer2>(factoryConfigurator);
 
                             // создается очередь которая будет использована всеми консьмерами только в этом сервисе и только консюмерами такого типа
                             // т.е. в другом сервисе даже для консюмера этого типа, будет создана своя очередь 
-                            context.RegisterReceiveEndpoint<HelloConsumer2, HelloMessageDto>(factoryConfigurator, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<HelloMessageDto, HelloConsumer2>(factoryConfigurator, createSeparateQueue: true);
                         }, refreshConnectCallback: context =>
                         {
                             var testPasswordService = context.GetRequiredService<ITestPasswordService>();
@@ -94,7 +94,7 @@ namespace Dex.MassTransit.Sample.Consumer
 
                         configurator.RegisterBus<OtherRabbitMqOptions>((context, factoryConfig) =>
                         {
-                            context.RegisterReceiveEndpoint<OtherConsumer, OtherMessageDto, OtherRabbitMqOptions>(factoryConfig);
+                            context.RegisterReceiveEndpoint<OtherRabbitMqOptions, OtherMessageDto, OtherConsumer>(factoryConfig);
                         });
                     });
 

@@ -76,7 +76,7 @@ public static class MassTransitConfigurator
     }
 
     /// <summary>
-    /// Register receive EndPoint and bind with type <typeparamref name="T"/>.
+    /// Register receive EndPoint and bind with type <typeparamref name="TConsumer"/>.
     /// </summary>
     /// <remarks>By default options RabbitMqOptions, will be injected from DI</remarks>
     /// <param name="busRegistrationContext">Bus registration contex.</param>
@@ -85,25 +85,25 @@ public static class MassTransitConfigurator
     /// <param name="rabbitMqOptions">Connection parameters. Affected only mapping SendEndpoint, if empty, then injected from DI.</param>
     /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is pub-sub pattern.</param>
     /// <param name="serviceName">Extra service name, queue prefix</param>
-    /// <typeparam name="T">Consumer type.</typeparam>
+    /// <typeparam name="TConsumer">Consumer type.</typeparam>
     /// <typeparam name="TMessage">Consumer message type.</typeparam>
     /// <exception cref="ArgumentNullException"/>
-    public static void RegisterReceiveEndpoint<T, TMessage>(
+    public static void RegisterReceiveEndpoint<TMessage, TConsumer>(
         this IBusRegistrationContext busRegistrationContext,
         IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
         Action<IEndpointConfigurator>? endpointConsumerConfigurator = null,
         RabbitMqOptions? rabbitMqOptions = null,
         bool createSeparateQueue = false,
         string? serviceName = null)
-        where T : class, IConsumer<TMessage>
+        where TConsumer : class, IConsumer<TMessage>
         where TMessage : class
     {
-        RegisterReceiveEndpoint<T, TMessage, RabbitMqOptions>(busRegistrationContext, busFactoryConfigurator,
+        RegisterReceiveEndpoint<RabbitMqOptions, TMessage, TConsumer>(busRegistrationContext, busFactoryConfigurator,
             endpointConsumerConfigurator, rabbitMqOptions, createSeparateQueue, serviceName);
     }
 
     /// <summary>
-    /// Register receive EndPoint and bind with type <typeparamref name="T"/>.
+    /// Register receive EndPoint and bind with type <typeparamref name="TConsumer"/>.
     /// </summary>
     /// <remarks>If createSeparateQueue = false, then call RegisterSendEndPoint, to allow sending messages TMessage by call Send</remarks>
     /// <param name="busRegistrationContext">Bus registration contex.</param>
@@ -112,27 +112,27 @@ public static class MassTransitConfigurator
     /// <param name="rabbitMqOptions">By default options RabbitMqOptions, will be injected from DI</param>
     /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is pub-sub pattern.</param>
     /// <param name="serviceName">Extra service name, queue prefix</param>
-    /// <typeparam name="T">Consumer type.</typeparam>
+    /// <typeparam name="TConsumer">Consumer type.</typeparam>
     /// <typeparam name="TMessage">Consumer message type.</typeparam>
     /// <typeparam name="TMqOptions">Options type. Affected only mapping SendEndpoint</typeparam>
     /// <exception cref="ArgumentNullException"/>
-    public static void RegisterReceiveEndpoint<T, TMessage, TMqOptions>(
+    public static void RegisterReceiveEndpoint<TMqOptions, TMessage, TConsumer>(
         this IBusRegistrationContext busRegistrationContext,
         IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
         Action<IEndpointConfigurator>? endpointConsumerConfigurator = null,
         TMqOptions? rabbitMqOptions = null,
         bool createSeparateQueue = false,
         string? serviceName = null)
-        where T : class, IConsumer<TMessage>
+        where TConsumer : class, IConsumer<TMessage>
         where TMessage : class
         where TMqOptions : RabbitMqOptions, new()
     {
         if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
         if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
 
-        RegisterConsumersEndpoint<TMessage, TMqOptions>(busRegistrationContext, busFactoryConfigurator,
-            endpointConsumerConfigurator,
-            new[] { typeof(T) }, rabbitMqOptions, createSeparateQueue, serviceName);
+        RegisterConsumersEndpoint<TMqOptions, TMessage>(busRegistrationContext, busFactoryConfigurator,
+            endpointConsumerConfigurator, new[] { typeof(TConsumer) },
+            rabbitMqOptions, createSeparateQueue, serviceName);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public static class MassTransitConfigurator
         RabbitMqOptions? rabbitMqOptions = null)
         where TMessage : class
     {
-        return RegisterSendEndPoint<TMessage, RabbitMqOptions>(provider, rabbitMqOptions);
+        return RegisterSendEndPoint<RabbitMqOptions, TMessage>(provider, rabbitMqOptions);
     }
 
     /// <summary>
@@ -159,7 +159,7 @@ public static class MassTransitConfigurator
     /// <typeparam name="TMessage">Consumer message type.</typeparam>
     /// <typeparam name="TMqOptions">Options type. Affected only mapping SendEndpoint</typeparam>
     /// <exception cref="ArgumentNullException"/>
-    public static UriBuilder RegisterSendEndPoint<TMessage, TMqOptions>(
+    public static UriBuilder RegisterSendEndPoint<TMqOptions, TMessage>(
         this IServiceProvider provider,
         TMqOptions? rabbitMqOptions = null)
         where TMessage : class
@@ -167,7 +167,7 @@ public static class MassTransitConfigurator
     {
         if (provider == null) throw new ArgumentNullException(nameof(provider));
 
-        var endPoint = CreateQueueNameFromType<TMessage, TMqOptions>(provider, rabbitMqOptions);
+        var endPoint = CreateQueueNameFromType<TMqOptions, TMessage>(provider, rabbitMqOptions);
         if (!EndpointConvention.TryGetDestinationAddress<TMessage>(out _))
         {
             EndpointConvention.Map<TMessage>(endPoint.Uri);
@@ -192,7 +192,7 @@ public static class MassTransitConfigurator
         where TMessage : class
         where TSaga : class, SagaStateMachineInstance
     {
-        return provider.RegisterSendEndPoint<TMessage, TSaga, RabbitMqOptions>(rabbitMqOptions);
+        return provider.RegisterSendEndPoint<RabbitMqOptions, TMessage, TSaga>(rabbitMqOptions);
     }
 
     /// <summary>
@@ -205,19 +205,16 @@ public static class MassTransitConfigurator
     /// <typeparam name="TMqOptions">Опции <see cref="RabbitMqOptions"/></typeparam>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static UriBuilder RegisterSendEndPoint<TMessage, TSaga, TMqOptions>(
+    public static UriBuilder RegisterSendEndPoint<TMqOptions, TMessage, TSaga>(
         this IServiceProvider provider,
         TMqOptions? rabbitMqOptions = null)
         where TMessage : class
         where TSaga : class, SagaStateMachineInstance
         where TMqOptions : RabbitMqOptions, new()
     {
-        if (provider == null)
-        {
-            throw new ArgumentNullException(nameof(provider));
-        }
+        if (provider == null) throw new ArgumentNullException(nameof(provider));
 
-        UriBuilder uriBuilder = provider.CreateQueueNameFromType<TSaga, TMqOptions>(rabbitMqOptions);
+        UriBuilder uriBuilder = provider.CreateQueueNameFromType<TMqOptions, TSaga>(rabbitMqOptions);
 
         if (!EndpointConvention.TryGetDestinationAddress<TMessage>(out Uri _))
         {
@@ -230,7 +227,7 @@ public static class MassTransitConfigurator
     /// <summary>
     /// Создание имени очереди для типа <typeparamref name="TMessage"/>
     /// </summary>
-    public static UriBuilder CreateQueueNameFromType<TMessage, TMqOptions>(
+    public static UriBuilder CreateQueueNameFromType<TMqOptions, TMessage>(
         this IServiceProvider provider,
         TMqOptions? rabbitMqOptions)
         where TMessage : class
@@ -241,18 +238,22 @@ public static class MassTransitConfigurator
         return new UriBuilder(mqOptions + "/" + queueName);
     }
 
-    private static void RegisterConsumersEndpoint<TMessage, TMqOptions>(IRegistrationContext busRegistrationContext,
+    private static void RegisterConsumersEndpoint<TMqOptions, TMessage>(
+        IRegistrationContext busRegistrationContext,
         IRabbitMqBusFactoryConfigurator busFactoryConfigurator,
-        Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator, IEnumerable<Type> types,
+        Action<IRabbitMqReceiveEndpointConfigurator>? endpointConsumerConfigurator,
+        IEnumerable<Type> consumerTypes,
         TMqOptions? rabbitMqOptions,
-        bool createSeparateQueue = false, string? serviceName = null)
-        where TMessage : class where TMqOptions : RabbitMqOptions, new()
+        bool createSeparateQueue = false,
+        string? serviceName = null)
+        where TMessage : class
+        where TMqOptions : RabbitMqOptions, new()
     {
         var endPoint = createSeparateQueue
-            ? busRegistrationContext.CreateQueueNameFromType<TMessage, TMqOptions>(rabbitMqOptions)
-            : busRegistrationContext.RegisterSendEndPoint<TMessage, TMqOptions>(rabbitMqOptions);
+            ? busRegistrationContext.CreateQueueNameFromType<TMqOptions, TMessage>(rabbitMqOptions)
+            : busRegistrationContext.RegisterSendEndPoint<TMqOptions, TMessage>(rabbitMqOptions);
 
-        foreach (var consumerType in types)
+        foreach (var consumerType in consumerTypes)
         {
             var queueName = createSeparateQueue
                 ? endPoint.Uri.GetName(consumerType, serviceName)
