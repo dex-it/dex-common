@@ -6,15 +6,14 @@ namespace Dex.MassTransit.Rabbit;
 
 public static class MassTransitConfigurationExtensions
 {
-    private const int DefaultRetryLimit = 20;
+    private const int DefaultRetryLimit = 5;
 
     /// <summary>
-    /// Конфигурация по умолчанию с настроенными Retry и Redelivery
+    /// Конфигурация с настроенными Redelivery и Retry 
     /// </summary>
-    public static void UseDefaultConfiguration<TConsumer>(
+    public static IConsumerConfigurator UseRedeliveryRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
         Func<Exception, bool> checkTransientException,
-        int concurrencyLimit = 2,
         int? retryLimit = null)
         where TConsumer : class
     {
@@ -27,23 +26,21 @@ public static class MassTransitConfigurationExtensions
             redeliveryConfigurator.Handle(checkTransientException);
         });
 
-        configurator.UseRetryConfiguration(checkTransientException, concurrencyLimit, retryLimit);
+        configurator.UseRetryConfiguration(checkTransientException, retryLimit);
+
+        return configurator;
     }
 
     /// <summary>
     /// Конфигурация Retry
     /// </summary>
-    public static void UseRetryConfiguration<TConsumer>(
+    public static IConsumerConfigurator UseRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
         Func<Exception, bool> checkTransientException,
-        int concurrencyLimit = 2,
         int? retryLimit = null)
         where TConsumer : class
     {
         if (configurator == null) throw new ArgumentNullException(nameof(configurator));
-        if (concurrencyLimit >= 100) throw new ArgumentOutOfRangeException(nameof(concurrencyLimit));
-
-        configurator.UseConcurrentMessageLimit(concurrencyLimit);
 
         configurator.UseMessageRetry(retryConfigurator =>
         {
@@ -52,13 +49,15 @@ public static class MassTransitConfigurationExtensions
             retryConfigurator.Incremental(retryLimit.Value, 1.Seconds(), 1.Seconds());
             retryConfigurator.Handle(checkTransientException);
         });
+
+        return configurator;
     }
 
     /// <summary>
     /// Не использовать дефолтную настройку эндпоинта (concurrencyLimit = 1 и prefetchCount = 1) совместно с настройкой консьюмера с Redelivery,
     /// так как не будет гарантирована последовательная обработка сообщений (сообщение удалится из очереди и консьюмер получит следующее)
     /// </summary>
-    public static void UseLimitPrefetchConfiguration(
+    public static IEndpointConfigurator UseLimitPrefetchConfiguration(
         this IEndpointConfigurator configurator,
         int concurrencyLimit = 1,
         int prefetchCount = 1)
@@ -68,5 +67,7 @@ public static class MassTransitConfigurationExtensions
 
         configurator.UseConcurrencyLimit(concurrencyLimit);
         configurator.ConfigureTransport(transportConfigurator => transportConfigurator.PrefetchCount = prefetchCount);
+
+        return configurator;
     }
 }
