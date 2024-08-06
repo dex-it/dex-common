@@ -5,7 +5,7 @@ using Dex.Audit.MediatR.Responses;
 using Dex.Audit.Sample.Shared.Enums;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Application.Commands.Logging;
+namespace Dex.Audit.ClientSample.Application.Commands.Logs;
 
 public class AddAuditableLogHandler(ILogger<AddAuditableLogHandler> logger) : IRequestHandler<AddAuditableLogCommand, AddAuditableLogResponse>
 {

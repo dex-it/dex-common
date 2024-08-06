@@ -2,10 +2,8 @@
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Services;
-using Dex.Audit.ClientSample.Application.Commands.Logging;
-using Dex.Audit.ClientSample.Application.Commands.Users.AddUser;
-using Dex.Audit.ClientSample.Application.Commands.Users.DeleteUser;
-using Dex.Audit.ClientSample.Application.Commands.Users.UpdateUser;
+using Dex.Audit.ClientSample.Application.Commands.Logs;
+using Dex.Audit.ClientSample.Application.Commands.Users;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
 using Dex.Audit.ClientSample.Workers;
@@ -102,42 +100,6 @@ public static class HostingExtensions
     {
         app.UseSwagger().UseSwaggerUI();
         app.MapControllers();
-        app.MapPost(
-            "/Logger", 
-            async (
-                [FromServices] IMediator mediator,
-                [FromBody] AddAuditableLogCommand request
-            ) =>
-            {
-                await mediator.Send(request);
-            });
-        app.MapPost(
-            "/Users", 
-            async (
-                [FromServices] IMediator mediator,
-                [FromBody] AddUserCommand request
-            ) =>
-            {
-                await mediator.Send(request);
-            });
-        app.MapPut(
-            "/Users", 
-            async (
-                [FromServices] IMediator mediator,
-                [FromBody] UpdateUserCommand request
-            ) =>
-            {
-                await mediator.Send(request);
-            });
-        app.MapDelete(
-            "/Users", 
-            async (
-                [FromServices] IMediator mediator,
-                [FromBody] DeleteUserCommand request
-            ) =>
-            {
-                await mediator.Send(request);
-            });
 
         return app;
     }
