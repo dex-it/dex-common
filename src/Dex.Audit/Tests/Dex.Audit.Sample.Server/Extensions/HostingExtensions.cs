@@ -2,8 +2,8 @@
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
-using Dex.Audit.Sample.Domain.Enums;
-using Dex.Audit.Sample.Domain.Repositories;
+using Dex.Audit.Sample.Shared.Enums;
+using Dex.Audit.Sample.Shared.Repositories;
 using Dex.Audit.Server.Consumers;
 using Dex.Audit.Server.Extensions;
 using Dex.Audit.Server.Workers;

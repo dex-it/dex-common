@@ -1,7 +1,7 @@
 using System.Reflection;
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Client.Abstractions.Messages;
-using Dex.Audit.Sample.Domain.Enums;
+using Dex.Audit.Sample.Shared.Enums;
 
 namespace Dex.Audit.ClientSample.Workers;
 
