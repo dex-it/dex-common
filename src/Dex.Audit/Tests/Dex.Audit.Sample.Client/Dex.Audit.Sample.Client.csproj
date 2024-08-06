@@ -27,11 +27,4 @@
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Application\" />
-      <Folder Include="Application\Queries\Users\" />
-      <Folder Include="Domain\" />
-      <Folder Include="Infrastructure\" />
-    </ItemGroup>
-
 </Project>

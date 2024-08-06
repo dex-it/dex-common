@@ -1,9 +1,9 @@
 ﻿using Dex.Audit.Domain.Entities;
 using Dex.Audit.Server.Abstractions.Interfaces;
-using Dex.Audit.ServerSample.Context;
+using Dex.Audit.ServerSample.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ServerSample.Repositories;
+namespace Dex.Audit.ServerSample.Infrastructure.Repositories;
 
 public class AuditPersistentRepository(AuditServerDbContext serverDbContext) : IAuditPersistentRepository
 {

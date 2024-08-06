@@ -5,7 +5,7 @@ using Dex.Audit.MediatR.Responses;
 using Dex.Audit.Sample.Shared.Enums;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Application.Commands.Users.AddUser;
+namespace Dex.Audit.ClientSample.Application.Commands.Users;
 
 public class AddUserHandler(ClientSampleContext context) : IRequestHandler<AddUserCommand, AddUserResponse>
 {
