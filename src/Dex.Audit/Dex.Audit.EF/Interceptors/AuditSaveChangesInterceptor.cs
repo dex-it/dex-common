@@ -35,7 +35,7 @@ internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService
             await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken).ConfigureAwait(false);
         }
 
-        return await base.SavedChangesAsync(eventData, result, cancellationToken);
+        return await base.SavedChangesAsync(eventData, result, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

@@ -1,11 +1,9 @@
-using Dex.Audit.Domain.Core;
-
 namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
 /// Информация об адресе участника системы аудита.
 /// </summary>
-public class AddressInfo : BaseValueObject
+public class AddressInfo
 {
     /// <summary>
     /// IP адрес.
@@ -26,4 +24,13 @@ public class AddressInfo : BaseValueObject
     /// Netbios имя или hostname.
     /// </summary>
     public string? Host { get; init; }
+
+    /// <summary>
+    /// Получить хэш кода объекта
+    /// </summary>
+    /// <returns>Хэш сумма</returns>
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(IpAddress, MacAddress, DnsName, Host);
+    }
 }

@@ -10,7 +10,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Dex.Audit.EF\Dex.Audit.EF.csproj" />
         <ProjectReference Include="..\..\Dex.Audit.Server\Dex.Audit.Server.csproj"/>
-        <ProjectReference Include="..\Dex.Audit.Sample.Domain\Dex.Audit.Sample.Domain.csproj" />
+        <ProjectReference Include="..\Dex.Audit.Sample.Shared\Dex.Audit.Sample.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
