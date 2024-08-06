@@ -1,11 +1,9 @@
-using Dex.Audit.Domain.Core;
-
 namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
 /// Информация о получателе объекта события аудита.
 /// </summary>
-public class Destination : BaseValueObject
+public class Destination
 {
     /// <summary>
     /// Информация о пользователе-получателе.
@@ -31,4 +29,13 @@ public class Destination : BaseValueObject
     /// Время GMT получателя.
     /// </summary>
     public DateTime GmtDate { get; set; }
+
+    /// <summary>
+    /// Получить хэш кода объекта
+    /// </summary>
+    /// <returns>Хэш сумма</returns>
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(UserDetails, AddressInfo, Port);
+    }
 }

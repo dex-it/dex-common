@@ -22,7 +22,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Sample.Client", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Sample.Server", "Tests\Dex.Audit.Sample.Server\Dex.Audit.Sample.Server.csproj", "{3255EB03-C654-46B1-9567-4C5EFEB217CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Sample.Domain", "Tests\Dex.Audit.Sample.Domain\Dex.Audit.Sample.Domain.csproj", "{811FC965-386D-48A7-99CD-F0F5F7FBB873}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Sample.Shared", "Tests\Dex.Audit.Sample.Shared\Dex.Audit.Sample.Shared.csproj", "{811FC965-386D-48A7-99CD-F0F5F7FBB873}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
