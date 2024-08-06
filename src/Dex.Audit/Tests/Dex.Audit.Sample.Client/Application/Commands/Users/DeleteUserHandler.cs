@@ -4,7 +4,7 @@ using Dex.Audit.MediatR.Responses;
 using Dex.Audit.Sample.Shared.Enums;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Application.Commands.Users.DeleteUser;
+namespace Dex.Audit.ClientSample.Application.Commands.Users;
 
 public class DeleteUserHandler(ClientSampleContext context) : IRequestHandler<DeleteUserCommand, DeleteUserResponse>
 {

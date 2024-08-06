@@ -2,7 +2,7 @@
 using Dex.Audit.EF.EntityConfiguration;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ServerSample.Context;
+namespace Dex.Audit.ServerSample.Infrastructure.Context;
 
 public class AuditServerDbContext : DbContext
 {

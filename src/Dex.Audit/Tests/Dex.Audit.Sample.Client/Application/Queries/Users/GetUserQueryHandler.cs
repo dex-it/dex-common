@@ -4,7 +4,7 @@ using Dex.Audit.Sample.Shared.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ClientSample.Application.Queries.Users.GetUserQuery;
+namespace Dex.Audit.ClientSample.Application.Queries.Users;
 
 public class GetUserQueryHandler(ClientSampleContext clientSampleContext) : IRequestHandler<GetUserQuery, GetUserQueryResponse>
 {

@@ -4,7 +4,7 @@ using Dex.Audit.MediatR.Responses;
 using Dex.Audit.Sample.Shared.Enums;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Application.Commands.Users.UpdateUser;
+namespace Dex.Audit.ClientSample.Application.Commands.Users;
 
 public class UpdateUserHandler(ClientSampleContext context) : IRequestHandler<UpdateUserCommand, UpdateUserResponse>
 {
