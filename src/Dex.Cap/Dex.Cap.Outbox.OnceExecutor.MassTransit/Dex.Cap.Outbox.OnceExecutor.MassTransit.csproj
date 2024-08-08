@@ -1,17 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>10</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.1</PackageVersion>
+        <PackageVersion>6.0.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -30,20 +32,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dex.Extensions"/>
-        <PackageReference Include="MassTransit"/>
-        <PackageReference Include="MassTransit.RabbitMQ"/>
+        <ProjectReference Include="..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj"/>
+        <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj"/>
+        <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
+        <ProjectReference Include="..\..\Dex.MassTransit\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Dex.MassTransit.Rabbit.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj"/>
-        <ProjectReference Include="..\Dex.MassTransit\Dex.MassTransit.csproj"/>
+        <PackageReference Include="MassTransit.Abstractions"/>
     </ItemGroup>
 
 </Project>

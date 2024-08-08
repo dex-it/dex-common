@@ -68,7 +68,7 @@ namespace Dex.MassTransit.Sample.Publisher
                     {
                         configurator.RegisterBus<OtherRabbitMqOptions>((context, _) =>
                         {
-                            context.RegisterSendEndPoint<OtherMessageDto, OtherRabbitMqOptions>();
+                            context.RegisterSendEndPoint<OtherRabbitMqOptions, OtherMessageDto>();
                         });
                     });
 
