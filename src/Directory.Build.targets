@@ -28,13 +28,12 @@
     <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.4" />
-
     
     <!--misc -->
     <PackageReference Update="Npgsql" Version="8.0.3" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     <PackageReference Update="Neo4jClient" Version="5.1.15" />
-    <PackageReference Update="MassTransit*" Version="8.2.2" />
+    <PackageReference Update="MassTransit*" Version="8.2.3" />
     <PackageReference Update="MassTransit.TestFramework" Version="8.0.12" />
     
     <!--microsoft asp.net core -->
@@ -52,7 +51,6 @@
 	<PackageReference Update="Dex.Types" Version="1.0.26" />
 	<PackageReference Update="Dex.Extensions" Version="1.0.30" />
 	<PackageReference Update="Dex.Neo4J" Version="1.1.31" />
-
 
   </ItemGroup>
 </Project>

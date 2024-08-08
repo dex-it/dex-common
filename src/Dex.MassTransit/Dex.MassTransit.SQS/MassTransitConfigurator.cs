@@ -42,9 +42,6 @@ namespace Dex.MassTransit.SQS
                     configurator.SecretKey(amazonMqOptions.SecretKey);
                 });
 
-                mqBusFactoryConfigurator.AutoDelete = false;
-                mqBusFactoryConfigurator.Durable = true;
-
                 // enable activity tracer for all consumers
                 if (EnableConsumerTracer)
                     mqBusFactoryConfigurator.LinkActivityTracingContext();
