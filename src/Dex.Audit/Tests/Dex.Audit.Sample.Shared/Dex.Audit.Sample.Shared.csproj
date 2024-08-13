@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
       <ProjectReference Include="..\..\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
     </ItemGroup>
 
