@@ -49,7 +49,7 @@ public class AuditEventConsumer(IAuditPersistentRepository auditPersistentReposi
             var eventType = message.EventType;
             var sourceIp = message.SourceIpAddress;
 
-            var auditSettings = await auditCacheRepository.GetAsync(eventType).ConfigureAwait(false);
+            var auditSettings = await auditCacheRepository.GetAsync(eventType, context.CancellationToken).ConfigureAwait(false);
 
             if (auditSettings is null)
             {
