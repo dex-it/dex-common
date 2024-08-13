@@ -8,21 +8,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.EF\Dex.Audit.EF.csproj" />
+        <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.Logger\Dex.Audit.Logger.csproj" />
+        <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.MediatR\Dex.Audit.MediatR.csproj" />
         <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
         <ProjectReference Include="..\..\Client\Dex.Audit.Client.Grpc\Dex.Audit.Client.Grpc.csproj" />
         <ProjectReference Include="..\..\Client\Dex.Audit.Client\Dex.Audit.Client.csproj" />
-        <ProjectReference Include="..\..\Dex.Audit.EF\Dex.Audit.EF.csproj" />
-        <ProjectReference Include="..\..\Dex.Audit.Logger\Dex.Audit.Logger.csproj"/>
-        <ProjectReference Include="..\..\Dex.Audit.MediatR\Dex.Audit.MediatR.csproj" />
         <ProjectReference Include="..\Dex.Audit.Sample.Shared\Dex.Audit.Sample.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6"/>
-        <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0"/>
         <PackageReference Include="StackExchange.Redis" Version="2.8.0" />
         <PackageReference Include="StackExchange.Redis.Extensions.AspNetCore" Version="10.2.0" />
-        <PackageReference Include="StackExchange.Redis.Extensions.Core" Version="10.2.0" />
         <PackageReference Include="StackExchange.Redis.Extensions.System.Text.Json" Version="10.2.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2"/>
