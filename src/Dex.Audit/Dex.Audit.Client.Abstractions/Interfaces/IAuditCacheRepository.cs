@@ -22,5 +22,5 @@ public interface IAuditCacheRepository
     /// <param name="expiresIn">Время истечения.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
-    Task AddAsync(AuditSettings settings, TimeSpan expiresIn, CancellationToken cancellationToken = default);
+    Task AddRangeAsync(IEnumerable<AuditSettings> settings, TimeSpan expiresIn, CancellationToken cancellationToken = default);
 }

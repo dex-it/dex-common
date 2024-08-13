@@ -2,8 +2,6 @@
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Services;
-using Dex.Audit.ClientSample.Application.Commands.Logs;
-using Dex.Audit.ClientSample.Application.Commands.Users;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
 using Dex.Audit.ClientSample.Workers;
@@ -15,7 +13,6 @@ using Dex.Audit.Sample.Shared.Repositories;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.System.Text.Json;
 
