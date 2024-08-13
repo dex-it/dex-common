@@ -11,11 +11,11 @@ public class AuditCacheRepository(IRedisDatabase redisDatabase) : IAuditCacheRep
         return await redisDatabase.GetAsync<AuditSettings>(eventType);
     }
 
-    public async Task AddRangeAsync(IEnumerable<AuditSettings> settings, TimeSpan expiresIn, CancellationToken cancellationToken = default)
+    public async Task AddRangeAsync(IEnumerable<AuditSettings> settings, CancellationToken cancellationToken = default)
     {
         foreach (var setting in settings)
         {
-            await redisDatabase.AddAsync(setting.EventType, setting, expiresIn);
+            await redisDatabase.AddAsync(setting.EventType, setting);
         }
     }
 }

@@ -1,9 +1,12 @@
 ﻿using System.Text.Json.Serialization;
+using AuditClient;
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Client.Extensions;
+using Dex.Audit.Client.Grpc.Extensions;
 using Dex.Audit.Client.Services;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
+using Dex.Audit.ClientSample.Services;
 using Dex.Audit.ClientSample.Workers;
 using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
@@ -51,7 +54,8 @@ public static class HostingExtensions
         AddStackExchangeRedis(services, builder.Configuration);
 
         // Client
-        services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(builder.Configuration);
+        services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>();
+        //services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>();
         services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
         services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
         {
