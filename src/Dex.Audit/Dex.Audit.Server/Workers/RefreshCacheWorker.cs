@@ -1,6 +1,6 @@
 using Dex.Audit.Client.Abstractions.Interfaces;
+using Dex.Audit.Client.Abstractions.Options;
 using Dex.Audit.Server.Abstractions.Interfaces;
-using Dex.Audit.Server.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -57,10 +57,7 @@ public sealed class RefreshCacheWorker(
 
         var auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken).ConfigureAwait(false);
 
-        foreach (var setting in auditSettings)
-        {
-            await auditSettingsRepository.AddAsync(setting, refreshInterval, cancellationToken).ConfigureAwait(false);
-        }
+        await auditSettingsRepository.AddRangeAsync(auditSettings, refreshInterval, cancellationToken).ConfigureAwait(false);
 
         logger.LogInformation("Кэш успешно обновлен");
     }
