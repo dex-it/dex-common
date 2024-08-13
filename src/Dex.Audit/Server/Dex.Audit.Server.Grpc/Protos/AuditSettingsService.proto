@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "AuditServer";
+
+package audit;
+
+message AuditSettingsMessage {
+  string Id = 1;
+  string EventType = 2;
+  string SeverityLevel = 3;
+}
+
+message AuditSettingsMessages{
+  repeated AuditSettingsMessage Messages = 1;
+}
+
+message Empty {}
+
+service AuditSettingsService {
+  rpc GetSettingsStream(Empty) returns (stream AuditSettingsMessages);
+  rpc GetSettings(Empty) returns (AuditSettingsMessages);
+}

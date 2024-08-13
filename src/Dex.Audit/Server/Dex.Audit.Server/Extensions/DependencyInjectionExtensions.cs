@@ -1,7 +1,6 @@
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Options;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dex.Audit.Server.Extensions;
@@ -15,15 +14,14 @@ public static class DependencyInjectionExtensions
     /// Добавляет необходимые для работы аудита зависимости.
     /// </summary>
     public static IServiceCollection AddAuditServer<TAuditRepository, TAuditSettingsRepository>(
-        this IServiceCollection services,
-        IConfiguration configuration)
+        this IServiceCollection services)
         where TAuditRepository : class, IAuditPersistentRepository
         where TAuditSettingsRepository : class, IAuditCacheRepository
     {
         services
             .AddScoped(typeof(IAuditPersistentRepository), typeof(TAuditRepository))
             .AddScoped(typeof(IAuditCacheRepository), typeof(TAuditSettingsRepository))
-            .Configure<AuditCacheOptions>(opts => configuration.GetSection(nameof(AuditCacheOptions)).Bind(opts));
+            .AddOptions<AuditCacheOptions>(nameof(AuditCacheOptions));
 
         return services;
     }
