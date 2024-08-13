@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Dex.Audit.Client\Dex.Audit.Client.csproj" />
+      <ProjectReference Include="..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
     </ItemGroup>
 
     <ItemGroup>
