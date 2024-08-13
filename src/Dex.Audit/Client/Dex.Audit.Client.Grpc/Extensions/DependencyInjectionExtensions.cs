@@ -10,19 +10,18 @@ using Microsoft.Extensions.Options;
 namespace Dex.Audit.Client.Grpc.Extensions;
 
 /// <summary>
-/// Статический класс, который содержит методы расширения для конфигурации зависимостей
+/// Статический класс, который содержит методы расширения для конфигурации зависимостей с добавленным Grpc.
 /// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавляет необходимые для работы аудита зависимости
+    /// Добавляет необходимые для работы аудита зависимости с добавленным Grpc.
     /// </summary>
     public static IServiceCollection AddGrpcAuditClient<TAuditEventConfigurator, TAuditCacheRepository>(
         this IServiceCollection services)
         where TAuditEventConfigurator : class, IAuditEventConfigurator
         where TAuditCacheRepository : class, IAuditCacheRepository
     {
-        services.AddGrpc();
         services.AddOptions<AuditGrpcOptions>(nameof(AuditGrpcOptions));
         services.AddGrpcClient<AuditSettingsService.AuditSettingsServiceClient>((provider, factoryOptions) =>
         {

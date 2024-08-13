@@ -52,7 +52,7 @@ public static class HostingExtensions
 
         // Server
         services.AddDbContext<AuditServerDbContext>();
-        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
+        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>();
         services.AddMassTransit(busRegistrationConfigurator =>
         {
             busRegistrationConfigurator.AddConsumer<AuditEventConsumer>();

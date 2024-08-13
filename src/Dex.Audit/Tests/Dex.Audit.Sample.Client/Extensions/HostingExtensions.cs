@@ -1,8 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using AuditClient;
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Client.Extensions;
-using Dex.Audit.Client.Grpc.Extensions;
 using Dex.Audit.Client.Services;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
@@ -63,7 +61,7 @@ public static class HostingExtensions
                 serviceProvider.GetRequiredService<IAuditSaveChangesInterceptor>(),
                 serviceProvider.GetRequiredService<IAuditDbTransactionInterceptor>());
         });
-        services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger(builder.Configuration));
+        services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger());
         services.AddMassTransit(x =>
         {
             x.RegisterBus((context, configurator) =>
