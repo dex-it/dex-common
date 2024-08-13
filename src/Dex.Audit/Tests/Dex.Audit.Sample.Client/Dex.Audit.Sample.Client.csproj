@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
+        <ProjectReference Include="..\..\Client\Dex.Audit.Client.Grpc\Dex.Audit.Client.Grpc.csproj" />
         <ProjectReference Include="..\..\Client\Dex.Audit.Client\Dex.Audit.Client.csproj" />
         <ProjectReference Include="..\..\Dex.Audit.EF\Dex.Audit.EF.csproj" />
         <ProjectReference Include="..\..\Dex.Audit.Logger\Dex.Audit.Logger.csproj"/>

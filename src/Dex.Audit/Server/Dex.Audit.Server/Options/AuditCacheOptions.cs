@@ -1,4 +1,4 @@
-namespace Dex.Audit.Client.Abstractions.Options;
+namespace Dex.Audit.Server.Options;
 
 /// <summary>
 /// Класс конфигураций используемых хостов сервиса Client API.

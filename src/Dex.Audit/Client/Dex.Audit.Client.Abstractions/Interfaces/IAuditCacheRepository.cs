@@ -19,8 +19,7 @@ public interface IAuditCacheRepository
     /// Добавить в кэш настройки.
     /// </summary>
     /// <param name="settings">Дто настройки события.</param>
-    /// <param name="expiresIn">Время истечения.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
-    Task AddRangeAsync(IEnumerable<AuditSettings> settings, TimeSpan expiresIn, CancellationToken cancellationToken = default);
+    Task AddRangeAsync(IEnumerable<AuditSettings> settings, CancellationToken cancellationToken = default);
 }
