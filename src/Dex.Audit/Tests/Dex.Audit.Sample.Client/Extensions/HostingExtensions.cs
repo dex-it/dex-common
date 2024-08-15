@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 using Dex.Audit.Client.Abstractions.Messages;
-using Dex.Audit.Client.Extensions;
+using Dex.Audit.Client.Grpc.Extensions;
 using Dex.Audit.Client.Services;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
-using Dex.Audit.ClientSample.Services;
 using Dex.Audit.ClientSample.Workers;
 using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
@@ -31,6 +30,14 @@ public static class HostingExtensions
     /// <returns>Web application</returns>
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenLocalhost(7211, listenOptions =>
+            {
+                listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+                listenOptions.UseHttps();
+            });
+        });
         // Base
         var environmentName = builder.Environment.EnvironmentName;
         builder.Configuration
@@ -52,8 +59,8 @@ public static class HostingExtensions
         AddStackExchangeRedis(services, builder.Configuration);
 
         // Client
-        services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>();
-        //services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>();
+        //services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>();
+        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(builder.Configuration);
         services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
         services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
         {

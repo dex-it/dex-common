@@ -13,9 +13,17 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
+        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.65.0" />
     </ItemGroup>
 
     <ItemGroup>
         <Protobuf Include="Protos/AuditSettingsService.proto" GrpcServices="AuditClient" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
+      <ProjectReference Include="..\Dex.Audit.Server.Abstractions\Dex.Audit.Server.Abstractions.csproj" />
+      <ProjectReference Include="..\Dex.Audit.Server\Dex.Audit.Server.csproj" />
     </ItemGroup>
 </Project>

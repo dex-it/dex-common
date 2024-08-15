@@ -1,4 +1,5 @@
 ﻿using Dex.Audit.Domain.Entities;
+using Dex.Audit.Domain.Enums;
 
 namespace Dex.Audit.Server.Abstractions.Interfaces;
 
@@ -14,6 +15,10 @@ public interface IAuditPersistentRepository
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default);
+
+    Task AddOrUpdateSettings(string eventType, AuditEventSeverityLevel severityLevel, CancellationToken cancellationToken = default);
+
+    Task DeleteSettings(string eventType, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Получить все настройки.
