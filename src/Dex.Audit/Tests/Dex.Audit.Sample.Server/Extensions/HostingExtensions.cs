@@ -4,8 +4,11 @@ using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
 using Dex.Audit.Sample.Shared.Enums;
 using Dex.Audit.Sample.Shared.Repositories;
+using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Consumers;
 using Dex.Audit.Server.Extensions;
+using Dex.Audit.Server.Grpc.Extensions;
+using Dex.Audit.Server.Grpc.Services;
 using Dex.Audit.Server.Workers;
 using Dex.Audit.ServerSample.Infrastructure.Context;
 using Dex.Audit.ServerSample.Infrastructure.Repositories;
@@ -30,6 +33,14 @@ public static class HostingExtensions
     /// <returns>Web application</returns>
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenLocalhost(7240, listenOptions =>
+            {
+                listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+                listenOptions.UseHttps();
+            });
+        });
         // Base
         var environmentName = builder.Environment.EnvironmentName;
         builder.Configuration
@@ -52,7 +63,8 @@ public static class HostingExtensions
 
         // Server
         services.AddDbContext<AuditServerDbContext>();
-        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>();
+        //services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
+        services.AddGrpcAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
         services.AddMassTransit(busRegistrationConfigurator =>
         {
             busRegistrationConfigurator.AddConsumer<AuditEventConsumer>();
@@ -85,6 +97,8 @@ public static class HostingExtensions
         // Additional
         services.AddHostedService<RefreshCacheWorker>();
 
+        services.AddGrpc();
+
         return builder.Build();
     }
 
@@ -105,6 +119,7 @@ public static class HostingExtensions
         FillAuditSettings(app);
 
         app.UseSwagger().UseSwaggerUI();
+        app.MapGrpcService<GrpcAuditServerSettingsService>();
         app.MapControllers();
         app.MapGet(
             "/Settings", 
@@ -114,6 +129,17 @@ public static class HostingExtensions
             "/Events", 
             async (AuditServerDbContext context
             ) => await context.AuditEvents.ToListAsync());
+        
+        app.MapPut("/Settings",
+            async (IAuditServerSettingsService settingsServer, string eventType, AuditEventSeverityLevel severityLevel) =>
+            {
+                await settingsServer.AddOrUpdateSettings(eventType, severityLevel);
+            });
+        app.MapDelete("/Settings",
+            async (IAuditServerSettingsService settingsServer, string eventType) =>
+            {
+                await settingsServer.DeleteSettings(eventType);
+            });
 
         return app;
     }

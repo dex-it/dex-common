@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option csharp_namespace = "AuditServer";
+option csharp_namespace = "AuditGrpcServer";
 
 package audit;
 

@@ -1,4 +1,4 @@
-﻿using AuditClient;
+﻿using AuditGrpcServer;
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
@@ -17,7 +17,7 @@ public class GrpcAuditBackgroundWorker(ILogger<GrpcAuditBackgroundWorker> logger
         var client = scope.ServiceProvider.GetRequiredService<AuditSettingsService.AuditSettingsServiceClient>();
         var cacheRepository = scope.ServiceProvider.GetRequiredService<IAuditCacheRepository>();
 
-        while (stoppingToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
