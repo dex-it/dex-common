@@ -1,7 +1,6 @@
 ﻿using AuditGrpcServer;
 using Dex.Audit.Client.Abstractions.Interfaces;
-using Dex.Audit.Domain.Entities;
-using Dex.Audit.Domain.Enums;
+using Dex.Audit.Client.Grpc.Extensions;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,19 +20,15 @@ internal class GrpcAuditBackgroundWorker(ILogger<GrpcAuditBackgroundWorker> logg
         {
             try
             {
-                using var call = client.GetSettingsStream(new Empty(), cancellationToken: stoppingToken);
+                using var call = client
+                    .GetSettingsStream(new Empty(), cancellationToken: stoppingToken);
 
                 await foreach (var cat in call.ResponseStream
                                    .ReadAllAsync(cancellationToken: stoppingToken)
                                    .ConfigureAwait(false))
                 {
-                    await cacheRepository.AddRangeAsync(cat.Messages.Select(message => new AuditSettings
-                            {
-                            Id = new Guid(message.Id),
-                            EventType = message.EventType,
-                            SeverityLevel = Enum.Parse<AuditEventSeverityLevel>(message.SeverityLevel)
-                        }),
-                        stoppingToken)
+                    await cacheRepository
+                        .AddRangeAsync(cat.Messages.Select(message => message.MapToAuditSettings()), stoppingToken)
                         .ConfigureAwait(false);
                 }
             }

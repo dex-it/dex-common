@@ -6,11 +6,13 @@ using Dex.Audit.Sample.Shared.Enums;
 using Dex.Audit.Sample.Shared.Repositories;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Consumers;
+using Dex.Audit.Server.Extensions;
 using Dex.Audit.Server.Grpc.Extensions;
 using Dex.Audit.Server.Grpc.Services;
 using Dex.Audit.Server.Workers;
 using Dex.Audit.ServerSample.Infrastructure.Context;
 using Dex.Audit.ServerSample.Infrastructure.Repositories;
+using Dex.Audit.ServerSample.Servers;
 using Dex.Extensions;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
@@ -62,33 +64,18 @@ public static class HostingExtensions
 
         // Server
         services.AddDbContext<AuditServerDbContext>();
-        //services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
-        services.AddGrpcAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
+        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository, AuditServerSettingsService>(builder.Configuration);
+
+        // Grpc Server
+        //services.AddGrpcAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
+
         services.AddMassTransit(busRegistrationConfigurator =>
         {
-            busRegistrationConfigurator.AddConsumer<AuditEventConsumer>();
+            busRegistrationConfigurator.AddAuditServerConsumer();
 
             busRegistrationConfigurator.RegisterBus((context, configurator) =>
             {
-                configurator.ReceiveEndpoint(nameof(AuditEventMessage), endpointConfigurator =>
-                {
-                    // the transport must be configured to deliver at least the batch message limit
-                    endpointConfigurator.PrefetchCount = 600;
-
-                    endpointConfigurator.Batch<AuditEventMessage>(b =>
-                    {
-                        b.MessageLimit = 500;
-                        b.TimeLimit = TimeSpan.FromSeconds(1);
-
-                        b.Consumer<AuditEventConsumer, AuditEventMessage>(context);
-
-                        b.ConcurrencyLimit = 1;
-                    });
-
-                    // retry
-                    endpointConfigurator.UseMessageRetry(retryConfigurator =>
-                        retryConfigurator.SetRetryPolicy(filter => filter.Interval(2, 1.Seconds())));
-                });
+                configurator.AddAuditServerReceiveEndpoint(context, true);
                 configurator.ConfigureEndpoints(context);
             });
         });

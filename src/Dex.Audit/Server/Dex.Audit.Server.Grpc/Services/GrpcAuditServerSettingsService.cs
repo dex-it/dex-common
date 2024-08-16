@@ -1,5 +1,6 @@
 ﻿using AuditGrpcServer;
 using Dex.Audit.Server.Abstractions.Interfaces;
+using Dex.Audit.Server.Grpc.Extensions;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,37 +10,22 @@ public class GrpcAuditServerSettingsService(IServiceProvider serviceProvider) : 
 {
     private readonly List<IServerStreamWriter<AuditSettingsMessages>> _clients = new();
     
-    internal async void NotifyClients()
+    internal void NotifyClients()
     {
-        using var scope = serviceProvider.CreateScope();
-        var settings = await scope.ServiceProvider.GetRequiredService<IAuditPersistentRepository>().GetAllSettingsAsync();
-        var messages = new AuditSettingsMessages();
-        messages.Messages
-            .AddRange(settings.Select(auditSettings => new AuditSettingsMessage
-            {
-                Id = auditSettings.Id.ToString(),
-                SeverityLevel = auditSettings.SeverityLevel.ToString(),
-                EventType = auditSettings.EventType
-            }));
-        foreach (var client in _clients)
+        _ = Task.Run(async () =>
         {
-            await client.WriteAsync(messages);
-        }
+            var messages = await GetMessagesAsync().ConfigureAwait(false);
+
+            foreach (var client in _clients)
+            {
+                await client.WriteAsync(messages).ConfigureAwait(false);
+            }
+        });
     }
 
     public override async Task<AuditSettingsMessages> GetSettings(Empty request, ServerCallContext context)
     {
-        using var scope = serviceProvider.CreateScope();
-        var settings = await scope.ServiceProvider.GetRequiredService<IAuditPersistentRepository>().GetAllSettingsAsync();
-        var messages = new AuditSettingsMessages();
-        messages.Messages
-            .AddRange(settings.Select(auditSettings => new AuditSettingsMessage
-            {
-                Id = auditSettings.Id.ToString(),
-                SeverityLevel = auditSettings.SeverityLevel.ToString(),
-                EventType = auditSettings.EventType
-            }));
-        return messages;
+        return await GetMessagesAsync(context.CancellationToken).ConfigureAwait(false);
     }
 
     public override async Task GetSettingsStream(Empty request, IServerStreamWriter<AuditSettingsMessages> responseStream, ServerCallContext context)
@@ -48,9 +34,26 @@ public class GrpcAuditServerSettingsService(IServiceProvider serviceProvider) : 
 
         while (!context.CancellationToken.IsCancellationRequested)
         {
-            await Task.Delay(1000);
+            await Task.Delay(1000).ConfigureAwait(false);
         }
 
         _clients.Remove(responseStream);
+    }
+
+    private async Task<AuditSettingsMessages> GetMessagesAsync(CancellationToken cancellationToken = default)
+    {
+        using var scope = serviceProvider.CreateScope();
+
+        var settings = await scope.ServiceProvider
+            .GetRequiredService<IAuditPersistentRepository>()
+            .GetAllSettingsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var messages = new AuditSettingsMessages();
+
+        messages.Messages
+            .AddRange(settings.Select(auditSettings => auditSettings.MapToAuditSettings()));
+
+        return messages;
     }
 }
