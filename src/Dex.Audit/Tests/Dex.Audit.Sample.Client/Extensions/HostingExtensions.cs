@@ -9,12 +9,11 @@ using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.PipelineBehaviours;
-using Dex.Audit.Sample.Shared.Repositories;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using MediatR;
-using StackExchange.Redis.Extensions.Core.Configuration;
-using StackExchange.Redis.Extensions.System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
+using AuditCacheRepository = Dex.Audit.ClientSample.Repositories.AuditCacheRepository;
 
 namespace Dex.Audit.ClientSample.Extensions;
 
@@ -30,14 +29,6 @@ public static class HostingExtensions
     /// <returns>Web application</returns>
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.ListenLocalhost(7211, listenOptions =>
-            {
-                listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
-                listenOptions.UseHttps();
-            });
-        });
         // Base
         var environmentName = builder.Environment.EnvironmentName;
         builder.Configuration
@@ -56,11 +47,19 @@ public static class HostingExtensions
                 opts.JsonSerializerOptions.Converters.Add(enumConverter);
             });
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
-        AddStackExchangeRedis(services, builder.Configuration);
+        services.AddScoped<IDistributedCache, MemoryDistributedCache>();
 
         // Client
         //services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>();
-        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(builder.Configuration);
+        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
+            builder.Configuration, 
+            () =>
+            {
+                var handler = new HttpClientHandler();
+                handler.ServerCertificateCustomValidationCallback = 
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                return handler;
+            });
         services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
         services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
         {
@@ -88,13 +87,6 @@ public static class HostingExtensions
         services.AddHostedService<SubsystemAuditWorker>();
 
         return builder.Build();
-    }
-
-    private static void AddStackExchangeRedis(IServiceCollection services, ConfigurationManager builderConfiguration)
-    {
-        var redisConfiguration = new RedisConfiguration();
-        builderConfiguration.GetSection(nameof(RedisConfiguration)).Bind(redisConfiguration);
-        services.AddStackExchangeRedisExtensions<SystemTextJsonSerializer>(redisConfiguration);
     }
 
     /// <summary>

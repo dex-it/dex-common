@@ -1,6 +1,5 @@
 ﻿using AuditGrpcServer;
 using Dex.Audit.Server.Abstractions.Interfaces;
-using Google.Protobuf.Collections;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 

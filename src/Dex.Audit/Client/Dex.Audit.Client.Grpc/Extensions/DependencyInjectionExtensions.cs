@@ -18,26 +18,31 @@ public static class DependencyInjectionExtensions
     /// <summary>
     /// Добавляет необходимые для работы аудита зависимости с добавленным Grpc.
     /// </summary>
+    /// <param name="services"><see cref="IServiceCollection"/></param>
+    /// <param name="configuration"><see cref="IConfiguration"/></param>
+    /// <param name="configureClient">Конфигурация <see cref="HttpClient"/>, который будет использовать grpc client</param>
+    /// <typeparam name="TAuditEventConfigurator"></typeparam>
+    /// <typeparam name="TAuditCacheRepository"></typeparam>
+    /// <returns></returns>
     public static IServiceCollection AddGrpcAuditClient<TAuditEventConfigurator, TAuditCacheRepository>(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        Func<HttpMessageHandler>? configureClient = null)
         where TAuditEventConfigurator : class, IAuditEventConfigurator
         where TAuditCacheRepository : class, IAuditCacheRepository
     {
         services.Configure<AuditGrpcOptions>(opts => configuration.GetSection(nameof(AuditGrpcOptions)).Bind(opts));
-        services.AddGrpcClient<AuditSettingsService.AuditSettingsServiceClient>((provider, factoryOptions) =>
+        var grpcClientBuilder = services.AddGrpcClient<AuditSettingsService.AuditSettingsServiceClient>((provider, factoryOptions) =>
         {
             var options = provider.GetRequiredService<IOptions<AuditGrpcOptions>>().Value;
             factoryOptions.Address = new Uri(options.ServerAddress);
-        })
-        .ConfigurePrimaryHttpMessageHandler(() =>
-        {
-            var handler = new HttpClientHandler();
-            handler.ServerCertificateCustomValidationCallback = 
-                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        });
 
-            return handler;
-        });;
+        if (configureClient != null)
+        {
+            grpcClientBuilder
+                .ConfigurePrimaryHttpMessageHandler(configureClient);
+        }
         services.AddHostedService<GrpcAuditBackgroundWorker>();
         services.AddAuditClient<TAuditEventConfigurator, TAuditCacheRepository, GrpcAuditSettingsService>(configuration);
 

@@ -3,12 +3,11 @@ using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
 using Grpc.Core;
-using Grpc.Net.ClientFactory;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Client.Grpc.Services;
 
-public class GrpcAuditSettingsService(
+internal class GrpcAuditSettingsService(
     ILogger<GrpcAuditSettingsService> logger,
     IAuditCacheRepository cacheRepository,
     AuditSettingsService.AuditSettingsServiceClient grpcClient) : IAuditSettingsService
@@ -24,8 +23,7 @@ public class GrpcAuditSettingsService(
                 return setting;
             }
 
-            var call = grpcClient.GetSettingsAsync(new Empty());
-            var settings = await call;
+            var settings = await grpcClient.GetSettingsAsync(new Empty(), cancellationToken: cancellationToken).ConfigureAwait(false);
 
             await cacheRepository.AddRangeAsync(settings.Messages.Select(message => new AuditSettings
                 {
@@ -33,7 +31,8 @@ public class GrpcAuditSettingsService(
                     EventType = message.EventType,
                     SeverityLevel = Enum.Parse<AuditEventSeverityLevel>(message.SeverityLevel)
                 }),
-                cancellationToken);
+                cancellationToken)
+                .ConfigureAwait(false);
 
             return await cacheRepository.GetAsync(eventType, cancellationToken).ConfigureAwait(false);
         }

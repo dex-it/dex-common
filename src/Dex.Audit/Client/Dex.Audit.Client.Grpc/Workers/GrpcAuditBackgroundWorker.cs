@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Client.Grpc.Workers;
 
-public class GrpcAuditBackgroundWorker(ILogger<GrpcAuditBackgroundWorker> logger, IServiceProvider serviceProvider) : BackgroundService
+internal class GrpcAuditBackgroundWorker(ILogger<GrpcAuditBackgroundWorker> logger, IServiceProvider serviceProvider) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -23,10 +23,12 @@ public class GrpcAuditBackgroundWorker(ILogger<GrpcAuditBackgroundWorker> logger
             {
                 using var call = client.GetSettingsStream(new Empty(), cancellationToken: stoppingToken);
 
-                await foreach (var cat in call.ResponseStream.ReadAllAsync(cancellationToken: stoppingToken).ConfigureAwait(false))
+                await foreach (var cat in call.ResponseStream
+                                   .ReadAllAsync(cancellationToken: stoppingToken)
+                                   .ConfigureAwait(false))
                 {
-                    await cacheRepository.AddRangeAsync(cat.Messages.Select(message => new AuditSettings()
-                        {
+                    await cacheRepository.AddRangeAsync(cat.Messages.Select(message => new AuditSettings
+                            {
                             Id = new Guid(message.Id),
                             EventType = message.EventType,
                             SeverityLevel = Enum.Parse<AuditEventSeverityLevel>(message.SeverityLevel)

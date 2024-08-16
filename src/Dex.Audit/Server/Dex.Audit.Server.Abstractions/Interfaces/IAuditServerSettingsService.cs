@@ -1,5 +1,4 @@
-﻿using Dex.Audit.Domain.Entities;
-using Dex.Audit.Domain.Enums;
+﻿using Dex.Audit.Domain.Enums;
 
 namespace Dex.Audit.Server.Abstractions.Interfaces;
 

@@ -3,7 +3,7 @@ using Dex.Audit.Server.Abstractions.Interfaces;
 
 namespace Dex.Audit.Server.Grpc.Services;
 
-public class AuditSettingsServiceWithGrpcNotifier(
+internal class AuditSettingsServiceWithGrpcNotifier(
     IAuditPersistentRepository persistentRepository,
     GrpcAuditServerSettingsService auditServerSettingsService) : IAuditServerSettingsService
 {

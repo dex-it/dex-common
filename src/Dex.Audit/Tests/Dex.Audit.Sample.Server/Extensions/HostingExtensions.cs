@@ -6,7 +6,6 @@ using Dex.Audit.Sample.Shared.Enums;
 using Dex.Audit.Sample.Shared.Repositories;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Consumers;
-using Dex.Audit.Server.Extensions;
 using Dex.Audit.Server.Grpc.Extensions;
 using Dex.Audit.Server.Grpc.Services;
 using Dex.Audit.Server.Workers;
