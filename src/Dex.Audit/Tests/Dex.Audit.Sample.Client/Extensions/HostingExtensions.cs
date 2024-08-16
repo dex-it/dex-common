@@ -1,10 +1,12 @@
 ﻿using System.Text.Json.Serialization;
 using Dex.Audit.Client.Abstractions.Messages;
+using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Grpc.Extensions;
 using Dex.Audit.Client.Services;
+using Dex.Audit.ClientSample.Application.Services;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
-using Dex.Audit.ClientSample.Workers;
+using Dex.Audit.ClientSample.Infrastructure.Workers;
 using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Dex.Audit.Logger.Extensions;
@@ -13,7 +15,7 @@ using Dex.MassTransit.Rabbit;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
-using AuditCacheRepository = Dex.Audit.ClientSample.Repositories.AuditCacheRepository;
+using AuditCacheRepository = Dex.Audit.ClientSample.Infrastructure.Repositories.AuditCacheRepository;
 
 namespace Dex.Audit.ClientSample.Extensions;
 
@@ -50,16 +52,19 @@ public static class HostingExtensions
         services.AddScoped<IDistributedCache, MemoryDistributedCache>();
 
         // Client
-        //services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>();
-        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
-            builder.Configuration, 
-            () =>
-            {
-                var handler = new HttpClientHandler();
-                handler.ServerCertificateCustomValidationCallback = 
-                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                return handler;
-            });
+        services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>(builder.Configuration);
+
+        // Grpc client
+        // services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
+        //     builder.Configuration, 
+        //     () =>
+        //     {
+        //         var handler = new HttpClientHandler();
+        //         handler.ServerCertificateCustomValidationCallback = 
+        //             HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        //         return handler;
+        //     });
+
         services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
         services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
         {
@@ -72,7 +77,7 @@ public static class HostingExtensions
         {
             x.RegisterBus((context, configurator) =>
             {
-                context.RegisterSendEndPoint<AuditEventMessage>();
+                context.AddAuditClientSendEndpoint();
                 configurator.ConfigureEndpoints(context);
             });
         });

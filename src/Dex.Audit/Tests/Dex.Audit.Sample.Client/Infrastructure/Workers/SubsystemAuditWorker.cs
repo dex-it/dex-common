@@ -3,7 +3,7 @@ using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Sample.Shared.Enums;
 
-namespace Dex.Audit.ClientSample.Workers;
+namespace Dex.Audit.ClientSample.Infrastructure.Workers;
 
 /// <summary>
 /// Сервис, отвечающий за выполнение аудита подсистемы.
