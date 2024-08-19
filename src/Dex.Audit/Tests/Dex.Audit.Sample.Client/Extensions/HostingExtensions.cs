@@ -1,9 +1,8 @@
 ﻿using System.Text.Json.Serialization;
-using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Client.Extensions;
-using Dex.Audit.Client.Grpc.Extensions;
 using Dex.Audit.Client.Services;
 using Dex.Audit.ClientSample.Application.Services;
+using Dex.Audit.ClientSample.Infrastructure.Consumers;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
 using Dex.Audit.ClientSample.Infrastructure.Workers;
@@ -11,6 +10,7 @@ using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.PipelineBehaviours;
+using Dex.Audit.Sample.Shared.Dto;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using MediatR;
@@ -75,8 +75,11 @@ public static class HostingExtensions
         services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger());
         services.AddMassTransit(x =>
         {
+            x.AddConsumer<AuditSettingsUpdatedConsumer>();
+
             x.RegisterBus((context, configurator) =>
             {
+                context.RegisterReceiveEndpoint<AuditSettingsUpdatedConsumer, AuditSettingsDto>(configurator);
                 context.AddAuditClientSendEndpoint();
                 configurator.ConfigureEndpoints(context);
             });

@@ -7,14 +7,14 @@ internal class AuditSettingsServiceWithGrpcNotifier(
     IAuditPersistentRepository persistentRepository,
     GrpcAuditServerSettingsService auditServerSettingsService) : IAuditServerSettingsService
 {
-    public async Task AddOrUpdateSettings(string eventType, AuditEventSeverityLevel severityLevel,
+    public async Task AddOrUpdateSettingsAsync(string eventType, AuditEventSeverityLevel severityLevel,
         CancellationToken cancellationToken = default)
     {
         await persistentRepository.AddOrUpdateSettings(eventType, severityLevel, cancellationToken);
         auditServerSettingsService.NotifyClients();
     }
 
-    public async Task DeleteSettings(string eventType, CancellationToken cancellationToken = default)
+    public async Task DeleteSettingsAsync(string eventType, CancellationToken cancellationToken = default)
     {
         await persistentRepository.DeleteSettings(eventType, cancellationToken);
         auditServerSettingsService.NotifyClients();

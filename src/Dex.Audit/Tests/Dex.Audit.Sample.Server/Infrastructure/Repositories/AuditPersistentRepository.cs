@@ -6,32 +6,43 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Audit.ServerSample.Infrastructure.Repositories;
 
-public class AuditPersistentRepository(AuditServerDbContext serverDbContext) : IAuditPersistentRepository
+public class AuditPersistentRepository(AuditServerDbContext context) : IAuditPersistentRepository
 {
     public async Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default)
     {
-        await serverDbContext.AddRangeAsync(auditEvents, cancellationToken);
-        await serverDbContext.SaveChangesAsync(cancellationToken);
+        await context.AddRangeAsync(auditEvents, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task AddOrUpdateSettings(string eventType, AuditEventSeverityLevel severityLevel, CancellationToken cancellationToken = default)
     {
-        var settings =
-            await serverDbContext.AuditSettings.FirstOrDefaultAsync(auditSettings => auditSettings.EventType == eventType, cancellationToken);
-        settings.SeverityLevel = severityLevel;
-        serverDbContext.Update(settings);
-        await serverDbContext.SaveChangesAsync(cancellationToken);
+        var setting = await context.AuditSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(settings => settings.EventType == eventType, cancellationToken);
+
+        if (setting == null)
+        {
+            setting = new AuditSettings { EventType = eventType, SeverityLevel = severityLevel };
+        }
+        else
+        {
+            setting.SeverityLevel = severityLevel;
+        }
+
+        context.Update(setting);
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteSettings(string eventType, CancellationToken cancellationToken = default)
     {
-        await serverDbContext.AuditSettings
+        await context.AuditSettings
             .Where(settings => settings.EventType == eventType)
             .ExecuteDeleteAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<IEnumerable<AuditSettings>> GetAllSettingsAsync(CancellationToken cancellationToken = default)
     {
-        return await serverDbContext.AuditSettings.ToListAsync(cancellationToken);
+        return await context.AuditSettings.AsNoTracking().ToListAsync(cancellationToken);
     }
 }

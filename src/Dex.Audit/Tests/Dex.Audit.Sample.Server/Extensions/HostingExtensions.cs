@@ -1,19 +1,14 @@
 ﻿using System.Text.Json.Serialization;
-using Dex.Audit.Client.Abstractions.Messages;
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
 using Dex.Audit.Sample.Shared.Enums;
-using Dex.Audit.Sample.Shared.Repositories;
 using Dex.Audit.Server.Abstractions.Interfaces;
-using Dex.Audit.Server.Consumers;
 using Dex.Audit.Server.Extensions;
-using Dex.Audit.Server.Grpc.Extensions;
 using Dex.Audit.Server.Grpc.Services;
-using Dex.Audit.Server.Workers;
+using Dex.Audit.ServerSample.Application.Services;
 using Dex.Audit.ServerSample.Infrastructure.Context;
 using Dex.Audit.ServerSample.Infrastructure.Repositories;
-using Dex.Audit.ServerSample.Servers;
-using Dex.Extensions;
+using Dex.Audit.ServerSample.Infrastructure.Workers;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -119,12 +114,12 @@ public static class HostingExtensions
         app.MapPut("/Settings",
             async (IAuditServerSettingsService settingsServer, string eventType, AuditEventSeverityLevel severityLevel) =>
             {
-                await settingsServer.AddOrUpdateSettings(eventType, severityLevel);
+                await settingsServer.AddOrUpdateSettingsAsync(eventType, severityLevel);
             });
         app.MapDelete("/Settings",
             async (IAuditServerSettingsService settingsServer, string eventType) =>
             {
-                await settingsServer.DeleteSettings(eventType);
+                await settingsServer.DeleteSettingsAsync(eventType);
             });
 
         return app;
