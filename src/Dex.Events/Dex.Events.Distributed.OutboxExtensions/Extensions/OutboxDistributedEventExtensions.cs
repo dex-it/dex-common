@@ -11,6 +11,7 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
 
         public static IServiceCollection RegisterOutboxDistributedEventHandler<TBus>(this IServiceCollection services)
             where TBus : IBus
-            => services.AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>>, OutboxDistributedEventHandler<TBus>>();
+            => services.AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>>,
+                OutboxDistributedEventHandler<TBus>>();
     }
 }

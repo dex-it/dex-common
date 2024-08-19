@@ -17,11 +17,15 @@ namespace Dex.Events.Distributed.Extensions
         /// </summary>
         /// <param name="registration">Bus consumers registration context</param>
         /// <param name="assembly">Assembly for IDistributedEventHandler</param>
-        public static void RegisterAllEventHandlers(this IBusRegistrationConfigurator registration, Assembly? assembly = null)
+        public static void RegisterAllEventHandlers(
+            this IBusRegistrationConfigurator registration,
+            Assembly? assembly = null)
         {
             assembly = assembly == null ? Assembly.GetCallingAssembly() : assembly;
             assembly.GetTypes()
-                .Where(type => typeof(IDistributedEventHandler).IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface)
+                .Where(type =>
+                    typeof(IDistributedEventHandler).IsAssignableFrom(type) &&
+                    type is { IsAbstract: false, IsInterface: false })
                 .ForEach(x => registration.AddConsumer(x));
         }
 
@@ -30,7 +34,9 @@ namespace Dex.Events.Distributed.Extensions
         /// </summary>
         /// <param name="registration">Bus consumers registration context</param>
         /// <param name="configurator"></param>
-        public static void RegisterEventHandler<T>(this IBusRegistrationConfigurator registration, Action<IConsumerConfigurator<T>>? configurator = null)
+        public static void RegisterEventHandler<T>(
+            this IBusRegistrationConfigurator registration,
+            Action<IConsumerConfigurator<T>>? configurator = null)
             where T : class, IDistributedEventHandler
         {
             if (registration == null) throw new ArgumentNullException(nameof(registration));
