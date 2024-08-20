@@ -5,8 +5,7 @@ namespace Dex.Audit.ClientSample.Infrastructure.Context;
 
 public class ClientSampleContext(DbContextOptions<ClientSampleContext> dbContextOptions) : DbContext(dbContextOptions)
 {
-    public DbSet<User> Users { get; set; }
-
+    public DbSet<User> Users { get; init; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -10,12 +10,12 @@ public class AuditEventMessage
     /// <summary>
     /// Название АС-источника информации о событии.
     /// </summary>
-    public string? DeviceVendor { get; set; }
+    public string? DeviceVendor { get; init; }
 
     /// <summary>
     /// Версия АС-источника информации о событии.
     /// </summary>
-    public string? DeviceVersion { get; set; }
+    public string? DeviceVersion { get; init; }
 
     /// <summary>
     /// Название журнала аудита АС-источника информации о событии.
@@ -25,32 +25,32 @@ public class AuditEventMessage
     /// <summary>
     ///  Системное имя (логин) пользователя-инициатора события.
     /// </summary>
-    public string? SourceUser { get; set; }
+    public string? SourceUser { get; init; }
 
     /// <summary>
     /// Домен (или имя рабочей группы) пользователя-инициатора события.
     /// </summary>
-    public string? SourceUserDomain { get; set; }
+    public string? SourceUserDomain { get; init; }
 
     /// <summary>
     /// IP адрес хоста-источника события.
     /// </summary>
-    public string? SourceIpAddress { get; set; }
+    public string? SourceIpAddress { get; init; }
 
     /// <summary>
     /// МАС адрес хоста-источника события.
     /// </summary>
-    public string? SourceMacAddress { get; set; }
+    public string? SourceMacAddress { get; init; }
 
     /// <summary>
     /// DNS-имя источника события.
     /// </summary>
-    public string? SourceDnsName { get; set; }
+    public string? SourceDnsName { get; init; }
 
     /// <summary>
     /// Netbios имя или hostname хоста-инициатора события.
     /// </summary>
-    public string? SourceHost { get; set; }
+    public string? SourceHost { get; init; }
 
     /// <summary>
     ///  Системное имя (логин) пользователя получателя.
@@ -105,7 +105,7 @@ public class AuditEventMessage
     /// <summary>
     ///  Системное время источника события.
     /// </summary>
-    public DateTime Start { get; set; }
+    public DateTime Start { get; init; }
 
     /// <summary>
     /// Системное время получателя.
@@ -115,7 +115,7 @@ public class AuditEventMessage
     /// <summary>
     /// Время GMT источника события.
     /// </summary>
-    public DateTime SourceGmtDate { get; set; }
+    public DateTime SourceGmtDate { get; init; }
 
     /// <summary>
     /// Время GMT получателя.
@@ -125,27 +125,27 @@ public class AuditEventMessage
     /// <summary>
     /// Объект события.
     /// </summary>
-    public string? EventObject { get; set; }
+    public string? EventObject { get; init; }
 
     /// <summary>
     /// Текст сообщения.
     /// </summary>
-    public string? Message { get; set; }
+    public string? Message { get; init; }
 
     /// <summary>
     /// Полное имя процесса (службы).
     /// </summary>
-    public string? DeviceProcessName { get; set; }
+    public string? DeviceProcessName { get; init; }
 
     /// <summary>
     /// Результат (успех/отказ).
     /// </summary>
-    public bool IsSuccess { get; set; }
+    public bool IsSuccess { get; init; }
 
     /// <summary>
     /// Тип события аудита.
     /// </summary>
-    public required string EventType { get; set; }
+    public required string EventType { get; init; }
 
     /// <summary>
     /// Минимальный уровень важности события для записи, указанный на стороне источника события.
