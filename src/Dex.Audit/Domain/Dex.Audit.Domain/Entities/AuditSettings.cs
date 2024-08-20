@@ -10,12 +10,12 @@ public class AuditSettings
     /// <summary>
     /// Идентификатор настройки события.
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
     /// <summary>
     /// Тип события.
     /// </summary>
-    public required string EventType { get; set; }
+    public required string EventType { get; init; }
 
     /// <summary>
     /// Уровень важности события.

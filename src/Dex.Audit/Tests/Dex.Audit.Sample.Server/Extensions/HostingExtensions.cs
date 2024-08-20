@@ -1,8 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using Dex.Audit.Domain.Entities;
-using Dex.Audit.Domain.Enums;
-using Dex.Audit.Sample.Shared.Enums;
-using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Extensions;
 using Dex.Audit.Server.Grpc.Services;
 using Dex.Audit.ServerSample.Application.Services;
@@ -11,7 +7,6 @@ using Dex.Audit.ServerSample.Infrastructure.Repositories;
 using Dex.Audit.ServerSample.Infrastructure.Workers;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
-using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.System.Text.Json;
 
@@ -97,78 +92,12 @@ public static class HostingExtensions
     /// <returns>Web application</returns>
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        FillAuditSettings(app);
+        app.FillAuditSettings();
 
         app.UseSwagger().UseSwaggerUI();
         app.MapGrpcService<GrpcAuditServerSettingsService>();
         app.MapControllers();
-        app.MapGet(
-            "/Settings", 
-            async (AuditServerDbContext context
-            ) => await context.AuditSettings.ToListAsync());
-        app.MapGet(
-            "/Events", 
-            async (AuditServerDbContext context
-            ) => await context.AuditEvents.ToListAsync());
-        
-        app.MapPut("/Settings",
-            async (IAuditServerSettingsService settingsServer, string eventType, AuditEventSeverityLevel severityLevel) =>
-            {
-                await settingsServer.AddOrUpdateSettingsAsync(eventType, severityLevel);
-            });
-        app.MapDelete("/Settings",
-            async (IAuditServerSettingsService settingsServer, string eventType) =>
-            {
-                await settingsServer.DeleteSettingsAsync(eventType);
-            });
 
         return app;
-    }
-
-    private static void FillAuditSettings(WebApplication app)
-    {
-        using var scope = app.Services.CreateScope();
-        using var context = scope.ServiceProvider.GetRequiredService<AuditServerDbContext>();
-        var settings = new AuditSettings
-            []
-            {
-                new()
-                {
-                    EventType = AuditEventType.None.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
-                },
-                new()
-                {
-                    EventType = AuditEventType.StartSystem.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
-                },
-                new()
-                {
-                    EventType = AuditEventType.ShutdownSystem.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
-                },
-                new()
-                {
-                    EventType = AuditEventType.ObjectCreated.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
-                },
-                new()
-                {
-                    EventType = AuditEventType.ObjectChanged.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
-                },
-                new()
-                {
-                    EventType = AuditEventType.ObjectRead.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
-                },
-                new()
-                {
-                    EventType = AuditEventType.ObjectDeleted.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
-                }
-            };
-        context.AuditSettings.AddRange(settings);
-        context.SaveChanges();
     }
 }

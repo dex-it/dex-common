@@ -10,7 +10,7 @@ public class User : IAuditEntity
     /// <summary>
     /// Идентификатор пользователя.
     /// </summary>
-    public int Id { get; set; }
+    public int Id { get; init; }
 
     /// <summary>
     /// ФИО пользователя.

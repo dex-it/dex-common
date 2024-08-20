@@ -6,8 +6,8 @@ namespace Dex.Audit.ServerSample.Infrastructure.Context;
 
 public class AuditServerDbContext : DbContext
 {
-    public DbSet<AuditEvent> AuditEvents { get; set; }
-    public DbSet<AuditSettings> AuditSettings { get; set; }
+    public DbSet<AuditEvent> AuditEvents { get; init; }
+    public DbSet<AuditSettings> AuditSettings { get; init; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -10,35 +10,35 @@ public class AuditEvent
     /// <summary>
     ///  Идентификатор строки о событии ИБ в рамках одного журнала АС.
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
     /// <summary>
     /// Тип события.
     /// </summary>
-    public required string EventType { get; set; }
+    public required string EventType { get; init; }
 
     /// <summary>
     /// Информация об источнике события.
     /// </summary>
-    public required Source Source { get; set; }
+    public required Source Source { get; init; }
 
     /// <summary>
     /// Информация о получателе объекта события.
     /// </summary>
-    public required Destination Destination { get; set; }
+    public required Destination Destination { get; init; }
 
     /// <summary>
     /// Объект события 
     /// </summary>
-    public required string EventObject { get; set; }
+    public required string EventObject { get; init; }
 
     /// <summary>
     /// Текст сообщения.
     /// </summary>
-    public required string Message { get; set; }
+    public required string Message { get; init; }
 
     /// <summary>
     /// Результат (успех/отказ).
     /// </summary>
-    public bool IsSuccess { get; set; }
+    public bool IsSuccess { get; init; }
 }

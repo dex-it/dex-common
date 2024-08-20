@@ -1,6 +1,6 @@
 ﻿using Dex.Audit.ClientSample.Application.Commands.Users;
 using Dex.Audit.ClientSample.Application.Queries.Users;
-using Dex.Audit.ClientSample.Infrastructure.Controllers.Core;
+using Dex.Audit.Sample.Shared.Api;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,7 +9,7 @@ namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
 public class UsersController(IMediator mediator) : BaseController
 {
     [HttpGet]
-    public async Task<GetUserQueryResponse> Add(GetUserQuery command)
+    public async Task<GetUserQueryResponse> Get(GetUserQuery command)
     {
         return await mediator.Send(command);
     }
@@ -21,13 +21,13 @@ public class UsersController(IMediator mediator) : BaseController
     }
 
     [HttpPut]
-    public async Task<UpdateUserResponse> Add(UpdateUserCommand command)
+    public async Task<UpdateUserResponse> Update(UpdateUserCommand command)
     {
         return await mediator.Send(command);
     }
 
     [HttpDelete]
-    public async Task<DeleteUserResponse> Add(DeleteUserCommand command)
+    public async Task<DeleteUserResponse> Delete(DeleteUserCommand command)
     {
         return await mediator.Send(command);
     }
