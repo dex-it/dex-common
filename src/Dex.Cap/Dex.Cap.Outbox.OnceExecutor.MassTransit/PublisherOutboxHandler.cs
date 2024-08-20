@@ -7,7 +7,8 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// Автоматически публикует объект, из аутбокса в очередь, заинтересованные сервисы могут получать эти события
 /// </summary>
 /// <typeparam name="T">Объект события</typeparam>
-public class PublisherOutboxHandler<T> : IOutboxMessageHandler<T> where T : IConsumer, IOutboxMessage
+public class PublisherOutboxHandler<T> : IOutboxMessageHandler<T>
+    where T : class, IOutboxMessage
 {
     private readonly IPublishEndpoint _publishEndpoint;
 

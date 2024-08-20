@@ -94,7 +94,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
         #region Consumer data
 
-        public interface ITestMessage : IConsumer
+        public interface ITestMessage
         {
             Guid Id { get; }
             string? Name { get; }
