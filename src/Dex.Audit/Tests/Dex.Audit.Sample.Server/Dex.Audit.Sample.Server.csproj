@@ -9,8 +9,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.EF\Dex.Audit.EF.csproj" />
+        <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.Server.Grpc\Dex.Audit.Server.Grpc.csproj" />
         <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
-        <ProjectReference Include="..\..\Server\Dex.Audit.Server.Grpc\Dex.Audit.Server.Grpc.csproj" />
         <ProjectReference Include="..\..\Server\Dex.Audit.Server\Dex.Audit.Server.csproj" />
         <ProjectReference Include="..\Dex.Audit.Sample.Shared\Dex.Audit.Sample.Shared.csproj" />
     </ItemGroup>
