@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using MassTransit;
 
@@ -11,12 +10,9 @@ namespace Dex.Events.Distributed
     /// Event sender contract
     /// </summary>
     /// <typeparam name="TBus">Bus type</typeparam>
-    [SuppressMessage("ReSharper", "UnusedTypeParameter")]
-    public interface IDistributedEventRaiser<out TBus>
+    public interface IDistributedEventRaiser<TBus>
         where TBus : IBus
     {
-        public TBus Bus { get; }
-
         /// <summary>
         /// Send event to the queue
         /// </summary>
