@@ -8,18 +8,8 @@ namespace Dex.Audit.ClientSample.Infrastructure.Workers;
 /// <summary>
 /// Сервис, отвечающий за выполнение аудита подсистемы.
 /// </summary>
-public class SubsystemAuditWorker : IHostedService
+public class SubsystemAuditWorker(IServiceScopeFactory scopeFactory, ILogger<SubsystemAuditWorker> logger) : IHostedService
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-
-    /// <summary>
-    /// Конструктор класса SubsystemAuditWorker.
-    /// </summary>
-    /// <param name="scopeFactory"><see cref="IServiceScopeFactory"/></param>
-    public SubsystemAuditWorker(IServiceScopeFactory scopeFactory)
-    {
-        _scopeFactory = scopeFactory;
-    }
 
     /// <summary>
     /// Запускает выполнение аудита при запуске подсистемы.
@@ -47,12 +37,19 @@ public class SubsystemAuditWorker : IHostedService
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     private async Task AuditSubsystemEventAsync(string eventType, string description, CancellationToken cancellationToken)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var auditManager = scope.ServiceProvider.GetRequiredService<IAuditWriter>();
+        try
+        {
+            using var scope = scopeFactory.CreateScope();
+            var auditManager = scope.ServiceProvider.GetRequiredService<IAuditWriter>();
 
-        await auditManager.WriteAsync(
-            new AuditEventBaseInfo(eventType, GetSourceAssemblyName(), description, true),
-            cancellationToken);
+            await auditManager.WriteAsync(
+                new AuditEventBaseInfo(eventType, GetSourceAssemblyName(), description, true),
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, exception.Message);
+        }
     }
 
     private static string? GetSourceAssemblyName()
