@@ -1,5 +1,5 @@
 ﻿using Dex.Audit.ClientSample.Application.Commands.AuditEvents;
-using Dex.Audit.ClientSample.Infrastructure.Controllers.Core;
+using Dex.Audit.Sample.Shared.Api;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
