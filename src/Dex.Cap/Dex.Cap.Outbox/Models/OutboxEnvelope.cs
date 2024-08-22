@@ -8,6 +8,10 @@ namespace Dex.Cap.Outbox.Models
     [Table(NameConst.TableName, Schema = NameConst.SchemaName)]
     public class OutboxEnvelope
     {
+        private OutboxEnvelope()
+        {
+        }
+
         public OutboxEnvelope(Guid id, Guid correlationId, string messageType, string content, DateTime? startAtUtc = null)
             : this(id, correlationId, messageType, content, startAtUtc, null)
         {

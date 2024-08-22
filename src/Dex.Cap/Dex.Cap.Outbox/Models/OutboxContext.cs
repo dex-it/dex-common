@@ -25,5 +25,10 @@ namespace Dex.Cap.Outbox.Models
         {
             await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken).ConfigureAwait(false);
         }
+
+        public IOutboxTypeDiscriminator GetDiscriminator()
+        {
+            return OutboxService.Discriminator;
+        }
     }
 }

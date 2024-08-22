@@ -21,5 +21,10 @@ namespace Dex.Cap.Outbox.Interfaces
         /// This method don't check Transaction, only append outbox message to change context.
         /// </summary>
         Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets outbox type discriminator
+        /// </summary>
+        IOutboxTypeDiscriminator GetDiscriminator();
     }
 }
