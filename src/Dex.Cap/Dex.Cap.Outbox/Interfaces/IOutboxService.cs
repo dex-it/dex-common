@@ -7,6 +7,11 @@ namespace Dex.Cap.Outbox.Interfaces
     public interface IOutboxService
     {
         /// <summary>
+        /// Outbox Type Discriminator
+        /// </summary>
+        IOutboxTypeDiscriminator Discriminator { get; }
+
+        /// <summary>
         /// Perform only publish outbox message to queue.
         /// This method don't check Transaction, only append outbox message to change context.
         /// NOTE. LockTimeout must be greater time of process message, against it lead to cycle process.

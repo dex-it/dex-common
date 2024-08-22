@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Events.Distributed.Models;
 using MassTransit;
 
 #pragma warning disable CA1030
@@ -11,18 +10,25 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
 {
     public static class OutboxServiceExtensions
     {
-        public static async Task RaiseDistributedEventAsync(this IOutboxService<object?> outboxService, Guid correlationId,
-            DistributedBaseEventParams outboxMessage, CancellationToken cancellationToken = default)
-            => await outboxService.RaiseDistributedEventAsync<IBus>(correlationId, outboxMessage, cancellationToken).ConfigureAwait(false);
+        public static Task EnqueueEventAsync(
+            this IOutboxService<object?> outboxService,
+            Guid correlationId,
+            IDistributedEventParams outboxMessage,
+            CancellationToken cancellationToken = default)
+            => outboxService.EnqueueEventAsync<IBus>(correlationId, outboxMessage, cancellationToken);
 
-        public static async Task RaiseDistributedEventAsync<TBus>(this IOutboxService<object?> outboxService, Guid correlationId,
-            DistributedBaseEventParams outboxMessage, CancellationToken cancellationToken = default)
+        public static async Task EnqueueEventAsync<TBus>(
+            this IOutboxService<object?> outboxService,
+            Guid correlationId,
+            IDistributedEventParams outboxMessage,
+            CancellationToken cancellationToken = default)
             where TBus : IBus
         {
             ArgumentNullException.ThrowIfNull(outboxService);
 
-            var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage);
-            await outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage, outboxService.Discriminator);
+            await outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

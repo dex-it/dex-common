@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Options;
+using Dex.Events.Distributed.Tests.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,7 +29,8 @@ namespace Dex.Events.Distributed.Tests.Tests
             await db.Database.EnsureDeletedAsync();
         }
 
-        protected IServiceCollection InitServiceCollection()
+        protected IServiceCollection InitServiceCollection(int messageToProcessLimit = 10, int parallelLimit = 2,
+            int getFreeMessagesTimeout = 10)
         {
             var sc = new ServiceCollection()
                 .AddLogging(builder =>
@@ -37,9 +39,15 @@ namespace Dex.Events.Distributed.Tests.Tests
                     builder.SetMinimumLevel(LogLevel.Debug);
                 })
                 .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext, TestDiscriminator>();
+                .AddOutbox<TestDbContext, TestDiscriminator<IExternalBus>>();
 
-            sc.AddOptions<OutboxOptions>().Configure(options => options.ProcessorDelay = TimeSpan.FromMilliseconds(100));
+            sc.AddOptions<OutboxOptions>()
+                .Configure(options =>
+                {
+                    options.GetFreeMessagesTimeout = TimeSpan.FromMilliseconds(getFreeMessagesTimeout);
+                    options.MessagesToProcess = messageToProcessLimit;
+                    options.ConcurrencyLimit = parallelLimit;
+                });
             sc.AddSingleton<IOutboxTypeDiscriminator, TestDiscriminator>();
 
             return sc;
