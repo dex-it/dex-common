@@ -14,10 +14,28 @@ public interface IAuditPersistentRepository
     /// <param name="auditEvents">Событие.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     /// <returns></returns>
-    Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default);
+    Task AddAuditEventsRangeAsync(
+        IEnumerable<AuditEvent> auditEvents,
+        CancellationToken cancellationToken = default);
 
-    Task AddOrUpdateSettings(string eventType, AuditEventSeverityLevel severityLevel, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Добавить или обновить настройки.
+    /// </summary>
+    /// <param name="eventType">Тип события.</param>
+    /// <param name="severityLevel">Уровень критичности события аудита.</param>
+    /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task AddOrUpdateSettings(
+        string eventType,
+        AuditEventSeverityLevel severityLevel,
+        CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Удалить настройки.
+    /// </summary>
+    /// <param name="eventType">Тип события.</param>
+    /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+    /// <returns></returns>
     Task DeleteSettings(string eventType, CancellationToken cancellationToken = default);
 
     /// <summary>

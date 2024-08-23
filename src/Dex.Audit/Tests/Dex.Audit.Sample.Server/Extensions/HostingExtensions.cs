@@ -52,11 +52,12 @@ public static class HostingExtensions
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
         AddStackExchangeRedis(services, builder.Configuration);
 
-        // Server
         services.AddDbContext<AuditServerDbContext>();
+
+        // Audit Server
         //services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository, AuditServerSettingsService>(builder.Configuration);
 
-        // Grpc Server
+        // Audit Grpc Server
         services.AddGrpcAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
 
         services.AddMassTransit(busRegistrationConfigurator =>

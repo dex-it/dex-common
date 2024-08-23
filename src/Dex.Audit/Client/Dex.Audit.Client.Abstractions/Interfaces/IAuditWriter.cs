@@ -12,5 +12,7 @@ public interface IAuditWriter
     /// </summary>
     /// <param name="eventBaseInfo">Базовая информация о событии аудита.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
-    public Task WriteAsync(AuditEventBaseInfo eventBaseInfo, CancellationToken cancellationToken = default);
+    public Task WriteAsync(
+        AuditEventBaseInfo eventBaseInfo,
+        CancellationToken cancellationToken = default);
 }

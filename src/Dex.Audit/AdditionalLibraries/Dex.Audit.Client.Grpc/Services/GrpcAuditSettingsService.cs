@@ -10,9 +10,12 @@ namespace Dex.Audit.Client.Grpc.Services;
 internal class GrpcAuditSettingsService(
     ILogger<GrpcAuditSettingsService> logger,
     IAuditCacheRepository cacheRepository,
-    AuditSettingsService.AuditSettingsServiceClient grpcClient) : IAuditSettingsService
+    AuditSettingsService.AuditSettingsServiceClient grpcClient)
+    : IAuditSettingsService
 {
-    public async Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(string eventType, CancellationToken cancellationToken = default)
+    public async Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(
+        string eventType,
+        CancellationToken cancellationToken = default)
     {
         try
         {

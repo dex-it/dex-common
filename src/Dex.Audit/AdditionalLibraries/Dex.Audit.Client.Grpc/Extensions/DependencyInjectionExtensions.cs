@@ -31,18 +31,21 @@ public static class DependencyInjectionExtensions
         where TAuditEventConfigurator : class, IAuditEventConfigurator
         where TAuditCacheRepository : class, IAuditCacheRepository
     {
-        services.Configure<AuditGrpcOptions>(opts => configuration.GetSection(nameof(AuditGrpcOptions)).Bind(opts));
-        var grpcClientBuilder = services.AddGrpcClient<AuditSettingsService.AuditSettingsServiceClient>((provider, factoryOptions) =>
-        {
-            var options = provider.GetRequiredService<IOptions<AuditGrpcOptions>>().Value;
-            factoryOptions.Address = new Uri(options.ServerAddress);
-        });
+        services.Configure<AuditGrpcOptions>(opts =>
+            configuration.GetSection(nameof(AuditGrpcOptions)).Bind(opts));
+        var grpcClientBuilder = services
+            .AddGrpcClient<AuditSettingsService.AuditSettingsServiceClient>((provider, factoryOptions) =>
+            {
+                var options = provider.GetRequiredService<IOptions<AuditGrpcOptions>>().Value;
+                factoryOptions.Address = new Uri(options.ServerAddress);
+            });
 
         if (configureClient != null)
         {
             grpcClientBuilder
                 .ConfigurePrimaryHttpMessageHandler(configureClient);
         }
+
         services.AddHostedService<GrpcAuditBackgroundWorker>();
         services.AddAuditClient<TAuditEventConfigurator, TAuditCacheRepository, GrpcAuditSettingsService>(configuration);
 

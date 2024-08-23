@@ -7,7 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Server.Grpc.Services;
 
-public class GrpcAuditServerSettingsService(IServiceProvider serviceProvider, ILogger<GrpcAuditServerSettingsService> logger) : AuditSettingsService.AuditSettingsServiceBase
+public class GrpcAuditServerSettingsService(
+    IServiceProvider serviceProvider,
+    ILogger<GrpcAuditServerSettingsService> logger)
+    : AuditSettingsService.AuditSettingsServiceBase
 {
     private readonly List<IServerStreamWriter<AuditSettingsMessages>> _clients = new();
     
@@ -26,23 +29,32 @@ public class GrpcAuditServerSettingsService(IServiceProvider serviceProvider, IL
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "Error due notifying clients {Message}.", exception.Message);
+                logger.LogError(exception,
+                    "An error occurred while notifying clients: {Message}.",
+                    exception.Message);
             }
         });
     }
 
-    public override async Task<AuditSettingsMessages> GetSettings(Empty request, ServerCallContext context)
+    public override async Task<AuditSettingsMessages> GetSettings(
+        Empty request,
+        ServerCallContext context)
     {
         return await GetMessagesAsync(context.CancellationToken).ConfigureAwait(false);
     }
 
-    public override async Task GetSettingsStream(Empty request, IServerStreamWriter<AuditSettingsMessages> responseStream, ServerCallContext context)
+    public override async Task GetSettingsStream(
+        Empty request,
+        IServerStreamWriter<AuditSettingsMessages> responseStream,
+        ServerCallContext context)
     {
         _clients.Add(responseStream);
 
         while (!context.CancellationToken.IsCancellationRequested)
         {
-            await Task.Delay(1000).ConfigureAwait(false);
+            await Task
+                .Delay(1000)
+                .ConfigureAwait(false);
         }
 
         _clients.Remove(responseStream);
