@@ -12,6 +12,7 @@ public class GrpcAuditServerSettingsService(
     ILogger<GrpcAuditServerSettingsService> logger)
     : AuditSettingsService.AuditSettingsServiceBase
 {
+    private static readonly SemaphoreSlim ClientsSemaphore = new(1, 1);
     private readonly List<IServerStreamWriter<AuditSettingsMessages>> _clients = new();
     
     internal void NotifyClients()
@@ -20,11 +21,32 @@ public class GrpcAuditServerSettingsService(
         {
             try
             {
-                var messages = await GetMessagesAsync().ConfigureAwait(false);
+                await ClientsSemaphore
+                    .WaitAsync()
+                    .ConfigureAwait(false);
+
+                if (_clients.Count == 0)
+                {
+                    return;
+                }
+
+                var messages = await GetMessagesAsync()
+                    .ConfigureAwait(false);
 
                 foreach (var client in _clients)
                 {
-                    await client.WriteAsync(messages).ConfigureAwait(false);
+                    try
+                    {
+                        await client
+                            .WriteAsync(messages)
+                            .ConfigureAwait(false);
+                    }
+                    catch (Exception exception)
+                    {
+                        logger.LogError(exception,
+                            "An error occurred while notifying client: {Message}.",
+                            exception.Message);
+                    }
                 }
             }
             catch (Exception exception)
@@ -33,6 +55,10 @@ public class GrpcAuditServerSettingsService(
                     "An error occurred while notifying clients: {Message}.",
                     exception.Message);
             }
+            finally
+            {
+                ClientsSemaphore.Release();
+            }
         });
     }
 
@@ -40,7 +66,8 @@ public class GrpcAuditServerSettingsService(
         Empty request,
         ServerCallContext context)
     {
-        return await GetMessagesAsync(context.CancellationToken).ConfigureAwait(false);
+        return await GetMessagesAsync(context.CancellationToken)
+            .ConfigureAwait(false);
     }
 
     public override async Task GetSettingsStream(
@@ -48,7 +75,11 @@ public class GrpcAuditServerSettingsService(
         IServerStreamWriter<AuditSettingsMessages> responseStream,
         ServerCallContext context)
     {
+        await ClientsSemaphore
+            .WaitAsync()
+            .ConfigureAwait(false);
         _clients.Add(responseStream);
+        ClientsSemaphore.Release();
 
         while (!context.CancellationToken.IsCancellationRequested)
         {
@@ -57,7 +88,11 @@ public class GrpcAuditServerSettingsService(
                 .ConfigureAwait(false);
         }
 
+        await ClientsSemaphore
+            .WaitAsync()
+            .ConfigureAwait(false);
         _clients.Remove(responseStream);
+        ClientsSemaphore.Release();
     }
 
     private async Task<AuditSettingsMessages> GetMessagesAsync(CancellationToken cancellationToken = default)
