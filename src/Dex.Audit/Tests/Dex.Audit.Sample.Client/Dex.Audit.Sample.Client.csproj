@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.Client.Grpc\Dex.Audit.Client.Grpc.csproj" />
         <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.EF\Dex.Audit.EF.csproj" />
         <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.Logger\Dex.Audit.Logger.csproj" />
         <ProjectReference Include="..\..\AdditionalLibraries\Dex.Audit.MediatR\Dex.Audit.MediatR.csproj" />

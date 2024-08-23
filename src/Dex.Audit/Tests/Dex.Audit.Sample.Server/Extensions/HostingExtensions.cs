@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Dex.Audit.Server.Extensions;
+using Dex.Audit.Server.Grpc.Extensions;
 using Dex.Audit.Server.Grpc.Services;
-using Dex.Audit.ServerSample.Application.Services;
 using Dex.Audit.ServerSample.Infrastructure.Context;
 using Dex.Audit.ServerSample.Infrastructure.Repositories;
 using Dex.Audit.ServerSample.Infrastructure.Workers;
@@ -54,10 +54,10 @@ public static class HostingExtensions
 
         // Server
         services.AddDbContext<AuditServerDbContext>();
-        services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository, AuditServerSettingsService>(builder.Configuration);
+        //services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository, AuditServerSettingsService>(builder.Configuration);
 
         // Grpc Server
-        //services.AddGrpcAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
+        services.AddGrpcAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
 
         services.AddMassTransit(busRegistrationConfigurator =>
         {
