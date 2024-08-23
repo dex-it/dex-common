@@ -13,7 +13,9 @@ public interface IAuditCacheRepository
     /// <param name="eventType">Тип события.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
-    Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default);
+    Task<AuditSettings?> GetAsync(
+        string eventType,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Добавить в кэш настройки.
@@ -21,5 +23,7 @@ public interface IAuditCacheRepository
     /// <param name="settings">Дто настройки события.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
-    Task AddRangeAsync(IEnumerable<AuditSettings> settings, CancellationToken cancellationToken = default);
+    Task AddRangeAsync(
+        IEnumerable<AuditSettings> settings,
+        CancellationToken cancellationToken = default);
 }

@@ -12,7 +12,8 @@ public static class DependencyInjectionExtensions
     /// <summary>
     /// Добавляет AuditInterceptor
     /// </summary>
-    public static IServiceCollection AddAuditInterceptors<TInterceptionAndSendingEntriesService>(this IServiceCollection services)
+    public static IServiceCollection AddAuditInterceptors<TInterceptionAndSendingEntriesService>(
+        this IServiceCollection services)
         where TInterceptionAndSendingEntriesService : class, IInterceptionAndSendingEntriesService
     {
         services

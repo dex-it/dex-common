@@ -14,46 +14,58 @@ namespace Dex.Audit.Server.Consumers;
 /// <param name="auditPersistentRepository"><see cref="IAuditPersistentRepository"/>.</param>
 /// <param name="logger"><see cref="ILogger"/>.</param>
 /// <param name="auditCacheRepository"><see cref="IAuditCacheRepository"/>.</param>
-public class AuditEventConsumer(IAuditPersistentRepository auditPersistentRepository,
+public class AuditEventConsumer(
+    IAuditPersistentRepository auditPersistentRepository,
     ILogger<AuditEventConsumer> logger,
-    IAuditCacheRepository auditCacheRepository) : IConsumer<Batch<AuditEventMessage>>
+    IAuditCacheRepository auditCacheRepository)
+    : IConsumer<Batch<AuditEventMessage>>
 {
     /// <summary>
     /// Метод для обработки аудиторских событий, полученных через шину сообщений.
     /// </summary>
     /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки.</param>
-    public async Task Consume(ConsumeContext<Batch<AuditEventMessage>> context)
+    public async Task Consume(
+        ConsumeContext<Batch<AuditEventMessage>> context)
     {
         try
         {
-            var unMappedAuditEvents = await GetRelevantAuditMessages(context).ConfigureAwait(false);
+            var unMappedAuditEvents = await GetRelevantAuditMessages(context)
+                .ConfigureAwait(false);
 
             var auditEvents = unMappedAuditEvents.Select(MapAuditEventFromMessage);
 
-            await auditPersistentRepository.AddAuditEventsRangeAsync(auditEvents, context.CancellationToken).ConfigureAwait(false);
+            await auditPersistentRepository
+                .AddAuditEventsRangeAsync(auditEvents, context.CancellationToken)
+                .ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            logger.LogError(ex, "Возникла ошибка при обработке сообщений аудита.");
+            logger.LogError(exception, "An error occurred while processing audit messages.");
         }
     }
 
-    private async Task<IEnumerable<AuditEventMessage>> GetRelevantAuditMessages(ConsumeContext<Batch<AuditEventMessage>> context)
+    private async Task<IEnumerable<AuditEventMessage>> GetRelevantAuditMessages(
+        ConsumeContext<Batch<AuditEventMessage>> context)
     {
-        var auditMessages = context.Message.Select(consumeContext => consumeContext.Message).ToArray();
+        var auditMessages = context.Message
+            .Select(consumeContext => consumeContext.Message)
+            .ToArray();
 
         var auditEventMessages = auditMessages.ToHashSet();
 
-        foreach (var message in auditMessages.Where(consumeContext => consumeContext.AuditSettingsId is null))
+        foreach (var message in auditMessages
+                     .Where(consumeContext => consumeContext.AuditSettingsId is null))
         {
             var eventType = message.EventType;
             var sourceIp = message.SourceIpAddress;
 
-            var auditSettings = await auditCacheRepository.GetAsync(eventType, context.CancellationToken).ConfigureAwait(false);
+            var auditSettings = await auditCacheRepository
+                .GetAsync(eventType, context.CancellationToken)
+                .ConfigureAwait(false);
 
             if (auditSettings is null)
             {
-                logger.LogWarning("Не удалось получить из кэша настройки для события типа [{EventType}]", eventType);
+                logger.LogWarning("Failed to retrieve settings for event type [{EventType}] from cache.", eventType);
 
                 auditEventMessages.Remove(message);
 
@@ -66,10 +78,11 @@ public class AuditEventConsumer(IAuditPersistentRepository auditPersistentReposi
             }
 
             logger.LogWarning(
-                "Минимальный уровень источника [{SourceSeverityLevel}], указанный во время отправки сообщение аудита [{EventType}] от [{SourceIp}] не соответствует актуальному в кэше [{CurrentSeverityLevel}].",
+                "The minimum source level [{SourceSeverityLevel}] specified when sending the audit message [{EventType}] from [{SourceIp}] does not match the actual one in the cache [{CurrentSeverityLevel}].",
                 message.SourceMinSeverityLevel,
                 eventType,
-                sourceIp,auditSettings.SeverityLevel);
+                sourceIp,
+                auditSettings.SeverityLevel);
 
             auditEventMessages.Remove(message);
         }

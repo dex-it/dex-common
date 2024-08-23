@@ -14,14 +14,18 @@ namespace Dex.Audit.Client.Services;
 /// Базовый конфигуратор события аудита
 /// </summary>
 /// <param name="auditEventOptions">Настройки события аудита.</param>
-public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOptions) : IAuditEventConfigurator
+public class BaseAuditEventConfigurator(
+    IOptions<AuditEventOptions> auditEventOptions)
+    : IAuditEventConfigurator
 {
     /// <summary>
     /// Конфигурирует сообщение аудита для отправки
     /// </summary>
     /// <param name="auditEventBaseInfo">Базовая информации о событии аудита</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public async Task<AuditEventMessage> ConfigureAuditEventAsync(AuditEventBaseInfo auditEventBaseInfo, CancellationToken cancellationToken = default)
+    public async Task<AuditEventMessage> ConfigureAuditEventAsync(
+        AuditEventBaseInfo auditEventBaseInfo,
+        CancellationToken cancellationToken = default)
     {
         var sourceAddress = await GetSourceAddressAsync(cancellationToken).ConfigureAwait(false);
         var deviceInfo = await GetDeviceInfoAsync(cancellationToken).ConfigureAwait(false);
@@ -51,7 +55,8 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
     /// Получает информацию об адресе источника события 
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    protected virtual async Task<AddressInfo> GetSourceAddressAsync(CancellationToken cancellationToken = default)
+    protected virtual async Task<AddressInfo> GetSourceAddressAsync(
+        CancellationToken cancellationToken = default)
     {
         var dnsName = Dns.GetHostName();
 
@@ -59,7 +64,8 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
         {
             DnsName = dnsName,
             MacAddress = GetMacAddress(),
-            IpAddress = await GetLocalIpAsync(dnsName, cancellationToken).ConfigureAwait(false),
+            IpAddress = await GetLocalIpAsync(dnsName, cancellationToken)
+                .ConfigureAwait(false),
             Host = Environment.MachineName
         };
     }
@@ -97,9 +103,12 @@ public class BaseAuditEventConfigurator(IOptions<AuditEventOptions> auditEventOp
             .FirstOrDefault();
     }
 
-    private static async Task<string?> GetLocalIpAsync(string dnsHostName, CancellationToken cancellationToken = default)
+    private static async Task<string?> GetLocalIpAsync(
+        string dnsHostName,
+        CancellationToken cancellationToken = default)
     {
-        var localIPs = await Dns.GetHostAddressesAsync(dnsHostName, cancellationToken).ConfigureAwait(false);
+        var localIPs = await Dns.GetHostAddressesAsync(dnsHostName, cancellationToken)
+            .ConfigureAwait(false);
         return localIPs.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork)?.ToString();
     }
 }

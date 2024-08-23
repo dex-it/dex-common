@@ -25,7 +25,8 @@ public static class DependencyInjectionExtensions
             .AddScoped(typeof(IAuditPersistentRepository), typeof(TAuditRepository))
             .AddScoped(typeof(IAuditCacheRepository), typeof(TAuditSettingsRepository))
             .AddScoped(typeof(IAuditServerSettingsService), typeof(TAuditServerSettingsServer))
-            .Configure<AuditCacheOptions>(opts => configuration.GetSection(nameof(AuditCacheOptions)).Bind(opts));
+            .Configure<AuditCacheOptions>(opts =>
+                configuration.GetSection(nameof(AuditCacheOptions)).Bind(opts));
 
         return services;
     }

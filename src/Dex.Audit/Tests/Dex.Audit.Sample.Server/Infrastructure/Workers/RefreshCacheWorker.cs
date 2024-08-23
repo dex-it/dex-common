@@ -26,12 +26,15 @@ public sealed class RefreshCacheWorker(
         {
             try
             {
-                logger.LogInformation("Служба обновления кеша аудита начала работу");
+                logger.LogDebug("The audit cache update service has started working.");
+
                 await UpdateCache(stoppingToken).ConfigureAwait(false);
+
+                logger.LogDebug("Cache updated successfully.");
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                logger.LogError(ex, "Возникла ошибка при обновлении кеша аудита");
+                logger.LogError(exception, "An error occurred while updating the audit cache.");
             }
 
             await Task.Delay(options.Value.RefreshInterval, stoppingToken).ConfigureAwait(false);
@@ -48,12 +51,8 @@ public sealed class RefreshCacheWorker(
         var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditPersistentRepository>();
         var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditCacheRepository>();
 
-        logger.LogInformation("Выполняется операция обновления настроек аудита в кэше");
-
         var auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken).ConfigureAwait(false);
 
         await auditSettingsRepository.AddRangeAsync(auditSettings, cancellationToken).ConfigureAwait(false);
-
-        logger.LogInformation("Кэш успешно обновлен");
     }
 }
