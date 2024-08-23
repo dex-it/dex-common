@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Dex.Audit.Client.Extensions;
+using Dex.Audit.Client.Grpc.Extensions;
 using Dex.Audit.Client.Services;
-using Dex.Audit.ClientSample.Application.Services;
 using Dex.Audit.ClientSample.Infrastructure.Consumers;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
@@ -52,18 +52,18 @@ public static class HostingExtensions
         services.AddScoped<IDistributedCache, MemoryDistributedCache>();
 
         // Client
-        services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>(builder.Configuration);
+        // services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>(builder.Configuration);
 
         // Grpc client
-        // services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
-        //     builder.Configuration, 
-        //     () =>
-        //     {
-        //         var handler = new HttpClientHandler();
-        //         handler.ServerCertificateCustomValidationCallback = 
-        //             HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-        //         return handler;
-        //     });
+        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
+            builder.Configuration, 
+            () =>
+            {
+                var handler = new HttpClientHandler();
+                handler.ServerCertificateCustomValidationCallback = 
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                return handler;
+            });
 
         services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
         services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>

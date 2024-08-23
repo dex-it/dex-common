@@ -3,10 +3,11 @@ using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Grpc.Extensions;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Server.Grpc.Services;
 
-public class GrpcAuditServerSettingsService(IServiceProvider serviceProvider) : AuditSettingsService.AuditSettingsServiceBase
+public class GrpcAuditServerSettingsService(IServiceProvider serviceProvider, ILogger<GrpcAuditServerSettingsService> logger) : AuditSettingsService.AuditSettingsServiceBase
 {
     private readonly List<IServerStreamWriter<AuditSettingsMessages>> _clients = new();
     
@@ -14,11 +15,18 @@ public class GrpcAuditServerSettingsService(IServiceProvider serviceProvider) : 
     {
         _ = Task.Run(async () =>
         {
-            var messages = await GetMessagesAsync().ConfigureAwait(false);
-
-            foreach (var client in _clients)
+            try
             {
-                await client.WriteAsync(messages).ConfigureAwait(false);
+                var messages = await GetMessagesAsync().ConfigureAwait(false);
+
+                foreach (var client in _clients)
+                {
+                    await client.WriteAsync(messages).ConfigureAwait(false);
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(exception, "Error due notifying clients {Message}.", exception.Message);
             }
         });
     }
