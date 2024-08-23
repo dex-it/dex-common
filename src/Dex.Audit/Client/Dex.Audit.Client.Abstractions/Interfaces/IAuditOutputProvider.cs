@@ -12,5 +12,7 @@ internal interface IAuditOutputProvider
     /// </summary>
     /// <param name="auditEvent">Аудиторское событие, которое нужно опубликовать</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public Task PublishEventAsync(AuditEventMessage auditEvent, CancellationToken cancellationToken = default);
+    public Task PublishEventAsync(
+        AuditEventMessage auditEvent,
+        CancellationToken cancellationToken = default);
 }

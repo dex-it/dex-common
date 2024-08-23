@@ -12,5 +12,7 @@ public interface IAuditEventConfigurator
     /// </summary>
     /// <param name="auditEventBaseInfo">Базовая информация о событии аудита</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public Task<AuditEventMessage> ConfigureAuditEventAsync(AuditEventBaseInfo auditEventBaseInfo, CancellationToken cancellationToken = default);
+    public Task<AuditEventMessage> ConfigureAuditEventAsync(
+        AuditEventBaseInfo auditEventBaseInfo,
+        CancellationToken cancellationToken = default);
 }

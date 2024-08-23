@@ -5,7 +5,8 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Repositories;
 
-public class AuditCacheRepository(IDistributedCache distributedCache) : IAuditCacheRepository
+public class AuditCacheRepository(IDistributedCache distributedCache)
+    : IAuditCacheRepository
 {
     public async Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default)
     {
@@ -17,7 +18,10 @@ public class AuditCacheRepository(IDistributedCache distributedCache) : IAuditCa
     {
         foreach (var setting in settings)
         {
-            await distributedCache.SetAsync(setting.EventType, JsonSerializer.SerializeToUtf8Bytes(setting), token: cancellationToken);
+            await distributedCache
+                .SetAsync(setting.EventType,
+                    JsonSerializer.SerializeToUtf8Bytes(setting),
+                    cancellationToken);
         }
     }
 }

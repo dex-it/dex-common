@@ -11,7 +11,8 @@ namespace Dex.Audit.EF.Interceptors;
 /// <summary>
 /// Сервис для перехвата и отправки записей аудита.
 /// </summary>
-public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvider)
+public class InterceptionAndSendingEntriesService(
+    IServiceProvider serviceProvider)
     : IInterceptionAndSendingEntriesService
 {
     private readonly List<EntryHelper> _entryHelpers = [];
@@ -56,7 +57,8 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
             var originalValues = entryHelper.State == EntityState.Added ? currentValues : entryHelper.OriginalValues;
             var message = FormAuditMessage(entryHelper.Entry, eventType, currentValues, originalValues);
 
-            await auditManager.WriteAsync(new AuditEventBaseInfo(eventType, entryHelper.Entry.GetType().ToString(), message, isSuccess),
+            await auditManager.WriteAsync(
+                new AuditEventBaseInfo(eventType, entryHelper.Entry.GetType().ToString(), message, isSuccess),
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -76,20 +78,26 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
         return eventType;
     }
 
-    private static string FormAuditMessage(object entity, string eventType, PropertyValues currentValues, PropertyValues originalValues)
+    private static string FormAuditMessage(
+        object entity,
+        string eventType,
+        PropertyValues currentValues,
+        PropertyValues originalValues)
     {
         StringBuilder messageBuilder = new();
-        messageBuilder.AppendLine($"Тип события аудита: {eventType}");
-        messageBuilder.AppendLine($"Сущность: {entity.GetType()}");
-        messageBuilder.AppendLine("Старое значение:");
+        messageBuilder.AppendLine($"Event type: {eventType}");
+        messageBuilder.AppendLine($"Entity: {entity.GetType()}");
+        messageBuilder.AppendLine("Original values:");
         AppendPropertyValues(originalValues, messageBuilder);
-        messageBuilder.AppendLine("Новое значение:");
+        messageBuilder.AppendLine("Current values:");
         AppendPropertyValues(currentValues, messageBuilder);
 
         return messageBuilder.ToString();
     }
 
-    private static void AppendPropertyValues(PropertyValues values, StringBuilder messageBuilder)
+    private static void AppendPropertyValues(
+        PropertyValues values,
+        StringBuilder messageBuilder)
     {
         foreach (var property in values.Properties)
         {
@@ -132,5 +140,3 @@ public class InterceptionAndSendingEntriesService(IServiceProvider serviceProvid
         public readonly PropertyValues OriginalValues = originalValues;
     }
 }
-
-

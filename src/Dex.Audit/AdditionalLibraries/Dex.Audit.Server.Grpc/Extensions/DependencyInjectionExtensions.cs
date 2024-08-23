@@ -23,7 +23,8 @@ public static class DependencyInjectionExtensions
     {
         services.AddGrpc();
         services.AddSingleton<GrpcAuditServerSettingsService>();
-        services.AddAuditServer<TAuditRepository, TAuditSettingsRepository, AuditSettingsServiceWithGrpcNotifier>(configuration);
+        services.AddAuditServer<TAuditRepository, TAuditSettingsRepository,
+            AuditSettingsServiceWithGrpcNotifier>(configuration);
 
         return services;
     }

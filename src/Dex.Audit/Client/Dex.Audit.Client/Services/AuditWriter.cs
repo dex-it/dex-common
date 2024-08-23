@@ -19,14 +19,17 @@ internal sealed class AuditWriter(
     IAuditEventConfigurator auditEventConfigurator,
     IOptions<AuditEventOptions> auditEventOptions,
     IAuditSettingsService auditSettingsService,
-    ILogger<AuditWriter> logger) : IAuditWriter
+    ILogger<AuditWriter> logger)
+    : IAuditWriter
 {
     /// <summary>
     /// Обрабатывает и публикует событие аудита
     /// </summary>
     /// <param name="eventBaseInfo">Базовая информация о событии аудита</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public async Task WriteAsync(AuditEventBaseInfo eventBaseInfo, CancellationToken cancellationToken = default)
+    public async Task WriteAsync(
+        AuditEventBaseInfo eventBaseInfo,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -39,15 +42,20 @@ internal sealed class AuditWriter(
                 return;
             }
 
-            var auditEvent = await auditEventConfigurator.ConfigureAuditEventAsync(eventBaseInfo, cancellationToken).ConfigureAwait(false);
+            var auditEvent = await auditEventConfigurator
+                .ConfigureAuditEventAsync(eventBaseInfo, cancellationToken)
+                .ConfigureAwait(false);
+
             auditEvent.SourceMinSeverityLevel = auditEventOptions.Value.MinSeverityLevel;
             auditEvent.AuditSettingsId = auditSettings?.Id;
 
-            await auditOutputProvider.PublishEventAsync(auditEvent, cancellationToken).ConfigureAwait(false);
+            await auditOutputProvider
+                .PublishEventAsync(auditEvent, cancellationToken)
+                .ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            logger.LogError(ex, "Возникла ошибка при обработке сообщения аудита");
+            logger.LogError(exception, "An error occurred while processing audit messages.");
             throw;
         }
     }

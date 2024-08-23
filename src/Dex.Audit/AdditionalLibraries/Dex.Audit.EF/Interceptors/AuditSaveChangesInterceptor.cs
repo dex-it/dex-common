@@ -5,20 +5,26 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
-/// Интерсептор аудита, отвечающий за перехват изменений контекста базы данных и отправку записей аудита
+/// Интерсептор аудита, отвечающий за перехват изменений контекста базы данных и отправку записей аудита.
 /// </summary>
-/// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита</param>
-internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService) : SaveChangesInterceptor, IAuditSaveChangesInterceptor
+/// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита.</param>
+internal class AuditSaveChangesInterceptor(
+    IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService)
+    : SaveChangesInterceptor, IAuditSaveChangesInterceptor
 {
     /// <inheritdoc/>
-    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+    public override InterceptionResult<int> SavingChanges(
+        DbContextEventData eventData,
+        InterceptionResult<int> result)
     {
         interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
         return base.SavingChanges(eventData, result);
     }
 
     /// <inheritdoc/>
-    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result,
+    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+        DbContextEventData eventData,
+        InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
         interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
@@ -26,25 +32,29 @@ internal class AuditSaveChangesInterceptor(IInterceptionAndSendingEntriesService
     }
 
     /// <inheritdoc/>
-    public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData,
+    public override async ValueTask<int> SavedChangesAsync(
+        SaveChangesCompletedEventData eventData,
         int result,
         CancellationToken cancellationToken = default)
     {
         if (CheckIfTransactionExists(eventData.Context))
         {
-            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken).ConfigureAwait(false);
+            await interceptionAndSendingEntriesService
+                .SendInterceptedEntriesAsync(true, cancellationToken).ConfigureAwait(false);
         }
 
         return await base.SavedChangesAsync(eventData, result, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public override async Task SaveChangesFailedAsync(DbContextErrorEventData eventData,
+    public override async Task SaveChangesFailedAsync(
+        DbContextErrorEventData eventData,
         CancellationToken cancellationToken = default)
     {
         if (CheckIfTransactionExists(eventData.Context))
         {
-            await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(false, cancellationToken).ConfigureAwait(false);
+            await interceptionAndSendingEntriesService
+                .SendInterceptedEntriesAsync(false, cancellationToken).ConfigureAwait(false);
         }
 
         await base.SaveChangesFailedAsync(eventData, cancellationToken).ConfigureAwait(false);

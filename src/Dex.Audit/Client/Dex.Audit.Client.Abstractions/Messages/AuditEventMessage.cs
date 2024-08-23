@@ -20,7 +20,7 @@ public class AuditEventMessage
     /// <summary>
     /// Название журнала аудита АС-источника информации о событии.
     /// </summary>
-    public string? DeviceProduct { get; set; }
+    public string? DeviceProduct { get; init; }
 
     /// <summary>
     ///  Системное имя (логин) пользователя-инициатора события.
@@ -85,12 +85,12 @@ public class AuditEventMessage
     /// <summary>
     /// Системный идентификатор сообщения о событии.
     /// </summary>
-    public long? DeviceEventClassId { get; set; }
+    public long? DeviceEventClassId { get; init; }
 
     /// <summary>
     /// Порт на стороне источника.
     /// </summary>
-    public string? SourcePort { get; set; }
+    public string? SourcePort { get; init; }
 
     /// <summary>
     /// Порт на стороне получателя.
@@ -100,7 +100,7 @@ public class AuditEventMessage
     /// <summary>
     /// Протокол на стороне источника.
     /// </summary>
-    public string? SourceProtocol { get; set; }
+    public string? SourceProtocol { get; init; }
 
     /// <summary>
     ///  Системное время источника события.

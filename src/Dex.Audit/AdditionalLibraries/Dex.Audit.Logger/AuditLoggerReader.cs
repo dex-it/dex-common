@@ -14,7 +14,8 @@ namespace Dex.Audit.Logger;
 internal sealed class AuditLoggerReader(
     IServiceProvider serviceScopeFactory,
     ILogger<AuditLoggerReader> logger,
-    IOptions<AuditLoggerOptions> options) : BackgroundService 
+    IOptions<AuditLoggerOptions> options)
+    : BackgroundService 
 {
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -26,21 +27,30 @@ internal sealed class AuditLoggerReader(
         {
             try
             {
-                await AuditLogger.BaseInfoChannel.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false);
+                await AuditLogger.BaseInfoChannel.Reader
+                    .WaitToReadAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
-                if (!AuditLogger.BaseInfoChannel.Reader.TryRead(out var auditEventBaseInfo))
+                if (!AuditLogger.BaseInfoChannel.Reader
+                        .TryRead(out var auditEventBaseInfo))
                 {
                     continue;
                 }
 
-                await auditManager.WriteAsync(auditEventBaseInfo, cancellationToken).ConfigureAwait(false);
+                await auditManager
+                    .WriteAsync(auditEventBaseInfo, cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "An error occured while trying to read auditable events: {Message}", exception.Message);
+                logger.LogError(exception, 
+                    "An error occured while trying to read auditable events: {Message}",
+                    exception.Message);
             }
 
-            await Task.Delay(options.Value.ReadEventsInterval, cancellationToken).ConfigureAwait(false);
+            await Task
+                .Delay(options.Value.ReadEventsInterval, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

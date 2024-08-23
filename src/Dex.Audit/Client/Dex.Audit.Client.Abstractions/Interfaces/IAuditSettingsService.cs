@@ -13,5 +13,7 @@ public interface IAuditSettingsService
     /// <param name="eventType"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(string eventType, CancellationToken cancellationToken = default);
+    Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(
+        string eventType,
+        CancellationToken cancellationToken = default);
 }

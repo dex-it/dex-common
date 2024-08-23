@@ -8,10 +8,14 @@ namespace Dex.Audit.EF.Interceptors;
 /// Интерсептор для перехвата коммита транзакции в базе данных.
 /// </summary>
 /// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита.</param>
-internal class AuditTransactionInterceptor(IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService) : DbTransactionInterceptor, IAuditDbTransactionInterceptor
+internal class AuditTransactionInterceptor(
+    IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService)
+    : DbTransactionInterceptor, IAuditDbTransactionInterceptor
 {
     /// <inheritdoc/>
-    public override InterceptionResult TransactionCommitting(DbTransaction transaction, TransactionEventData eventData,
+    public override InterceptionResult TransactionCommitting(
+        DbTransaction transaction,
+        TransactionEventData eventData,
         InterceptionResult result)
     {
         interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
@@ -19,25 +23,34 @@ internal class AuditTransactionInterceptor(IInterceptionAndSendingEntriesService
     }
 
     /// <inheritdoc/>
-    public override async ValueTask<InterceptionResult> TransactionCommittingAsync(DbTransaction transaction, TransactionEventData eventData,
-        InterceptionResult result, CancellationToken cancellationToken = default)
+    public override async ValueTask<InterceptionResult> TransactionCommittingAsync(
+        DbTransaction transaction,
+        TransactionEventData eventData,
+        InterceptionResult result,
+        CancellationToken cancellationToken = default)
     {
         interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
-        return await base.TransactionCommittingAsync(transaction, eventData, result, cancellationToken).ConfigureAwait(false);
+        return await base.TransactionCommittingAsync(transaction, eventData, result, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public override void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
+    public override void TransactionCommitted(
+        DbTransaction transaction,
+        TransactionEndEventData eventData)
     {
         interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true).RunSynchronously();
         base.TransactionCommitted(transaction, eventData);
     }
 
     /// <inheritdoc/>
-    public override async Task TransactionCommittedAsync(DbTransaction transaction, TransactionEndEventData eventData,
+    public override async Task TransactionCommittedAsync(
+        DbTransaction transaction,
+        TransactionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken).ConfigureAwait(false);
+        await interceptionAndSendingEntriesService.SendInterceptedEntriesAsync(true, cancellationToken)
+            .ConfigureAwait(false);
         await base.TransactionCommittedAsync(transaction, eventData, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -51,10 +51,10 @@ public static class HostingExtensions
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
         services.AddScoped<IDistributedCache, MemoryDistributedCache>();
 
-        // Client
+        // Audit Client
         // services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>(builder.Configuration);
 
-        // Grpc client
+        // Audit Grpc client
         services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
             builder.Configuration, 
             () =>

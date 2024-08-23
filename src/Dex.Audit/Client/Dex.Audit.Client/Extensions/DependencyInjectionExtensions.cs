@@ -20,7 +20,7 @@ public static class DependencyInjectionExtensions
         IConfiguration configuration)
         where TAuditEventConfigurator : class, IAuditEventConfigurator
         where TAuditCacheRepository : class, IAuditCacheRepository
-        where TAuditSettingsService : class, IAuditSettingsService 
+        where TAuditSettingsService : class, IAuditSettingsService
     {
         services
             .AddScoped<IAuditOutputProvider, AuditOutputProvider>()
@@ -28,7 +28,8 @@ public static class DependencyInjectionExtensions
             .AddScoped(typeof(IAuditEventConfigurator), typeof(TAuditEventConfigurator))
             .AddScoped(typeof(IAuditCacheRepository), typeof(TAuditCacheRepository))
             .AddScoped(typeof(IAuditSettingsService), typeof(TAuditSettingsService))
-            .Configure<AuditEventOptions>(opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));
+            .Configure<AuditEventOptions>(
+                opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));
 
         return services;
     }

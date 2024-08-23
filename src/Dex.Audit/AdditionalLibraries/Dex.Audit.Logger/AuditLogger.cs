@@ -9,9 +9,15 @@ namespace Dex.Audit.Logger;
 /// </summary>
 internal class AuditLogger : ILogger
 {
-    internal static readonly Channel<AuditEventBaseInfo> BaseInfoChannel = Channel.CreateBounded<AuditEventBaseInfo>(new BoundedChannelOptions(Int32.MaxValue));
+    internal static readonly Channel<AuditEventBaseInfo> BaseInfoChannel =
+        Channel.CreateBounded<AuditEventBaseInfo>(new BoundedChannelOptions(int.MaxValue));
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    public void Log<TState>(
+        LogLevel logLevel,
+        EventId eventId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
     {
         if (eventId.Id != AuditLoggerConstants.AuditEventId || string.IsNullOrEmpty(eventId.Name)) return;
 

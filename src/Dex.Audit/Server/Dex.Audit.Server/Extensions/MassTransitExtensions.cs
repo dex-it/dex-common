@@ -59,7 +59,8 @@ public static class MassTransitExtensions
             if (enableRetry)
             {
                 endpointConfigurator.UseMessageRetry(retryConfigurator =>
-                    retryConfigurator.SetRetryPolicy(filter => filter.Interval(retryCount, retryIntervalSeconds.Seconds())));
+                    retryConfigurator.SetRetryPolicy(filter =>
+                        filter.Interval(retryCount, retryIntervalSeconds.Seconds())));
             }
         });
     }

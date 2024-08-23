@@ -8,7 +8,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Client.Grpc.Workers;
 
-internal class GrpcAuditBackgroundWorker(ILogger<GrpcAuditBackgroundWorker> logger, IServiceProvider serviceProvider) : BackgroundService
+internal class GrpcAuditBackgroundWorker(
+    ILogger<GrpcAuditBackgroundWorker> logger,
+    IServiceProvider serviceProvider)
+    : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -28,7 +31,8 @@ internal class GrpcAuditBackgroundWorker(ILogger<GrpcAuditBackgroundWorker> logg
                                    .ConfigureAwait(false))
                 {
                     await cacheRepository
-                        .AddRangeAsync(cat.Messages.Select(message => message.MapToAuditSettings()), stoppingToken)
+                        .AddRangeAsync(cat.Messages
+                            .Select(message => message.MapToAuditSettings()), stoppingToken)
                         .ConfigureAwait(false);
                 }
             }
