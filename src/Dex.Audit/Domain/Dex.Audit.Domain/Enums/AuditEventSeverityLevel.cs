@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Dex.Audit.Domain.Enums;
 
 /// <summary>
@@ -5,23 +7,15 @@ namespace Dex.Audit.Domain.Enums;
 /// </summary>
 public enum AuditEventSeverityLevel
 {
-    /// <summary>
-    /// Нулевая критичность.
-    /// </summary>
-    Zero = 0,
+    [Description("Низкий уровень.")]
+    Low = 0,
 
-    /// <summary>
-    /// Первый уровень критичности.
-    /// </summary>
-    First = 1,
+    [Description("Средний уровень.")]
+    Medium = 1,
 
-    /// <summary>
-    /// Второй уровень критичности.
-    /// </summary>
-    Second = 2,
+    [Description("Высокий уровень.")]
+    High = 2,
 
-    /// <summary>
-    /// Третий уровень критичности.
-    /// </summary>
-    Third = 3
+    [Description("Критический уровень.")]
+    Critical = 3
 }

@@ -17,37 +17,37 @@ internal static class AuditDatabaseFillingHelper
                 new()
                 {
                     EventType = AuditEventType.None.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
+                    SeverityLevel = AuditEventSeverityLevel.Low
                 },
                 new()
                 {
                     EventType = AuditEventType.StartSystem.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
+                    SeverityLevel = AuditEventSeverityLevel.Low
                 },
                 new()
                 {
                     EventType = AuditEventType.ShutdownSystem.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
+                    SeverityLevel = AuditEventSeverityLevel.Low
                 },
                 new()
                 {
                     EventType = AuditEventType.ObjectCreated.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
+                    SeverityLevel = AuditEventSeverityLevel.Low
                 },
                 new()
                 {
                     EventType = AuditEventType.ObjectChanged.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
+                    SeverityLevel = AuditEventSeverityLevel.Low
                 },
                 new()
                 {
                     EventType = AuditEventType.ObjectRead.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
+                    SeverityLevel = AuditEventSeverityLevel.Low
                 },
                 new()
                 {
                     EventType = AuditEventType.ObjectDeleted.ToString(),
-                    SeverityLevel = AuditEventSeverityLevel.First
+                    SeverityLevel = AuditEventSeverityLevel.Low
                 }
             };
         context.AuditSettings.AddRange(settings);
