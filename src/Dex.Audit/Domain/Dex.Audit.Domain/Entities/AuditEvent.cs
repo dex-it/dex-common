@@ -28,7 +28,7 @@ public class AuditEvent
     public required Destination Destination { get; init; }
 
     /// <summary>
-    /// Объект события 
+    /// Объект события.
     /// </summary>
     public required string EventObject { get; init; }
 

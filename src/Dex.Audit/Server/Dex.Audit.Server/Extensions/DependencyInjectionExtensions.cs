@@ -19,7 +19,7 @@ public static class DependencyInjectionExtensions
         IConfiguration configuration)
         where TAuditRepository : class, IAuditPersistentRepository
         where TAuditSettingsRepository : class, IAuditCacheRepository
-        where TAuditServerSettingsServer : class, IAuditServerSettingsService 
+        where TAuditServerSettingsServer : class, IAuditServerSettingsService
     {
         services
             .AddScoped(typeof(IAuditPersistentRepository), typeof(TAuditRepository))

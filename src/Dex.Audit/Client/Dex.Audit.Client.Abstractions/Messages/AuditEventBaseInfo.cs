@@ -26,7 +26,7 @@ public class AuditEventBaseInfo
     public bool IsSuccess { get; }
 
     /// <summary>
-    /// Инициализирует новый экземпляр класса <see cref="AuditEventBaseInfo"/> 
+    /// Инициализирует новый экземпляр класса <see cref="AuditEventBaseInfo"/>
     /// </summary>
     /// <param name="eventType">Тип события аудита</param>
     /// <param name="eventObject">Объект события аудита</param>

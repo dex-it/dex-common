@@ -19,12 +19,12 @@ public class Device
     /// Название журнала аудита АС.
     /// </summary>
     public string? Product { get; init; }
-    
+
     /// <summary>
     /// Полное имя процесса (службы).
     /// </summary>
     public string? ProcessName { get; init; }
-    
+
     /// <summary>
     /// Системный идентификатор сообщения о событии.
     /// </summary>

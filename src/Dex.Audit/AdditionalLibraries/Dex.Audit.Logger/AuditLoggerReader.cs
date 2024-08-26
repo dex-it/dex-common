@@ -15,7 +15,7 @@ internal sealed class AuditLoggerReader(
     IServiceProvider serviceScopeFactory,
     ILogger<AuditLoggerReader> logger,
     IOptions<AuditLoggerOptions> options)
-    : BackgroundService 
+    : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -43,7 +43,7 @@ internal sealed class AuditLoggerReader(
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, 
+                logger.LogError(exception,
                     "An error occured while trying to read auditable events: {Message}",
                     exception.Message);
             }

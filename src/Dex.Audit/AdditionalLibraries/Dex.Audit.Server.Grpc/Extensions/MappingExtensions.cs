@@ -9,11 +9,11 @@ namespace Dex.Audit.Server.Grpc.Extensions;
 internal static class MappingExtensions
 {
     /// <summary>
-    /// Замаппить сущность <see cref="AuditSettings"/> в grpc сообщение <see cref="AuditSettingsMessage"/>. 
+    /// Замапить сущность <see cref="AuditSettings"/> в grpc сообщение <see cref="AuditSettingsMessage"/>.
     /// </summary>
-    /// <param name="auditSettings"><see cref="AuditSettingsMessage"/></param>
-    /// <returns><see cref="AuditSettings"/></returns>
-    internal static AuditSettingsMessage MapToAuditSettings(this AuditSettings auditSettings)
+    /// <param name="auditSettings"><see cref="AuditSettings"/></param>
+    /// <returns><see cref="AuditSettingsMessage"/><see cref="AuditSettings"/></returns>
+    internal static AuditSettingsMessage MapToAuditSettingsMessage(this AuditSettings auditSettings)
     {
         return new AuditSettingsMessage
         {

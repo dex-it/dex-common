@@ -52,7 +52,7 @@ public class BaseAuditEventConfigurator(
     }
 
     /// <summary>
-    /// Получает информацию об адресе источника события 
+    /// Получает информацию об адресе источника события.
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     protected virtual async Task<AddressInfo> GetSourceAddressAsync(

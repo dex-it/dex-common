@@ -14,7 +14,7 @@ public class GrpcAuditServerSettingsService(
 {
     private static readonly SemaphoreSlim ClientsSemaphore = new(1, 1);
     private readonly List<IServerStreamWriter<AuditSettingsMessages>> _clients = new();
-    
+
     internal void NotifyClients()
     {
         _ = Task.Run(async () =>
@@ -107,7 +107,7 @@ public class GrpcAuditServerSettingsService(
         var messages = new AuditSettingsMessages();
 
         messages.Messages
-            .AddRange(settings.Select(auditSettings => auditSettings.MapToAuditSettings()));
+            .AddRange(settings.Select(auditSettings => auditSettings.MapToAuditSettingsMessage()));
 
         return messages;
     }
