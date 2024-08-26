@@ -35,18 +35,8 @@ public class GrpcAuditServerSettingsService(
 
                 foreach (var client in _clients)
                 {
-                    try
-                    {
-                        await client
-                            .WriteAsync(messages)
-                            .ConfigureAwait(false);
-                    }
-                    catch (Exception exception)
-                    {
-                        logger.LogError(exception,
-                            "An error occurred while notifying client: {Message}.",
-                            exception.Message);
-                    }
+                    await NotifyClientAsync(client, messages)
+                        .ConfigureAwait(false);
                 }
             }
             catch (Exception exception)
@@ -110,5 +100,21 @@ public class GrpcAuditServerSettingsService(
             .AddRange(settings.Select(auditSettings => auditSettings.MapToAuditSettingsMessage()));
 
         return messages;
+    }
+
+    private async Task NotifyClientAsync(IServerStreamWriter<AuditSettingsMessages> client, AuditSettingsMessages messages)
+    {
+        try
+        {
+            await client
+                .WriteAsync(messages)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception,
+                "An error occurred while notifying client: {Message}.",
+                exception.Message);
+        }
     }
 }
