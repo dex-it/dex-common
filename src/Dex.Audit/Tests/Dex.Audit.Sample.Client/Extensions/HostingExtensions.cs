@@ -9,11 +9,10 @@ using Dex.Audit.ClientSample.Infrastructure.Workers;
 using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Dex.Audit.Logger.Extensions;
-using Dex.Audit.MediatR.PipelineBehaviours;
+using Dex.Audit.MediatR.Extensions;
 using Dex.Audit.Sample.Shared.Dto;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
-using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
 using AuditCacheRepository = Dex.Audit.ClientSample.Infrastructure.Repositories.AuditCacheRepository;
 
@@ -84,11 +83,12 @@ public static class HostingExtensions
                 configurator.ConfigureEndpoints(context);
             });
         });
-        services.AddTransient(typeof(AuditBehavior<,>), typeof(AuditBehavior<,>));
+        
         services.AddMediatR(configuration =>
         {
             configuration.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
-            configuration.AddBehavior(typeof(IPipelineBehavior<,>),typeof(AuditBehavior<,>));
+            // Audit MediatR
+            configuration.AddPipelineAuditBehavior();
         });
 
         // Additional
