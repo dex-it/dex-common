@@ -21,13 +21,13 @@ internal class AuditLogger : ILogger
     {
         if (eventId.Id != AuditLoggerConstants.AuditEventId || string.IsNullOrEmpty(eventId.Name)) return;
 
-        var failure = logLevel is LogLevel.Critical or LogLevel.Error or LogLevel.Warning;
+        var success = logLevel is not (LogLevel.Critical or LogLevel.Error or LogLevel.Warning);
 
         BaseInfoChannel.Writer.TryWrite(new AuditEventBaseInfo(
             eventId.Name,
             nameof(Log),
             formatter(state, exception),
-            !failure));
+            success));
     }
 
     public bool IsEnabled(LogLevel logLevel)
