@@ -55,11 +55,11 @@ public static class HostingExtensions
 
         // Audit Grpc client
         services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
-            builder.Configuration, 
+            builder.Configuration,
             () =>
             {
                 var handler = new HttpClientHandler();
-                handler.ServerCertificateCustomValidationCallback = 
+                handler.ServerCertificateCustomValidationCallback =
                     HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
                 return handler;
             });
@@ -83,7 +83,7 @@ public static class HostingExtensions
                 configurator.ConfigureEndpoints(context);
             });
         });
-        
+
         services.AddMediatR(configuration =>
         {
             configuration.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());

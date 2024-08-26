@@ -14,17 +14,17 @@ public class Destination
     /// Адрес получателя объекта события.
     /// </summary>
     public required AddressInfo AddressInfo { get; init; }
-    
+
     /// <summary>
     /// Порт на стороне получателя.
     /// </summary>
     public string? Port { get; init; }
-    
+
     /// <summary>
     /// Системное время получателя.
     /// </summary>
     public DateTime End { get; set; }
-    
+
     /// <summary>
     /// Время GMT получателя.
     /// </summary>
