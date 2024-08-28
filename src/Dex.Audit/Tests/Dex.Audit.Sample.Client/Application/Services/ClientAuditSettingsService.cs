@@ -6,31 +6,31 @@ using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 namespace Dex.Audit.ClientSample.Application.Services;
 
 public class ClientAuditSettingsService(
-    IAuditCacheRepository cacheRepository,
+    IAuditSettingsCacheRepository settingsCacheRepository,
     IConfiguration configuration,
     ILogger<ClientAuditSettingsService> logger) : IAuditSettingsService
 {
     public async Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(string eventType, CancellationToken cancellationToken = default)
     {
-        var setting = await cacheRepository.GetAsync(eventType, cancellationToken);
+        var setting = await settingsCacheRepository.GetAsync(eventType, cancellationToken);
 
         if (setting != null)
         {
             return setting;
         }
 
-        var settings = await GetSettingsFromServerAsync(cancellationToken);
+        var settings = (await GetSettingsFromServerAsync(cancellationToken))?.ToArray();
 
         if (settings == null)
         {
             return null;
         }
 
-        await cacheRepository
+        await settingsCacheRepository
             .AddRangeAsync(settings, cancellationToken)
             .ConfigureAwait(false);
 
-        return await cacheRepository.GetAsync(eventType, cancellationToken);
+        return settings.FirstOrDefault(auditSettings => auditSettings.EventType == eventType);
     }
 
     private async Task<IEnumerable<AuditSettings>?> GetSettingsFromServerAsync(CancellationToken cancellationToken)

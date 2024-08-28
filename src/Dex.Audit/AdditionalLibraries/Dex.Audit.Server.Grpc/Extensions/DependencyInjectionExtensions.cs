@@ -15,16 +15,16 @@ public static class DependencyInjectionExtensions
     /// <summary>
     /// Добавляет необходимые для работы аудита зависимости.
     /// </summary>
-    public static IServiceCollection AddGrpcAuditServer<TAuditRepository, TAuditSettingsRepository>(
+    public static IServiceCollection AddGrpcAuditServer<TAuditEventsRepository, TAuditSettingsRepository, TAuditSettingsCacheRepository>(
         this IServiceCollection services,
         IConfiguration configuration)
-        where TAuditRepository : class, IAuditPersistentRepository
-        where TAuditSettingsRepository : class, IAuditCacheRepository
+        where TAuditEventsRepository : class, IAuditEventsRepository
+        where TAuditSettingsRepository : class, IAuditSettingsRepository
+        where TAuditSettingsCacheRepository : class, IAuditSettingsCacheRepository
     {
         services.AddGrpc();
         services.AddSingleton<GrpcAuditServerSettingsService>();
-        services.AddAuditServer<TAuditRepository, TAuditSettingsRepository,
-            AuditSettingsServiceWithGrpcNotifier>(configuration);
+        services.AddAuditServer<TAuditEventsRepository, TAuditSettingsRepository, TAuditSettingsCacheRepository, AuditSettingsServiceWithGrpcNotifier>(configuration);
 
         return services;
     }

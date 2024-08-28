@@ -11,13 +11,13 @@ namespace Dex.Audit.Server.Consumers;
 /// <summary>
 /// Обработчик аудиторских событий, полученных через шину сообщений.
 /// </summary>
-/// <param name="auditPersistentRepository"><see cref="IAuditPersistentRepository"/>.</param>
+/// <param name="auditEventsRepository"><see cref="IAuditEventsRepository"/>.</param>
 /// <param name="logger"><see cref="ILogger"/>.</param>
-/// <param name="auditCacheRepository"><see cref="IAuditCacheRepository"/>.</param>
+/// <param name="auditSettingsCacheRepository"><see cref="IAuditSettingsCacheRepository"/>.</param>
 public class AuditEventConsumer(
-    IAuditPersistentRepository auditPersistentRepository,
+    IAuditEventsRepository auditEventsRepository,
     ILogger<AuditEventConsumer> logger,
-    IAuditCacheRepository auditCacheRepository)
+    IAuditSettingsCacheRepository auditSettingsCacheRepository)
     : IConsumer<Batch<AuditEventMessage>>
 {
     /// <summary>
@@ -29,12 +29,12 @@ public class AuditEventConsumer(
     {
         try
         {
-            var unMappedAuditEvents = await GetRelevantAuditMessages(context)
+            var unMappedAuditEvents = await GetRelevantAuditMessages(context, context.CancellationToken)
                 .ConfigureAwait(false);
 
             var auditEvents = unMappedAuditEvents.Select(MapAuditEventFromMessage);
 
-            await auditPersistentRepository
+            await auditEventsRepository
                 .AddAuditEventsRangeAsync(auditEvents, context.CancellationToken)
                 .ConfigureAwait(false);
         }
@@ -45,35 +45,39 @@ public class AuditEventConsumer(
     }
 
     private async Task<IEnumerable<AuditEventMessage>> GetRelevantAuditMessages(
-        ConsumeContext<Batch<AuditEventMessage>> context)
+        ConsumeContext<Batch<AuditEventMessage>> context,
+        CancellationToken cancellationToken)
     {
         var auditMessages = context.Message
+            .Where(consumeContext => consumeContext.Message.AuditSettingsId != null)
             .Select(consumeContext => consumeContext.Message)
-            .ToArray();
+            .ToList();
 
-        var auditEventMessages = auditMessages.ToHashSet();
+        var messagesWithUnknownSettings = context.Message
+            .Where(consumeContext => consumeContext.Message.AuditSettingsId is null)
+            .Select(consumeContext => consumeContext.Message)
+            .ToList();
 
-        foreach (var message in auditMessages
-                     .Where(consumeContext => consumeContext.AuditSettingsId is null))
+        var auditSettings = await GetAuditSettings(messagesWithUnknownSettings, cancellationToken);
+
+        foreach (var message in messagesWithUnknownSettings)
         {
             var eventType = message.EventType;
             var sourceIp = message.SourceIpAddress;
 
-            var auditSettings = await auditCacheRepository
-                .GetAsync(eventType, context.CancellationToken)
-                .ConfigureAwait(false);
+            auditSettings.TryGetValue(eventType, out var setting);
 
-            if (auditSettings is null)
+            if (setting == null)
             {
                 logger.LogWarning("Failed to retrieve settings for event type [{EventType}] from cache.", eventType);
-
-                auditEventMessages.Remove(message);
 
                 continue;
             }
 
-            if (auditSettings.SeverityLevel >= message.SourceMinSeverityLevel)
+            if (setting.SeverityLevel >= message.SourceMinSeverityLevel)
             {
+                auditMessages.Add(message);
+
                 continue;
             }
 
@@ -82,12 +86,22 @@ public class AuditEventConsumer(
                 message.SourceMinSeverityLevel,
                 eventType,
                 sourceIp,
-                auditSettings.SeverityLevel);
-
-            auditEventMessages.Remove(message);
+                setting.SeverityLevel);
         }
 
-        return auditEventMessages;
+        return auditMessages;
+    }
+
+    private async Task<IDictionary<string, AuditSettings?>> GetAuditSettings(
+        List<AuditEventMessage> messagesWithUnknownSettings,
+        CancellationToken cancellationToken)
+    {
+        var unknownEventTypes = messagesWithUnknownSettings
+            .Select(pair => pair.EventType)
+            .Distinct()
+            .ToArray();
+
+        return await auditSettingsCacheRepository.GetDictionaryAsync(unknownEventTypes, cancellationToken);
     }
 
     private static AuditEvent MapAuditEventFromMessage(AuditEventMessage message)

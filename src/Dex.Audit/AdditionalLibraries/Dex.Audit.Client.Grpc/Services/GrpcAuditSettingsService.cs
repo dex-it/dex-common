@@ -9,7 +9,7 @@ namespace Dex.Audit.Client.Grpc.Services;
 
 internal class GrpcAuditSettingsService(
     ILogger<GrpcAuditSettingsService> logger,
-    IAuditCacheRepository cacheRepository,
+    IAuditSettingsCacheRepository settingsCacheRepository,
     AuditSettingsService.AuditSettingsServiceClient grpcClient)
     : IAuditSettingsService
 {
@@ -19,7 +19,7 @@ internal class GrpcAuditSettingsService(
     {
         try
         {
-            var setting = await cacheRepository
+            var setting = await settingsCacheRepository
                 .GetAsync(eventType, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -32,11 +32,11 @@ internal class GrpcAuditSettingsService(
                 .GetSettingsAsync(new Empty(), cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            await cacheRepository
+            await settingsCacheRepository
                 .AddRangeAsync(settings.Messages.Select(message => message.MapToAuditSettings()), cancellationToken)
                 .ConfigureAwait(false);
 
-            return await cacheRepository
+            return await settingsCacheRepository
                 .GetAsync(eventType, cancellationToken)
                 .ConfigureAwait(false);
         }

@@ -17,7 +17,7 @@ internal class GrpcAuditBackgroundWorker(
     {
         using var scope = serviceProvider.CreateScope();
         var client = scope.ServiceProvider.GetRequiredService<AuditSettingsService.AuditSettingsServiceClient>();
-        var cacheRepository = scope.ServiceProvider.GetRequiredService<IAuditCacheRepository>();
+        var cacheRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsCacheRepository>();
 
         while (!stoppingToken.IsCancellationRequested)
         {
