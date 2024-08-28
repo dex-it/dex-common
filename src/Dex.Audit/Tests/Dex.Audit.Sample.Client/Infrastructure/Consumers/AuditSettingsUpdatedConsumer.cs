@@ -5,7 +5,7 @@ using MassTransit;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Consumers;
 
-public class AuditSettingsUpdatedConsumer(IAuditCacheRepository cacheRepository) : IConsumer<AuditSettingsDto>
+public class AuditSettingsUpdatedConsumer(IAuditSettingsCacheRepository settingsCacheRepository) : IConsumer<AuditSettingsDto>
 {
     public async Task Consume(ConsumeContext<AuditSettingsDto> context)
     {
@@ -17,6 +17,6 @@ public class AuditSettingsUpdatedConsumer(IAuditCacheRepository cacheRepository)
                 SeverityLevel = dto.SeverityLevel
             });
 
-        await cacheRepository.AddRangeAsync(settings, context.CancellationToken);
+        await settingsCacheRepository.AddRangeAsync(settings, context.CancellationToken);
     }
 }

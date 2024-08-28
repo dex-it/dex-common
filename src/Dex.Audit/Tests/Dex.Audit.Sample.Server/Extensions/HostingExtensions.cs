@@ -55,10 +55,10 @@ public static class HostingExtensions
         services.AddDbContext<AuditServerDbContext>();
 
         // Audit Server
-        //services.AddAuditServer<AuditPersistentRepository, AuditCacheRepository, AuditServerSettingsService>(builder.Configuration);
+        //services.AddAuditServer<AuditEventsRepository, AuditSettingsRepository, AuditSettingsCacheRepository, AuditServerSettingsService>(builder.Configuration);
 
         // Audit Grpc Server
-        services.AddGrpcAuditServer<AuditPersistentRepository, AuditCacheRepository>(builder.Configuration);
+        services.AddGrpcAuditServer<AuditEventsRepository, AuditSettingsRepository, AuditSettingsCacheRepository>(builder.Configuration);
 
         services.AddMassTransit(busRegistrationConfigurator =>
         {

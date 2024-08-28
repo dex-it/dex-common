@@ -5,7 +5,7 @@ namespace Dex.Audit.Client.Abstractions.Interfaces;
 /// <summary>
 /// Репозиторий кэшируемого хранилища.
 /// </summary>
-public interface IAuditCacheRepository
+public interface IAuditSettingsCacheRepository
 {
     /// <summary>
     /// Получить настройки из кэша по типу события.
@@ -15,6 +15,16 @@ public interface IAuditCacheRepository
     /// <returns></returns>
     Task<AuditSettings?> GetAsync(
         string eventType,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Получить настройки из кэша по типам событий.
+    /// </summary>
+    /// <param name="eventTypes">Типы событий.</param>
+    /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
+    /// <returns></returns>
+    Task<IDictionary<string, AuditSettings?>> GetDictionaryAsync(
+        IEnumerable<string> eventTypes,
         CancellationToken cancellationToken = default);
 
     /// <summary>

@@ -5,6 +5,7 @@ using Dex.Audit.Client.Services;
 using Dex.Audit.ClientSample.Infrastructure.Consumers;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
+using Dex.Audit.ClientSample.Infrastructure.Repositories;
 using Dex.Audit.ClientSample.Infrastructure.Workers;
 using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
@@ -14,7 +15,6 @@ using Dex.Audit.Sample.Shared.Dto;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
-using AuditCacheRepository = Dex.Audit.ClientSample.Infrastructure.Repositories.AuditCacheRepository;
 
 namespace Dex.Audit.ClientSample.Extensions;
 
@@ -51,10 +51,10 @@ public static class HostingExtensions
         services.AddScoped<IDistributedCache, MemoryDistributedCache>();
 
         // Audit Client
-        // services.AddAuditClient<BaseAuditEventConfigurator, AuditCacheRepository, ClientAuditSettingsService>(builder.Configuration);
+        // services.AddAuditClient<BaseAuditEventConfigurator, AuditSettingsCacheRepository, ClientAuditSettingsService>(builder.Configuration);
 
         // Audit Grpc client
-        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditCacheRepository>(
+        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditSettingsCacheRepository>(
             builder.Configuration,
             () =>
             {

@@ -30,7 +30,7 @@ public class GrpcAuditServerSettingsService(
                     return;
                 }
 
-                var messages = await GetMessagesAsync()
+                var messages = await GetMessages()
                     .ConfigureAwait(false);
 
                 foreach (var client in _clients)
@@ -56,7 +56,7 @@ public class GrpcAuditServerSettingsService(
         Empty request,
         ServerCallContext context)
     {
-        return await GetMessagesAsync(context.CancellationToken)
+        return await GetMessages(context.CancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -71,12 +71,7 @@ public class GrpcAuditServerSettingsService(
         _clients.Add(responseStream);
         ClientsSemaphore.Release();
 
-        while (!context.CancellationToken.IsCancellationRequested)
-        {
-            await Task
-                .Delay(1000)
-                .ConfigureAwait(false);
-        }
+        context.CancellationToken.WaitHandle.WaitOne();
 
         await ClientsSemaphore
             .WaitAsync()
@@ -85,12 +80,12 @@ public class GrpcAuditServerSettingsService(
         ClientsSemaphore.Release();
     }
 
-    private async Task<AuditSettingsMessages> GetMessagesAsync(CancellationToken cancellationToken = default)
+    private async Task<AuditSettingsMessages> GetMessages(CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
 
         var settings = await scope.ServiceProvider
-            .GetRequiredService<IAuditPersistentRepository>()
+            .GetRequiredService<IAuditSettingsRepository>()
             .GetAllSettingsAsync(cancellationToken)
             .ConfigureAwait(false);
 

@@ -5,26 +5,29 @@ using MassTransit;
 
 namespace Dex.Audit.ServerSample.Application.Services;
 
-public class AuditServerSettingsService(IAuditPersistentRepository persistentRepository, IPublishEndpoint publishEndpoint) : IAuditServerSettingsService
+public class AuditServerSettingsService(
+    IAuditSettingsRepository auditSettingsRepository,
+    IPublishEndpoint publishEndpoint)
+    : IAuditServerSettingsService
 {
     public async Task AddOrUpdateSettingsAsync(string eventType, AuditEventSeverityLevel severityLevel,
         CancellationToken cancellationToken = default)
     {
-        await persistentRepository.AddOrUpdateSettings(eventType, severityLevel, cancellationToken);
+        await auditSettingsRepository.AddOrUpdateSettings(eventType, severityLevel, cancellationToken);
 
         await SendSettingsUpdated(cancellationToken);
     }
 
     public async Task DeleteSettingsAsync(string eventType, CancellationToken cancellationToken = default)
     {
-        await persistentRepository.DeleteSettings(eventType, cancellationToken);
+        await auditSettingsRepository.DeleteSettings(eventType, cancellationToken);
 
         await SendSettingsUpdated(cancellationToken);
     }
 
     private async Task SendSettingsUpdated(CancellationToken cancellationToken)
     {
-        var settings = await persistentRepository.GetAllSettingsAsync(cancellationToken);
+        var settings = await auditSettingsRepository.GetAllSettingsAsync(cancellationToken);
 
         await publishEndpoint
             .Publish(new AuditSettingsDto(settings
