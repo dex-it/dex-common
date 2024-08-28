@@ -19,14 +19,14 @@ public static class DependencyInjectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
         where TAuditEventConfigurator : class, IAuditEventConfigurator
-        where TAuditCacheRepository : class, IAuditCacheRepository
+        where TAuditCacheRepository : class, IAuditSettingsCacheRepository
         where TAuditSettingsService : class, IAuditSettingsService
     {
         services
             .AddScoped<IAuditOutputProvider, AuditOutputProvider>()
             .AddScoped<IAuditWriter, AuditWriter>()
             .AddScoped(typeof(IAuditEventConfigurator), typeof(TAuditEventConfigurator))
-            .AddScoped(typeof(IAuditCacheRepository), typeof(TAuditCacheRepository))
+            .AddScoped(typeof(IAuditSettingsCacheRepository), typeof(TAuditCacheRepository))
             .AddScoped(typeof(IAuditSettingsService), typeof(TAuditSettingsService))
             .Configure<AuditEventOptions>(
                 opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));

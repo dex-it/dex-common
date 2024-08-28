@@ -4,7 +4,7 @@ using Dex.Audit.Server.Abstractions.Interfaces;
 namespace Dex.Audit.Server.Grpc.Services;
 
 internal class AuditSettingsServiceWithGrpcNotifier(
-    IAuditPersistentRepository persistentRepository,
+    IAuditSettingsRepository eventsRepository,
     GrpcAuditServerSettingsService auditServerSettingsService)
     : IAuditServerSettingsService
 {
@@ -13,7 +13,7 @@ internal class AuditSettingsServiceWithGrpcNotifier(
         AuditEventSeverityLevel severityLevel,
         CancellationToken cancellationToken = default)
     {
-        await persistentRepository
+        await eventsRepository
             .AddOrUpdateSettings(eventType, severityLevel, cancellationToken)
             .ConfigureAwait(false);
         auditServerSettingsService.NotifyClients();
@@ -23,7 +23,7 @@ internal class AuditSettingsServiceWithGrpcNotifier(
         string eventType,
         CancellationToken cancellationToken = default)
     {
-        await persistentRepository
+        await eventsRepository
             .DeleteSettings(eventType, cancellationToken)
             .ConfigureAwait(false);
         auditServerSettingsService.NotifyClients();

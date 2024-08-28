@@ -14,16 +14,19 @@ public static class DependencyInjectionExtensions
     /// <summary>
     /// Добавляет необходимые для работы аудита зависимости.
     /// </summary>
-    public static IServiceCollection AddAuditServer<TAuditRepository, TAuditSettingsRepository, TAuditServerSettingsServer>(
+    public static IServiceCollection AddAuditServer
+        <TAuditEventsRepository, TAuditSettingsRepository, TAuditCacheRepository, TAuditServerSettingsServer>(
         this IServiceCollection services,
         IConfiguration configuration)
-        where TAuditRepository : class, IAuditPersistentRepository
-        where TAuditSettingsRepository : class, IAuditCacheRepository
+        where TAuditEventsRepository : class, IAuditEventsRepository
+        where TAuditSettingsRepository : class, IAuditSettingsRepository
+        where TAuditCacheRepository : class, IAuditSettingsCacheRepository
         where TAuditServerSettingsServer : class, IAuditServerSettingsService
     {
         services
-            .AddScoped(typeof(IAuditPersistentRepository), typeof(TAuditRepository))
-            .AddScoped(typeof(IAuditCacheRepository), typeof(TAuditSettingsRepository))
+            .AddScoped(typeof(IAuditEventsRepository), typeof(TAuditEventsRepository))
+            .AddScoped(typeof(IAuditSettingsRepository), typeof(TAuditSettingsRepository))
+            .AddScoped(typeof(IAuditSettingsCacheRepository), typeof(TAuditCacheRepository))
             .AddScoped(typeof(IAuditServerSettingsService), typeof(TAuditServerSettingsServer))
             .Configure<AuditCacheOptions>(opts =>
                 configuration.GetSection(nameof(AuditCacheOptions)).Bind(opts));

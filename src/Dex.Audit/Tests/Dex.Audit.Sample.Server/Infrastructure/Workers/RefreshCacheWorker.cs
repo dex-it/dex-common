@@ -48,8 +48,8 @@ public sealed class RefreshCacheWorker(
     private async Task UpdateCache(CancellationToken cancellationToken = default)
     {
         using var scope = scopeFactory.CreateScope();
-        var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditPersistentRepository>();
-        var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditCacheRepository>();
+        var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
+        var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsCacheRepository>();
 
         var auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken).ConfigureAwait(false);
 

@@ -11,7 +11,7 @@ namespace Dex.Audit.Client.Services;
 /// </summary>
 /// <param name="auditOutputProvider"><see cref="IAuditOutputProvider"/></param>
 /// <param name="auditEventConfigurator"><see cref="IAuditEventConfigurator"/></param>
-/// <param name="auditSettingsService"><see cref="IAuditCacheRepository"/></param>
+/// <param name="auditSettingsService"><see cref="IAuditSettingsCacheRepository"/></param>
 /// <param name="auditEventOptions"><see cref="AuditEventOptions"/></param>
 /// <param name="logger"><see cref="ILogger{TCategoryName}"/></param>
 internal sealed class AuditWriter(

@@ -29,7 +29,7 @@ public static class DependencyInjectionExtensions
         IConfiguration configuration,
         Func<HttpMessageHandler>? configureClient = null)
         where TAuditEventConfigurator : class, IAuditEventConfigurator
-        where TAuditCacheRepository : class, IAuditCacheRepository
+        where TAuditCacheRepository : class, IAuditSettingsCacheRepository
     {
         services.Configure<AuditGrpcOptions>(opts =>
             configuration.GetSection(nameof(AuditGrpcOptions)).Bind(opts));
