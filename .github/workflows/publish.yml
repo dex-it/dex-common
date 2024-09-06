@@ -33,7 +33,7 @@ jobs:
           done
 
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4.1.7
         with:
           name: nuget
           if-no-files-found: error
