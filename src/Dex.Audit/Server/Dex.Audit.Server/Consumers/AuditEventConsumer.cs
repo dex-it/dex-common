@@ -56,7 +56,7 @@ public class AuditEventConsumer(
         var messagesWithUnknownSettings = context.Message
             .Where(consumeContext => consumeContext.Message.AuditSettingsId is null)
             .Select(consumeContext => consumeContext.Message)
-            .ToList();
+            .ToArray();
 
         var auditSettings = await GetAuditSettings(messagesWithUnknownSettings, cancellationToken);
 
@@ -92,8 +92,8 @@ public class AuditEventConsumer(
         return auditMessages;
     }
 
-    private async Task<IDictionary<string, AuditSettings?>> GetAuditSettings(
-        List<AuditEventMessage> messagesWithUnknownSettings,
+    private Task<IDictionary<string, AuditSettings?>> GetAuditSettings(
+        AuditEventMessage[] messagesWithUnknownSettings,
         CancellationToken cancellationToken)
     {
         var unknownEventTypes = messagesWithUnknownSettings
@@ -101,7 +101,7 @@ public class AuditEventConsumer(
             .Distinct()
             .ToArray();
 
-        return await auditSettingsCacheRepository.GetDictionaryAsync(unknownEventTypes, cancellationToken);
+        return auditSettingsCacheRepository.GetDictionaryAsync(unknownEventTypes, cancellationToken);
     }
 
     private static AuditEvent MapAuditEventFromMessage(AuditEventMessage message)

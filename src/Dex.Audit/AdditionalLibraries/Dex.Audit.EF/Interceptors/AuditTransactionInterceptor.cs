@@ -1,4 +1,5 @@
 using System.Data.Common;
+using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -18,20 +19,19 @@ internal class AuditTransactionInterceptor(
         TransactionEventData eventData,
         InterceptionResult result)
     {
-        interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
+        eventData.InterceptIfPossible(interceptionAndSendingEntriesService);
         return base.TransactionCommitting(transaction, eventData, result);
     }
 
     /// <inheritdoc/>
-    public override async ValueTask<InterceptionResult> TransactionCommittingAsync(
+    public override ValueTask<InterceptionResult> TransactionCommittingAsync(
         DbTransaction transaction,
         TransactionEventData eventData,
         InterceptionResult result,
         CancellationToken cancellationToken = default)
     {
-        interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
-        return await base.TransactionCommittingAsync(transaction, eventData, result, cancellationToken)
-            .ConfigureAwait(false);
+        eventData.InterceptIfPossible(interceptionAndSendingEntriesService);
+        return base.TransactionCommittingAsync(transaction, eventData, result, cancellationToken);
     }
 
     /// <inheritdoc/>

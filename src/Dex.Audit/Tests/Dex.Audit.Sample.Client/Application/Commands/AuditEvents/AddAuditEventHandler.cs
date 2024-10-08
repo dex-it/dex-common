@@ -6,9 +6,9 @@ namespace Dex.Audit.ClientSample.Application.Commands.AuditEvents;
 
 public class AddAuditEventHandler(IAuditWriter auditWriter) : IRequestHandler<AddAuditEventCommand>
 {
-    public async Task Handle(AddAuditEventCommand request, CancellationToken cancellationToken)
+    public Task Handle(AddAuditEventCommand request, CancellationToken cancellationToken)
     {
-        await auditWriter.WriteAsync(
+        return auditWriter.WriteAsync(
             new AuditEventBaseInfo(
                 request.EventType,
                 request.EventObject,

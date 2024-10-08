@@ -16,12 +16,11 @@ internal sealed class AuditOutputProvider(ISendEndpointProvider sendEndpoint)
     /// </summary>
     /// <param name="auditEvent">Аудиторское событие, которое нужно опубликовать</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public async Task PublishEventAsync(
+    public Task PublishEventAsync(
         AuditEventMessage auditEvent,
         CancellationToken cancellationToken = default)
     {
-        await sendEndpoint
-            .Send(auditEvent, cancellationToken)
-            .ConfigureAwait(false);
+        return sendEndpoint
+            .Send(auditEvent, cancellationToken);
     }
 }

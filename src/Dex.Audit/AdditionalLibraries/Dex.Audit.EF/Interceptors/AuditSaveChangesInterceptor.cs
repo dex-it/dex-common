@@ -1,3 +1,4 @@
+using Dex.Audit.EF.Extensions;
 using Dex.Audit.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -17,7 +18,7 @@ internal class AuditSaveChangesInterceptor(
         DbContextEventData eventData,
         InterceptionResult<int> result)
     {
-        interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
+        eventData.InterceptIfPossible(interceptionAndSendingEntriesService);
         return base.SavingChanges(eventData, result);
     }
 
@@ -27,7 +28,7 @@ internal class AuditSaveChangesInterceptor(
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        interceptionAndSendingEntriesService.InterceptEntries(eventData.Context!.ChangeTracker.Entries());
+        eventData.InterceptIfPossible(interceptionAndSendingEntriesService);
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 

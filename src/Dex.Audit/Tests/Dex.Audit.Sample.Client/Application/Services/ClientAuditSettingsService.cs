@@ -1,5 +1,6 @@
 ﻿using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Domain.Entities;
+using Dex.Extensions;
 using Newtonsoft.Json;
 using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
@@ -19,9 +20,9 @@ public class ClientAuditSettingsService(
             return setting;
         }
 
-        var settings = (await GetSettingsFromServerAsync(cancellationToken))?.ToArray();
+        var settings = await GetSettingsFromServerAsync(cancellationToken);
 
-        if (settings == null)
+        if (settings.IsNullOrEmpty())
         {
             return null;
         }
@@ -33,7 +34,7 @@ public class ClientAuditSettingsService(
         return settings.FirstOrDefault(auditSettings => auditSettings.EventType == eventType);
     }
 
-    private async Task<IEnumerable<AuditSettings>?> GetSettingsFromServerAsync(CancellationToken cancellationToken)
+    private async Task<AuditSettings[]> GetSettingsFromServerAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -49,12 +50,12 @@ public class ClientAuditSettingsService(
             var serializer = new JsonSerializer();
             using var sr = new StreamReader(await result.Content.ReadAsStreamAsync(cancellationToken));
             using var jsonTextReader = new JsonTextReader(sr);
-            return serializer.Deserialize<IEnumerable<AuditSettings>?>(jsonTextReader);
+            return serializer.Deserialize<AuditSettings[]>(jsonTextReader);
         }
         catch (Exception exception)
         {
             logger.LogError(exception, exception.Message);
-            return null;
+            return [];
         }
     }
 }

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Repositories;
 
-public class AuditSettingsCacheRepository(IDistributedCache distributedCache)
+internal class AuditSettingsCacheRepository(IDistributedCache distributedCache)
     : IAuditSettingsCacheRepository
 {
     public async Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default)
