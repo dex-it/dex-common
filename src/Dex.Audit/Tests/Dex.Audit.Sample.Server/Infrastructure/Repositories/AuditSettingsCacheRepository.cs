@@ -4,18 +4,18 @@ using StackExchange.Redis.Extensions.Core.Abstractions;
 
 namespace Dex.Audit.ServerSample.Infrastructure.Repositories;
 
-public class AuditSettingsCacheRepository(IRedisDatabase redisDatabase) : IAuditSettingsCacheRepository
+internal class AuditSettingsCacheRepository(IRedisDatabase redisDatabase) : IAuditSettingsCacheRepository
 {
-    public async Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default)
+    public Task<AuditSettings?> GetAsync(string eventType, CancellationToken cancellationToken = default)
     {
-        return await redisDatabase.GetAsync<AuditSettings>(eventType);
+        return redisDatabase.GetAsync<AuditSettings>(eventType);
     }
 
-    public async Task<IDictionary<string, AuditSettings?>> GetDictionaryAsync(
+    public Task<IDictionary<string, AuditSettings?>> GetDictionaryAsync(
         IEnumerable<string> eventTypes,
         CancellationToken cancellationToken = default)
     {
-        return await redisDatabase.GetAllAsync<AuditSettings>(eventTypes.ToHashSet());
+        return redisDatabase.GetAllAsync<AuditSettings>(eventTypes.ToHashSet());
     }
 
     public async Task AddRangeAsync(IEnumerable<AuditSettings> settings, CancellationToken cancellationToken = default)

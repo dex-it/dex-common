@@ -8,8 +8,8 @@ namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
 public class LogsController(IMediator mediator) : BaseController
 {
     [HttpPost]
-    public async Task<AddAuditableLogResponse> Add(AddAuditableLogCommand command)
+    public Task<AddAuditableLogResponse> Add(AddAuditableLogCommand command)
     {
-        return await mediator.Send(command);
+        return mediator.Send(command);
     }
 }

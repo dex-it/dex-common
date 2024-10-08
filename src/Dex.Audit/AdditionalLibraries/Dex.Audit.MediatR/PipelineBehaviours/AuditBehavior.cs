@@ -49,15 +49,14 @@ internal sealed class AuditBehavior<TRequest, TResponse>(
         return response;
     }
 
-    private async Task WriteAuditAsync(
+    private Task WriteAuditAsync(
         AuditRequest<TResponse> request,
         bool success,
         CancellationToken cancellationToken)
     {
-        await auditWriter
+        return auditWriter
             .WriteAsync(
                 new AuditEventBaseInfo(request.EventType, request.EventObject, request.Message, success),
-                cancellationToken)
-            .ConfigureAwait(false);
+                cancellationToken);
     }
 }
