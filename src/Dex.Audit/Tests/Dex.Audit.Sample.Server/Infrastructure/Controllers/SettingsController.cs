@@ -17,14 +17,14 @@ public class SettingsController : BaseController
     }
 
     [HttpPut]
-    public async Task AddOrUpdate(IAuditServerSettingsService settingsServer, string eventType, AuditEventSeverityLevel severityLevel)
+    public Task AddOrUpdate(IAuditServerSettingsService settingsServer, string eventType, AuditEventSeverityLevel severityLevel)
     {
-        await settingsServer.AddOrUpdateSettingsAsync(eventType, severityLevel);
+        return settingsServer.AddOrUpdateSettingsAsync(eventType, severityLevel);
     }
 
     [HttpDelete]
-    public async Task Delete(IAuditServerSettingsService settingsServer, string eventType)
+    public Task Delete(IAuditServerSettingsService settingsServer, string eventType)
     {
-        await settingsServer.DeleteSettingsAsync(eventType);
+        return settingsServer.DeleteSettingsAsync(eventType);
     }
 }

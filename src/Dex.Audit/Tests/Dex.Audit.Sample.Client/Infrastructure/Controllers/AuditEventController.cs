@@ -8,8 +8,8 @@ namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
 public class AuditEventController(IMediator mediator) : BaseController
 {
     [HttpPost]
-    public async Task Add(AddAuditEventCommand command)
+    public Task Add(AddAuditEventCommand command)
     {
-        await mediator.Send(command);
+        return mediator.Send(command);
     }
 }

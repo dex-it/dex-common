@@ -5,9 +5,9 @@ using MassTransit;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Consumers;
 
-public class AuditSettingsUpdatedConsumer(IAuditSettingsCacheRepository settingsCacheRepository) : IConsumer<AuditSettingsDto>
+internal class AuditSettingsUpdatedConsumer(IAuditSettingsCacheRepository settingsCacheRepository) : IConsumer<AuditSettingsDto>
 {
-    public async Task Consume(ConsumeContext<AuditSettingsDto> context)
+    public Task Consume(ConsumeContext<AuditSettingsDto> context)
     {
         var settings = context.Message.AuditSettingDtos
             .Select(dto => new AuditSettings
@@ -17,6 +17,6 @@ public class AuditSettingsUpdatedConsumer(IAuditSettingsCacheRepository settings
                 SeverityLevel = dto.SeverityLevel
             });
 
-        await settingsCacheRepository.AddRangeAsync(settings, context.CancellationToken);
+        return settingsCacheRepository.AddRangeAsync(settings, context.CancellationToken);
     }
 }

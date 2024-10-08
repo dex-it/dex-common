@@ -52,12 +52,11 @@ public class GrpcAuditServerSettingsService(
         });
     }
 
-    public override async Task<AuditSettingsMessages> GetSettings(
+    public override Task<AuditSettingsMessages> GetSettings(
         Empty request,
         ServerCallContext context)
     {
-        return await GetMessages(context.CancellationToken)
-            .ConfigureAwait(false);
+        return GetMessages(context.CancellationToken);
     }
 
     public override async Task GetSettingsStream(
@@ -65,19 +64,31 @@ public class GrpcAuditServerSettingsService(
         IServerStreamWriter<AuditSettingsMessages> responseStream,
         ServerCallContext context)
     {
-        await ClientsSemaphore
-            .WaitAsync()
-            .ConfigureAwait(false);
-        _clients.Add(responseStream);
-        ClientsSemaphore.Release();
+        try
+        {
+            await ClientsSemaphore
+                .WaitAsync()
+                .ConfigureAwait(false);
+            _clients.Add(responseStream);
+        }
+        finally
+        {
+            ClientsSemaphore.Release();
+        }
 
         context.CancellationToken.WaitHandle.WaitOne();
 
-        await ClientsSemaphore
-            .WaitAsync()
-            .ConfigureAwait(false);
-        _clients.Remove(responseStream);
-        ClientsSemaphore.Release();
+        try
+        {
+            await ClientsSemaphore
+                .WaitAsync()
+                .ConfigureAwait(false);
+            _clients.Remove(responseStream);
+        }
+        finally
+        {
+            ClientsSemaphore.Release();
+        }
     }
 
     private async Task<AuditSettingsMessages> GetMessages(CancellationToken cancellationToken = default)
