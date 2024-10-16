@@ -9,21 +9,26 @@ public static class ConsumeContextExtensions
     public static string GetIdempotentKey<TMessage>(this ConsumeContext<TMessage> context)
         where TMessage : class
     {
-        if (context.MessageId == null)
+        if (context.Message is not IHaveIdempotenceKey key)
         {
-            throw new ArgumentNullException(nameof(context));
+            return GetMessageIdValue(context.MessageId);
         }
 
-        if (context.Message is not IHaveIdempotenceKey k)
+        if (key is { IdempotentKey: null } && context.Message is IOutboxMessage outboxMessage)
         {
-            return context.MessageId.Value.ToString("N");
+            return GetMessageIdValue(outboxMessage.MessageId);
         }
 
-        if (k is { IdempotentKey: null } && context.Message is IOutboxMessage o)
-        {
-            return o.MessageId.ToString("N");
-        }
+        return key.IdempotentKey ?? GetMessageIdValue(context.MessageId);
 
-        return k.IdempotentKey ?? context.MessageId.Value.ToString("N");
+        string GetMessageIdValue(Guid? messageId)
+        {
+            if (messageId == null)
+            {
+                throw new ArgumentNullException(nameof(messageId));
+            }
+
+            return messageId.Value.ToString("N");
+        }
     }
 }

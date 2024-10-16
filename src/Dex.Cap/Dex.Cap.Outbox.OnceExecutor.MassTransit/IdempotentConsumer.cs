@@ -32,11 +32,6 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 
     protected sealed override async Task Process(ConsumeContext<TMessage> context)
     {
-        if (!context.MessageId.HasValue)
-        {
-            throw new InvalidOperationException("Consume context must have MessageId");
-        }
-
         await _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
             async (_, _) => await IdempotentProcess(context),
@@ -84,11 +79,6 @@ public abstract class IdempotentConsumer<TDbContext>
         IEfOptions? options = default)
         where TMessage : class
     {
-        if (!context.MessageId.HasValue)
-        {
-            throw new InvalidOperationException("Consume context must have MessageId");
-        }
-
         await _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
             operation,
