@@ -1,9 +1,6 @@
-using System;
-using System.Threading.Tasks;
 using Dex.Cap.OnceExecutor.Memory.Extensions;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
 
 namespace Dex.Cap.OnceExecutor.Memory.Test
 {

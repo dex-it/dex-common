@@ -39,8 +39,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 },
                 CancellationToken.None);
 
-            // IdempotentCreateUserCommandHandler.CountDown = 2;
-
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
@@ -298,8 +296,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             Assert.AreEqual(num, threads.Distinct().Count());
             Assert.LessOrEqual((int)sw.Elapsed.TotalSeconds, 1);
-
-            return;
 
             async void RunOutboxHandler()
             {

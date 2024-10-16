@@ -38,7 +38,7 @@ namespace Dex.Cap.Ef.Tests
 
             serviceCollection
                 .AddScoped(_ => new TestDbContext(DbName))
-                .AddOutbox<TestDbContext, TestDiscriminator>((provider, configurator) => { strategyConfigure?.Invoke(configurator); })
+                .AddOutbox<TestDbContext, TestDiscriminator>((_, configurator) => { strategyConfigure?.Invoke(configurator); })
                 .AddOnceExecutor<TestDbContext>()
                 .AddOptions<OutboxOptions>()
                 .Configure(options =>
@@ -50,7 +50,7 @@ namespace Dex.Cap.Ef.Tests
             return serviceCollection;
         }
 
-        protected static void AddLogging(IServiceCollection serviceCollection)
+        private static void AddLogging(IServiceCollection serviceCollection)
         {
             serviceCollection.AddLogging(builder =>
             {
