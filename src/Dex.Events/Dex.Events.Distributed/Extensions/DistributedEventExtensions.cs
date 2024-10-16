@@ -39,7 +39,8 @@ namespace Dex.Events.Distributed.Extensions
             Action<IConsumerConfigurator<T>>? configurator = null)
             where T : class, IDistributedEventHandler
         {
-            if (registration == null) throw new ArgumentNullException(nameof(registration));
+            ArgumentNullException.ThrowIfNull(registration);
+
             if (configurator != null)
             {
                 registration.AddConsumer(configurator);

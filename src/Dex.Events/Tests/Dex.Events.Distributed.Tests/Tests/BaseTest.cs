@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Ef.Extensions;
-using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Options;
 using Dex.Events.Distributed.Tests.Services;
 using Microsoft.EntityFrameworkCore;
@@ -48,7 +47,6 @@ namespace Dex.Events.Distributed.Tests.Tests
                     options.MessagesToProcess = messageToProcessLimit;
                     options.ConcurrencyLimit = parallelLimit;
                 });
-            sc.AddSingleton<IOutboxTypeDiscriminator, TestDiscriminator>();
 
             return sc;
         }

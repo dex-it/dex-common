@@ -36,7 +36,7 @@ namespace Dex.Cap.Outbox
             where T : IOutboxMessage
         {
             var messageType = message.GetType();
-            if (messageType != typeof(EmptyOutboxMessage) && message.MessageId == default)
+            if (messageType != typeof(EmptyOutboxMessage) && message.MessageId == Guid.Empty)
                 throw new InvalidOperationException("MessageId can't be empty");
 
             var envelopeId = message.MessageId;

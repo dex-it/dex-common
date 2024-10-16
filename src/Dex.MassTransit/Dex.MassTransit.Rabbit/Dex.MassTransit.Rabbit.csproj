@@ -26,12 +26,12 @@
 
     <!-- Source debugging -->
     <ItemGroup>
-        <PackageReference Include="MassTransit"/>
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Dex.Extensions"/>
+        <PackageReference Include="MassTransit"/>
         <PackageReference Include="MassTransit.RabbitMQ"/>
     </ItemGroup>
 

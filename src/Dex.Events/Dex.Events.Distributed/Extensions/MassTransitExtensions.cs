@@ -23,8 +23,8 @@ namespace Dex.Events.Distributed.Extensions
             where TEventParams : class, IDistributedEventParams
             where TDistributedEventHandler : IDistributedEventHandler<TEventParams>
         {
-            if (configurator == null) throw new ArgumentNullException(nameof(configurator));
-            if (registrationContext == null) throw new ArgumentNullException(nameof(registrationContext));
+            ArgumentNullException.ThrowIfNull(configurator);
+            ArgumentNullException.ThrowIfNull(registrationContext);
 
             serviceName ??= Assembly.GetCallingAssembly().GetName().Name;
 
@@ -57,8 +57,8 @@ namespace Dex.Events.Distributed.Extensions
             where TDistributedEventHandler1 : IDistributedEventHandler<TEventParams>
             where TDistributedEventHandler2 : IDistributedEventHandler<TEventParams>
         {
-            if (configurator == null) throw new ArgumentNullException(nameof(configurator));
-            if (registrationContext == null) throw new ArgumentNullException(nameof(registrationContext));
+            ArgumentNullException.ThrowIfNull(configurator);
+            ArgumentNullException.ThrowIfNull(registrationContext);
 
             return configurator
                 .SubscribeEventHandlers<TEventParams, TDistributedEventHandler1>(registrationContext, serviceName)
@@ -86,8 +86,8 @@ namespace Dex.Events.Distributed.Extensions
             where TDistributedEventHandler2 : IDistributedEventHandler<TEventParams>
             where TDistributedEventHandler3 : IDistributedEventHandler<TEventParams>
         {
-            if (configurator == null) throw new ArgumentNullException(nameof(configurator));
-            if (registrationContext == null) throw new ArgumentNullException(nameof(registrationContext));
+            ArgumentNullException.ThrowIfNull(configurator);
+            ArgumentNullException.ThrowIfNull(registrationContext);
 
             return configurator
                 .SubscribeEventHandlers<TEventParams, TDistributedEventHandler1>(registrationContext, serviceName)
