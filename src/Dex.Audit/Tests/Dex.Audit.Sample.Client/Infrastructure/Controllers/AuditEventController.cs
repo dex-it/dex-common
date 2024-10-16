@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
 
-public class AuditEventController(IMediator mediator) : BaseController
+public class AuditEventController(ISender mediator) : BaseController
 {
     [HttpPost]
     public Task Add(AddAuditEventCommand command)

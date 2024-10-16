@@ -26,12 +26,12 @@ internal class GrpcAuditBackgroundWorker(
                 using var call = client
                     .GetSettingsStream(new Empty(), cancellationToken: stoppingToken);
 
-                await foreach (var cat in call.ResponseStream
+                await foreach (var messages in call.ResponseStream
                                    .ReadAllAsync(cancellationToken: stoppingToken)
                                    .ConfigureAwait(false))
                 {
                     await cacheRepository
-                        .AddRangeAsync(cat.Messages
+                        .AddRangeAsync(messages.Messages
                             .Select(message => message.MapToAuditSettings()), stoppingToken)
                         .ConfigureAwait(false);
                 }

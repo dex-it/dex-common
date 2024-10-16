@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
 
-public class UsersController(IMediator mediator) : BaseController
+public class UsersController(ISender mediator) : BaseController
 {
     [HttpGet]
     public Task<GetUserQueryResponse> Get(GetUserQuery command)
