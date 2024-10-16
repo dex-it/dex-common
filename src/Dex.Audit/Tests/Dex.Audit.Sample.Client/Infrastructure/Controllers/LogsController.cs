@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
 
-public class LogsController(IMediator mediator) : BaseController
+public class LogsController(ISender mediator) : BaseController
 {
     [HttpPost]
     public Task<AddAuditableLogResponse> Add(AddAuditableLogCommand command)

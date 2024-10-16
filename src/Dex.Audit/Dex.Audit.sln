@@ -20,7 +20,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Server", "Server\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Server.Abstractions", "Server\Dex.Audit.Server.Abstractions\Dex.Audit.Server.Abstractions.csproj", "{0E1A4FCB-0787-4F3D-BC5D-5C4E9480AB9C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AdditionalLibraries", "AdditionalLibraries", "{07CD406B-6D8A-4F65-A49E-2107EA5501FE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{07CD406B-6D8A-4F65-A49E-2107EA5501FE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{DF3F18B5-041B-4F77-8229-A20EB7B90424}"
 EndProject
