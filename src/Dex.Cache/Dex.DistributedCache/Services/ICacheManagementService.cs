@@ -13,9 +13,9 @@ namespace Dex.DistributedCache.Services
 
         Task<byte[]?> GetValueDataAsync(string key, CancellationToken cancellation);
 
-        Task SetMetaInfoAsync(string key, byte[]? metaInfo, int expiration, CancellationToken cancellation);
+        Task SetMetaInfoAsync(string key, byte[] metaInfo, int expiration, CancellationToken cancellation);
 
-        Task SetValueDataAsync(string key, byte[]? valueData, int expiration, CancellationToken cancellation);
+        Task SetValueDataAsync(string key, byte[] valueData, int expiration, CancellationToken cancellation);
 
         Task SetCacheDependenciesAsync(string key, int expiration, object? executedActionResult, CancellationToken cancellation);
 

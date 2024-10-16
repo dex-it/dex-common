@@ -60,11 +60,12 @@ namespace Dex.DistributedCache.Services
             }
             else
             {
-                if (!cacheMetaInfo.IsCompleted) return false;
+                if (!cacheMetaInfo.IsCompleted)
+                    return false;
 
-                if (request.Headers.ContainsKey(HeaderNames.IfNoneMatch))
+                if (request.Headers.TryGetValue(HeaderNames.IfNoneMatch, out var value))
                 {
-                    var incomingETag = request.Headers[HeaderNames.IfNoneMatch].ToString();
+                    var incomingETag = value.ToString();
                     if (incomingETag.Equals(cacheMetaInfo.ETag, StringComparison.Ordinal))
                     {
                         executingContext.Result = new StatusCodeResult((int)HttpStatusCode.NotModified);
@@ -72,8 +73,12 @@ namespace Dex.DistributedCache.Services
                     }
                 }
 
-                var cacheValueByte = await _cacheService.GetValueDataAsync(key, executingContext.HttpContext.RequestAborted).ConfigureAwait(false);
-                if (cacheValueByte == null) return false;
+                var cacheValueByte = await _cacheService
+                    .GetValueDataAsync(key, executingContext.HttpContext.RequestAborted)
+                    .ConfigureAwait(false);
+
+                if (cacheValueByte == null)
+                    return false;
 
                 SetResponseData(executingContext, cacheMetaInfo, cacheValueByte);
                 return true;
