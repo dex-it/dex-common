@@ -17,6 +17,11 @@ public class GrpcAuditServerSettingsService(
 
     internal void NotifyClients()
     {
+        if (_clients.Count == 0)
+        {
+            return;
+        }
+
         _ = Task.Run(async () =>
         {
             try
@@ -24,11 +29,6 @@ public class GrpcAuditServerSettingsService(
                 await ClientsSemaphore
                     .WaitAsync()
                     .ConfigureAwait(false);
-
-                if (_clients.Count == 0)
-                {
-                    return;
-                }
 
                 var messages = await GetMessages()
                     .ConfigureAwait(false);
