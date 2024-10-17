@@ -107,12 +107,12 @@ namespace Dex.DistributedCache.Services
             return await _cache.GetAsync(GetCacheKeyForValueData(key), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheManagementService.SetMetaInfoAsync(string key, byte[]? metaInfo, int expiration, CancellationToken cancellation)
+        async Task ICacheManagementService.SetMetaInfoAsync(string key, byte[] metaInfo, int expiration, CancellationToken cancellation)
         {
             await _cache.SetAsync(GetCacheKeyForMetaInfo(key), metaInfo, GetCacheEntryOptions(expiration), cancellation).ConfigureAwait(false);
         }
 
-        async Task ICacheManagementService.SetValueDataAsync(string key, byte[]? valueData, int expiration, CancellationToken cancellation)
+        async Task ICacheManagementService.SetValueDataAsync(string key, byte[] valueData, int expiration, CancellationToken cancellation)
         {
             await _cache.SetAsync(GetCacheKeyForValueData(key), valueData, GetCacheEntryOptions(expiration), cancellation).ConfigureAwait(false);
         }

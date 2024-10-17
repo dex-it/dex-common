@@ -14,8 +14,6 @@ namespace Dex.DistributedCache.ActionFilters
         public int Expiration { get; }
         public Type[] CacheVariableKeyResolvers { get; }
 
-        private IServiceProvider? _serviceProvider;
-
         /// <summary>
         /// CacheActionFilter
         /// </summary>
@@ -29,12 +27,12 @@ namespace Dex.DistributedCache.ActionFilters
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
-            if (next == null) throw new ArgumentNullException(nameof(next));
+            ArgumentNullException.ThrowIfNull(context);
+            ArgumentNullException.ThrowIfNull(next);
 
-            _serviceProvider = context.HttpContext.RequestServices;
-            var cacheService = _serviceProvider.GetRequiredService<ICacheManagementService>();
-            var cacheActionFilterService = _serviceProvider.GetRequiredService<ICacheActionFilterService>();
+            var serviceProvider = context.HttpContext.RequestServices;
+            var cacheService = serviceProvider.GetRequiredService<ICacheManagementService>();
+            var cacheActionFilterService = serviceProvider.GetRequiredService<ICacheActionFilterService>();
 
             var variableKeys = cacheActionFilterService.GetVariableKeys(CacheVariableKeyResolvers);
             var paramsList = new[] { CacheHelper.GetDisplayUrl(context.HttpContext.Request) };
