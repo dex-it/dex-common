@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <FrameworkVersion>8.0.10</FrameworkVersion>
+    <FrameworkVersion>6.0.35</FrameworkVersion>
     <EntityFrameworkVersion>7.0.20</EntityFrameworkVersion>
     <ExtensionsVersion>[8.0.0,8.0.10]</ExtensionsVersion>
   </PropertyGroup>
@@ -13,6 +13,7 @@
     <!--tests -->
     <PackageReference Update="coverlet.collector" Version="6.0.2" />
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Update="xunit" Version="2.9.2" />
     <PackageReference Update="NUnit" Version="3.14.0" />
     <PackageReference Update="NUnit3TestAdapter" Version="4.6.0" />
     <PackageReference Update="NUnit.Analyzers" Version="4.3.0" />

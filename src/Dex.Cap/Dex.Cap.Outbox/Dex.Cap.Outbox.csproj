@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>outbox business-transaction consistency</PackageTags>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.3</PackageVersion>
+        <PackageVersion>6.0.4</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -25,15 +25,11 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Dex.Types"/>
-        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks"/>
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
-        <PackageReference Include="System.Diagnostics.DiagnosticSource"/>
     </ItemGroup>
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <Compile Remove="Outbox\Neo4j\**"/>
         <Compile Update="MainLoopOutboxHandler.cs">
             <DependentUpon>IOutboxHandler.cs</DependentUpon>
         </Compile>
@@ -52,16 +48,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Remove="Outbox\Neo4j\**"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="Outbox\Neo4j\**"/>
-    </ItemGroup>
-
-    <ItemGroup>
+        <PackageReference Include="Dex.Types"/>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
         <PackageReference Include="Microsoft.Extensions.Options"/>
+        <PackageReference Include="System.Diagnostics.DiagnosticSource"/>
     </ItemGroup>
 
     <ItemGroup>

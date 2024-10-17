@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.0</PackageVersion>
+        <PackageVersion>6.0.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -26,13 +26,14 @@
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
     <!--/Для NuGet-->
+    
     <ItemGroup>
         <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dex.Neo4J"/>
-        <PackageReference Include="Neo4jClient" Version="5.1.15"/>
+        <PackageReference Include="Dex.Neo4J" />
+        <PackageReference Include="Neo4jClient" />
     </ItemGroup>
 
 </Project>
