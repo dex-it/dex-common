@@ -1,6 +1,5 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Dex.Events.Distributed.Models;
 using MassTransit;
 
 namespace Dex.Events.Distributed
@@ -15,12 +14,12 @@ namespace Dex.Events.Distributed
             _bus = bus;
         }
 
-        public async Task RaiseAsync<T>(T args, CancellationToken cancellationToken) where T : DistributedBaseEventParams
+        public async Task RaiseAsync<T>(T args, CancellationToken cancellationToken)
+            where T : class, IDistributedEventParams
         {
             // The Publish(T) and Publish(object) work differently:
             // - in the first method, the type is defined by typeof(T)
             // - in the second method, the type is defined by GetType()
-
             await _bus.Publish(args as object, cancellationToken).ConfigureAwait(false);
         }
     }

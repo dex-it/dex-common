@@ -6,16 +6,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dex.Cap.Outbox.Ef" Version="8.0.0" />
-        <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.0" />
         <PackageReference Include="MassTransit.RabbitMQ"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore">
-          <TreatAsUsed>true</TreatAsUsed>
+            <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <TreatAsUsed>true</TreatAsUsed>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <TreatAsUsed>true</TreatAsUsed>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Logging.Debug"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
@@ -25,18 +23,20 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Migrations\" />
+        <Folder Include="Migrations\" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Dex.Events.Distributed\Dex.Events.Distributed.csproj" />
-      <ProjectReference Include="..\..\Dex.Events.Distributed.OutboxExtensions\Dex.Events.Distributed.OutboxExtensions.csproj" />
+        <ProjectReference Include="..\..\Dex.Events.Distributed\Dex.Events.Distributed.csproj" />
+        <ProjectReference Include="..\..\Dex.Events.Distributed.OutboxExtensions\Dex.Events.Distributed.OutboxExtensions.csproj" />
+        <ProjectReference Include="..\..\..\Dex.Cap\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj" />
+        <ProjectReference Include="..\..\..\Dex.MassTransit\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Handlers\TestOutboxCommand.cs">
-        <DependentUpon>TestCommandHandler.cs</DependentUpon>
-      </Compile>
+        <Compile Update="Handlers\TestOutboxCommand.cs">
+            <DependentUpon>TestCommandHandler.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>

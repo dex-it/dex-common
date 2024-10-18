@@ -41,7 +41,7 @@ namespace Dex.Cap.Ef.Tests
             var config = builder.Build();
 
             var connectionString = config.GetConnectionString("DefaultConnection");
-            connectionString = connectionString.Replace("_dbName_", _dbName);
+            connectionString = connectionString!.Replace("_dbName_", _dbName);
             optionsBuilder.UseNpgsql(connectionString,
                 options =>
                 {

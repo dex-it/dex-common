@@ -40,7 +40,11 @@ namespace Dex.Cap.Outbox
             Interlocked.Exchange(ref _lastTime, DateTime.UtcNow.Ticks);
         }
 
-        public void IncEmptyProcessCount() => _emptyProcessCount.Add(1);
+        public void IncEmptyProcessCount()
+        {
+            _emptyProcessCount.Add(1);
+            Interlocked.Exchange(ref _lastTime, DateTime.UtcNow.Ticks);
+        }
 
         public void IncProcessJobCount()
         {
@@ -49,6 +53,7 @@ namespace Dex.Cap.Outbox
         }
 
         public void IncProcessJobSuccessCount() => _processJobSuccessCount.Add(1);
+
         public void AddProcessJobSuccessDuration(TimeSpan duration) => _processDuration.Record(duration.TotalMilliseconds);
 
         public DateTime GetLastStamp() => new(Interlocked.Read(ref _lastTime));

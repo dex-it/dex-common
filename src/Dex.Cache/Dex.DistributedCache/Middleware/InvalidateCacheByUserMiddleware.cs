@@ -23,7 +23,7 @@ namespace Dex.DistributedCache.Middleware
 
         public async Task Invoke(HttpContext context)
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
+            ArgumentNullException.ThrowIfNull(context);
 
             var serviceProvider = context.RequestServices;
             var logger = serviceProvider.GetRequiredService<ILogger<InvalidateCacheByUserMiddleware>>();

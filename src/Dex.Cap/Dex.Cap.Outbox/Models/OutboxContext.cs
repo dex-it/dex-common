@@ -5,7 +5,11 @@ using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox.Models
 {
-    internal sealed class OutboxContext<TDbContext, TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TDbContext dbContext, TState state)
+    internal sealed class OutboxContext<TDbContext, TState>(
+        Guid correlationId,
+        IOutboxService<TDbContext> outboxService,
+        TDbContext dbContext,
+        TState state)
         : IOutboxContext<TDbContext, TState>
     {
         public TDbContext DbContext { get; } = dbContext;
@@ -14,9 +18,16 @@ namespace Dex.Cap.Outbox.Models
         private Guid CorrelationId { get; } = correlationId;
         private IOutboxService<TDbContext> OutboxService { get; } = outboxService;
 
-        public async Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc, CancellationToken cancellationToken)
+        public async Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc = null,
+            CancellationToken cancellationToken = default)
         {
-            await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken).ConfigureAwait(false);
+            await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public IOutboxTypeDiscriminator GetDiscriminator()
+        {
+            return OutboxService.Discriminator;
         }
     }
 }

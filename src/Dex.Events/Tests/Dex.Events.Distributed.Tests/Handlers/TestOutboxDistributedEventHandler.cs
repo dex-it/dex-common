@@ -7,7 +7,8 @@ using MassTransit;
 
 namespace Dex.Events.Distributed.Tests.Handlers
 {
-    public sealed class TestOutboxDistributedEventHandler<TBus> : IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>> where TBus : IBus
+    public sealed class TestOutboxDistributedEventHandler<TBus> : IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>>
+        where TBus : IBus
     {
         public static event EventHandler<OutboxDistributedEventMessage<TBus>> OnProcess;
 
@@ -17,7 +18,8 @@ namespace Dex.Events.Distributed.Tests.Handlers
 
             Console.WriteLine(
                 $"{nameof(TestOutboxDistributedEventHandler<TBus>)} - Processed command at {DateTime.Now}, Args: {message.EventParams}, {message.EventParamsType}");
-            OnProcess?.Invoke(this, message);
+            OnProcess?.Invoke(null, message);
+
             return Task.CompletedTask;
         }
 

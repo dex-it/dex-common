@@ -23,9 +23,8 @@ namespace Dex.DistributedCache.Helpers
 
         public static string CreateMd5(string input)
         {
-            using var md5 = System.Security.Cryptography.MD5.Create();
             var inputBytes = Encoding.UTF8.GetBytes(input); // UTF8 т.к. inputString может содержать любые символы
-            var hashBytes = md5.ComputeHash(inputBytes);
+            var hashBytes = System.Security.Cryptography.MD5.HashData(inputBytes);
 
             return Convert.ToHexString(hashBytes);
         }

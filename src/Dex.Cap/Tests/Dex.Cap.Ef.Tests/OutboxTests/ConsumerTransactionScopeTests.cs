@@ -66,7 +66,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var busControl = provider.GetRequiredService<IBusControl>();
             var messageCounter = new MessageCounter();
             busControl.ConnectConsumeMessageObserver(messageCounter);
-            busControl.Start();
+            await busControl.StartAsync();
 
             try
             {
@@ -88,13 +88,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             }
             finally
             {
-                busControl.Stop();
+                await busControl.StopAsync();
             }
         }
 
         #region Consumer data
 
-        public interface ITestMessage : IConsumer
+        public interface ITestMessage
         {
             Guid Id { get; }
             string? Name { get; }

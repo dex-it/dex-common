@@ -12,14 +12,14 @@ using Microsoft.Extensions.Logging;
 namespace Dex.Cap.Outbox;
 
 /// <summary>
-/// Обработчки одного OutboxJob. Изолирует необходимые ресурсы для этого
+/// Обработчик одного OutboxJob. Изолирует необходимые ресурсы для этого
 /// </summary>
 /// <param name="dataProvider"></param>
 /// <param name="serializer"></param>
 /// <param name="discriminator"></param>
 /// <param name="handlerFactory"></param>
+/// <param name="dbContext"></param>
 /// <param name="logger"></param>
-/// <typeparam name="TDbContext"></typeparam>
 internal class OutboxJobHandler<TDbContext>(
     IOutboxDataProvider dataProvider,
     IOutboxSerializer serializer,
@@ -47,20 +47,20 @@ internal class OutboxJobHandler<TDbContext>(
             }
             finally
             {
-                // очищаем контекст от всего что там осталось после операиции,т.к. переиспользуем его
+                // Очищаем контекст от всего что там осталось после операции, т.к. переиспользуем его
                 dbContext.ChangeTracker.Clear();
             }
         }
-        catch (OperationCanceledException) when (job.LockToken.IsCancellationRequested)
+        catch (OperationCanceledException oce) when (job.LockToken.IsCancellationRequested)
             // Истекло время аренды блокировки.
         {
-            logger.LogError(LockTimeoutMessage, job.Envelope.Id);
+            logger.LogError(oce, LockTimeoutMessage, job.Envelope.Id);
             await dataProvider.JobFail(job, default, "Lock is expired").ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested && cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException oce) when (!job.LockToken.IsCancellationRequested && cancellationToken.IsCancellationRequested)
             // Пользователь запросил отмену.
         {
-            logger.LogError(UserCanceledMessageWithId, job.Envelope.Id);
+            logger.LogError(oce, UserCanceledMessageWithId, job.Envelope.Id);
             await UnlockJobOnUserCancel(job).ConfigureAwait(false); // Попытаться освободить блокировку раньше чем истечёт время аренды.
             throw;
         }
@@ -85,9 +85,9 @@ internal class OutboxJobHandler<TDbContext>(
         {
             await dataProvider.JobFail(job, linked.Token, UserCanceledDbMessage).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (!job.LockToken.IsCancellationRequested)
+        catch (OperationCanceledException oce) when (!job.LockToken.IsCancellationRequested)
         {
-            logger.LogError("Could not release the message for 1 second after the user cancellation request. MessageId: {MessageId}", job.Envelope.Id);
+            logger.LogError(oce, "Could not release the message for 1 second after the user cancellation request. MessageId: {MessageId}", job.Envelope.Id);
         }
         catch (OperationCanceledException)
         {

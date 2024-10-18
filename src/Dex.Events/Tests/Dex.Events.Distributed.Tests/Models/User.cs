@@ -1,4 +1,5 @@
 ﻿using System;
+// ReSharper disable EntityFramework.ModelValidation.UnlimitedStringLength
 
 namespace Dex.Events.Distributed.Tests.Models
 {

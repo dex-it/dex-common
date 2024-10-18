@@ -68,7 +68,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await cacheService.SetMetaInfoAsync(cacheKey, cacheMetaInfo.GetBytes(), ExpirationInSeconds, CancellationToken.None);
 
             var actionExecutingContext = CreateDefaultActionExecutingContext();
-            actionExecutingContext.HttpContext.Request.Headers.Add(HeaderNames.IfNoneMatch, new[] { cacheMetaInfo.ETag });
+            actionExecutingContext.HttpContext.Request.Headers.Append(HeaderNames.IfNoneMatch, new[] { cacheMetaInfo.ETag });
 
             var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
 
@@ -97,7 +97,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await cacheService.SetValueDataAsync(cacheKey, cacheValueByte, ExpirationInSeconds, CancellationToken.None);
 
             var actionExecutingContext = CreateDefaultActionExecutingContext();
-            actionExecutingContext.HttpContext.Request.Headers.Add(HeaderNames.IfNoneMatch, new[] { "eTagOld" });
+            actionExecutingContext.HttpContext.Request.Headers.Append(HeaderNames.IfNoneMatch, new[] { "eTagOld" });
 
             var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
 
@@ -149,7 +149,7 @@ namespace Dex.DistributedCache.Tests.Tests
             var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
-            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKeyResolver), typeof(ICacheLocaleVariableKeyResolver) };
+            Type[] cacheVariableKeys = [typeof(ICacheUserVariableKeyResolver), typeof(ICacheLocaleVariableKeyResolver)];
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
             var paramsList = new List<string> { "paramTest" };
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
@@ -182,7 +182,7 @@ namespace Dex.DistributedCache.Tests.Tests
             var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
-            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKeyResolver) };
+            Type[] cacheVariableKeys = [typeof(ICacheUserVariableKeyResolver)];
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
             var paramsList = new List<string> { "paramTest" };
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
@@ -215,7 +215,7 @@ namespace Dex.DistributedCache.Tests.Tests
             var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheService>();
 
-            Type[] cacheVariableKeys = { typeof(ICacheUserVariableKeyResolver) };
+            Type[] cacheVariableKeys = [typeof(ICacheUserVariableKeyResolver)];
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
             var paramsList = new List<string> { "paramTest", "парамТест" };
             var cacheKey = ((ICacheManagementService)cacheService).GenerateCacheKey(variableKeys, paramsList);

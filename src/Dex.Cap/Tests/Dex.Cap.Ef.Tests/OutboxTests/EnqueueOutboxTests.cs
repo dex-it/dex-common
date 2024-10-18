@@ -87,7 +87,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // check
             using var scope = sp.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-            Assert.IsTrue(db.Set<OutboxEnvelope>().Where(x => x.CorrelationId == correlationId).All(x => x.Status == OutboxMessageStatus.Succeeded));
+            var result = await db.Set<OutboxEnvelope>()
+                .Where(x => x.CorrelationId == correlationId)
+                .AllAsync(x => x.Status == OutboxMessageStatus.Succeeded);
+
+            Assert.IsTrue(result);
         }
 
         [Test]
@@ -189,7 +193,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // assert
             var db = sp.GetRequiredService<TestDbContext>();
-            Assert.AreEqual(1, db.Set<TestUser>().Count());
+            Assert.AreEqual(1, await db.Set<TestUser>().CountAsync());
         }
 
         [Test]
@@ -308,7 +312,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             return Task.CompletedTask;
         }
 
-        [Test(Description = "Сообщение не может быть обработанно, т.к. на него нужно больше времени чем предусматривает LockTimeout")]
+        [Test(Description = "Сообщение не может быть обработано, т.к. на него нужно больше времени чем предусматривает LockTimeout")]
         public async Task LargeProcessingTimeLockTimeoutExceededTest()
         {
             var sp = InitServiceCollection()
@@ -330,8 +334,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // check
             using var scope = sp.CreateScope();
             var e = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FindAsync(id);
-            Assert.AreEqual(1, e.Retries);
-            Assert.AreEqual(OutboxMessageStatus.Failed, e.Status);
+            Assert.AreEqual(1, e?.Retries);
+            Assert.AreEqual(OutboxMessageStatus.Failed, e?.Status);
         }
 
         [Test(Description = "Обработка нескольких сообщений общей продолжительностью больше чем LockTimeout, " +

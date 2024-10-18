@@ -10,14 +10,15 @@ namespace Dex.Events.Distributed.Tests.Handlers
 {
     public class TestOnUserAddedHandler : IDistributedEventHandler<OnUserAdded>
     {
-        public static event EventHandler OnProcessed;
+        public static event EventHandler OnProcess;
 
         public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
         {
             if (argument == null) throw new ArgumentNullException(nameof(argument));
 
             Console.WriteLine($"{nameof(TestOnUserAddedHandler)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
-            OnProcessed?.Invoke(this, EventArgs.Empty);
+
+            OnProcess?.Invoke(null, EventArgs.Empty);
             return Task.CompletedTask;
         }
 
@@ -29,7 +30,7 @@ namespace Dex.Events.Distributed.Tests.Handlers
 
     public class TestOnUserAddedHandler2 : IDistributedEventHandler<OnUserAdded>
     {
-        public static event EventHandler OnProcessed;
+        public static event EventHandler OnProcess;
 
         public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
         {
@@ -37,7 +38,7 @@ namespace Dex.Events.Distributed.Tests.Handlers
 
             Console.WriteLine($"{nameof(TestOnUserAddedHandler2)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
 
-            OnProcessed?.Invoke(this, EventArgs.Empty);
+            OnProcess?.Invoke(null, EventArgs.Empty);
             return Task.CompletedTask;
         }
 
@@ -49,7 +50,7 @@ namespace Dex.Events.Distributed.Tests.Handlers
 
     public class TestOnUserAddedHandlerRaiseException : IDistributedEventHandler<OnUserAdded>
     {
-        public static event EventHandler OnProcessed;
+        public static event EventHandler OnProcess;
 
         public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
         {
@@ -59,7 +60,7 @@ namespace Dex.Events.Distributed.Tests.Handlers
             throw new Exception("test Exception");
 
             // ReSharper disable once HeuristicUnreachableCode
-            OnProcessed?.Invoke(this, EventArgs.Empty);
+            OnProcess?.Invoke(null, EventArgs.Empty);
             return Task.CompletedTask;
         }
 
