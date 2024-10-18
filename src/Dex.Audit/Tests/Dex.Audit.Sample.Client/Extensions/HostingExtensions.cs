@@ -78,7 +78,7 @@ public static class HostingExtensions
 
             x.RegisterBus((context, configurator) =>
             {
-                context.RegisterReceiveEndpoint<AuditSettingsUpdatedConsumer, AuditSettingsDto>(configurator);
+                context.RegisterReceiveEndpoint<AuditSettingsDto, AuditSettingsUpdatedConsumer>(configurator);
                 context.AddAuditClientSendEndpoint();
                 configurator.ConfigureEndpoints(context);
             });

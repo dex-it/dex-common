@@ -3,7 +3,7 @@ using Dex.Audit.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Dex.Audit.Server.EntityConfiguration;
+namespace Dex.Audit.EF.EntityConfiguration;
 
 internal class AuditEventConfiguration : IEntityTypeConfiguration<AuditEvent>
 {
