@@ -35,6 +35,8 @@
     <PackageReference Update="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.10" />
     <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+
+    <PackageReference Update="System.Threading.Channels" Version="8.0.0" />
     
     <!--misc -->
     <PackageReference Update="Npgsql" Version="8.0.5" />
