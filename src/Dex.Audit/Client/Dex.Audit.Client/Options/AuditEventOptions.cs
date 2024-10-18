@@ -3,17 +3,17 @@ using Dex.Audit.Domain.Enums;
 namespace Dex.Audit.Client.Options;
 
 /// <summary>
-/// Опции системы аудита
+/// Audit events options.
 /// </summary>
 public class AuditEventOptions
 {
     /// <summary>
-    /// Минимальный уровень важности события для записи
+    /// The minimum level of severity of the event for recording.
     /// </summary>
     public AuditEventSeverityLevel MinSeverityLevel { get; set; }
 
     /// <summary>
-    /// Название системы инициатора события
+    /// The name of the event initiator's system.
     /// </summary>
     public required string SystemName { get; set; }
 }

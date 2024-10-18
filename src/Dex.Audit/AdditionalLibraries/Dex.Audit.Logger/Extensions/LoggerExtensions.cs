@@ -3,18 +3,18 @@
 namespace Dex.Audit.Logger.Extensions;
 
 /// <summary>
-/// Расширение для аудируемых логов.
+/// An extension for auditable logs.
 /// </summary>
 public static class LoggerExtensions
 {
     /// <summary>
-    /// Аудируемый лог с уровнем Debug.
+    /// Auditable log with Debug level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="exception">Исключение.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="exception">Exception.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditDebug(
         this ILogger logger,
         string eventType,
@@ -26,12 +26,12 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Debug.
+    /// Auditable log with Debug level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditDebug(
         this ILogger logger,
         string eventType,
@@ -42,13 +42,13 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Trace.
+    /// Auditable log with Trace level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="exception">Исключение.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="exception">Exception.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditTrace(
         this ILogger logger,
         string eventType,
@@ -60,12 +60,12 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Trace.
+    /// Auditable log with Trace level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditTrace(
         this ILogger logger,
         string eventType,
@@ -76,13 +76,13 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Information.
+    /// Auditable log with Information level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="exception">Исключение.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="exception">Exception.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditInformation(
         this ILogger logger,
         string eventType,
@@ -94,12 +94,12 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Information.
+    /// Auditable log with Information level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditInformation(
         this ILogger logger,
         string eventType,
@@ -110,13 +110,13 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Warning.
+    /// Auditable log with Warning level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="exception">Исключение.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="exception">Exception.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditWarning(
         this ILogger logger,
         string eventType,
@@ -128,12 +128,12 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Warning.
+    /// Auditable log with Warning level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditWarning(
         this ILogger logger,
         string eventType,
@@ -144,13 +144,13 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Error.
+    /// Auditable log with Error level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="exception">Исключение.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="exception">Exception.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditError(
         this ILogger logger,
         string eventType,
@@ -162,12 +162,12 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Error.
+    /// Auditable log with Error level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditError(
         this ILogger logger,
         string eventType,
@@ -178,13 +178,13 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Critical.
+    /// Auditable log with Critical level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="exception">Исключение.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="exception">Exception.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditCritical(
         this ILogger logger,
         string eventType,
@@ -196,12 +196,12 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог с уровнем Critical.
+    /// Auditable log with Critical level.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAuditCritical(
         this ILogger logger,
         string eventType,
@@ -212,13 +212,13 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог.
+    /// Auditable log.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="logLevel">Уровень логирования.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="logLevel">Log level.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAudit(
         this ILogger logger,
         LogLevel logLevel,
@@ -230,14 +230,14 @@ public static class LoggerExtensions
     }
 
     /// <summary>
-    /// Аудируемый лог.
+    /// Auditable log.
     /// </summary>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="logLevel">Уровень логирования.</param>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="exception">Исключение.</param>
-    /// <param name="message">Сообщение.</param>
-    /// <param name="args">Параметры сообщения.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="logLevel">Log level.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="exception">Exception.</param>
+    /// <param name="message">Message.</param>
+    /// <param name="args">Message parameters.</param>
     public static void LogAudit(
         this ILogger logger,
         LogLevel logLevel,

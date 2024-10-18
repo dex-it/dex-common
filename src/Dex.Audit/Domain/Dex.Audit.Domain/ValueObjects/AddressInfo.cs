@@ -1,34 +1,34 @@
 namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
-/// Информация об адресе участника системы аудита.
+/// Information about the address of an audit system participant.
 /// </summary>
 public class AddressInfo
 {
     /// <summary>
-    /// IP адрес.
+    /// IP address.
     /// </summary>
     public string? IpAddress { get; init; }
 
     /// <summary>
-    /// МАС адрес.
+    /// MAC address.
     /// </summary>
     public string? MacAddress { get; init; }
 
     /// <summary>
-    /// DNS-имя.
+    /// DNS name.
     /// </summary>
     public string? DnsName { get; init; }
 
     /// <summary>
-    /// Netbios имя или hostname.
+    /// NetBIOS name or hostname.
     /// </summary>
     public string? Host { get; init; }
 
     /// <summary>
-    /// Получить хэш кода объекта
+    /// Get the object's hash code
     /// </summary>
-    /// <returns>Хэш сумма</returns>
+    /// <returns>Hash sum</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(IpAddress, MacAddress, DnsName, Host);

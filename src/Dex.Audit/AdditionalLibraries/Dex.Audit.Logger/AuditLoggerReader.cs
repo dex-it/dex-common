@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 namespace Dex.Audit.Logger;
 
 /// <summary>
-/// Фоновая служба для чтения и отправки событий в очередь из <see cref="AuditLogger.BaseInfoChannel"/>.
+/// A background service for reading and sending events to a queue from <see cref="AuditLogger.BaseInfoChannel"/>.
 /// </summary>
 /// <param name="serviceScopeFactory"><see cref="IServiceProvider"/></param>
 internal sealed class AuditLoggerReader(
@@ -21,7 +21,7 @@ internal sealed class AuditLoggerReader(
     {
         using var scope = serviceScopeFactory.CreateScope();
 
-        var auditManager = scope.ServiceProvider.GetRequiredService<IAuditWriter>();
+        var auditWriter = scope.ServiceProvider.GetRequiredService<IAuditWriter>();
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -37,7 +37,7 @@ internal sealed class AuditLoggerReader(
                     continue;
                 }
 
-                await auditManager
+                await auditWriter
                     .WriteAsync(auditEventBaseInfo, cancellationToken)
                     .ConfigureAwait(false);
             }

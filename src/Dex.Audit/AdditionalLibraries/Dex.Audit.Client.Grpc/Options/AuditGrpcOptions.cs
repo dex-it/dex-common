@@ -1,12 +1,12 @@
 ﻿namespace Dex.Audit.Client.Grpc.Options;
 
 /// <summary>
-/// Опции подключения аудита по Grpc.
+/// Options for enabling Grpc auditing.
 /// </summary>
 public class AuditGrpcOptions
 {
     /// <summary>
-    /// Адрес сервера.
+    /// Server address.
     /// </summary>
     public required string ServerAddress { get; init; }
 }

@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
-/// Интерсептор аудита, отвечающий за перехват изменений контекста базы данных и отправку записей аудита.
+/// An audit interceptor responsible for intercepting database context changes and sending audit records.
 /// </summary>
-/// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита.</param>
+/// <param name="interceptionAndSendingEntriesService">A service for intercepting and sending audit records.</param>
 internal class AuditSaveChangesInterceptor(
     IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService)
     : SaveChangesInterceptor, IAuditSaveChangesInterceptor

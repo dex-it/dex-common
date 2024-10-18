@@ -1,10 +1,10 @@
 namespace Dex.Audit.EF.Interfaces;
 
 /// <summary>
-/// Интерфейс для пометки сущностей, которые нужно аудировать.
+/// An interface for marking entities that need to be audited.
 /// </summary>
 /// <remarks>
-/// Изменения сущности подвергнутся аудированию только если её успел затрекать dbContext.
-/// Если произошел сбой до того, как она попала в трекер DbContext, то сообщение аудита сформировано и отправлено не будет.
+/// Entity changes will be auditioned only if DbContext has already started it.
+/// If a failure occurred before it got into the DbContext tracker, then an audit message is generated and will not be sent.
 /// </remarks>
 public interface IAuditEntity;

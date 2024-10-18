@@ -3,9 +3,9 @@ using Dex.Audit.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Dex.Audit.EF.EntityConfiguration;
+namespace Dex.Audit.Server.EntityConfiguration;
 
-public class AuditEventConfiguration : IEntityTypeConfiguration<AuditEvent>
+internal class AuditEventConfiguration : IEntityTypeConfiguration<AuditEvent>
 {
     private const string SourcePropertyPrefix = "Source";
     private const string DestinationPropertyPrefix = "Destination";

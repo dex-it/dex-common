@@ -1,12 +1,12 @@
 ﻿namespace Dex.Audit.Logger.Options;
 
 /// <summary>
-/// Опции аудиремого логгера.
+/// Audit logger options.
 /// </summary>
 public class AuditLoggerOptions
 {
     /// <summary>
-    /// Интервал прочтения накопленных собитий.
+    /// The interval of reading the accumulated data.
     /// </summary>
     public TimeSpan ReadEventsInterval { get; set; }
 }

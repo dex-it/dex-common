@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
-/// Сервис для перехвата и отправки записей аудита.
+/// A service for intercepting and sending audit records.
 /// </summary>
 public class InterceptionAndSendingEntriesService(
     IServiceProvider serviceProvider)
@@ -18,9 +18,9 @@ public class InterceptionAndSendingEntriesService(
     private readonly List<EntryHelper> _entryHelpers = [];
 
     /// <summary>
-    /// Перехватывает записи аудита из контекста изменений
+    /// Intercepts audit records from the context of changes.
     /// </summary>
-    /// <param name="entries">Коллекция записей аудита</param>
+    /// <param name="entries">Collection of audit records.</param>
     public void InterceptEntries(IEnumerable<EntityEntry> entries)
     {
         var entityEntries = entries

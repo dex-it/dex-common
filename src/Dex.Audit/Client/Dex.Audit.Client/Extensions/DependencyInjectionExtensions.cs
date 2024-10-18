@@ -8,12 +8,12 @@ using AuditWriter = Dex.Audit.Client.Services.AuditWriter;
 namespace Dex.Audit.Client.Extensions;
 
 /// <summary>
-/// Статический класс, который содержит методы расширения для конфигурации зависимостей
+/// A static class that contains extension methods for configuring dependencies.
 /// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавляет необходимые для работы аудита зависимости
+    /// Adds the dependencies necessary for the audit client to work.
     /// </summary>
     public static IServiceCollection AddAuditClient<TAuditEventConfigurator, TAuditCacheRepository, TAuditSettingsService>(
         this IServiceCollection services,

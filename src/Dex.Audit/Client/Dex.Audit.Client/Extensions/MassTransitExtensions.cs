@@ -5,12 +5,12 @@ using MassTransit;
 namespace Dex.Audit.Client.Extensions;
 
 /// <summary>
-/// Расширения MassTransit для клиента.
+/// MassTransit extensions for the client.
 /// </summary>
 public static class MassTransitExtensions
 {
     /// <summary>
-    /// Добавить точку отправления сообщения <see cref="AuditEventMessage"/>.
+    /// Add a send endpoint for a message <see cref="AuditEventMessage"/>.
     /// </summary>
     /// <param name="busRegistrationContext"><see cref="IBusRegistrationContext"/></param>
     public static void AddAuditClientSendEndpoint(this IBusRegistrationContext busRegistrationContext)

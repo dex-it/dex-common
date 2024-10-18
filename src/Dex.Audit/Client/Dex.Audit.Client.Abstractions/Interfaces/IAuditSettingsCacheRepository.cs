@@ -3,14 +3,14 @@
 namespace Dex.Audit.Client.Abstractions.Interfaces;
 
 /// <summary>
-/// Репозиторий кэшируемого хранилища.
+/// The repository of the cached storage.
 /// </summary>
 public interface IAuditSettingsCacheRepository
 {
     /// <summary>
-    /// Получить настройки из кэша по типу события.
+    /// Get settings from the cache by event type.
     /// </summary>
-    /// <param name="eventType">Тип события.</param>
+    /// <param name="eventType">Event Type.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
     Task<AuditSettings?> GetAsync(
@@ -18,9 +18,9 @@ public interface IAuditSettingsCacheRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Получить настройки из кэша по типам событий.
+    /// Get settings from the cache by event types.
     /// </summary>
-    /// <param name="eventTypes">Типы событий.</param>
+    /// <param name="eventTypes">Event types.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
     Task<IDictionary<string, AuditSettings?>> GetDictionaryAsync(
@@ -28,9 +28,9 @@ public interface IAuditSettingsCacheRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Добавить в кэш настройки.
+    /// Add settings to the cache.
     /// </summary>
-    /// <param name="settings">Дто настройки события.</param>
+    /// <param name="settings">Audit setting.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
     Task AddRangeAsync(

@@ -6,12 +6,12 @@ using MassTransit;
 namespace Dex.Audit.Server.Extensions;
 
 /// <summary>
-/// Расширения MassTransit для клиента.
+/// MassTransit extensions for the audit server client.
 /// </summary>
 public static class MassTransitExtensions
 {
     /// <summary>
-    /// Добавить точку получения сообщения <see cref="AuditEventMessage"/>.
+    /// Add a consumer for <see cref="AuditEventMessage"/>.
     /// </summary>
     /// <param name="busRegistrationConfigurator"><see cref="IBusRegistrationConfigurator"/></param>
     public static void AddAuditServerConsumer(this IBusRegistrationConfigurator busRegistrationConfigurator)
@@ -20,17 +20,17 @@ public static class MassTransitExtensions
     }
 
     /// <summary>
-    /// Добавить точку получения сообщений <see cref="AuditEventMessage"/>.
+    /// Configures a receive endpoint for <see cref="AuditEventMessage"/>.
     /// </summary>
-    /// <param name="busRegistrationContext"><see cref="IBusRegistrationContext"/></param>
+    /// <param name="busRegistrationContext"><see cref="IRabbitMqBusFactoryConfigurator"/></param>
     /// <param name="context"><see cref="IBusRegistrationContext"/></param>
-    /// <param name="enableRetry">Включить ли повторные попытки получить сообщение.</param>
-    /// <param name="prefetchCount">Количество предварительной выборки.</param>
-    /// <param name="messageLimit">Лимит сообщений.</param>
-    /// <param name="timeLimitSeconds">Время ожидания сообщений в секундах.</param>
-    /// <param name="concurrencyLimit">Количество одновременно принмаемых сообщений.</param>
-    /// <param name="retryCount">Количество повторных попыток.</param>
-    /// <param name="retryIntervalSeconds">Интервал повторных попыток.</param>
+    /// <param name="enableRetry">Whether to enable retry for message processing.</param>
+    /// <param name="prefetchCount">Number of messages to prefetch.</param>
+    /// <param name="messageLimit">Limit of messages to batch.</param>
+    /// <param name="timeLimitSeconds">Time limit for message processing in seconds.</param>
+    /// <param name="concurrencyLimit">Limit for concurrent message processing.</param>
+    /// <param name="retryCount">Number of retry attempts.</param>
+    /// <param name="retryIntervalSeconds">Interval between retry attempts in seconds.</param>
     public static void AddAuditServerReceiveEndpoint(
         this IRabbitMqBusFactoryConfigurator busRegistrationContext,
         IBusRegistrationContext context,

@@ -5,16 +5,16 @@ using MassTransit;
 namespace Dex.Audit.Client.Services;
 
 /// <summary>
-/// Реализация интерфейса <see cref="IAuditOutputProvider"/>, которая осуществляет публикацию аудиторских событий через RabbitMQ
+/// Interface implementation <see cref="IAuditOutputProvider"/>, which publishes audit events through RabbitMQ.
 /// </summary>
-/// <param name="sendEndpoint">Конечная точка для публикации сообщений</param>
+/// <param name="sendEndpoint">The endpoint for publishing messages.</param>
 internal sealed class AuditOutputProvider(ISendEndpointProvider sendEndpoint)
     : IAuditOutputProvider
 {
     /// <summary>
-    /// Публикует аудиторское событие через RabbitMQ
+    /// Publishes an audit event via RabbitMQ.
     /// </summary>
-    /// <param name="auditEvent">Аудиторское событие, которое нужно опубликовать</param>
+    /// <param name="auditEvent">Audit event to be published.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public Task PublishEventAsync(
         AuditEventMessage auditEvent,

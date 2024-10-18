@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Dex.Audit.Logger;
 
 /// <summary>
-/// Логгер, для аудиремых логов.
+/// Logger, for audio logs.
 /// </summary>
 internal class AuditLogger : ILogger
 {

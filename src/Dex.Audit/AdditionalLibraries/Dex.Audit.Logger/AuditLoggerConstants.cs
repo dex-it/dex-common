@@ -1,12 +1,12 @@
 ﻿namespace Dex.Audit.Logger;
 
 /// <summary>
-/// Константы логгера аудита.
+/// Audit logger constants.
 /// </summary>
 internal static class AuditLoggerConstants
 {
     /// <summary>
-    /// Идентификатор события аудита.
+    /// The ID of the audit event.
     /// </summary>
     internal const int AuditEventId = 10_000_000;
 }

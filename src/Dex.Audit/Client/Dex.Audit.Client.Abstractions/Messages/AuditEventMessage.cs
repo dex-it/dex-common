@@ -3,157 +3,157 @@ using Dex.Audit.Domain.Enums;
 namespace Dex.Audit.Client.Abstractions.Messages;
 
 /// <summary>
-/// Контракт сообщения о событии аудита
+/// Contract for reporting an audit event.
 /// </summary>
 public class AuditEventMessage
 {
     /// <summary>
-    /// Название АС-источника информации о событии.
+    /// The name of the AC source of information about the event.
     /// </summary>
     public string? DeviceVendor { get; init; }
 
     /// <summary>
-    /// Версия АС-источника информации о событии.
+    /// The version of the AC source of information about the event.
     /// </summary>
     public string? DeviceVersion { get; init; }
 
     /// <summary>
-    /// Название журнала аудита АС-источника информации о событии.
+    /// The name of the AC audit log, the source of information about the event.
     /// </summary>
     public string? DeviceProduct { get; init; }
 
     /// <summary>
-    ///  Системное имя (логин) пользователя-инициатора события.
+    /// The system name (login) of the user who initiated the event.
     /// </summary>
     public string? SourceUser { get; init; }
 
     /// <summary>
-    /// Домен (или имя рабочей группы) пользователя-инициатора события.
+    /// The domain (or workgroup name) of the user who initiated the event.
     /// </summary>
     public string? SourceUserDomain { get; init; }
 
     /// <summary>
-    /// IP адрес хоста-источника события.
+    /// The IP address of the event source host.
     /// </summary>
     public string? SourceIpAddress { get; init; }
 
     /// <summary>
-    /// МАС адрес хоста-источника события.
+    /// MAC address of the event source host.
     /// </summary>
     public string? SourceMacAddress { get; init; }
 
     /// <summary>
-    /// DNS-имя источника события.
+    /// DNS name of the event source.
     /// </summary>
     public string? SourceDnsName { get; init; }
 
     /// <summary>
-    /// Netbios имя или hostname хоста-инициатора события.
+    /// Netbios name or hostname of the event initiator host.
     /// </summary>
     public string? SourceHost { get; init; }
 
     /// <summary>
-    ///  Системное имя (логин) пользователя получателя.
+    /// The system name (login) of the recipient's user.
     /// </summary>
     public string? DestinationUser { get; set; }
 
     /// <summary>
-    /// Домен (или имя рабочей группы) пользователя получателя.
+    /// The domain (or workgroup name) of the recipient's user.
     /// </summary>
     public string? DestinationDomain { get; set; }
 
     /// <summary>
-    ///  IP адрес хоста-получателя.
+    /// The IP address of the receiving host.
     /// </summary>
     public string? DestinationIpAddress { get; set; }
 
     /// <summary>
-    /// МАС адрес хоста-получателя.
+    /// MAC address of the receiving host.
     /// </summary>
     public string? DestinationMacAddress { get; set; }
 
     /// <summary>
-    ///  DNS-имя получателя.
+    /// The DNS name of the recipient.
     /// </summary>
     public string? DestinationDnsName { get; set; }
 
     /// <summary>
-    /// Netbios имя или hostname хоста получателя.
+    /// Netbios name or hostname of the recipient's host.
     /// </summary>
     public string? DestinationHost { get; set; }
 
     /// <summary>
-    /// Системный идентификатор сообщения о событии.
+    /// The system ID of the event message.
     /// </summary>
     public long? DeviceEventClassId { get; init; }
 
     /// <summary>
-    /// Порт на стороне источника.
+    /// The port is on the source side.
     /// </summary>
     public string? SourcePort { get; init; }
 
     /// <summary>
-    /// Порт на стороне получателя.
+    /// The port is on the recipient's side.
     /// </summary>
     public string? DestinationPort { get; set; }
 
     /// <summary>
-    /// Протокол на стороне источника.
+    /// The protocol is on the source side.
     /// </summary>
     public string? SourceProtocol { get; init; }
 
     /// <summary>
-    ///  Системное время источника события.
+    /// The system time of the event source.
     /// </summary>
     public DateTime Start { get; init; }
 
     /// <summary>
-    /// Системное время получателя.
+    /// The recipient's system time.
     /// </summary>
     public DateTime End { get; set; }
 
     /// <summary>
-    /// Время GMT источника события.
+    /// The GMT time of the event source.
     /// </summary>
     public DateTime SourceGmtDate { get; init; }
 
     /// <summary>
-    /// Время GMT получателя.
+    /// The recipient's GMT time.
     /// </summary>
     public DateTime DestinationGmtDate { get; set; }
 
     /// <summary>
-    /// Объект события.
+    /// The event object.
     /// </summary>
     public string? EventObject { get; init; }
 
     /// <summary>
-    /// Текст сообщения.
+    /// The text of the message.
     /// </summary>
     public string? Message { get; init; }
 
     /// <summary>
-    /// Полное имя процесса (службы).
+    /// The full name of the process (service).
     /// </summary>
     public string? DeviceProcessName { get; init; }
 
     /// <summary>
-    /// Результат (успех/отказ).
+    /// The result (success/failure).
     /// </summary>
     public bool IsSuccess { get; init; }
 
     /// <summary>
-    /// Тип события аудита.
+    /// The type of audit event.
     /// </summary>
     public required string EventType { get; init; }
 
     /// <summary>
-    /// Минимальный уровень важности события для записи, указанный на стороне источника события.
+    /// The minimum level of severity of the event for recording, specified on the side of the event source.
     /// </summary>
     public AuditEventSeverityLevel SourceMinSeverityLevel { get; set; }
 
     /// <summary>
-    /// Id настройки аудита.
+    /// The ID of the audit setting.
     /// </summary>
     public Guid? AuditSettingsId { get; set; }
 }

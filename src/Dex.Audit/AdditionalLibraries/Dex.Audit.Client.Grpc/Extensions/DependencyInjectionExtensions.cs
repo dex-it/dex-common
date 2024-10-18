@@ -11,16 +11,16 @@ using Microsoft.Extensions.Options;
 namespace Dex.Audit.Client.Grpc.Extensions;
 
 /// <summary>
-/// Статический класс, который содержит методы расширения для конфигурации зависимостей с добавленным Grpc.
+/// Static class containing extension methods for configuring dependencies with added Grpc support.
 /// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавляет необходимые для работы аудита зависимости с добавленным Grpc.
+    /// Adds the necessary audit dependencies with added Grpc support.
     /// </summary>
     /// <param name="services"><see cref="IServiceCollection"/></param>
     /// <param name="configuration"><see cref="IConfiguration"/></param>
-    /// <param name="configureClient">Конфигурация <see cref="HttpClient"/>, который будет использовать grpc client</param>
+    /// <param name="configureClient">Configuration of <see cref="HttpClient"/> that will use the grpc client</param>
     /// <typeparam name="TAuditEventConfigurator"></typeparam>
     /// <typeparam name="TAuditCacheRepository"></typeparam>
     /// <returns></returns>

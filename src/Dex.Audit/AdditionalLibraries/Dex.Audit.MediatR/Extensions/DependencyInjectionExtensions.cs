@@ -5,12 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Dex.Audit.MediatR.Extensions;
 
 /// <summary>
-/// Статический класс, который содержит методы расширения для конфигурации поведения конвейера MeiatR.
+/// A static class that contains extension methods for configuring dependencies.
 /// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавить в конвейер аудируемость.
+    /// Add audibility to the pipeline.
     /// </summary>
     /// <param name="configuration"><see cref="MediatRServiceConfiguration"/></param>
     public static void AddPipelineAuditBehavior(this MediatRServiceConfiguration configuration)

@@ -5,12 +5,12 @@ using Dex.Audit.Domain.Enums;
 namespace Dex.Audit.Client.Grpc.Extensions;
 
 /// <summary>
-/// Расширение для маппинга.
+/// MappingExtensions.
 /// </summary>
 internal static class MappingExtensions
 {
     /// <summary>
-    /// Замаппить grpc сообщение <see cref="AuditSettingsMessage"/> к сущности <see cref="AuditSettings"/>.
+    /// Map <see cref="AuditSettingsMessage"/> to <see cref="AuditSettings"/>.
     /// </summary>
     /// <param name="auditSettingsMessage"><see cref="AuditSettingsMessage"/></param>
     /// <returns><see cref="AuditSettings"/></returns>

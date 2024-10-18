@@ -4,6 +4,8 @@ using Dex.Audit.ServerSample.Infrastructure.Context;
 
 namespace Dex.Audit.ServerSample.Infrastructure.Repositories;
 
+// ReSharper disable once ClassNeverInstantiated.Global
+// ReSharper disable once SuggestBaseTypeForParameterInConstructor
 internal class AuditEventsRepository(AuditServerDbContext context) : IAuditEventsRepository
 {
     public async Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default)

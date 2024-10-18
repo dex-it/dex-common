@@ -8,12 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Dex.Audit.Server.Grpc.Extensions;
 
 /// <summary>
-/// Статический класс, который содержит методы расширения для конфигурации зависимостей с добавленным Grpc.
+/// A static class that contains extension methods for configuring dependencies.
 /// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавляет необходимые для работы аудита зависимости.
+    /// Adds the dependencies necessary for the audit with grpc to work.
     /// </summary>
     public static IServiceCollection AddGrpcAuditServer<TAuditEventsRepository, TAuditSettingsRepository, TAuditSettingsCacheRepository>(
         this IServiceCollection services,

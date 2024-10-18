@@ -11,17 +11,17 @@ using Microsoft.Extensions.Options;
 namespace Dex.Audit.Client.Services;
 
 /// <summary>
-/// Базовый конфигуратор события аудита
+/// Basic Audit Event Configurator.
 /// </summary>
-/// <param name="auditEventOptions">Настройки события аудита.</param>
+/// <param name="auditEventOptions">Audit Event Settings.</param>
 public class BaseAuditEventConfigurator(
     IOptions<AuditEventOptions> auditEventOptions)
     : IAuditEventConfigurator
 {
     /// <summary>
-    /// Конфигурирует сообщение аудита для отправки
+    /// Configures the audit message to be sent.
     /// </summary>
-    /// <param name="auditEventBaseInfo">Базовая информации о событии аудита</param>
+    /// <param name="auditEventBaseInfo">Basic information about the audit event.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task<AuditEventMessage> ConfigureAuditEventAsync(
         AuditEventBaseInfo auditEventBaseInfo,
@@ -52,7 +52,7 @@ public class BaseAuditEventConfigurator(
     }
 
     /// <summary>
-    /// Получает информацию об адресе источника события.
+    /// Gets information about the address of the event source.
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     protected virtual async Task<AddressInfo> GetSourceAddressAsync(
@@ -71,7 +71,7 @@ public class BaseAuditEventConfigurator(
     }
 
     /// <summary>
-    /// Получает информацию о устройстве источника события
+    /// Get information about the device of the event source.
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     protected virtual Task<Device> GetDeviceInfoAsync(CancellationToken cancellationToken = default)
@@ -87,7 +87,7 @@ public class BaseAuditEventConfigurator(
     }
 
     /// <summary>
-    /// Получает информацию о пользователе-инициаторе
+    /// Get information about the initiator user.
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     protected virtual Task<UserDetails> GetUserDetailsAsync(CancellationToken cancellationToken = default)

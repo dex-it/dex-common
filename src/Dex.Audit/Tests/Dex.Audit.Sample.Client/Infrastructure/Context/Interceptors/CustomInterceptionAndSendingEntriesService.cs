@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
 
-public class CustomInterceptionAndSendingEntriesService(IServiceProvider serviceProvider) : InterceptionAndSendingEntriesService(serviceProvider)
+internal class CustomInterceptionAndSendingEntriesService(IServiceProvider serviceProvider) : InterceptionAndSendingEntriesService(serviceProvider)
 {
     protected override string GetEventType(EntityState entityState)
     {
