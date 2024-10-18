@@ -13,7 +13,7 @@ namespace Dex.Cap.OnceExecutor.Ef.Extensions
         /// <exception cref="ArgumentNullException"></exception>
         public static void OnceExecutorModelCreating(this ModelBuilder builder)
         {
-            if (builder == null) throw new ArgumentNullException(nameof(builder));
+            ArgumentNullException.ThrowIfNull(builder);
 
             var eb = builder.Entity<LastTransaction>();
             eb.HasKey(l => l.IdempotentKey);

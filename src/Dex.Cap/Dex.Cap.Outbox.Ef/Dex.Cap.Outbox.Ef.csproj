@@ -7,7 +7,7 @@
         <PackageTags>outbox business-transaction consistency EF implementation</PackageTags>
         <LangVersion>default</LangVersion>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.2</PackageVersion>
+        <PackageVersion>8.0.3</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

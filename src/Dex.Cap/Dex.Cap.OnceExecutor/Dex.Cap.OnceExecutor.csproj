@@ -10,7 +10,6 @@
     <FileVersion>$(PackageVersion)</FileVersion>
   </PropertyGroup>
 
-
   <!--Для NuGet-->
   <PropertyGroup>
     <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
@@ -30,21 +29,12 @@
   <!--/Для NuGet-->
 
   <ItemGroup>
-    <Compile Remove="Neo4j\**" />
     <Compile Update="BaseOnceExecutor.cs">
       <DependentUpon>IOnceExecutor.cs</DependentUpon>
     </Compile>
     <Compile Update="StrategyOnceExecutor.cs">
       <DependentUpon>IStrategyOnceExecutor.cs</DependentUpon>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Remove="Neo4j\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Neo4j\**" />
   </ItemGroup>
 
 </Project>
