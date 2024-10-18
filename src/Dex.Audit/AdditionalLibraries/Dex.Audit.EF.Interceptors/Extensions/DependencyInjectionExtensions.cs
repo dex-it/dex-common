@@ -1,8 +1,8 @@
-using Dex.Audit.EF.Interceptors;
-using Dex.Audit.EF.Interfaces;
+using Dex.Audit.EF.Interceptors.Interceptors;
+using Dex.Audit.EF.Interceptors.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.Audit.EF.Extensions;
+namespace Dex.Audit.EF.Interceptors.Extensions;
 
 /// <summary>
 /// A static class that contains extension methods for configuring dependencies.

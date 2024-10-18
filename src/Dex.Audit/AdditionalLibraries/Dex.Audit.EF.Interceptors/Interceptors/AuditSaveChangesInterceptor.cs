@@ -1,9 +1,9 @@
-using Dex.Audit.EF.Extensions;
-using Dex.Audit.EF.Interfaces;
+using Dex.Audit.EF.Interceptors.Extensions;
+using Dex.Audit.EF.Interceptors.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Dex.Audit.EF.Interceptors;
+namespace Dex.Audit.EF.Interceptors.Interceptors;
 
 /// <summary>
 /// An audit interceptor responsible for intercepting database context changes and sending audit records.

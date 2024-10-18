@@ -1,4 +1,4 @@
-﻿using Dex.Audit.EF.Interceptors;
+﻿using Dex.Audit.EF.Interceptors.Interceptors;
 using Dex.Audit.Sample.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 

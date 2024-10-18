@@ -1,4 +1,5 @@
-using Dex.Audit.EF.Interfaces;
+using Dex.Audit.EF.Interceptors.Abstractions;
+
 // ReSharper disable EntityFramework.ModelValidation.UnlimitedStringLength
 
 namespace Dex.Audit.ClientSample.Domain.Entities;

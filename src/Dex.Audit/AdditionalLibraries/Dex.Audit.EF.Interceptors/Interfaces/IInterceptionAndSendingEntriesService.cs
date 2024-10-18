@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace Dex.Audit.EF.Interfaces;
+namespace Dex.Audit.EF.Interceptors.Interfaces;
 
 /// <summary>
 /// Represents a service for intercepting and sending audit records.

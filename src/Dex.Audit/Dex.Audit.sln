@@ -30,11 +30,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.MediatR", "Additi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Logger", "AdditionalLibraries\Dex.Audit.Logger\Dex.Audit.Logger.csproj", "{516E8F98-1253-40B2-A2CE-3F40F74CE2B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.EF", "AdditionalLibraries\Dex.Audit.EF\Dex.Audit.EF.csproj", "{0D93CD62-ED86-4F2A-A0D6-B7E7667A6AA1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.EF.Interceptors", "AdditionalLibraries\Dex.Audit.EF.Interceptors\Dex.Audit.EF.Interceptors.csproj", "{0D93CD62-ED86-4F2A-A0D6-B7E7667A6AA1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Server.Grpc", "AdditionalLibraries\Dex.Audit.Server.Grpc\Dex.Audit.Server.Grpc.csproj", "{3996E2F7-98AB-4AD8-A3B3-11375EE3D6D8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Client.Grpc", "AdditionalLibraries\Dex.Audit.Client.Grpc\Dex.Audit.Client.Grpc.csproj", "{BEBB03B3-64B6-4F80-AF6A-28C9B6262CA6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.EF.Interceptors.Abstractions", "Dex.Audit.EF.Interceptors.Abstractions\Dex.Audit.EF.Interceptors.Abstractions.csproj", "{7C272844-D7CA-4E04-876D-A672CDA8C8E3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +57,7 @@ Global
 		{0D93CD62-ED86-4F2A-A0D6-B7E7667A6AA1} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
 		{3996E2F7-98AB-4AD8-A3B3-11375EE3D6D8} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
 		{BEBB03B3-64B6-4F80-AF6A-28C9B6262CA6} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
+		{7C272844-D7CA-4E04-876D-A672CDA8C8E3} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DB652823-8DF9-4FCF-B22F-8195578C02A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -109,5 +112,9 @@ Global
 		{BEBB03B3-64B6-4F80-AF6A-28C9B6262CA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BEBB03B3-64B6-4F80-AF6A-28C9B6262CA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BEBB03B3-64B6-4F80-AF6A-28C9B6262CA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C272844-D7CA-4E04-876D-A672CDA8C8E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C272844-D7CA-4E04-876D-A672CDA8C8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C272844-D7CA-4E04-876D-A672CDA8C8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C272844-D7CA-4E04-876D-A672CDA8C8E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

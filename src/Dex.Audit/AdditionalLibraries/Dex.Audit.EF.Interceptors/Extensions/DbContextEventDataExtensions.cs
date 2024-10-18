@@ -1,7 +1,7 @@
-﻿using Dex.Audit.EF.Interfaces;
+﻿using Dex.Audit.EF.Interceptors.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Dex.Audit.EF.Extensions;
+namespace Dex.Audit.EF.Interceptors.Extensions;
 
 internal static class DbContextEventDataExtensions
 {
