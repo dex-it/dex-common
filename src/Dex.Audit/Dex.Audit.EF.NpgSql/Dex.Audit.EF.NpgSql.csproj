@@ -4,11 +4,12 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <PackageTags>audit server</PackageTags>
+        <PackageTags>audit ef npgsql</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
         <PackageVersion>8.0.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
+        <RootNamespace>Dex.Audit.EF</RootNamespace>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -24,22 +25,19 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
-    <ItemGroup>        
+    <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
-        <PackageReference Include="Microsoft.Extensions.Options"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
-      <ProjectReference Include="..\Dex.Audit.Server.Abstractions\Dex.Audit.Server.Abstractions.csproj" />
-      <ProjectReference Include="..\..\..\Dex.MassTransit\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
+      <ProjectReference Include="..\Domain\Dex.Audit.Domain\Dex.Audit.Domain.csproj" />
     </ItemGroup>
 
 </Project>

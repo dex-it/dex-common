@@ -1,4 +1,5 @@
 ﻿using Dex.Audit.Domain.Entities;
+using Dex.Audit.EF.Extensions;
 using Dex.Audit.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
 

@@ -38,6 +38,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.Client.Grpc", "Ad
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.EF.Interceptors.Abstractions", "Dex.Audit.EF.Interceptors.Abstractions\Dex.Audit.EF.Interceptors.Abstractions.csproj", "{7C272844-D7CA-4E04-876D-A672CDA8C8E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Audit.EF.NpgSql", "Dex.Audit.EF.NpgSql\Dex.Audit.EF.NpgSql.csproj", "{C84EF851-F752-4436-B800-BF7CF6CB2451}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,7 @@ Global
 		{3996E2F7-98AB-4AD8-A3B3-11375EE3D6D8} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
 		{BEBB03B3-64B6-4F80-AF6A-28C9B6262CA6} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
 		{7C272844-D7CA-4E04-876D-A672CDA8C8E3} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
+		{C84EF851-F752-4436-B800-BF7CF6CB2451} = {07CD406B-6D8A-4F65-A49E-2107EA5501FE}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DB652823-8DF9-4FCF-B22F-8195578C02A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -116,5 +119,9 @@ Global
 		{7C272844-D7CA-4E04-876D-A672CDA8C8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C272844-D7CA-4E04-876D-A672CDA8C8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C272844-D7CA-4E04-876D-A672CDA8C8E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C84EF851-F752-4436-B800-BF7CF6CB2451}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C84EF851-F752-4436-B800-BF7CF6CB2451}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C84EF851-F752-4436-B800-BF7CF6CB2451}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C84EF851-F752-4436-B800-BF7CF6CB2451}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
