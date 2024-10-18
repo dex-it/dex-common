@@ -1,24 +1,24 @@
 namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
-/// Информация о пользователе.
+/// Information about the user.
 /// </summary>
 public class UserDetails
 {
     /// <summary>
-    ///  Системное имя (логин) пользователя.
+    /// System username (login).
     /// </summary>
     public string? User { get; init; }
 
     /// <summary>
-    /// Домен (или имя рабочей группы) пользователя.
+    /// Domain (or workgroup name) of the user.
     /// </summary>
     public string? UserDomain { get; init; }
 
     /// <summary>
-    /// Получить хэш кода объекта
+    /// Get the object's hash code
     /// </summary>
-    /// <returns>Хэш сумма</returns>
+    /// <returns>Hash sum</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(User, UserDomain);

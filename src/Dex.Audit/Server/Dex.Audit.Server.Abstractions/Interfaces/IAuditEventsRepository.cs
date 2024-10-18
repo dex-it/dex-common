@@ -3,14 +3,14 @@
 namespace Dex.Audit.Server.Abstractions.Interfaces;
 
 /// <summary>
-/// Репозиторий постоянного хранилища событий.
+/// The repository of the permanent event repository.
 /// </summary>
 public interface IAuditEventsRepository
 {
     /// <summary>
-    /// Добавить событие.
+    /// Add event.
     /// </summary>
-    /// <param name="auditEvents">Событие.</param>
+    /// <param name="auditEvents">Event.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task AddAuditEventsRangeAsync(

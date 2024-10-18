@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Dex.Audit.EF.Interceptors;
 
 /// <summary>
-/// Интерсептор для перехвата коммита транзакции в базе данных.
+/// An interceptor for intercepting a transaction commit in the database.
 /// </summary>
-/// <param name="interceptionAndSendingEntriesService">Сервис для перехвата и отправки записей аудита.</param>
+/// <param name="interceptionAndSendingEntriesService">A service for intercepting and sending audit records.</param>
 internal class AuditTransactionInterceptor(
     IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService)
     : DbTransactionInterceptor, IAuditDbTransactionInterceptor

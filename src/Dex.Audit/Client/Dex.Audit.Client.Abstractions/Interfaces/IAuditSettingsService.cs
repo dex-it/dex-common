@@ -3,16 +3,16 @@
 namespace Dex.Audit.Client.Abstractions.Interfaces;
 
 /// <summary>
-/// Интерфейс сервиса настроек аудита.
+/// The interface of the audit settings service.
 /// </summary>
 public interface IAuditSettingsService
 {
     /// <summary>
-    /// Получить или получить и обновить настройки.
+    /// Get or get and update settings.
     /// </summary>
-    /// <param name="eventType">Тип события.</param>
+    /// <param name="eventType">Event type.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    /// <returns>Настройка аудита.</returns>
+    /// <returns>Audit settings.</returns>
     Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(
         string eventType,
         CancellationToken cancellationToken = default);

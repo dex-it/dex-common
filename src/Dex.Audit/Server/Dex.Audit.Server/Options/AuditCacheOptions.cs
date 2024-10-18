@@ -1,12 +1,12 @@
 namespace Dex.Audit.Server.Options;
 
 /// <summary>
-/// Класс конфигураций используемых хостов сервиса Client API.
+/// The configuration class of the hosts used by the Client API service.
 /// </summary>
 public class AuditCacheOptions
 {
     /// <summary>
-    /// Интервал для обновления кэша.
+    /// The interval for updating the cache.
     /// </summary>
     public TimeSpan RefreshInterval { get; set; }
 }

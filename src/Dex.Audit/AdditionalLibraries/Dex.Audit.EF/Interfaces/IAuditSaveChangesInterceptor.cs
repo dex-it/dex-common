@@ -3,6 +3,6 @@
 namespace Dex.Audit.EF.Interfaces;
 
 /// <summary>
-/// Интерфейс интерсептора аудита, отвечающий за перехват изменений контекста базы данных и отправку записей аудита.
+/// The interface of the audit interceptor, responsible for intercepting changes to the database context and sending audit records.
 /// </summary>
 public interface IAuditSaveChangesInterceptor : ISaveChangesInterceptor;

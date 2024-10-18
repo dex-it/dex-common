@@ -7,12 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Dex.Audit.Server.Extensions;
 
 /// <summary>
-/// Статический класс, который содержит методы расширения для конфигурации зависимостей.
+/// A static class that contains extension methods for configuring dependencies.
 /// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавляет необходимые для работы аудита зависимости.
+    /// Add the dependencies necessary for the audit to work.
     /// </summary>
     public static IServiceCollection AddAuditServer
         <TAuditEventsRepository, TAuditSettingsRepository, TAuditCacheRepository, TAuditServerSettingsServer>(

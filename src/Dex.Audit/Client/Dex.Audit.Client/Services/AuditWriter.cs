@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace Dex.Audit.Client.Services;
 
 /// <summary>
-/// Класс для управления событиями аудита
+/// A class for managing audit events.
 /// </summary>
 /// <param name="auditOutputProvider"><see cref="IAuditOutputProvider"/></param>
 /// <param name="auditEventConfigurator"><see cref="IAuditEventConfigurator"/></param>
@@ -23,9 +23,9 @@ internal sealed class AuditWriter(
     : IAuditWriter
 {
     /// <summary>
-    /// Обрабатывает и публикует событие аудита
+    /// Processes and publishes an audit event.
     /// </summary>
-    /// <param name="eventBaseInfo">Базовая информация о событии аудита</param>
+    /// <param name="eventBaseInfo">Basic information about the audit event.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public async Task WriteAsync(
         AuditEventBaseInfo eventBaseInfo,

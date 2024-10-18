@@ -4,25 +4,25 @@ using MediatR;
 namespace Dex.Audit.MediatR.Requests;
 
 /// <summary>
-/// Интерфейс для запросов аудита, которые возвращают результат типа <typeparamref name="TResponse"/>.
+/// Interface for audit requests that return a result of type <typeparamref name="TResponse"/>.
 /// </summary>
-/// <typeparam name="TResponse">Тип результата запроса.</typeparam>
+/// <typeparam name="TResponse">The type of the result returned by the request.</typeparam>
 public abstract class AuditRequest<TResponse> : IRequest<TResponse>
 {
     /// <summary>
-    /// Тип события аудита.
+    /// The type of the audit event.
     /// </summary>
     [JsonIgnore]
     public abstract string EventType { get; }
 
     /// <summary>
-    /// Объект события аудита.
+    /// The object associated with the audit event.
     /// </summary>
     [JsonIgnore]
     public abstract string EventObject { get; }
 
     /// <summary>
-    /// Сообщение события аудита.
+    /// The message describing the audit event.
     /// </summary>
     [JsonIgnore]
     public abstract string Message { get; }

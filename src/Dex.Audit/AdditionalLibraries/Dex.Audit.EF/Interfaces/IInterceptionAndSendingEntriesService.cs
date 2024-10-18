@@ -3,20 +3,20 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 namespace Dex.Audit.EF.Interfaces;
 
 /// <summary>
-/// Представляет сервис для перехвата и отправки записей аудита.
+/// Represents a service for intercepting and sending audit records.
 /// </summary>
 public interface IInterceptionAndSendingEntriesService
 {
     /// <summary>
-    /// Перехватывает записи аудита из контекста изменений
+    /// Intercepts audit records from the context of changes.
     /// </summary>
-    /// <param name="entries">Коллекция записей аудита</param>
+    /// <param name="entries">Collection of audit records.</param>
     void InterceptEntries(IEnumerable<EntityEntry> entries);
 
     /// <summary>
-    /// Асинхронно отправляет перехваченные записи аудита
+    /// Asynchronously sends intercepted audit records
     /// </summary>
-    /// <param name="isSuccess">Показатель успешности выполнения операции</param>
+    /// <param name="isSuccess">The success rate of the operation.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     Task SendInterceptedEntriesAsync(bool isSuccess, CancellationToken cancellationToken = default);
 }

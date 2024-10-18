@@ -1,49 +1,49 @@
 namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
-/// Информация об источнике события.
+/// Information about the event source.
 /// </summary>
 public class Source
 {
     /// <summary>
-    /// Информация о рабочем устройстве источника события.
+    /// Information about the working device of the event source.
     /// </summary>
     public required Device Device { get; init; }
 
     /// <summary>
-    /// Информация о пользователе, инициировавшем событие.
+    /// Information about the user who initiated the event.
     /// </summary>
     public required UserDetails UserDetails { get; init; }
 
     /// <summary>
-    /// Адрес источника события.
+    /// Address of the event source.
     /// </summary>
     public required AddressInfo AddressInfo { get; init; }
 
     /// <summary>
-    /// Порт на стороне источника.
+    /// Port on the source side.
     /// </summary>
     public string? Port { get; init; }
 
     /// <summary>
-    /// Протокол на стороне источника.
+    /// Protocol on the source side.
     /// </summary>
     public string? Protocol { get; init; }
 
     /// <summary>
-    ///  Системное время источника события.
+    /// System time of the event source.
     /// </summary>
     public DateTime Start { get; init; }
 
     /// <summary>
-    /// Время GMT источника события.
+    /// GMT time of the event source.
     /// </summary>
     public DateTime GmtDate { get; init; }
 
     /// <summary>
-    /// Получить хэш кода объекта
+    /// Get the object's hash code
     /// </summary>
-    /// <returns>Хэш сумма</returns>
+    /// <returns>Hash sum</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(Device, UserDetails, AddressInfo, Port, Protocol, Start, GmtDate);

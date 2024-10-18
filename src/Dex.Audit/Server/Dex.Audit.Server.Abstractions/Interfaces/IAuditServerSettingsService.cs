@@ -3,15 +3,15 @@
 namespace Dex.Audit.Server.Abstractions.Interfaces;
 
 /// <summary>
-/// Сервис управления настройками.
+/// Settings management service.
 /// </summary>
 public interface IAuditServerSettingsService
 {
     /// <summary>
-    /// Добавить или обновить настройки.
+    /// Add or update settings.
     /// </summary>
-    /// <param name="eventType">Тип события.</param>
-    /// <param name="severityLevel">Уровень критичности события аудита.</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="severityLevel">The level of severity of the audit event.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task AddOrUpdateSettingsAsync(
@@ -20,9 +20,9 @@ public interface IAuditServerSettingsService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Удалить настройки.
+    /// Delete settings.
     /// </summary>
-    /// <param name="eventType">Тип события.</param>
+    /// <param name="eventType">Event type.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     Task DeleteSettingsAsync(
         string eventType,

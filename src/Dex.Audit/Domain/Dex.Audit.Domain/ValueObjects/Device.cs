@@ -1,39 +1,39 @@
 namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
-/// Информация об устройстве участника системы аудита.
+/// Information about the device of an audit system participant.
 /// </summary>
 public class Device
 {
     /// <summary>
-    /// Название АС.
+    /// Name of the information system (IS).
     /// </summary>
     public string? Vendor { get; init; }
 
     /// <summary>
-    /// Версия АС.
+    /// Version of the IS.
     /// </summary>
     public string? Version { get; init; }
 
     /// <summary>
-    /// Название журнала аудита АС.
+    /// Name of the IS audit log.
     /// </summary>
     public string? Product { get; init; }
 
     /// <summary>
-    /// Полное имя процесса (службы).
+    /// Full name of the process (service).
     /// </summary>
     public string? ProcessName { get; init; }
 
     /// <summary>
-    /// Системный идентификатор сообщения о событии.
+    /// System identifier of the event message.
     /// </summary>
     public long? EventClassId { get; init; }
 
     /// <summary>
-    /// Получить хэш кода объекта
+    /// Get the object's hash code
     /// </summary>
-    /// <returns>Хэш сумма</returns>
+    /// <returns>Hash sum</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(Vendor, Version, Product, ProcessName, EventClassId);

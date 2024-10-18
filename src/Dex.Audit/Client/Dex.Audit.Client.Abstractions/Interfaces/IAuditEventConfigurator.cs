@@ -3,14 +3,14 @@ using Dex.Audit.Client.Abstractions.Messages;
 namespace Dex.Audit.Client.Abstractions.Interfaces;
 
 /// <summary>
-/// Интерфейс для конфигурации событий аудита
+/// Interface for configuring audit events.
 /// </summary>
 public interface IAuditEventConfigurator
 {
     /// <summary>
-    /// Конфигурирует событие аудита на основе переданной базовой информации о событии
+    /// Configure an audit event based on the transmitted basic information about the event.
     /// </summary>
-    /// <param name="auditEventBaseInfo">Базовая информация о событии аудита</param>
+    /// <param name="auditEventBaseInfo">Basic information about the audit event.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     public Task<AuditEventMessage> ConfigureAuditEventAsync(
         AuditEventBaseInfo auditEventBaseInfo,

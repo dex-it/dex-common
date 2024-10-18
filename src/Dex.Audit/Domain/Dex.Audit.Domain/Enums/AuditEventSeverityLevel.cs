@@ -3,19 +3,19 @@ using System.ComponentModel;
 namespace Dex.Audit.Domain.Enums;
 
 /// <summary>
-/// Уровень критичности события аудита.
+/// The level of severity of the audit event.
 /// </summary>
 public enum AuditEventSeverityLevel
 {
-    [Description("Низкий уровень.")]
+    [Description("Low level.")]
     Low = 0,
 
-    [Description("Средний уровень.")]
+    [Description("Medium level.")]
     Medium = 1,
 
-    [Description("Высокий уровень.")]
+    [Description("High level.")]
     High = 2,
 
-    [Description("Критический уровень.")]
+    [Description("Critical level.")]
     Critical = 3
 }

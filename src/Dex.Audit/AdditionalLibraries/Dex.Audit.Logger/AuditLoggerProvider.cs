@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Dex.Audit.Logger;
 
 /// <summary>
-/// Провайдер <see cref="AuditLogger"/>.
+/// <see cref="AuditLogger"/> provider.
 /// </summary>
 internal sealed class AuditLoggerProvider : ILoggerProvider
 {

@@ -3,6 +3,6 @@
 namespace Dex.Audit.EF.Interfaces;
 
 /// <summary>
-/// Интерфейс интерсептора для перехвата коммита транзакции в базе данных.
+/// The interface of the interceptor for intercepting a transaction commit in the database.
 /// </summary>
 public interface IAuditDbTransactionInterceptor : IDbTransactionInterceptor;

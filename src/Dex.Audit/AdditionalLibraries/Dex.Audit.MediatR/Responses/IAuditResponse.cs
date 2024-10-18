@@ -1,6 +1,6 @@
 namespace Dex.Audit.MediatR.Responses;
 
 /// <summary>
-/// Интерфейс для ответов аудита.
+/// Interface for audit responses.
 /// </summary>
 public interface IAuditResponse;

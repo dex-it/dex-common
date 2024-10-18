@@ -1,37 +1,37 @@
 namespace Dex.Audit.Client.Abstractions.Messages;
 
 /// <summary>
-/// Базовая информация о событии аудита
+/// Basic information about the audit event.
 /// </summary>
 public class AuditEventBaseInfo
 {
     /// <summary>
-    /// Тип события аудита
+    /// Event type.
     /// </summary>
     public string EventType { get; }
 
     /// <summary>
-    /// Объект сообщения аудита
+    /// The object of the audit message.
     /// </summary>
     public string? EventObject { get; }
 
     /// <summary>
-    /// Текст сообщения о событии
+    /// The text of the event message.
     /// </summary>
     public string? Message { get; }
 
     /// <summary>
-    /// Результат (успех/отказ) действия
+    /// Result (success/failure) of the action.
     /// </summary>
     public bool IsSuccess { get; }
 
     /// <summary>
-    /// Инициализирует новый экземпляр класса <see cref="AuditEventBaseInfo"/>
+    /// Initializes a new instance of the class <see cref="AuditEventBaseInfo"/>.
     /// </summary>
-    /// <param name="eventType">Тип события аудита</param>
-    /// <param name="eventObject">Объект события аудита</param>
-    /// <param name="message">Текст сообщения о событии</param>
-    /// <param name="isSuccess">Результат (успех/отказ) действия</param>
+    /// <param name="eventType">Event type.</param>
+    /// <param name="eventObject">The object of the audit message.</param>
+    /// <param name="message">The text of the event message.</param>
+    /// <param name="isSuccess">Result (success/failure) of the action.</param>
     public AuditEventBaseInfo(string eventType, string? eventObject, string? message, bool isSuccess)
     {
         EventType = eventType;

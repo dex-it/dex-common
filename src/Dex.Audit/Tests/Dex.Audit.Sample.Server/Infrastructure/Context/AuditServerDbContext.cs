@@ -1,5 +1,5 @@
 ﻿using Dex.Audit.Domain.Entities;
-using Dex.Audit.EF.EntityConfiguration;
+using Dex.Audit.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Audit.ServerSample.Infrastructure.Context;
@@ -16,8 +16,6 @@ public class AuditServerDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new AuditEventConfiguration());
-
-        modelBuilder.Entity<AuditSettings>().HasKey(s => s.Id);
+        modelBuilder.AddAuditEntities();
     }
 }

@@ -9,21 +9,21 @@ using Microsoft.Extensions.Logging;
 namespace Dex.Audit.Server.Consumers;
 
 /// <summary>
-/// Обработчик аудиторских событий, полученных через шину сообщений.
+/// Consumer for audit events received via the message bus.
 /// </summary>
-/// <param name="auditEventsRepository"><see cref="IAuditEventsRepository"/>.</param>
 /// <param name="logger"><see cref="ILogger"/>.</param>
+/// <param name="auditEventsRepository"><see cref="IAuditEventsRepository"/>.</param>
 /// <param name="auditSettingsCacheRepository"><see cref="IAuditSettingsCacheRepository"/>.</param>
 public class AuditEventConsumer(
-    IAuditEventsRepository auditEventsRepository,
     ILogger<AuditEventConsumer> logger,
+    IAuditEventsRepository auditEventsRepository,
     IAuditSettingsCacheRepository auditSettingsCacheRepository)
     : IConsumer<Batch<AuditEventMessage>>
 {
     /// <summary>
-    /// Метод для обработки аудиторских событий, полученных через шину сообщений.
+    /// A method for processing audit events received via the message bus.
     /// </summary>
-    /// <param name="context">Контекст сообщения, содержащий аудиторское событие для обработки.</param>
+    /// <param name="context">The context of the message containing the audit event to be processed.</param>
     public async Task Consume(
         ConsumeContext<Batch<AuditEventMessage>> context)
     {

@@ -1,39 +1,39 @@
 namespace Dex.Audit.Domain.ValueObjects;
 
 /// <summary>
-/// Информация о получателе объекта события аудита.
+/// Information about the recipient of the audit event object.
 /// </summary>
 public class Destination
 {
     /// <summary>
-    /// Информация о пользователе-получателе.
+    /// Information about the recipient user.
     /// </summary>
     public required UserDetails UserDetails { get; init; }
 
     /// <summary>
-    /// Адрес получателя объекта события.
+    /// Address of the recipient of the event object.
     /// </summary>
     public required AddressInfo AddressInfo { get; init; }
 
     /// <summary>
-    /// Порт на стороне получателя.
+    /// Port on the recipient's side.
     /// </summary>
     public string? Port { get; init; }
 
     /// <summary>
-    /// Системное время получателя.
+    /// System time of the recipient.
     /// </summary>
     public DateTime End { get; set; }
 
     /// <summary>
-    /// Время GMT получателя.
+    /// GMT time of the recipient.
     /// </summary>
     public DateTime GmtDate { get; set; }
 
     /// <summary>
-    /// Получить хэш кода объекта
+    /// Get the object's hash code
     /// </summary>
-    /// <returns>Хэш сумма</returns>
+    /// <returns>Hash sum</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(UserDetails, AddressInfo, Port);

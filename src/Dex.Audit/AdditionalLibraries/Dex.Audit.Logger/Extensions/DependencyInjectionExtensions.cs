@@ -4,13 +4,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Logger.Extensions;
 
+/// <summary>
+/// A static class that contains extension methods for configuring dependencies.
+/// </summary>
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Добавить аудируемые логи.
+    /// Add auditable logs.
     /// </summary>
     /// <param name="builder"><see cref="ILoggingBuilder"/>.</param>
-    /// <param name="dispose">Освобождать ли ресурсы средствами DI.</param>
+    /// <param name="dispose">Whether to free up resources by means of DI.</param>
     /// <returns></returns>
     public static ILoggingBuilder AddAuditLogger(
         this ILoggingBuilder builder,
