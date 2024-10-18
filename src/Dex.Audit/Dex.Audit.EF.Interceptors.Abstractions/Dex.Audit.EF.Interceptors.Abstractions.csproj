@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <PackageTags>audit ef</PackageTags>
+        <PackageTags>audit ef inteceptors abstractions</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
         <PackageVersion>8.0.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
@@ -28,14 +28,5 @@
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
     <!--/Для NuGet-->
-
-    <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
-      <ProjectReference Include="..\..\Domain\Dex.Audit.Domain\Dex.Audit.Domain.csproj" />
-    </ItemGroup>
 
 </Project>

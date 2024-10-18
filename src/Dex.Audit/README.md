@@ -122,7 +122,11 @@ In appsettings
 
 Any event, that must be audited, should be added to AuditSettings with `IAuditServerSettingsService.AddOrUpdateSettingsAsync` (or another way) on server and must be available timely from `IAuditSettingsService.GetOrGetAndUpdateSettingsAsync` on client.
 
-# Dex.Audit.EF
+# Dex.Audit.EF.Interceptors.Abstractions
+
+### Provides interface IAuditEntity  for Dex.Audit.EF.Interceptors library.
+
+# Dex.Audit.EF.Interceptors
 
 ### Provides ready-made functionality for auditing operations on DbContext entities.
 

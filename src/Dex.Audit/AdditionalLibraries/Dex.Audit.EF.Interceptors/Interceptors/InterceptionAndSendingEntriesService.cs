@@ -1,12 +1,13 @@
 using System.Text;
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Client.Abstractions.Messages;
-using Dex.Audit.EF.Interfaces;
+using Dex.Audit.EF.Interceptors.Abstractions;
+using Dex.Audit.EF.Interceptors.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.Audit.EF.Interceptors;
+namespace Dex.Audit.EF.Interceptors.Interceptors;
 
 /// <summary>
 /// A service for intercepting and sending audit records.

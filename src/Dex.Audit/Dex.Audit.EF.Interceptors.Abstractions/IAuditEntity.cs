@@ -1,4 +1,4 @@
-namespace Dex.Audit.EF.Interfaces;
+namespace Dex.Audit.EF.Interceptors.Abstractions;
 
 /// <summary>
 /// An interface for marking entities that need to be audited.

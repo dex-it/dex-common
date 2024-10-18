@@ -1,9 +1,9 @@
 using System.Data.Common;
-using Dex.Audit.EF.Extensions;
-using Dex.Audit.EF.Interfaces;
+using Dex.Audit.EF.Interceptors.Extensions;
+using Dex.Audit.EF.Interceptors.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Dex.Audit.EF.Interceptors;
+namespace Dex.Audit.EF.Interceptors.Interceptors;
 
 /// <summary>
 /// An interceptor for intercepting a transaction commit in the database.
