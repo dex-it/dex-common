@@ -9,7 +9,7 @@ using Dex.Cap.Outbox.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Cap.Outbox;
+namespace Dex.Cap.Outbox.Ef;
 
 /// <summary>
 /// Обработчик одного OutboxJob. Изолирует необходимые ресурсы для этого
@@ -20,13 +20,13 @@ namespace Dex.Cap.Outbox;
 /// <param name="handlerFactory"></param>
 /// <param name="dbContext"></param>
 /// <param name="logger"></param>
-internal class OutboxJobHandler<TDbContext>(
+internal class OutboxJobHandlerEf<TDbContext>(
     IOutboxDataProvider dataProvider,
     IOutboxSerializer serializer,
     IOutboxTypeDiscriminator discriminator,
     IOutboxMessageHandlerFactory handlerFactory,
     TDbContext dbContext,
-    ILogger<OutboxJobHandler<TDbContext>> logger) : IOutboxJobHandler
+    ILogger<OutboxJobHandlerEf<TDbContext>> logger) : IOutboxJobHandler
     where TDbContext : DbContext
 {
     private const string LockTimeoutMessage = "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}";

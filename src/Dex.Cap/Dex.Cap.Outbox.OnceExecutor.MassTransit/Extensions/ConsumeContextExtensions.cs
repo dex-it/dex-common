@@ -1,4 +1,4 @@
-using Dex.Cap.Common.Ef.Interfaces;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using MassTransit;
 
@@ -9,7 +9,7 @@ public static class ConsumeContextExtensions
     public static string GetIdempotentKey<TMessage>(this ConsumeContext<TMessage> context)
         where TMessage : class
     {
-        if (context.Message is not IHaveIdempotenceKey key)
+        if (context.Message is not IIdempotentKey key)
         {
             return GetMessageIdValue(context.MessageId);
         }
