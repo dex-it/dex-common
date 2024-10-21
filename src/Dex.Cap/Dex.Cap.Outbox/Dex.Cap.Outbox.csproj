@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>outbox business-transaction consistency</PackageTags>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.4</PackageVersion>
+        <PackageVersion>6.0.5</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -56,7 +56,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj"/>
+        <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj"/>
     </ItemGroup>
 
 </Project>

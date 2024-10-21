@@ -22,7 +22,7 @@ public static class MicrosoftDependencyInjectionExtensions
             .AddScoped<IOutboxService<TDbContext>, OutboxService<TDbContext>>()
             .AddScoped<IOutboxService>(provider => provider.GetRequiredService<IOutboxService<TDbContext>>())
             .AddScoped<IOutboxHandler, MainLoopOutboxHandler<TDbContext>>()
-            .AddScoped<IOutboxJobHandler, OutboxJobHandler<TDbContext>>()
+            .AddScoped<IOutboxJobHandler, OutboxJobHandlerEf<TDbContext>>()
             .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
             .AddScoped<IOutboxDataProvider<TDbContext>, OutboxDataProviderEf<TDbContext>>()
             .AddScoped<IOutboxDataProvider>(provider => provider.GetRequiredService<IOutboxDataProvider<TDbContext>>())
