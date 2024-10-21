@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Dex.Cap.Common.Ef.Interfaces;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
-    public interface IOutboxMessage : IHaveIdempotenceKey
+    public interface IOutboxMessage : IIdempotentKey
     {
         Guid MessageId { get; }
         
         [SuppressMessage("Design", "CA1033:Методы интерфейса должны быть доступны для вызова дочерним типам")]
-        string IHaveIdempotenceKey.IdempotentKey => MessageId.ToString("N");
+        string IIdempotentKey.IdempotentKey => MessageId.ToString("N");
     }
 }

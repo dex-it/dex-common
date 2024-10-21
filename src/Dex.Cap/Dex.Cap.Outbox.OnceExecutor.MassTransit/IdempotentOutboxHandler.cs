@@ -3,7 +3,6 @@ using Dex.Cap.OnceExecutor;
 using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
@@ -11,12 +10,13 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// Идемпотентный обработчик сообщений аутбокса
 /// </summary>
 /// <typeparam name="TMessage"></typeparam>
-public abstract class IdempotentOutboxHandler<TMessage> : IOutboxMessageHandler<TMessage>
+/// <typeparam name="TDbContext"></typeparam>
+public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
     where TMessage : BaseOutboxMessage
 {
-    private readonly IOnceExecutor<IEfOptions, DbContext> _onceExecutor;
+    private readonly IOnceExecutor<IEfOptions, TDbContext> _onceExecutor;
 
-    protected IdempotentOutboxHandler(IOnceExecutor<IEfOptions, DbContext> onceExecutor)
+    protected IdempotentOutboxHandler(IOnceExecutor<IEfOptions, TDbContext> onceExecutor)
     {
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
     }

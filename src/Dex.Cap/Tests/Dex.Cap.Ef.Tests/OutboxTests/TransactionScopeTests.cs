@@ -30,7 +30,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             Assert.Catch<InvalidOperationException>(() =>
             {
                 var id = Guid.NewGuid();
-                using (var aScope = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
+                using (var aScope = TransactionScopeHelper
+                           .CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
                 {
                     var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                     db.Database.CreateExecutionStrategy()
@@ -38,14 +39,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                             (_, _) =>
                             {
                                 using (var inner2 = TransactionScopeHelper
-                                           .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                           .CreateTransactionScope(TransactionScopeOption.Required,
+                                               IsolationLevel.ReadCommitted))
                                 {
                                     db.Users.Add(new TestUser { Id = id, Name = "max" });
                                     db.SaveChanges();
                                     inner2.Complete();
-                                }
 
-                                return 0;
+                                    return 0;
+                                }
                             },
                             (_, _) => new ExecutionResult<int>(true, 0));
 
@@ -63,7 +65,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var id = Guid.NewGuid();
-            using (var aScope = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
+            using (var aScope = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew,
+                       IsolationLevel.ReadCommitted))
             {
                 var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                 db.Database.CreateExecutionStrategy()
@@ -71,14 +74,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                         (_, _) =>
                         {
                             using (var inner2 = TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                       .CreateTransactionScope(TransactionScopeOption.Required,
+                                           IsolationLevel.ReadCommitted))
                             {
                                 db.Users.Add(new TestUser { Id = id, Name = "max" });
                                 db.SaveChanges();
                                 inner2.Complete();
-                            }
 
-                            return 0;
+                                return 0;
+                            }
                         },
                         (_, _) => new ExecutionResult<int>(true, 0));
 
@@ -97,9 +101,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var id = Guid.NewGuid();
-            using (var aScope = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
+            using (var aScope = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew,
+                       IsolationLevel.ReadCommitted))
             {
-                using (var inner = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.Suppress, IsolationLevel.ReadCommitted))
+                using (var inner = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.Suppress,
+                           IsolationLevel.ReadCommitted))
                 {
                     var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                     db.Database.CreateExecutionStrategy()
@@ -107,14 +113,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                             (_, _) =>
                             {
                                 using (var inner2 = TransactionScopeHelper
-                                           .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                           .CreateTransactionScope(TransactionScopeOption.Required,
+                                               IsolationLevel.ReadCommitted))
                                 {
                                     db.Users.Add(new TestUser { Id = id, Name = "max" });
                                     db.SaveChanges();
                                     inner2.Complete();
-                                }
 
-                                return 0;
+                                    return 0;
+                                }
                             },
                             (_, _) => new ExecutionResult<int>(true, 0));
 
@@ -141,7 +148,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var id2 = Guid.NewGuid();
             Assert.Catch<TransactionAbortedException>(() =>
             {
-                using (var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
+                using (var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew,
+                           IsolationLevel.ReadCommitted))
                 {
                     var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                     db.Database.CreateExecutionStrategy()
@@ -149,7 +157,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                             (_, _) =>
                             {
                                 using (var inner2 = TransactionScopeHelper
-                                           .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                           .CreateTransactionScope(TransactionScopeOption.Required,
+                                               IsolationLevel.ReadCommitted))
                                 {
                                     db.Users.Add(new TestUser { Id = id, Name = "max" });
                                     db.SaveChanges();
@@ -166,7 +175,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                             (_, _) =>
                             {
                                 using (TransactionScopeHelper
-                                           .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                           .CreateTransactionScope(TransactionScopeOption.Required,
+                                               IsolationLevel.ReadCommitted))
                                 {
                                     db.Users.Add(new TestUser { Id = id2, Name = "max2" });
                                     db.SaveChanges();
@@ -202,7 +212,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var id = Guid.NewGuid();
             var id2 = Guid.NewGuid();
-            using (var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.Suppress, IsolationLevel.ReadCommitted))
+            using (var ambient =
+                   TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.Suppress,
+                       IsolationLevel.ReadCommitted))
             {
                 var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
                 db.Database.CreateExecutionStrategy()
@@ -210,7 +222,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                         (_, _) =>
                         {
                             using (var inner2 = TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                       .CreateTransactionScope(TransactionScopeOption.Required,
+                                           IsolationLevel.ReadCommitted))
                             {
                                 db.Users.Add(new TestUser { Id = id, Name = "max" });
                                 db.SaveChanges();
@@ -227,7 +240,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                         (_, _) =>
                         {
                             using (TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted))
+                                       .CreateTransactionScope(TransactionScopeOption.Required,
+                                           IsolationLevel.ReadCommitted))
                             {
                                 db.Users.Add(new TestUser { Id = id2, Name = "max2" });
                                 db.SaveChanges();
@@ -261,7 +275,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .BuildServiceProvider();
 
             var id = Guid.NewGuid();
-            using (var aScope = new CommittableTransaction(new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted }))
+            using (var aScope = new CommittableTransaction(new TransactionOptions
+                       { IsolationLevel = IsolationLevel.ReadCommitted }))
             {
                 Transaction.Current = aScope;
 
@@ -271,7 +286,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                         (_, _) =>
                         {
                             using (var inner2 = TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
+                                       .CreateTransactionScope(TransactionScopeOption.RequiresNew,
+                                           IsolationLevel.ReadCommitted))
                             {
                                 db.Users.Add(new TestUser { Id = id, Name = "max" });
                                 db.SaveChanges();
