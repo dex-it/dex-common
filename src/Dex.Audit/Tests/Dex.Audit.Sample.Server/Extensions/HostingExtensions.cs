@@ -3,7 +3,6 @@ using Dex.Audit.Server.Extensions;
 using Dex.Audit.Server.Grpc.Extensions;
 using Dex.Audit.Server.Grpc.Services;
 using Dex.Audit.ServerSample.Infrastructure.Context;
-using Dex.Audit.ServerSample.Infrastructure.Repositories;
 using Dex.Audit.ServerSample.Infrastructure.Workers;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
@@ -15,7 +14,7 @@ namespace Dex.Audit.ServerSample.Extensions;
 /// <summary>
 /// Расширение регистрации сервисов и пайплайна
 /// </summary>
-public static class HostingExtensions
+internal static class HostingExtensions
 {
     /// <summary>
     /// Регистрация конфигураций сервисов
@@ -54,11 +53,21 @@ public static class HostingExtensions
 
         services.AddDbContext<AuditServerDbContext>();
 
-        // Audit Server
-        //services.AddAuditServer<AuditEventsRepository, AuditSettingsRepository, AuditSettingsCacheRepository, AuditServerSettingsService>(builder.Configuration);
+        // Audit simple Server
+        services.AddSimpleAuditServer<AuditServerDbContext>(builder.Configuration);
 
-        // Audit Grpc Server
-        services.AddGrpcAuditServer<AuditEventsRepository, AuditSettingsRepository, AuditSettingsCacheRepository>(builder.Configuration);
+        // // Audit Server
+        // services.AddAuditServer<
+        //     SimpleAuditEventsRepository<AuditServerDbContext>,
+        //     SimpleAuditSettingsRepository<AuditServerDbContext>,
+        //     SimpleAuditSettingsCacheRepository,
+        //     SimpleAuditServerSettingsService>(builder.Configuration);
+        //
+        // // Audit Grpc Server
+        // services.AddGrpcAuditServer<
+        //     SimpleAuditEventsRepository<AuditServerDbContext>,
+        //     SimpleAuditSettingsRepository<AuditServerDbContext>,
+        //     SimpleAuditSettingsCacheRepository>(builder.Configuration);
 
         services.AddMassTransit(busRegistrationConfigurator =>
         {

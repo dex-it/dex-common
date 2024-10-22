@@ -4,4 +4,4 @@ namespace Dex.Audit.Sample.Shared.Api;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BaseController : Controller;
+public class BaseController : ControllerBase;

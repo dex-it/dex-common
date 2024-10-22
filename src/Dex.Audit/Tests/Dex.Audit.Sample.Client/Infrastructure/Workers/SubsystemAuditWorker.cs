@@ -8,7 +8,7 @@ namespace Dex.Audit.ClientSample.Infrastructure.Workers;
 /// <summary>
 /// Сервис, отвечающий за выполнение аудита подсистемы.
 /// </summary>
-public class SubsystemAuditWorker(IServiceScopeFactory scopeFactory, ILogger<SubsystemAuditWorker> logger) : IHostedService
+public sealed class SubsystemAuditWorker(IServiceScopeFactory scopeFactory, ILogger<SubsystemAuditWorker> logger) : IHostedService
 {
 
     /// <summary>

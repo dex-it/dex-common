@@ -1,17 +1,16 @@
 ﻿using System.Text.Json.Serialization;
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Grpc.Extensions;
+using Dex.Audit.Client.Grpc.Services;
 using Dex.Audit.Client.Services;
-using Dex.Audit.ClientSample.Infrastructure.Consumers;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
-using Dex.Audit.ClientSample.Infrastructure.Repositories;
 using Dex.Audit.ClientSample.Infrastructure.Workers;
 using Dex.Audit.EF.Interceptors.Extensions;
 using Dex.Audit.EF.Interceptors.Interfaces;
+using Dex.Audit.Implementations.Common.Repositories;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.Extensions;
-using Dex.Audit.Sample.Shared.Dto;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
@@ -21,7 +20,7 @@ namespace Dex.Audit.ClientSample.Extensions;
 /// <summary>
 /// Расширение регистрации сервисов и пайплайна
 /// </summary>
-public static class HostingExtensions
+internal static class HostingExtensions
 {
     /// <summary>
     /// Регистрация конфигураций сервисов
@@ -50,19 +49,22 @@ public static class HostingExtensions
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
         services.AddScoped<IDistributedCache, MemoryDistributedCache>();
 
+        // Audit simple Client
+        services.AddSimpleAuditClient(builder.Configuration);
+
         // Audit Client
-        // services.AddAuditClient<BaseAuditEventConfigurator, AuditSettingsCacheRepository, ClientAuditSettingsService>(builder.Configuration);
+        services.AddAuditClient<BaseAuditEventConfigurator, SimpleAuditSettingsCacheRepository, SimpleClientAuditSettingsService>(builder.Configuration);
 
         // Audit Grpc client
-        services.AddGrpcAuditClient<BaseAuditEventConfigurator, AuditSettingsCacheRepository>(
-            builder.Configuration,
-            () =>
-            {
-                var handler = new HttpClientHandler();
-                handler.ServerCertificateCustomValidationCallback =
-                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                return handler;
-            });
+        // services.AddGrpcAuditClient<BaseAuditEventConfigurator, SimpleAuditSettingsCacheRepository>(
+        //     builder.Configuration,
+        //     () =>
+        //     {
+        //         var handler = new HttpClientHandler();
+        //         handler.ServerCertificateCustomValidationCallback =
+        //             HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        //         return handler;
+        //     });
 
         services.AddAuditInterceptors<CustomInterceptionAndSendingEntriesService>();
         services.AddDbContext<ClientSampleContext>((serviceProvider, opt) =>
@@ -74,11 +76,11 @@ public static class HostingExtensions
         services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger());
         services.AddMassTransit(x =>
         {
-            x.AddConsumer<AuditSettingsUpdatedConsumer>();
+            x.AddSimpleAuditClientConsumer();
 
             x.RegisterBus((context, configurator) =>
             {
-                context.RegisterReceiveEndpoint<AuditSettingsDto, AuditSettingsUpdatedConsumer>(configurator);
+                context.AddSimpleAuditClientReceiveEndpoint(configurator);
                 context.AddAuditClientSendEndpoint();
                 configurator.ConfigureEndpoints(context);
             });

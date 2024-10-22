@@ -33,4 +33,25 @@ public static class DependencyInjectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Adds the dependencies necessary for the audit client to work with implementation of <see cref="BaseAuditEventConfigurator"/>.
+    /// </summary>
+    public static IServiceCollection AddAuditClient<TAuditCacheRepository, TAuditSettingsService>(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        where TAuditCacheRepository : class, IAuditSettingsCacheRepository
+        where TAuditSettingsService : class, IAuditSettingsService
+    {
+        services
+            .AddScoped<IAuditOutputProvider, AuditOutputProvider>()
+            .AddScoped<IAuditWriter, AuditWriter>()
+            .AddScoped(typeof(IAuditEventConfigurator), typeof(BaseAuditEventConfigurator))
+            .AddScoped(typeof(IAuditSettingsCacheRepository), typeof(TAuditCacheRepository))
+            .AddScoped(typeof(IAuditSettingsService), typeof(TAuditSettingsService))
+            .Configure<AuditEventOptions>(
+                opts => configuration.GetSection(nameof(AuditEventOptions)).Bind(opts));
+
+        return services;
+    }
 }

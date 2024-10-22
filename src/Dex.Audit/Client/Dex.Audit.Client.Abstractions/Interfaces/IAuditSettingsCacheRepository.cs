@@ -23,8 +23,7 @@ public interface IAuditSettingsCacheRepository
     /// <param name="eventTypes">Event types.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/>></param>
     /// <returns></returns>
-    Task<IDictionary<string, AuditSettings?>> GetDictionaryAsync(
-        IEnumerable<string> eventTypes,
+    Task<IDictionary<string, AuditSettings?>> GetDictionaryAsync(IEnumerable<string> eventTypes,
         CancellationToken cancellationToken = default);
 
     /// <summary>
