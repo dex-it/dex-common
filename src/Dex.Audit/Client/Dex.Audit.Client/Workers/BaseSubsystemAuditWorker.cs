@@ -45,7 +45,8 @@ public class BaseSubsystemAuditWorker(IServiceScopeFactory scopeFactory, ILogger
 
             await auditManager.WriteAsync(
                 new AuditEventBaseInfo(eventType, GetSourceAssemblyName(), description, true),
-                cancellationToken);
+                cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (Exception exception)
         {

@@ -18,7 +18,8 @@ public class SimpleAuditSettingsRepository<TDbContext>(TDbContext context) : IAu
         var setting = await context
             .Set<AuditSettings>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(settings => settings.EventType == eventType, cancellationToken);
+            .FirstOrDefaultAsync(settings => settings.EventType == eventType, cancellationToken)
+            .ConfigureAwait(false);
 
         if (setting == null)
         {
@@ -31,14 +32,18 @@ public class SimpleAuditSettingsRepository<TDbContext>(TDbContext context) : IAu
 
         context.Update(setting);
 
-        await context.SaveChangesAsync(cancellationToken);
+        await context
+            .SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task DeleteSettings(string eventType, CancellationToken cancellationToken = default)
     {
-        await context.Set<AuditSettings>()
+        await context
+            .Set<AuditSettings>()
             .Where(settings => settings.EventType == eventType)
-            .ExecuteDeleteAsync(cancellationToken: cancellationToken);
+            .ExecuteDeleteAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<AuditSettings>> GetAllSettingsAsync(CancellationToken cancellationToken = default)
@@ -46,6 +51,7 @@ public class SimpleAuditSettingsRepository<TDbContext>(TDbContext context) : IAu
         return await context
             .Set<AuditSettings>()
             .AsNoTracking()
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 }

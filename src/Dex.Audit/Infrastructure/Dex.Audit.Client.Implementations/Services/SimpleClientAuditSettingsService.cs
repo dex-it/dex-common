@@ -19,14 +19,17 @@ public class SimpleClientAuditSettingsService(
 {
     public async Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(string eventType, CancellationToken cancellationToken = default)
     {
-        var setting = await settingsCacheRepository.GetAsync(eventType, cancellationToken);
+        var setting = await settingsCacheRepository
+            .GetAsync(eventType, cancellationToken)
+            .ConfigureAwait(false);
 
         if (setting != null)
         {
             return setting;
         }
 
-        var settings = await GetSettingsFromServerAsync(cancellationToken);
+        var settings = await GetSettingsFromServerAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         if (settings == null || settings.Length == 0)
         {
@@ -47,16 +50,24 @@ public class SimpleClientAuditSettingsService(
             using var handler = new HttpClientHandler();
             handler.ServerCertificateCustomValidationCallback =
                 HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
             using var httpClient = new HttpClient(handler);
+
             using var result =
                 await httpClient.GetAsync(
                     configuration.GetConnectionString("AuditServerSettingsAddress"),
-                    cancellationToken);
+                    cancellationToken)
+                    .ConfigureAwait(false);
 
-            await using var stream = await result.Content.ReadAsStreamAsync(cancellationToken);
+            await using var stream = await result
+                .Content
+                .ReadAsStreamAsync(cancellationToken)
+                .ConfigureAwait(false);
+
             return await JsonSerializer.DeserializeAsync<AuditSettings[]?>(
                 stream,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (Exception exception)
         {

@@ -22,7 +22,7 @@ public class RefreshCacheWorker(
     /// <summary>
     /// Method that will be executed asynchronously in the background.
     /// </summary>
-    /// <param name="stoppingToken">Cancellation token to stop the operation.</param>
+    /// <param name="stoppingToken"><see cref="CancellationToken"/></param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -31,7 +31,8 @@ public class RefreshCacheWorker(
             {
                 logger.LogDebug("The audit cache update service has started working.");
 
-                await UpdateCache(stoppingToken).ConfigureAwait(false);
+                await UpdateCache(stoppingToken)
+                    .ConfigureAwait(false);
 
                 logger.LogDebug("Cache updated successfully.");
             }
@@ -40,7 +41,8 @@ public class RefreshCacheWorker(
                 logger.LogError(exception, "An error occurred while updating the audit cache.");
             }
 
-            await Task.Delay(options.Value.RefreshInterval, stoppingToken).ConfigureAwait(false);
+            await Task.Delay(options.Value.RefreshInterval, stoppingToken)
+                .ConfigureAwait(false);
         }
     }
 
@@ -54,8 +56,12 @@ public class RefreshCacheWorker(
         var auditRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsRepository>();
         var auditSettingsRepository = scope.ServiceProvider.GetRequiredService<IAuditSettingsCacheRepository>();
 
-        var auditSettings = await auditRepository.GetAllSettingsAsync(cancellationToken).ConfigureAwait(false);
+        var auditSettings = await auditRepository
+            .GetAllSettingsAsync(cancellationToken)
+            .ConfigureAwait(false);
 
-        await auditSettingsRepository.AddRangeAsync(auditSettings, cancellationToken).ConfigureAwait(false);
+        await auditSettingsRepository
+            .AddRangeAsync(auditSettings, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

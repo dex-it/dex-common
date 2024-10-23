@@ -58,7 +58,8 @@ public class AuditEventConsumer(
             .Select(consumeContext => consumeContext.Message)
             .ToArray();
 
-        var auditSettings = await GetAuditSettings(messagesWithUnknownSettings, cancellationToken);
+        var auditSettings = await GetAuditSettings(messagesWithUnknownSettings, cancellationToken)
+            .ConfigureAwait(false);
 
         foreach (var message in messagesWithUnknownSettings)
         {

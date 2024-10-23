@@ -14,7 +14,12 @@ public class SimpleAuditEventsRepository<TDbContext>(TDbContext context) : IAudi
 {
     public async Task AddAuditEventsRangeAsync(IEnumerable<AuditEvent> auditEvents, CancellationToken cancellationToken = default)
     {
-        await context.AddRangeAsync(auditEvents, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
+        await context
+            .AddRangeAsync(auditEvents, cancellationToken)
+            .ConfigureAwait(false);
+
+        await context
+            .SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 }

@@ -27,9 +27,12 @@ public class BaseAuditEventConfigurator(
         AuditEventBaseInfo auditEventBaseInfo,
         CancellationToken cancellationToken = default)
     {
-        var sourceAddress = await GetSourceAddressAsync(cancellationToken).ConfigureAwait(false);
-        var deviceInfo = await GetDeviceInfoAsync(cancellationToken).ConfigureAwait(false);
-        var userDetails = await GetUserDetailsAsync(cancellationToken).ConfigureAwait(false);
+        var sourceAddress = await GetSourceAddressAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var deviceInfo = await GetDeviceInfoAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var userDetails = await GetUserDetailsAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         return new AuditEventMessage
         {

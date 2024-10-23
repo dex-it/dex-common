@@ -4,7 +4,7 @@
 
 # Dex.Audit.Client
 
-### Provides functionality for auditing to events, enriching them and sending them to the listening server.
+### Provides functionality to audit events, enrich them, and send them to the listing server.
 
 ### Implementation
 
@@ -77,17 +77,6 @@ class YourClass
 
 In code
 ```csharp
-class YourContext : DbContext
-{
-    ...
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        ...
-        modelBuilder.AddAuditEntities();
-    }
-}
-
 services
     .AddAuditServer<
     YourAuditEventsRepository, // must be inherited and implemented from interface IAuditEventsRepository (Preferably persistente store)
@@ -135,6 +124,11 @@ Any event, that must be audited, should be added to AuditSettings with `IAuditSe
 
 ### Provides interface IAuditEntity  for Dex.Audit.EF.Interceptors library.
 
+In code
+```csharp
+public class YourAuditableEntity : IAuditEntity
+```
+
 # Dex.Audit.EF.Interceptors
 
 ### Provides ready-made functionality for auditing operations on DbContext entities.
@@ -155,8 +149,6 @@ services.AddDbContext<YourDbContext>((serviceProvider, options) =>
                 serviceProvider.GetRequiredService<IAuditSaveChangesInterceptor>(),
                 serviceProvider.GetRequiredService<IAuditDbTransactionInterceptor>());
         });
-
-public class YourAuditableEntity : IAuditEntity
 ```
 
 ### Basic usage
@@ -228,6 +220,20 @@ services.AddSimpleAuditClient(builder.Configuration);
 services.AddSimpleAuditClient<YourAuditEventConfigurator>(builder.Configuration);
 
 services.AddSimpleAuditClient<YourAuditEventConfigurator, YourClientAuditSettingsService>(builder.Configuration);
+
+services.AddMassTransit(x =>
+        {
+            ...
+            x.AddSimpleAuditClientConsumer();
+            ...
+
+            x.RegisterBus((context, configurator) =>
+            {
+                ...
+                context.AddSimpleAuditClientReceiveEndpoint(configurator);
+                ...
+            });
+        });
 ```
 
 Other configuration and usage similar to Dex.Audit.Client.
@@ -274,6 +280,17 @@ In code
 services.AddSimpleAuditServer<YourDbContext>(builder.Configuration);
 
 services.AddSimpleAuditServer<YourDbContext, YourAuditServerSettingsService>(builder.Configuration);
+
+class YourContext : DbContext
+{
+    ...
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        ...
+        modelBuilder.AddAuditEntities();
+    }
+}
 ```
 
 Other configuration and usage similar to Dex.Audit.Server.

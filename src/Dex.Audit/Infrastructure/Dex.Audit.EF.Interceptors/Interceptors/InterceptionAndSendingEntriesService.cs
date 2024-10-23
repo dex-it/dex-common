@@ -60,7 +60,8 @@ public class InterceptionAndSendingEntriesService(
 
             await auditManager.WriteAsync(
                 new AuditEventBaseInfo(eventType, entryHelper.Entry.GetType().ToString(), message, isSuccess),
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken)
+                .ConfigureAwait(false);
         }
 
         _entryHelpers.Clear();

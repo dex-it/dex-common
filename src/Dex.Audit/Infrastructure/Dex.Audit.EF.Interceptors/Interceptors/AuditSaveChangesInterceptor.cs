@@ -41,10 +41,12 @@ internal class AuditSaveChangesInterceptor(
         if (CheckIfTransactionExists(eventData.Context))
         {
             await interceptionAndSendingEntriesService
-                .SendInterceptedEntriesAsync(true, cancellationToken).ConfigureAwait(false);
+                .SendInterceptedEntriesAsync(true, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        return await base.SavedChangesAsync(eventData, result, cancellationToken).ConfigureAwait(false);
+        return await base.SavedChangesAsync(eventData, result, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
