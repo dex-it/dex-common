@@ -1,39 +1,40 @@
 using System.Reflection;
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Client.Abstractions.Messages;
-using Dex.Audit.Sample.Shared.Enums;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace Dex.Audit.ClientSample.Infrastructure.Workers;
+namespace Dex.Audit.Client.Workers;
 
 /// <summary>
-/// Сервис, отвечающий за выполнение аудита подсистемы.
+/// Service responsible for performing audit of the subsystem.
 /// </summary>
-public sealed class SubsystemAuditWorker(IServiceScopeFactory scopeFactory, ILogger<SubsystemAuditWorker> logger) : IHostedService
+public class BaseSubsystemAuditWorker(IServiceScopeFactory scopeFactory, ILogger<BaseSubsystemAuditWorker> logger) : IHostedService
 {
-
     /// <summary>
-    /// Запускает выполнение аудита при запуске подсистемы.
+    /// Starts the audit when the subsystem starts.
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public Task StartAsync(CancellationToken cancellationToken)
+    public virtual Task StartAsync(CancellationToken cancellationToken)
     {
-        return AuditSubsystemEventAsync(AuditEventType.StartSystem.ToString(), "Начало работы подсистемы", cancellationToken);
+        return AuditSubsystemEventAsync("StartSystem", "Subsystem startup", cancellationToken);
     }
 
     /// <summary>
-    /// Завершает выполнение аудита при завершении работы подсистемы.
+    /// Completes the audit when the subsystem shuts down.
     /// </summary>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    public Task StopAsync(CancellationToken cancellationToken)
+    public virtual Task StopAsync(CancellationToken cancellationToken)
     {
-        return AuditSubsystemEventAsync(AuditEventType.ShutdownSystem.ToString(), "Окончание работы подсистемы", cancellationToken);
+        return AuditSubsystemEventAsync("ShutdownSystem", "Subsystem shutdown", cancellationToken);
     }
 
     /// <summary>
-    /// Выполняет аудит события подсистемы.
+    /// Performs the audit of a subsystem event.
     /// </summary>
-    /// <param name="eventType">Тип события аудита</param>
-    /// <param name="description">Описание события</param>
+    /// <param name="eventType">The type of audit event</param>
+    /// <param name="description">Event description</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     private async Task AuditSubsystemEventAsync(string eventType, string description, CancellationToken cancellationToken)
     {

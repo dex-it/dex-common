@@ -25,11 +25,8 @@ public static class DependencyInjectionExtensions
         where TAuditServerSettingsServer : class, IAuditServerSettingsService
         where TDbContext : DbContext
     {
-        
-        services
-            .AddAuditServer<SimpleAuditEventsRepository<TDbContext>, SimpleAuditSettingsRepository<TDbContext>,
-                SimpleAuditSettingsCacheRepository, TAuditServerSettingsServer
-            >(configuration);
+        services.AddAuditServer<SimpleAuditEventsRepository<TDbContext>, SimpleAuditSettingsRepository<TDbContext>,
+            SimpleAuditSettingsCacheRepository, TAuditServerSettingsServer>(configuration);
 
         return services;
     }
@@ -46,8 +43,7 @@ public static class DependencyInjectionExtensions
     {
         services
             .AddAuditServer<SimpleAuditEventsRepository<TDbContext>, SimpleAuditSettingsRepository<TDbContext>,
-                SimpleAuditSettingsCacheRepository, SimpleAuditServerSettingsService
-            >(configuration);
+                SimpleAuditSettingsCacheRepository, SimpleAuditServerSettingsService>(configuration);
 
         return services;
     }

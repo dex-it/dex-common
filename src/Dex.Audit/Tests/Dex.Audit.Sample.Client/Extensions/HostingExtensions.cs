@@ -1,14 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 using Dex.Audit.Client.Extensions;
 using Dex.Audit.Client.Grpc.Extensions;
-using Dex.Audit.Client.Grpc.Services;
-using Dex.Audit.Client.Services;
+using Dex.Audit.Client.Workers;
 using Dex.Audit.ClientSample.Infrastructure.Context;
 using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
-using Dex.Audit.ClientSample.Infrastructure.Workers;
 using Dex.Audit.EF.Interceptors.Extensions;
 using Dex.Audit.EF.Interceptors.Interfaces;
-using Dex.Audit.Implementations.Common.Repositories;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.Extensions;
 using Dex.MassTransit.Rabbit;
@@ -51,9 +48,10 @@ internal static class HostingExtensions
 
         // Audit simple Client
         services.AddSimpleAuditClient(builder.Configuration);
+        //services.AddSimpleAuditClient<BaseAuditEventConfigurator, SimpleClientAuditSettingsService>(builder.Configuration);
 
         // Audit Client
-        services.AddAuditClient<BaseAuditEventConfigurator, SimpleAuditSettingsCacheRepository, SimpleClientAuditSettingsService>(builder.Configuration);
+        //services.AddAuditClient<BaseAuditEventConfigurator, SimpleAuditSettingsCacheRepository, SimpleClientAuditSettingsService>(builder.Configuration);
 
         // Audit Grpc client
         // services.AddGrpcAuditClient<BaseAuditEventConfigurator, SimpleAuditSettingsCacheRepository>(
@@ -94,7 +92,7 @@ internal static class HostingExtensions
         });
 
         // Additional
-        services.AddHostedService<SubsystemAuditWorker>();
+        services.AddHostedService<BaseSubsystemAuditWorker>();
 
         return builder.Build();
     }

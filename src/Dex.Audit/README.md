@@ -28,6 +28,9 @@ services
             ...
         });
     });
+
+// Optional
+services.AddHostedService<BaseSubsystemAuditWorker>();
 ```
 
 In appsettings
@@ -102,6 +105,8 @@ services.AddMassTransit(busRegistrationConfigurator =>
                 configurator.AddAuditServerReceiveEndpoint(context, true);
             });
         });
+
+services.AddHostedService<RefreshCacheWorker>();
 ```
 
 In appsettings
@@ -208,11 +213,28 @@ public class YourAuditableResponse : IAuditResponse;
 Any command, which inherits AuditRequest and response, which inherits IAuditResponse will be audited.
 
 
-# Audit Grpc libraries
+# Audit implementations libraries
 
-### These libraries provide a ready-made communication capability between the client and the server.
+### These libraries provide a ready-made implementation of the client and the server interfaces.
 
-# Dex.Audit.Client.Grpc
+# Dex.Audit.Client.Implementations
+
+### Implementation
+
+In code
+```csharp
+services.AddSimpleAuditClient(builder.Configuration);
+
+services.AddSimpleAuditClient<YourAuditEventConfigurator>(builder.Configuration);
+
+services.AddSimpleAuditClient<YourAuditEventConfigurator, YourClientAuditSettingsService>(builder.Configuration);
+```
+
+Other configuration and usage similar to Dex.Audit.Client.
+**Implementations:** IAuditSettingsCacheRepository (Microsoft.Extensions.Caching.Memory), 
+IAuditSettingsService (Dex.Masstransit.RabbitMq).
+
+# Dex.Audit.Client.Implementations.Grpc
 
 ### Implementation
 
@@ -240,9 +262,28 @@ In appsettings
 }
 ```
 
-Another implementation and usage is similar to Audit Client. IAuditSettingsService is already implemented.
+Other configuration and usage similar to Dex.Audit.Client.
+**Implementations:** IAuditSettingsService (GRPC).
 
-# Dex.Audit.Server.Grpc
+# Dex.Audit.Server.Implementations
+
+### Implementation
+
+In code
+```csharp
+services.AddSimpleAuditServer<YourDbContext>(builder.Configuration);
+
+services.AddSimpleAuditServer<YourDbContext, YourAuditServerSettingsService>(builder.Configuration);
+```
+
+Other configuration and usage similar to Dex.Audit.Server.
+
+**Implementations:**
+IAuditEventsRepository (EF.Core), IAuditSettingsRepository (EF.Core),
+IAuditSettingsCacheRepository (Microsoft.Extensions.Caching.Memory),
+IAuditServerSettingsService (Dex.Masstransit.RabbitMq).
+
+# Dex.Audit.Server.Implementations.Grpc
 
 ### Implementation
 
@@ -256,7 +297,8 @@ services
     >(builder.Configuration);
 ```
 
-Another implementation and usage is similar to Audit Server. IAuditServerSettingsService is already implemented.
+Other configuration and usage similar to Dex.Audit.Server.
+**Implementations:** IAuditServerSettingsService (GRPC).
 
 # Samples
 

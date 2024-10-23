@@ -2,8 +2,8 @@
 using Dex.Audit.Server.Extensions;
 using Dex.Audit.Server.Grpc.Extensions;
 using Dex.Audit.Server.Grpc.Services;
+using Dex.Audit.Server.Workers;
 using Dex.Audit.ServerSample.Infrastructure.Context;
-using Dex.Audit.ServerSample.Infrastructure.Workers;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using StackExchange.Redis.Extensions.Core.Configuration;
@@ -54,7 +54,7 @@ internal static class HostingExtensions
         services.AddDbContext<AuditServerDbContext>();
 
         // Audit simple Server
-        services.AddSimpleAuditServer<AuditServerDbContext>(builder.Configuration);
+        services.AddSimpleAuditServer<AuditServerDbContext, SimpleAuditServerSettingsService>(builder.Configuration);
 
         // // Audit Server
         // services.AddAuditServer<

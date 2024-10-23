@@ -3,22 +3,22 @@ using Dex.Audit.Domain.Enums;
 namespace Dex.Audit.Domain.Entities;
 
 /// <summary>
-/// Настройки событий аудита.
+/// Audit event settings.
 /// </summary>
 public class AuditSettings
 {
     /// <summary>
-    /// Идентификатор настройки события.
+    /// Event setting identifier.
     /// </summary>
     public Guid Id { get; init; }
 
     /// <summary>
-    /// Тип события.
+    /// Event type.
     /// </summary>
     public required string EventType { get; init; }
 
     /// <summary>
-    /// Уровень важности события.
+    /// Event severity level.
     /// </summary>
     public AuditEventSeverityLevel SeverityLevel { get; set; }
 }

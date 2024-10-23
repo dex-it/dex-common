@@ -4,6 +4,10 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Dex.Audit.Implementations.Common.Repositories;
 
+/// <summary>
+/// Simple implementation of <see cref="IAuditSettingsCacheRepository"/>
+/// </summary>
+/// <param name="memoryCache"><see cref="IMemoryCache"/></param>
 public class SimpleAuditSettingsCacheRepository(IMemoryCache memoryCache)
     : IAuditSettingsCacheRepository
 {

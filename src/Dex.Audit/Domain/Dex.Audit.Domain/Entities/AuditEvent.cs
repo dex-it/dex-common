@@ -3,42 +3,42 @@ using Dex.Audit.Domain.ValueObjects;
 namespace Dex.Audit.Domain.Entities;
 
 /// <summary>
-/// Событие аудита.
+/// Audit event.
 /// </summary>
 public class AuditEvent
 {
     /// <summary>
-    ///  Идентификатор строки о событии ИБ в рамках одного журнала АС.
+    /// Identifier of the security event entry within a single system log.
     /// </summary>
     public Guid Id { get; init; }
 
     /// <summary>
-    /// Тип события.
+    /// Event type.
     /// </summary>
     public required string EventType { get; init; }
 
     /// <summary>
-    /// Информация об источнике события.
+    /// Information about the event source.
     /// </summary>
     public required Source Source { get; init; }
 
     /// <summary>
-    /// Информация о получателе объекта события.
+    /// Information about the event destination object.
     /// </summary>
     public required Destination Destination { get; init; }
 
     /// <summary>
-    /// Объект события.
+    /// Event object.
     /// </summary>
     public required string EventObject { get; init; }
 
     /// <summary>
-    /// Текст сообщения.
+    /// Message text.
     /// </summary>
     public required string Message { get; init; }
 
     /// <summary>
-    /// Результат (успех/отказ).
+    /// Result (success/failure).
     /// </summary>
     public bool IsSuccess { get; init; }
 }

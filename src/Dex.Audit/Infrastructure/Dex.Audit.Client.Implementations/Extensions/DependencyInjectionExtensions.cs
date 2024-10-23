@@ -15,6 +15,22 @@ public static class DependencyInjectionExtensions
 {
     /// <summary>
     /// Adds the dependencies necessary for the audit client to work with default implementations:
+    /// <see cref="SimpleAuditSettingsCacheRepository"/>.
+    /// </summary>
+    public static IServiceCollection AddSimpleAuditClient<TAuditEventConfigurator, TAuditSettingsService>(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        where TAuditEventConfigurator : class, IAuditEventConfigurator
+        where TAuditSettingsService : class, IAuditSettingsService 
+    {
+        services
+            .AddAuditClient<TAuditEventConfigurator, SimpleAuditSettingsCacheRepository, TAuditSettingsService>(configuration);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds the dependencies necessary for the audit client to work with default implementations:
     /// <see cref="SimpleAuditSettingsCacheRepository"/>, <see cref="SimpleClientAuditSettingsService"/>.
     /// </summary>
     public static IServiceCollection AddSimpleAuditClient<TAuditEventConfigurator>(
