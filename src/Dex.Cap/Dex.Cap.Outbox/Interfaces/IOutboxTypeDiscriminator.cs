@@ -5,8 +5,7 @@ namespace Dex.Cap.Outbox.Interfaces;
 
 public interface IOutboxTypeDiscriminator
 {
-    IReadOnlyDictionary<string, Type> Discriminators { get; }
-    
+    IReadOnlyCollection<string> GetDiscriminators();
     string ResolveDiscriminator(Type type);
     Type ResolveType(string discriminator);
 }

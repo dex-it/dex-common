@@ -102,7 +102,6 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
         return outboxEnvelopes.Select(x => (IOutboxLockedJob)new OutboxLockedJob(x)).ToArray();
     }
 
-    
     public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
     {
         var lockId = Guid.NewGuid(); // Ключ идемпотентности.
@@ -218,10 +217,9 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
             const string cLockTimeout = nameof(OutboxEnvelope.LockTimeout);
             const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
             const string cMessageType = nameof(OutboxEnvelope.MessageType);
-            
-            var discriminators = _outboxTypeDiscriminator.Discriminators.Keys.ToArray();
-            var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
 
+            var discriminators = _outboxTypeDiscriminator.GetDiscriminators();
+            var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
 
             var sql = $@"
                 WITH cte AS (
