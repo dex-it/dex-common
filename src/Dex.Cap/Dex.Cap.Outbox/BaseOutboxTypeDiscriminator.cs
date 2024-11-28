@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
@@ -17,7 +16,7 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
         Add<EmptyOutboxMessage>(nameof(EmptyOutboxMessage));
     }
 
-    public IReadOnlyCollection<string> GetDiscriminators()
+    public string[] GetDiscriminators()
     {
         return Discriminator.Keys.ToArray();
     }
