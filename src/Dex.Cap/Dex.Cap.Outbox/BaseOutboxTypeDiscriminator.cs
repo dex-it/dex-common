@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
@@ -13,6 +14,11 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
     protected BaseOutboxTypeDiscriminator()
     {
         Add<EmptyOutboxMessage>(nameof(EmptyOutboxMessage));
+    }
+
+    public string[] GetDiscriminators()
+    {
+        return Discriminator.Keys.ToArray();
     }
 
     protected void Add(string discriminator, Type value)

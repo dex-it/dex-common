@@ -50,7 +50,7 @@ namespace Dex.Cap.Ef.Tests
             return serviceCollection;
         }
 
-        private static void AddLogging(IServiceCollection serviceCollection)
+        protected static void AddLogging(IServiceCollection serviceCollection)
         {
             serviceCollection.AddLogging(builder =>
             {
