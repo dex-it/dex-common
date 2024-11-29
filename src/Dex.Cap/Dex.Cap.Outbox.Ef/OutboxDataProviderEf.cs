@@ -23,19 +23,23 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
     private readonly TDbContext _dbContext;
     private readonly ILogger<OutboxDataProviderEf<TDbContext>> _logger;
     private readonly OutboxOptions _outboxOptions;
+    private readonly IOutboxTypeDiscriminator _outboxTypeDiscriminator;
 
     public OutboxDataProviderEf(
         TDbContext dbContext,
         IOptions<OutboxOptions> outboxOptions,
         ILogger<OutboxDataProviderEf<TDbContext>> logger,
-        IOutboxRetryStrategy retryStrategy) : base(retryStrategy)
+        IOutboxRetryStrategy retryStrategy,
+        IOutboxTypeDiscriminator outboxTypeDiscriminator) : base(retryStrategy)
     {
         _dbContext = dbContext;
         _outboxOptions = outboxOptions.Value;
         _logger = logger;
+        _outboxTypeDiscriminator = outboxTypeDiscriminator;
     }
 
-    public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
+    public override async Task ExecuteActionInTransaction<TState>(Guid correlationId,
+        IOutboxService<TDbContext> outboxService, TState state,
         Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(outboxService);
@@ -48,11 +52,13 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
                     var (context, outbox, outerState) = st;
 
                     if (context.ChangeTracker.HasChanges())
-                        throw new UnsavedChangesDetectedException(context, "Can't start outbox action, unsaved changes detected");
+                        throw new UnsavedChangesDetectedException(context,
+                            "Can't start outbox action, unsaved changes detected");
 
                     try
                     {
-                        var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
+                        var outboxContext =
+                            new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
                         await action(ct, outboxContext).ConfigureAwait(false);
 
                         // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
@@ -61,7 +67,8 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
 
                         if (!isOutboxMessageExists)
                         {
-                            await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct).ConfigureAwait(false);
+                            await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
+                                .ConfigureAwait(false);
                         }
 
                         await context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -119,7 +126,8 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
 
     public override async Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.CorrelationId == correlationId, cancellationToken).ConfigureAwait(false);
+        return await _dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.CorrelationId == correlationId, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public override int GetFreeMessagesCount()
@@ -191,7 +199,8 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
             .ConfigureAwait(false);
 
         static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
-            x => x.Id == messageId && x.LockId == lockId && (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
+            x => x.Id == messageId && x.LockId == lockId &&
+                 (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
     }
 
     // TODO вынести в провайдер
@@ -207,12 +216,17 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
             const string cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
             const string cLockTimeout = nameof(OutboxEnvelope.LockTimeout);
             const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
+            const string cMessageType = nameof(OutboxEnvelope.MessageType);
+
+            var discriminators = _outboxTypeDiscriminator.GetDiscriminators();
+            var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
 
             var sql = $@"
                 WITH cte AS (
                     SELECT ""Id""
                     FROM {NameConst.SchemaName}.{NameConst.TableName}
                     WHERE ""{cScheduledStartIndexing}"" IS NOT NULL
+                      AND ""{cMessageType}"" IN ({discriminatorsSql})
                       AND CURRENT_TIMESTAMP >= ""{cStartAtUtc}""
                       AND ""{cRetries}"" < {_outboxOptions.Retries}
                       AND (""{cStatus}"" = {OutboxMessageStatus.New:D} OR ""{cStatus}"" = {OutboxMessageStatus.Failed:D})

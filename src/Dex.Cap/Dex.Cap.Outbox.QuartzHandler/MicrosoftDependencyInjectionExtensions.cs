@@ -8,13 +8,15 @@ namespace Dex.Cap.Outbox.AspNetScheduler
 {
     public static class MicrosoftDependencyInjectionExtensions
     {
-        public static IServiceCollection RegisterOutboxScheduler(this IServiceCollection services, int periodSeconds = 30, int cleanupDays = 30)
+        public static IServiceCollection RegisterOutboxScheduler(this IServiceCollection services,
+            int periodSeconds = 30, int cleanupDays = 30)
         {
             ArgumentNullException.ThrowIfNull(services);
 
             if (periodSeconds <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(periodSeconds), periodSeconds, "Should be a positive number");
+                throw new ArgumentOutOfRangeException(nameof(periodSeconds), periodSeconds,
+                    "Should be a positive number");
             }
 
             if (cleanupDays <= 0)
@@ -23,7 +25,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler
             }
 
             services.AddHealthChecks()
-                .AddCheck<OutboxHealthCheck>("outbox-scheduler");
+                .AddCheck<OutboxHealthCheck>("outbox-scheduler", tags: new[] { "outbox-scheduler" });
 
             services
                 .AddSingleton(new OutboxHandlerOptions
