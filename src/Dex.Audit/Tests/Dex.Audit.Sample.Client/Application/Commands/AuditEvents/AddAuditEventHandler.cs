@@ -18,7 +18,7 @@ public class AddAuditEventHandler(IAuditWriter auditWriter) : IRequestHandler<Ad
     }
 }
 
-public record AddAuditEventCommand : IRequest
+public sealed record AddAuditEventCommand : IRequest
 {
     /// <summary>
     /// Тип события аудита

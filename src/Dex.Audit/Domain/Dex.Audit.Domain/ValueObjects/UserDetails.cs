@@ -3,7 +3,7 @@ namespace Dex.Audit.Domain.ValueObjects;
 /// <summary>
 /// Information about the user.
 /// </summary>
-public class UserDetails
+public sealed class UserDetails
 {
     /// <summary>
     /// System username (login).

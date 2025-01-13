@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Server.Grpc.Services;
 
-public class GrpcAuditServerSettingsService(
+public sealed class GrpcAuditServerSettingsService(
     IServiceProvider serviceProvider,
     ILogger<GrpcAuditServerSettingsService> logger)
     : AuditSettingsService.AuditSettingsServiceBase

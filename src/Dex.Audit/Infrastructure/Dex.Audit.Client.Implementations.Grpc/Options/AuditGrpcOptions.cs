@@ -3,7 +3,7 @@
 /// <summary>
 /// Options for enabling Grpc auditing.
 /// </summary>
-public class AuditGrpcOptions
+public sealed class AuditGrpcOptions
 {
     /// <summary>
     /// Server address.

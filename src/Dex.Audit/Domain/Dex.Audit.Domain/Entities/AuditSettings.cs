@@ -5,7 +5,7 @@ namespace Dex.Audit.Domain.Entities;
 /// <summary>
 /// Audit event settings.
 /// </summary>
-public class AuditSettings
+public sealed class AuditSettings
 {
     /// <summary>
     /// Event setting identifier.

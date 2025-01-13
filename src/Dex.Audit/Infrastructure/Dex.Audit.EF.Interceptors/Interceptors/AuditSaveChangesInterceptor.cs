@@ -9,7 +9,7 @@ namespace Dex.Audit.EF.Interceptors.Interceptors;
 /// An audit interceptor responsible for intercepting database context changes and sending audit records.
 /// </summary>
 /// <param name="interceptionAndSendingEntriesService">A service for intercepting and sending audit records.</param>
-internal class AuditSaveChangesInterceptor(
+internal sealed class AuditSaveChangesInterceptor(
     IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService)
     : SaveChangesInterceptor, IAuditSaveChangesInterceptor
 {

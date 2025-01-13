@@ -14,7 +14,7 @@ namespace Dex.Audit.Server.Workers;
 /// <param name="logger">Logger for recording information about the background service's work.</param>
 /// <param name="scopeFactory">Provider for creating service scopes.</param>
 /// <param name="options">Caching settings.</param>
-public class RefreshCacheWorker(
+public sealed class RefreshCacheWorker(
     ILogger<RefreshCacheWorker> logger,
     IServiceScopeFactory scopeFactory,
     IOptions<AuditCacheOptions> options) : BackgroundService

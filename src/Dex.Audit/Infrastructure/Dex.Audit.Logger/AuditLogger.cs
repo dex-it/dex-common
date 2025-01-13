@@ -7,7 +7,7 @@ namespace Dex.Audit.Logger;
 /// <summary>
 /// Logger, for audio logs.
 /// </summary>
-internal class AuditLogger : ILogger
+internal sealed class AuditLogger : ILogger
 {
     internal static readonly Channel<AuditEventBaseInfo> BaseInfoChannel =
         Channel.CreateBounded<AuditEventBaseInfo>(new BoundedChannelOptions(int.MaxValue));

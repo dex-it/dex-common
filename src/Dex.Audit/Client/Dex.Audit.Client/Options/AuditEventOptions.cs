@@ -5,7 +5,7 @@ namespace Dex.Audit.Client.Options;
 /// <summary>
 /// Audit events options.
 /// </summary>
-public class AuditEventOptions
+public sealed class AuditEventOptions
 {
     /// <summary>
     /// The minimum level of severity of the event for recording.

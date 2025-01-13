@@ -29,7 +29,7 @@ public class GetUserQueryHandler(ClientSampleContext clientSampleContext) : IReq
     }
 }
 
-public class GetUserQuery : AuditRequest<GetUserQueryResponse>
+public sealed class GetUserQuery : AuditRequest<GetUserQueryResponse>
 {
     public override string EventType { get; } = AuditEventType.ObjectRead.ToString();
     public override string EventObject { get; } = nameof(GetUserQuery);
@@ -38,7 +38,7 @@ public class GetUserQuery : AuditRequest<GetUserQueryResponse>
     public int Id { get; set; }
 }
 
-public class GetUserQueryResponse
+public sealed class GetUserQueryResponse
 {
     /// <summary>
     /// Идентификатор пользователя.

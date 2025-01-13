@@ -3,7 +3,7 @@ namespace Dex.Audit.Domain.ValueObjects;
 /// <summary>
 /// Information about the device of an audit system participant.
 /// </summary>
-public class Device
+public sealed class Device
 {
     /// <summary>
     /// Name of the information system (IS).

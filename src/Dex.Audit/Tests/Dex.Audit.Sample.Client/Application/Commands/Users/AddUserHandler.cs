@@ -21,7 +21,7 @@ public class AddUserHandler(ClientSampleContext context) : IRequestHandler<AddUs
     }
 }
 
-public class AddUserCommand : AuditRequest<AddUserResponse>
+public sealed class AddUserCommand : AuditRequest<AddUserResponse>
 {
     public override string EventType { get; } = AuditEventType.ObjectCreated.ToString();
     public override string EventObject { get; } = nameof(AddUserCommand);
@@ -43,4 +43,4 @@ public class AddUserCommand : AuditRequest<AddUserResponse>
     public string? Email { get; set; }
 }
 
-public record AddUserResponse(int Id) : IAuditResponse;
+public sealed record AddUserResponse(int Id) : IAuditResponse;

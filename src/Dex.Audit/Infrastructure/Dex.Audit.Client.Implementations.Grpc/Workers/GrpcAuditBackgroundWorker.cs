@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Audit.Client.Grpc.Workers;
 
-internal class GrpcAuditBackgroundWorker(
+internal sealed class GrpcAuditBackgroundWorker(
     ILogger<GrpcAuditBackgroundWorker> logger,
     IServiceProvider serviceProvider)
     : BackgroundService

@@ -7,7 +7,7 @@ namespace Dex.Audit.ClientSample.Domain.Entities;
 /// <summary>
 /// Пользователь системы
 /// </summary>
-public class User : IAuditEntity
+public sealed class User : IAuditEntity
 {
     /// <summary>
     /// Идентификатор пользователя.

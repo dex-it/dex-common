@@ -3,7 +3,7 @@ namespace Dex.Audit.Domain.ValueObjects;
 /// <summary>
 /// Information about the address of an audit system participant.
 /// </summary>
-public class AddressInfo
+public sealed class AddressInfo
 {
     /// <summary>
     /// IP address.

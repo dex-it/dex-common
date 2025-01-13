@@ -5,7 +5,7 @@ namespace Dex.Audit.Client.Abstractions.Messages;
 /// <summary>
 /// Contract for reporting an audit event.
 /// </summary>
-public class AuditEventMessage
+public sealed class AuditEventMessage
 {
     /// <summary>
     /// The name of the AC source of information about the event.

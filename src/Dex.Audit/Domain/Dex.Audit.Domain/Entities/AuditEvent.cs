@@ -5,7 +5,7 @@ namespace Dex.Audit.Domain.Entities;
 /// <summary>
 /// Audit event.
 /// </summary>
-public class AuditEvent
+public sealed class AuditEvent
 {
     /// <summary>
     /// Identifier of the security event entry within a single system log.

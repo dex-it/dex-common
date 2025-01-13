@@ -24,7 +24,7 @@ public class UpdateUserHandler(ClientSampleContext context) : IRequestHandler<Up
     }
 }
 
-public class UpdateUserCommand : AuditRequest<UpdateUserResponse>
+public sealed class UpdateUserCommand : AuditRequest<UpdateUserResponse>
 {
     public override string EventType { get; } = AuditEventType.ObjectChanged.ToString();
     public override string EventObject { get; } = nameof(UpdateUserCommand);
@@ -51,4 +51,4 @@ public class UpdateUserCommand : AuditRequest<UpdateUserResponse>
     public string? Email { get; set; }
 }
 
-public record UpdateUserResponse(int Id) : IAuditResponse;
+public sealed record UpdateUserResponse(int Id) : IAuditResponse;

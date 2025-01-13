@@ -3,7 +3,7 @@ namespace Dex.Audit.Domain.ValueObjects;
 /// <summary>
 /// Information about the recipient of the audit event object.
 /// </summary>
-public class Destination
+public sealed class Destination
 {
     /// <summary>
     /// Information about the recipient user.

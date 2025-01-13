@@ -3,7 +3,7 @@
 /// <summary>
 /// Audit logger options.
 /// </summary>
-public class AuditLoggerOptions
+public sealed class AuditLoggerOptions
 {
     /// <summary>
     /// The interval of reading the accumulated data.

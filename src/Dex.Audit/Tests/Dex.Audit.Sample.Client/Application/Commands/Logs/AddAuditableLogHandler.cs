@@ -24,7 +24,7 @@ public class AddAuditableLogHandler(ILogger<AddAuditableLogHandler> logger) : IR
     }
 }
 
-public class AddAuditableLogCommand : AuditRequest<AddAuditableLogResponse>
+public sealed class AddAuditableLogCommand : AuditRequest<AddAuditableLogResponse>
 {
     public override string EventType { get; } = AuditEventType.ObjectCreated.ToString();
     public override string EventObject { get; } = nameof(AddAuditableLogCommand);
@@ -40,4 +40,4 @@ public class AddAuditableLogCommand : AuditRequest<AddAuditableLogResponse>
     public string? LogMessageParams { get; set; }
 }
 
-public record AddAuditableLogResponse(bool Result) : IAuditResponse;
+public sealed record AddAuditableLogResponse(bool Result) : IAuditResponse;

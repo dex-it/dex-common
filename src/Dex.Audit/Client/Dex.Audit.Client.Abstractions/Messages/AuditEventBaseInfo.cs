@@ -3,7 +3,7 @@ namespace Dex.Audit.Client.Abstractions.Messages;
 /// <summary>
 /// Basic information about the audit event.
 /// </summary>
-public class AuditEventBaseInfo
+public sealed class AuditEventBaseInfo
 {
     /// <summary>
     /// Event type.

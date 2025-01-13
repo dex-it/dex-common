@@ -22,7 +22,7 @@ public class DeleteUserHandler(ClientSampleContext context) : IRequestHandler<De
     }
 }
 
-public class DeleteUserCommand : AuditRequest<DeleteUserResponse>
+public sealed class DeleteUserCommand : AuditRequest<DeleteUserResponse>
 {
     public override string EventType { get; } = AuditEventType.ObjectDeleted.ToString();
     public override string EventObject { get; } = nameof(DeleteUserCommand);
@@ -34,4 +34,4 @@ public class DeleteUserCommand : AuditRequest<DeleteUserResponse>
     public int Id { get; set; }
 }
 
-public class DeleteUserResponse : IAuditResponse;
+public sealed class DeleteUserResponse : IAuditResponse;

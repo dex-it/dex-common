@@ -3,7 +3,7 @@ namespace Dex.Audit.Domain.ValueObjects;
 /// <summary>
 /// Information about the event source.
 /// </summary>
-public class Source
+public sealed class Source
 {
     /// <summary>
     /// Information about the working device of the event source.

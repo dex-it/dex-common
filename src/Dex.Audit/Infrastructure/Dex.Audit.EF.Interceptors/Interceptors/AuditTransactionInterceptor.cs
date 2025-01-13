@@ -9,7 +9,7 @@ namespace Dex.Audit.EF.Interceptors.Interceptors;
 /// An interceptor for intercepting a transaction commit in the database.
 /// </summary>
 /// <param name="interceptionAndSendingEntriesService">A service for intercepting and sending audit records.</param>
-internal class AuditTransactionInterceptor(
+internal sealed class AuditTransactionInterceptor(
     IInterceptionAndSendingEntriesService interceptionAndSendingEntriesService)
     : DbTransactionInterceptor, IAuditDbTransactionInterceptor
 {
