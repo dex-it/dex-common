@@ -9,7 +9,6 @@
         <PackageVersion>8.0.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
-        <RootNamespace>Dex.Audit.Server.Grpc</RootNamespace>
     </PropertyGroup>
 
     <!--Для NuGet-->
