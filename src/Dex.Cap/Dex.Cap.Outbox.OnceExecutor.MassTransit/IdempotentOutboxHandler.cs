@@ -1,4 +1,5 @@
 using System.Transactions;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Interfaces;

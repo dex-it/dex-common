@@ -1,4 +1,5 @@
 using System;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 

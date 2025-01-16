@@ -1,5 +1,5 @@
 using System;
-using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Outbox.Command.Test;
 
