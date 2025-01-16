@@ -2,6 +2,6 @@
 {
     public interface IOutboxMessage
     {
-        Guid MessageId { get; }
+        Guid MessageId { get; init; }
     }
 }

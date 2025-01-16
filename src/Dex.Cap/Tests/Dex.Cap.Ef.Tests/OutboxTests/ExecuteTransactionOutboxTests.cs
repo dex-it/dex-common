@@ -30,12 +30,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            var msgId = Guid.NewGuid();
             var correlationId = Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlationId,
                 async (token, outboxContext) =>
                 {
-                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { MessageId = msgId, UserName = name }, cancellationToken: token);
+                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { UserName = name }, cancellationToken: token);
                 },
                 CancellationToken.None);
 
@@ -67,12 +66,11 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // act
             var name = "mmx_" + Guid.NewGuid();
-            var msgId = Guid.NewGuid();
             var correlationId = Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlationId,
                 async (token, outboxContext) =>
                 {
-                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { MessageId = msgId, UserName = name }, cancellationToken: token);
+                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { UserName = name }, cancellationToken: token);
                 },
                 CancellationToken.None);
 

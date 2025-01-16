@@ -8,6 +8,7 @@ namespace Dex.Cap.Outbox.Models
     {
         public static readonly EmptyOutboxMessage Empty = new();
 
-        [JsonIgnore] public Guid MessageId => Guid.Empty;
+        [JsonIgnore]
+        public Guid MessageId { get; init; } = Guid.Empty;
     }
 }

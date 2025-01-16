@@ -6,6 +6,6 @@ namespace Dex.Cap.Outbox.Interfaces
 {
     public interface IOutboxMessageHandler
     {
-        Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken);
+        Task ProcessMessage(IOutboxMessage outboxMessage, CancellationToken cancellationToken);
     }
 }
