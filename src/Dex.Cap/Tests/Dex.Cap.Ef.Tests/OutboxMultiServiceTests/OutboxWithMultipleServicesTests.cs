@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Ef.Tests.OutboxMultiServiceTests.Discriminators;
 using Dex.Cap.Ef.Tests.OutboxMultiServiceTests.Handlers;
 using Dex.Cap.OnceExecutor.Ef.Extensions;

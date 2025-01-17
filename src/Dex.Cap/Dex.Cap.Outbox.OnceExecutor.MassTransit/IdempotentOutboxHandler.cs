@@ -1,8 +1,8 @@
 using System.Transactions;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
@@ -12,7 +12,7 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// <typeparam name="TMessage"></typeparam>
 /// <typeparam name="TDbContext"></typeparam>
 public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
-    where TMessage : BaseOutboxMessage
+    where TMessage : IOutboxMessage
 {
     private readonly IOnceExecutor<IEfOptions, TDbContext> _onceExecutor;
 
@@ -25,20 +25,15 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
     public abstract Task ProcessMessage(TMessage message, CancellationToken cancellationToken);
 
     /// <inheritdoc />
-    public async Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
+    public async Task ProcessMessage(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
     {
-        if (outbox is not BaseOutboxMessage baseMessage)
-        {
-            throw new InvalidOperationException("Message type must be inherited from BaseOutboxMessage");
-        }
-
-        if (outbox is not TMessage typedMessage)
+        if (outboxMessage is not TMessage typedMessage)
         {
             throw new InvalidOperationException($"Unable cast IOutboxMessage to type: {typeof(TMessage)}");
         }
 
         await _onceExecutor.ExecuteAsync(
-            baseMessage.MessageId.ToString("N"),
+            outboxMessage.MessageId.ToString("N"),
             async (_, token) => await ProcessMessage(typedMessage, token),
             options: new EfOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew },
             cancellationToken: cancellationToken
