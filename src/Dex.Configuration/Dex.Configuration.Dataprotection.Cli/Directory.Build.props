@@ -1,0 +1,23 @@
+<Project>
+
+  <ItemGroup>
+    <PackageReference Include="GitInfo" Version="3.3.5" PrivateAssets="all" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Отключить версионирование по умолчанию -->
+    <GitVersion>false</GitVersion>
+    <!-- Делать репортинг во время сборки -->
+    <GitInfoReportImportance>high</GitInfoReportImportance>
+    <!-- Не получать информацию с тегов и веток -->
+    <GitIgnoreTagVersion>true</GitIgnoreTagVersion>
+    <GitIgnoreBranchVersion>true</GitIgnoreBranchVersion>
+    <!-- Не гененрировать ThisAssembly класс -->
+    <GitThisAssembly>false</GitThisAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+</Project>
