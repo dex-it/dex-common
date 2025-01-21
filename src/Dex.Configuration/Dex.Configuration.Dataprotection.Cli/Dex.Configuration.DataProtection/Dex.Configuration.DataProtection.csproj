@@ -10,10 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="DataEncryption\DataProtectionContainer.pfx" />
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="DataEncryption\DataProtectionContainer.pfx" />
   </ItemGroup>
 
