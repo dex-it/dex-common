@@ -9,7 +9,7 @@
     
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/netcore-6/src/Dex.Response.Signing/Dex.ResponseSigning</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>dex; extensions</PackageTags>
         <Authors>dex team</Authors>
