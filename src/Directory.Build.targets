@@ -69,7 +69,10 @@
     <PackageReference Update="Grpc.AspNetCore.Server" Version="2.66.0" />
 
     <!--mediatr -->
-    <PackageReference Update="MediatR" Version="12.4.1" />
+    <PackageReference Update="MediatR" Version="12.4.1" />    
+
+    <!--Dex -->
+    <PackageReference Update="Dex.MassTransit.Rabbit" Version="8.0.1" />
 
   </ItemGroup>
 </Project>
