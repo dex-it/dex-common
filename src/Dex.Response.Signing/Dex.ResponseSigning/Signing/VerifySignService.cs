@@ -14,14 +14,13 @@ internal sealed class VerifySignService : IVerifySignService
         _publicKeyExtractor = publicKeyExtractor;
     }
 
-    /// <inheritdoc/>
-    public async Task<bool> VerifySignAsync(string data, string signature, CancellationToken cancellationToken)
+    public bool VerifySign(string data, string signature)
     {
         var dataBytes = Encoding.UTF8.GetBytes(data);
 
         var signatureBytes = Base64UrlTextEncoder.Decode(signature);
 
-        using var publicKey = await _publicKeyExtractor.GetKeyAsync(cancellationToken);
+        using var publicKey = _publicKeyExtractor.GetKey();
 
         return publicKey.VerifyData(
             dataBytes,

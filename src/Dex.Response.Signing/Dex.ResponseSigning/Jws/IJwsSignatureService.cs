@@ -9,6 +9,5 @@ public interface IJwsSignatureService
     /// Подписываем объект
     /// </summary>
     /// <param name="payload">Объект для подписи</param>
-    /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    Task<string> SignDataAsync(object payload, CancellationToken cancellationToken);
+    string SignData(object payload);
 }

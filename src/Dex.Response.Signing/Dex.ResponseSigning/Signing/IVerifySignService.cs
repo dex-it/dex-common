@@ -10,6 +10,5 @@ public interface IVerifySignService
     /// </summary>
     /// <param name="data">Подписанную информацию</param>
     /// <param name="signature">Подпись для верификации</param>
-    /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    Task<bool> VerifySignAsync(string data, string signature, CancellationToken cancellationToken);
+    bool VerifySign(string data, string signature);
 }

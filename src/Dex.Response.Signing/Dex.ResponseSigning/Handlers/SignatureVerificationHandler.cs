@@ -33,7 +33,7 @@ public class SignatureVerificationHandler : DelegatingHandler
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-        var serializedResponse = await _parseJwsService.GetSerializedResponseAsync(content, cancellationToken);
+        var serializedResponse = _parseJwsService.GetSerializedResponse(content);
 
         response.Content = new StringContent(serializedResponse, Encoding.UTF8, mediaType?.MediaType);
 

@@ -26,7 +26,7 @@ internal sealed class JwsSignatureService : IJwsSignatureService
     }
 
     /// <inheritdoc/>
-    public async Task<string> SignDataAsync(object payload, CancellationToken cancellationToken)
+    public string SignData(object payload)
     {
         var headerBytes = Encoding.UTF8.GetBytes($"{{\"alg\":\"{_responseSigningOptions.Algorithm}\"}}");
 
@@ -37,7 +37,7 @@ internal sealed class JwsSignatureService : IJwsSignatureService
 
         var dataToSign = headerBase64 + '.' + payloadBase64;
 
-        var signatureData = await _signDataService.SignDataAsync(dataToSign, cancellationToken);
+        var signatureData = _signDataService.SignDataAsync(dataToSign);
 
         return dataToSign + '.' + signatureData;
     }

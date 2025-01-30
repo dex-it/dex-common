@@ -15,11 +15,11 @@ internal sealed class SignDataService : ISignDataService
     }
 
     /// <inheritdoc/>
-    public async Task<string> SignDataAsync(string data, CancellationToken cancellationToken)
+    public string SignDataAsync(string data)
     {
         var dataBytes = Encoding.UTF8.GetBytes(data);
 
-        using var privateKey = await _privateKeyExtractor.GetKeyAsync(cancellationToken);
+        using var privateKey = _privateKeyExtractor.GetKey();
 
         var signedBytes = privateKey.SignData(
             dataBytes,

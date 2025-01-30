@@ -1,4 +1,5 @@
-﻿using Dex.ResponseSigning.Jws;
+﻿using System.Text.Json;
+using Dex.ResponseSigning.Jws;
 using Dex.ResponseSigning.Options;
 using Dex.ResponseSigning.Serialization;
 using Dex.ResponseSigning.Signing;
@@ -29,20 +30,21 @@ public class MakeJwsIntegrationTests
     }
 
     [Fact]
-    public async Task MakeJwsTestAsync()
+    public void MakeJwsTest()
     {
         var testEntity = new TestEntity { Id = 2, Name = "test entity 22", Description = "second test" };
 
         var makeJwsService = new JwsSignatureService(_signDataService, _options.Object,
-            new SigningDataSerializationOptions(new()));
+            new SigningDataSerializationOptions(new JsonSerializerOptions()));
 
-        var jws = await makeJwsService.SignDataAsync(testEntity, CancellationToken.None);
+        var jws = makeJwsService.SignData(testEntity);
 
         _outputHelper.WriteLine(jws);
 
-        var parseJwsService = new JwsParsingService(_verifySignService, new SigningDataSerializationOptions(new()));
+        var parseJwsService = new JwsParsingService(_verifySignService,
+            new SigningDataSerializationOptions(new JsonSerializerOptions()));
 
-        var parsedEntity = await parseJwsService.ParseJwsAsync<TestEntity>(jws, CancellationToken.None);
+        var parsedEntity = parseJwsService.ParseJws<TestEntity>(jws);
 
         Assert.Equal(testEntity.Id, parsedEntity.Id);
         Assert.Equal(testEntity.Name, parsedEntity.Name);

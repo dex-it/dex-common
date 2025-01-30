@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Dex.ResponseSigning.Options;
 using Microsoft.Extensions.Options;
@@ -12,9 +13,7 @@ internal sealed class InternalDefaultCertificateExtractor
 {
     private const string CertificateResourceName = "Dex.ResponseSigning.Certificate.ResponseSigning.pfx";
 
-    private readonly X509Certificate2 _certificate;
-
-    public X509Certificate2 Certificate => _certificate;
+    public X509Certificate2 Certificate { get; }
 
     public InternalDefaultCertificateExtractor(IOptions<ResponseSigningOptions> responseSigningOptions)
     {
@@ -28,6 +27,6 @@ internal sealed class InternalDefaultCertificateExtractor
             raw[i] = (byte)resourceStream.ReadByte();
         }
 
-        _certificate = new X509Certificate2(raw, responseSigningOptions.Value.DefaultPassword);
+        Certificate = new X509Certificate2(raw, responseSigningOptions.Value.DefaultPassword);
     }
 }

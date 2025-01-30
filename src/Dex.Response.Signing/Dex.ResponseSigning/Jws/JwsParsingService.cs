@@ -20,9 +20,9 @@ internal sealed class JwsParsingService : IJwsParsingService
     }
 
     /// <inheritdoc/>
-    public async Task<T> ParseJwsAsync<T>(string jws, CancellationToken cancellationToken)
+    public T ParseJws<T>(string jws)
     {
-        var payload = await ParsePayloadAsync(jws, cancellationToken);
+        var payload = ParsePayload(jws);
         var result = JsonSerializer.Deserialize<T?>(payload, _jsonSerializerOptions);
 
         if (EqualityComparer<T>.Default.Equals(result, default))
@@ -34,13 +34,13 @@ internal sealed class JwsParsingService : IJwsParsingService
     }
 
     /// <inheritdoc/>
-    public async Task<string> GetSerializedResponseAsync(string jws, CancellationToken cancellationToken)
+    public string GetSerializedResponse(string jws)
     {
-        var payload = await ParsePayloadAsync(jws, cancellationToken);
+        var payload = ParsePayload(jws);
         return Encoding.UTF8.GetString(payload);
     }
 
-    private async Task<byte[]> ParsePayloadAsync(string jws, CancellationToken cancellationToken)
+    private byte[] ParsePayload(string jws)
     {
         var lastIndexOfDot = jws.LastIndexOf('.');
         var data = jws[..lastIndexOfDot];
@@ -48,7 +48,7 @@ internal sealed class JwsParsingService : IJwsParsingService
         var parts = jws.Split('.');
         var signature = parts[2];
 
-        if (!await _verifySignService.VerifySignAsync(data, signature, cancellationToken))
+        if (!_verifySignService.VerifySign(data, signature))
         {
             throw new InvalidOperationException("Verification failed.");
         }

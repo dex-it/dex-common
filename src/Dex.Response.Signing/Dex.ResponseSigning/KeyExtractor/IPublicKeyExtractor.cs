@@ -11,9 +11,4 @@ public interface IPublicKeyExtractor
     /// Получить публичную компоненту RSA - ключа
     /// </summary>
     RSA GetKey();
-
-    /// <summary>
-    /// Получить публичную компоненту RSA - ключа
-    /// </summary>
-    Task<RSA> GetKeyAsync(CancellationToken cancellationToken);
 }

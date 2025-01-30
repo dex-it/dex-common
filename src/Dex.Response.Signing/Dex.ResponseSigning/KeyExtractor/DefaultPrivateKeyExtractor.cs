@@ -18,12 +18,7 @@ internal sealed class DefaultPrivateKeyExtractor : IPrivateKeyExtractor
     /// <inheritdoc/>
     public RSA GetKey()
     {
-        return _certificate.GetRSAPrivateKey() ?? throw new ArgumentNullException("Не удалось получить приватный ключ");
-    }
-
-    /// <inheritdoc/>
-    public Task<RSA> GetKeyAsync(CancellationToken cancellationToken)
-    {
-        return Task.FromResult(GetKey());
+        return _certificate.GetRSAPrivateKey() ??
+               throw new InvalidOperationException("Не удалось получить приватный ключ");
     }
 }

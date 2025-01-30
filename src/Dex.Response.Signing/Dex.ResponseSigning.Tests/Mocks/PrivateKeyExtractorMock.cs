@@ -14,8 +14,6 @@ internal class PrivateKeyExtractorMock : Mock<IPrivateKeyExtractor>
         var rsa = RSA.Create();
         rsa.ImportFromPem(PrivateKey.ToCharArray());
 
-        Setup(x => x.GetKeyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(rsa);
-
         Setup(x => x.GetKey()).Returns(rsa);
     }
 }

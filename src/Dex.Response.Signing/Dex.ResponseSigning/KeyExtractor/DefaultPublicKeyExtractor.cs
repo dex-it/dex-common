@@ -18,12 +18,7 @@ internal sealed class DefaultPublicKeyExtractor : IPublicKeyExtractor
     /// <inheritdoc/>
     public RSA GetKey()
     {
-        return _certificate.GetRSAPublicKey() ?? throw new ArgumentNullException("Не удалось получить публичный ключ");
-    }
-
-    /// <inheritdoc/>
-    public Task<RSA> GetKeyAsync(CancellationToken cancellationToken)
-    {
-        return Task.FromResult(GetKey());
+        return _certificate.GetRSAPublicKey() ??
+               throw new InvalidOperationException("Не удалось получить публичный ключ");
     }
 }

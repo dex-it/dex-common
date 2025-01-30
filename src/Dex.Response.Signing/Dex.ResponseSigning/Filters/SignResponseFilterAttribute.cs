@@ -10,7 +10,7 @@ namespace Dex.ResponseSigning.Filters;
 /// </summary>
 public sealed class SignResponseFilterAttribute : Attribute, IAsyncResultFilter
 {
-    private const int SuccessfullStatusCode = 200;
+    private const int SuccessfulStatusCode = 200;
 
     /// <inheritdoc/>
     public async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
@@ -18,15 +18,14 @@ public sealed class SignResponseFilterAttribute : Attribute, IAsyncResultFilter
         var makeJwsService =
             context.HttpContext.RequestServices.GetRequiredService<IJwsSignatureService>();
 
-        if (context.Result is ObjectResult { StatusCode: SuccessfullStatusCode } objectResult)
+        if (context.Result is ObjectResult { StatusCode: SuccessfulStatusCode } objectResult)
         {
             if (objectResult.Value is null)
             {
                 throw new InvalidOperationException("Cannot sign empty payload.");
             }
 
-            objectResult.Value =
-                await makeJwsService.SignDataAsync(objectResult.Value, context.HttpContext.RequestAborted);
+            objectResult.Value = makeJwsService.SignData(objectResult.Value);
         }
 
         await next();
