@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Dex.ResponseSigning\Dex.ResponseSigning.csproj" />
+    <ProjectReference Include="..\..\Dex.ResponseSigning\Dex.ResponseSigning.csproj" />
   </ItemGroup>
 
 </Project>
