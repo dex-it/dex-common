@@ -30,7 +30,7 @@ internal sealed class OutboxDataProviderEf<TDbContext> : BaseOutboxDataProvider<
         IOptions<OutboxOptions> outboxOptions,
         ILogger<OutboxDataProviderEf<TDbContext>> logger,
         IOutboxRetryStrategy retryStrategy,
-        IOutboxTypeDiscriminator outboxTypeDiscriminator) : base(retryStrategy)
+        IOutboxTypeDiscriminator outboxTypeDiscriminator) : base(retryStrategy, outboxOptions)
     {
         _dbContext = dbContext;
         _outboxOptions = outboxOptions.Value;
