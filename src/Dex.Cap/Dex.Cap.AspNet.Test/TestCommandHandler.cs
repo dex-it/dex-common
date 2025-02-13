@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Cap.Outbox.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.AspNet.Test
@@ -34,8 +34,9 @@ namespace Dex.Cap.AspNet.Test
         }
     }
 
-    public class TestOutboxCommand : BaseOutboxMessage
+    public class TestOutboxCommand : IOutboxMessage
     {
         public string Args { get; set; }
+        public Guid MessageId { get; init; } = Guid.NewGuid();
     }
 }

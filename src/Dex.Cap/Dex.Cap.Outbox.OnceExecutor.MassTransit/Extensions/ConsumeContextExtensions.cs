@@ -1,5 +1,4 @@
 using Dex.Cap.Common.Interfaces;
-using Dex.Cap.Outbox.Interfaces;
 using MassTransit;
 
 namespace Dex.Cap.Outbox.OnceExecutor.MassTransit.Extensions;
