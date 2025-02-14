@@ -21,7 +21,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     TDbContext dbContext,
     IOptions<OutboxOptions> outboxOptions,
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
-    IOutboxRetryStrategy retryStrategy) : BaseOutboxDataProvider<TDbContext>(retryStrategy)
+    IOutboxRetryStrategy retryStrategy,
+    IOutboxTypeDiscriminator outboxTypeDiscriminator) : BaseOutboxDataProvider<TDbContext>(retryStrategy)
     where TDbContext : DbContext
 {
     private OutboxOptions Options => outboxOptions.Value;
@@ -39,11 +40,13 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                     var (context, outbox, outerState) = st;
 
                     if (context.ChangeTracker.HasChanges())
-                        throw new UnsavedChangesDetectedException(context, "Can't start outbox action, unsaved changes detected");
+                        throw new UnsavedChangesDetectedException(context,
+                            "Can't start outbox action, unsaved changes detected");
 
                     try
                     {
-                        var outboxContext = new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
+                        var outboxContext =
+                            new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
                         await action(ct, outboxContext).ConfigureAwait(false);
 
                         // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
@@ -52,7 +55,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
                         if (!isOutboxMessageExists)
                         {
-                            await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct).ConfigureAwait(false);
+                            await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
+                                .ConfigureAwait(false);
                         }
 
                         await context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -154,7 +158,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                         catch (DbUpdateException e)
                         {
                             logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
-                            // очищаем все что было в конетексте
+                            // очищаем все что было в контексте
                             dbContext.ChangeTracker.Clear();
                             dbContext.Update(job);
                             await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -182,7 +186,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             .ConfigureAwait(false);
 
         static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
-            x => x.Id == messageId && x.LockId == lockId && (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
+            x => x.Id == messageId && x.LockId == lockId &&
+                 (x.LockExpirationTimeUtc == null || x.LockExpirationTimeUtc > DateTime.UtcNow);
     }
 
     // TODO вынести в провайдер
@@ -198,12 +203,17 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             const string cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
             const string cLockTimeout = nameof(OutboxEnvelope.LockTimeout);
             const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
+            const string cMessageType = nameof(OutboxEnvelope.MessageType);
+
+            var discriminators = outboxTypeDiscriminator.GetDiscriminators();
+            var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
 
             var sql = $@"
                 WITH cte AS (
                     SELECT ""Id""
                     FROM {NameConst.SchemaName}.{NameConst.TableName}
                     WHERE ""{cScheduledStartIndexing}"" IS NOT NULL
+                      AND ""{cMessageType}"" IN ({discriminatorsSql})
                       AND CURRENT_TIMESTAMP >= ""{cStartAtUtc}""
                       AND ""{cRetries}"" < {Options.Retries}
                       AND (""{cStatus}"" = {OutboxMessageStatus.New:D} OR ""{cStatus}"" = {OutboxMessageStatus.Failed:D})

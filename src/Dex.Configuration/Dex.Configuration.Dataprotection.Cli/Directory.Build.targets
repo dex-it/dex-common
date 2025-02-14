@@ -1,0 +1,10 @@
+﻿<Project>
+
+  <Target Name="PopulateInfo" DependsOnTargets="GitVersion" BeforeTargets="GetAssemblyVersion;GenerateNuspec;GetPackageContents">
+    <PropertyGroup>
+      <FileVersion>$(GitBaseVersion).0</FileVersion>
+      <InformationalVersion>$(GitBaseVersion)+$(GitSha)</InformationalVersion>
+    </PropertyGroup>
+  </Target>
+
+</Project>

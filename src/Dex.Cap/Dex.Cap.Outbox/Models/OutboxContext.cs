@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox.Models

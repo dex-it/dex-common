@@ -1,6 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
-using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Models
 {
@@ -8,6 +8,7 @@ namespace Dex.Cap.Outbox.Models
     {
         public static readonly EmptyOutboxMessage Empty = new();
 
-        [JsonIgnore] public Guid MessageId => Guid.Empty;
+        [JsonIgnore]
+        public Guid MessageId { get; init; } = Guid.Empty;
     }
 }
