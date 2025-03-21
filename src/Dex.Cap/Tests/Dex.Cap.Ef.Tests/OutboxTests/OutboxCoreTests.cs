@@ -18,6 +18,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             
             Assert.IsNotNull(cmd);
             Assert.AreEqual(command.Args, cmd.Args);
+            Assert.AreEqual(command.MessageId, cmd.MessageId);
         }
     }
 }
