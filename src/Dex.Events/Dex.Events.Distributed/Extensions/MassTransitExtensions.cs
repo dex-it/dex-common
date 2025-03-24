@@ -20,7 +20,7 @@ namespace Dex.Events.Distributed.Extensions
                 this IReceiveConfigurator<IReceiveEndpointConfigurator> configurator,
                 IBusRegistrationContext registrationContext,
                 string? serviceName = null)
-            where TEventParams : class, IDistributedEventParams
+            where TEventParams : class
             where TDistributedEventHandler : IDistributedEventHandler<TEventParams>
         {
             if (configurator == null) throw new ArgumentNullException(nameof(configurator));
@@ -53,7 +53,7 @@ namespace Dex.Events.Distributed.Extensions
                 this IReceiveConfigurator<IReceiveEndpointConfigurator> configurator,
                 IBusRegistrationContext registrationContext,
                 string? serviceName = null)
-            where TEventParams : class, IDistributedEventParams
+            where TEventParams : class
             where TDistributedEventHandler1 : IDistributedEventHandler<TEventParams>
             where TDistributedEventHandler2 : IDistributedEventHandler<TEventParams>
         {
@@ -81,7 +81,7 @@ namespace Dex.Events.Distributed.Extensions
                 this IReceiveConfigurator<IReceiveEndpointConfigurator> configurator,
                 IBusRegistrationContext registrationContext,
                 string? serviceName = null)
-            where TEventParams : class, IDistributedEventParams
+            where TEventParams : class
             where TDistributedEventHandler1 : IDistributedEventHandler<TEventParams>
             where TDistributedEventHandler2 : IDistributedEventHandler<TEventParams>
             where TDistributedEventHandler3 : IDistributedEventHandler<TEventParams>

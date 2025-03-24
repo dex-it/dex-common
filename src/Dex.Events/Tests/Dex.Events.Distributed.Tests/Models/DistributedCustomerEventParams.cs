@@ -2,8 +2,8 @@
 
 namespace Dex.Events.Distributed.Tests.Models
 {
-    public class DistributedCustomerEventParams : IDistributedEventParams
+    public class DistributedCustomerEventParams
     {
-        public Guid CustomerId { get; set; }
+        public Guid CustomerId { get; init; }
     }
 }

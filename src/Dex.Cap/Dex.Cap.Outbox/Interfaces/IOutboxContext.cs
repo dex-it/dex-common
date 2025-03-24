@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
@@ -21,7 +20,7 @@ namespace Dex.Cap.Outbox.Interfaces
         /// Publish outbox message to queue.
         /// This method don't check Transaction, only append outbox message to change context.
         /// </summary>
-        Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default);
+        Task<Guid> EnqueueAsync(object outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets outbox type discriminator

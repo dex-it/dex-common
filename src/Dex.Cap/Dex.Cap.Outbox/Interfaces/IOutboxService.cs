@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
@@ -20,7 +19,7 @@ namespace Dex.Cap.Outbox.Interfaces
         /// </summary>
         Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null, TimeSpan? lockTimeout = null,
             CancellationToken cancellationToken = default)
-            where T : IOutboxMessage;
+            where T : class;
 
         /// <summary>
         /// Check if operation with correlationId already exists.

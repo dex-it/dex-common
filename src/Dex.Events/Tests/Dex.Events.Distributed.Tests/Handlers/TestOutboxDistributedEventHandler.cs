@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Events.Distributed.OutboxExtensions;
 using MassTransit;
@@ -13,7 +12,7 @@ namespace Dex.Events.Distributed.Tests.Handlers
     {
         public static event EventHandler<OutboxDistributedEventMessage<TBus>> OnProcess;
 
-        public Task ProcessMessage(OutboxDistributedEventMessage<TBus> message, CancellationToken cancellationToken)
+        public Task Process(OutboxDistributedEventMessage<TBus> message, CancellationToken cancellationToken)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
@@ -22,11 +21,6 @@ namespace Dex.Events.Distributed.Tests.Handlers
             OnProcess?.Invoke(null, message);
 
             return Task.CompletedTask;
-        }
-
-        public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
-        {
-            return ProcessMessage((OutboxDistributedEventMessage<TBus>)outbox, cancellationToken);
         }
     }
 }

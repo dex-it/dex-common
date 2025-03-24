@@ -20,6 +20,6 @@ namespace Dex.Events.Distributed
         /// <param name="cancellationToken">CancellationToken</param>
         /// <typeparam name="T">DistributedBaseEventParams</typeparam>
         Task RaiseAsync<T>(T args, CancellationToken cancellationToken)
-            where T : class, IDistributedEventParams;
+            where T : class;
     }
 }

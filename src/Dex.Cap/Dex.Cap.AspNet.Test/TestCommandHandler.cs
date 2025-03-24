@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -18,7 +16,7 @@ namespace Dex.Cap.AspNet.Test
             _logger = logger;
         }
 
-        public async Task ProcessMessage(TestOutboxCommand message, CancellationToken cancellationToken)
+        public async Task Process(TestOutboxCommand message, CancellationToken cancellationToken)
         {
             await Task.Delay(200, cancellationToken);
 
@@ -26,17 +24,10 @@ namespace Dex.Cap.AspNet.Test
 
             OnProcess?.Invoke(this, EventArgs.Empty);
         }
-
-        [DebuggerStepThrough]
-        public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
-        {
-            return ProcessMessage((TestOutboxCommand)outbox, cancellationToken);
-        }
     }
 
-    public class TestOutboxCommand : IOutboxMessage
+    public class TestOutboxCommand
     {
         public string Args { get; set; }
-        public Guid MessageId { get; init; } = Guid.NewGuid();
     }
 }
