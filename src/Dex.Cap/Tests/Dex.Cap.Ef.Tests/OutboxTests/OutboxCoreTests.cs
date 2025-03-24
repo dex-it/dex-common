@@ -11,14 +11,15 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         public void SerializerTest()
         {
             var serializer = new DefaultOutboxSerializer();
-            var command = new TestOutboxCommand {Args = "hello"};
+            var messageId = Guid.Parse("391804C8-C326-4EA7-9494-DBCFE73ACECE");
+            var command = new TestOutboxCommand {Args = "hello", MessageId = messageId};
             var commandText = serializer.Serialize(command);
             var typeName = typeof(TestOutboxCommand).AssemblyQualifiedName ?? throw new InvalidOperationException();
             var cmd = (TestOutboxCommand) serializer.Deserialize(Type.GetType(typeName, true)!, commandText)!;
             
             Assert.IsNotNull(cmd);
             Assert.AreEqual(command.Args, cmd.Args);
-            Assert.AreEqual(command.MessageId, cmd.MessageId);
+            Assert.AreEqual(messageId, cmd.MessageId);
         }
     }
 }
