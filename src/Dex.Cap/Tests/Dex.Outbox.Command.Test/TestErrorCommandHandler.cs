@@ -2,7 +2,6 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Outbox.Command.Test
@@ -14,7 +13,7 @@ namespace Dex.Outbox.Command.Test
 
         private static int Count { get; set; }
 
-        public Task ProcessMessage(TestErrorOutboxCommand message, CancellationToken cancellationToken)
+        public Task Process(TestErrorOutboxCommand message, CancellationToken cancellationToken)
         {
             Count++;
 
@@ -26,11 +25,6 @@ namespace Dex.Outbox.Command.Test
 
             OnProcess?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
-        }
-
-        public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
-        {
-            return ProcessMessage((TestErrorOutboxCommand)outbox, cancellationToken);
         }
     }
 }

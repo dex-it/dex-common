@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 
@@ -34,19 +33,19 @@ namespace Dex.Cap.Outbox
 
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null, TimeSpan? lockTimeout = null,
             CancellationToken cancellationToken = default)
-            where T : IOutboxMessage
+            where T : class
         {
             var messageType = message.GetType();
-            if (messageType != typeof(EmptyOutboxMessage) && message.MessageId == Guid.Empty)
-                throw new InvalidOperationException("MessageId can't be empty");
+            var envelopeId = messageType == typeof(EmptyOutboxMessage)
+                ? Guid.Empty
+                : Guid.NewGuid();
 
-            var envelopeId = message.MessageId;
             var msgBody = _serializer.Serialize(messageType, message);
             var discriminator = Discriminator.ResolveDiscriminator(messageType);
             var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc, lockTimeout);
             await _outboxDataProvider.Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
 
-            return message.MessageId;
+            return envelopeId;
         }
 
         public async Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken = default)
