@@ -30,6 +30,7 @@
         <ProjectReference Include="..\..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj"/>
         <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj"/>
         <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj"/>
+        <ProjectReference Include="..\..\Dex.Cap.Outbox.OnceExecutor.MassTransit\Dex.Cap.Outbox.OnceExecutor.MassTransit.csproj" />
         <ProjectReference Include="..\..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
         <ProjectReference Include="..\Dex.Outbox.Command.Test\Dex.Outbox.Command.Test.csproj"/>
     </ItemGroup>

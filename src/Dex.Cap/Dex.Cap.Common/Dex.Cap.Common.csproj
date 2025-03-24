@@ -7,7 +7,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>shared interfaces, extentions and helpers</PackageTags>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.1</PackageVersion>
+        <PackageVersion>6.0.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
