@@ -15,7 +15,7 @@ namespace Dex.Events.Distributed
         }
 
         public async Task RaiseAsync<T>(T args, CancellationToken cancellationToken)
-            where T : class, IDistributedEventParams
+            where T : class
         {
             // The Publish(T) and Publish(object) work differently:
             // - in the first method, the type is defined by typeof(T)
