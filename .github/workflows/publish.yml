@@ -23,6 +23,11 @@ jobs:
         with:
           fetch-depth: 0 # Get all history to allow automatic versioning using MinVer
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev
+
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
@@ -46,6 +51,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ create_nuget ]
     steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev
+
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
@@ -115,10 +125,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '5.0.101'
+
       - name: Run tests
         run: |
           find . -name '*.sln' -type f -print0 |
@@ -126,6 +143,7 @@ jobs:
             echo "Testing solution $solution"
             dotnet test "$solution"
           done
+
       - name: Upload dotnet test results
         uses: actions/upload-artifact@v4
         with:
