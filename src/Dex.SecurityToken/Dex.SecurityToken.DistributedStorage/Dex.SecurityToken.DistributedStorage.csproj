@@ -2,10 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>default</LangVersion>
-        <PackageVersion>1.2.5</PackageVersion>
+        <PackageVersion>1.2.6</PackageVersion>
         <PackageTags>security token management, distributed storage</PackageTags>
     </PropertyGroup>
     

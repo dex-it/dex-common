@@ -1,4 +1,7 @@
-﻿using Dex.SecurityToken.DistributedStorage;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Dex.SecurityToken.DistributedStorage;
 using Dex.SecurityTokenProvider.Exceptions;
 using Dex.SecurityTokenProvider.Extensions;
 using Dex.SecurityTokenProvider.Interfaces;
@@ -43,7 +46,7 @@ namespace Dex.SecurityTokenProviderTests
             //Assert
             Assert.Equal(tokenData.UserId, userToken.UserId);
             Assert.Equal(tokenData.Audience, userToken.Audience);
-            Assert.Equal(tokenData.Audience, TestAudience);
+            Assert.Equal(TestAudience, tokenData.Audience);
         }
 
         [Fact]

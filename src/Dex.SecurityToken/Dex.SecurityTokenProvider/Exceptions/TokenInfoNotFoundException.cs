@@ -1,4 +1,6 @@
-﻿namespace Dex.SecurityTokenProvider.Exceptions
+﻿using System;
+
+namespace Dex.SecurityTokenProvider.Exceptions
 {
     public class TokenInfoNotFoundException : Exception
 

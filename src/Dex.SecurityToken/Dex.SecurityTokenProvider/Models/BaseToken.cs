@@ -1,6 +1,8 @@
 ﻿
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
+using System;
+
 namespace Dex.SecurityTokenProvider.Models
 {
     public abstract class BaseToken

@@ -27,7 +27,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '5.0.101'
+          dotnet-version: |
+            5.0.x
+            6.0.x
+            8.0.x
 
       - run: |
           for file in $(find . -name "*.sln" -type f); do
@@ -35,7 +38,7 @@ jobs:
           done
 
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nuget
           if-no-files-found: error
@@ -50,10 +53,13 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '5.0.101'
+          dotnet-version: |
+            5.0.x
+            6.0.x
+            8.0.x
 
       # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -72,12 +78,9 @@ jobs:
             echo "validate nuget"
             meziantou.validate-nuget-package "$nuget" --rules AssembliesMustBeOptimized
           done
-  
-  
-  
 
   run_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     services:
       postgres:
         image: postgres
@@ -115,10 +118,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '5.0.101'
+          dotnet-version: |
+            5.0.x
+            6.0.x
+            8.0.x
+
       - name: Run tests
         run: |
           find . -name '*.sln' -type f -print0 |
@@ -126,8 +134,9 @@ jobs:
             echo "Testing solution $solution"
             dotnet test "$solution"
           done
+
       - name: Upload dotnet test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dotnet-results-${{ matrix.dotnet-version }}
           path: TestResults-${{ matrix.dotnet-version }}
@@ -140,7 +149,7 @@ jobs:
     needs: [ validate_nuget, run_test ]
     steps:
       # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -149,7 +158,10 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '5.0.101'
+          dotnet-version: |
+            5.0.x
+            6.0.x
+            8.0.x
 
       - name: Publish NuGet package
         run: |
@@ -157,5 +169,3 @@ jobs:
           while IFS= read -r -d '' nuget; do
             dotnet nuget push "$nuget" --api-key "${{ secrets.NUGET_APIKEY }}" --source "${{ secrets.NUGET_SOURCE }}" --skip-duplicate
           done
-
-
