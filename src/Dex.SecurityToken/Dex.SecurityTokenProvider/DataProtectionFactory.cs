@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using Dex.SecurityTokenProvider.Interfaces;
 using Microsoft.AspNetCore.DataProtection;
 

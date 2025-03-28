@@ -1,14 +1,17 @@
-namespace Dex.SecurityTokenProvider.Exceptions;
+using System;
 
-public class TokenAlreadyExistException : Exception
+namespace Dex.SecurityTokenProvider.Exceptions
 {
-    public TokenAlreadyExistException()
+    public class TokenAlreadyExistException : Exception
     {
+        public TokenAlreadyExistException()
+        {
             
-    }
+        }
 
-    public TokenAlreadyExistException(string errorText): base(errorText)
-    {
+        public TokenAlreadyExistException(string errorText): base(errorText)
+        {
             
+        }
     }
 }
