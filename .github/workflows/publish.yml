@@ -35,7 +35,7 @@ jobs:
           done
 
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nuget
           if-no-files-found: error
@@ -53,7 +53,7 @@ jobs:
           dotnet-version: '5.0.101'
 
       # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -127,7 +127,7 @@ jobs:
             dotnet test "$solution"
           done
       - name: Upload dotnet test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dotnet-results-${{ matrix.dotnet-version }}
           path: TestResults-${{ matrix.dotnet-version }}
@@ -140,7 +140,7 @@ jobs:
     needs: [ validate_nuget, run_test ]
     steps:
       # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
