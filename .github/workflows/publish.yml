@@ -17,7 +17,7 @@ env:
 
 jobs:
   create_nuget:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
         with:
@@ -48,7 +48,7 @@ jobs:
           path: ${{ env.NuGetDirectory }}/*.nupkg
 
   validate_nuget:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [ create_nuget ]
     steps:
       - name: Install dependencies
@@ -87,7 +87,7 @@ jobs:
   
 
   run_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     services:
       postgres:
         image: postgres
@@ -154,7 +154,7 @@ jobs:
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/netcore-5'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [ validate_nuget, run_test ]
     steps:
       # Download the NuGet package created in the previous job
