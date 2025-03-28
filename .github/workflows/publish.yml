@@ -28,7 +28,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: |
-            5.0.*
+            5.0.x
+            6.0.x
+            8.0.x
 
       - run: |
           for file in $(find . -name "*.sln" -type f); do
@@ -52,7 +54,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: |
-            5.0.*
+            5.0.x
+            6.0.x
+            8.0.x
 
       # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v4
@@ -119,7 +123,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: |
-            5.0.*
+            5.0.x
+            6.0.x
+            8.0.x
 
       - name: Run tests
         run: |
@@ -153,7 +159,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: |
-            5.0.*
+            5.0.x
+            6.0.x
+            8.0.x
 
       - name: Publish NuGet package
         run: |
@@ -161,5 +169,3 @@ jobs:
           while IFS= read -r -d '' nuget; do
             dotnet nuget push "$nuget" --api-key "${{ secrets.NUGET_APIKEY }}" --source "${{ secrets.NUGET_SOURCE }}" --skip-duplicate
           done
-
-
