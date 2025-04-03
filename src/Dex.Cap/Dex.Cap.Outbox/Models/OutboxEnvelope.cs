@@ -12,6 +12,15 @@ namespace Dex.Cap.Outbox.Models
         {
             var startDateUtc = startAtUtc ?? DateTime.UtcNow;
 
+#if NET8_0
+            //now  8:00 utc
+            //net5 5:00
+            //net8 8:00
+
+            //приводим поведение в версии 8 к такому же как в и в версии 5
+            startDateUtc = DateTime.SpecifyKind(startDateUtc, DateTimeKind.Local).ToUniversalTime();
+#endif
+
             Id = id;
             CorrelationId = correlationId;
             MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
@@ -38,7 +47,7 @@ namespace Dex.Cap.Outbox.Models
         public string Content { get; set; }
 
         /// <summary>
-        /// Идентификатор Activity.Id подсистемы System.Diagnostics.Activity 
+        /// Идентификатор Activity.Id подсистемы System.Diagnostics.Activity
         /// </summary>
         public string? ActivityId { get; set; }
 
@@ -48,7 +57,7 @@ namespace Dex.Cap.Outbox.Models
         public int Retries { get; set; }
 
         /// <summary>
-        /// Статус сообщения 
+        /// Статус сообщения
         /// </summary>
         [Required]
         public OutboxMessageStatus Status { get; set; }
