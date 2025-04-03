@@ -12,7 +12,7 @@ namespace Dex.Cap.Outbox.Models
         {
             var startDateUtc = startAtUtc ?? DateTime.UtcNow;
 
-#if NET8_0
+#if NET6_0_OR_GREATER
             //now  8:00 utc
             //net5 5:00
             //net8 8:00
