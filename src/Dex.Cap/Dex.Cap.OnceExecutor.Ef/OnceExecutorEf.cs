@@ -35,13 +35,14 @@ namespace Dex.Cap.OnceExecutor.Ef
         protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             return await Context.Set<LastTransaction>()
+                .AsNoTracking()
                 .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken)
                 .ConfigureAwait(false);
         }
 
         protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
-            await Context.AddAsync(new LastTransaction { IdempotentKey = idempotentKey }, cancellationToken).AsTask().ConfigureAwait(false);
+            Context.Add(new LastTransaction { IdempotentKey = idempotentKey });
             await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
