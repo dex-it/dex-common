@@ -1,10 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
@@ -12,6 +14,7 @@ namespace Dex.Cap.OnceExecutor.Ef
         where TDbContext : DbContext
     {
         protected override TDbContext Context { get; }
+        private LastTransaction? LastTransaction { get; set; }
 
         public OnceExecutorEf(TDbContext context)
         {
@@ -28,11 +31,13 @@ namespace Dex.Cap.OnceExecutor.Ef
             options ??= new EfOptions();
 
             return await Context.ExecuteInTransactionScopeAsync(
-                    operation, verifySucceeded, options.TransactionScopeOption, options.IsolationLevel, options.TimeoutInSeconds, cancellationToken)
+                    operation, verifySucceeded, options.TransactionScopeOption, options.IsolationLevel,
+                    options.TimeoutInSeconds, cancellationToken)
                 .ConfigureAwait(false);
         }
 
-        protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey, CancellationToken cancellationToken)
+        protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey,
+            CancellationToken cancellationToken)
         {
             return await Context.Set<LastTransaction>()
                 .AsNoTracking()
@@ -42,7 +47,28 @@ namespace Dex.Cap.OnceExecutor.Ef
 
         protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
-            Context.Add(new LastTransaction { IdempotentKey = idempotentKey });
+            // в случае использования ретрай стратегии EnableRetryOnFailure метод вызовется несколько раз
+            // и если LastTransaction уже был добавлен в DbContext то меняем его State на Added
+            // поиск в ChangeTracker осуществляем по инстансу
+
+            EntityEntry? existingEntry = null;
+
+            if (LastTransaction != null)
+            {
+                existingEntry = Context.ChangeTracker.Entries<LastTransaction>()
+                    .FirstOrDefault(t => t.Entity == LastTransaction);
+            }
+
+            if (existingEntry == null)
+            {
+                LastTransaction = new LastTransaction { IdempotentKey = idempotentKey };
+                Context.Add(LastTransaction);
+            }
+            else
+            {
+                existingEntry.State = EntityState.Added;
+            }
+
             await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
