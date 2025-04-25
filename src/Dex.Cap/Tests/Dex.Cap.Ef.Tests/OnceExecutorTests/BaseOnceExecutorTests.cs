@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -7,9 +9,10 @@ using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.OnceExecutor.Ef;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.OnceExecutorTests
@@ -17,7 +20,30 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
     public class BaseOnceExecutorTests : BaseTest
     {
         [Test]
-        public void DoubleInsertTest1()
+        public async Task OnceExecute_AddEntity_SuccessTrue()
+        {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
+
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+
+            var stepId = Guid.NewGuid().ToString("N");
+            var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+
+            await executor.ExecuteAsync(stepId, async (context, token) =>
+            {
+                await context.Users.AddAsync(user, token);
+                await context.SaveChangesAsync(token);
+            });
+            await dbContext.SaveChangesAsync();
+
+            var xUser = await dbContext.FindAsync<TestUser>(user.Id);
+            Assert.IsNotNull(xUser);
+        }
+
+        [Test]
+        public void DoubleInsert_ThrowDbUpdateException()
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
@@ -37,7 +63,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
         }
 
         [Test]
-        public async Task OnceExecuteTest1()
+        public async Task DoubleInsertByOnceExecutor_SuccessTrue()
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
@@ -47,20 +73,20 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
 
-            var firstResult = await executor.ExecuteAsync(stepId, async (context, c) =>
+            var firstResult = await executor.ExecuteAsync(stepId, async (context, ct) =>
                 {
-                    await context.Users.AddAsync(user, c);
-                    await context.SaveChangesAsync(c);
+                    await context.Users.AddAsync(user, ct);
+                    await context.SaveChangesAsync(ct);
                 },
-                (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
+                (context, ct) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", ct)
             );
 
-            var secondResult = await executor.ExecuteAsync(stepId, async (context, c) =>
+            var secondResult = await executor.ExecuteAsync(stepId, async (context, ct) =>
                 {
-                    await context.Users.AddAsync(user, c);
-                    await context.SaveChangesAsync(c);
+                    await context.Users.AddAsync(user, ct);
+                    await context.SaveChangesAsync(ct);
                 },
-                (context, c) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", cancellationToken: c)
+                (context, ct) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", ct)
             );
 
             Assert.IsNotNull(firstResult);
@@ -71,30 +97,84 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
         }
 
         [Test]
-        public async Task OnceExecuteTest2()
+        public void OnceExecuteThrowTransientException_TriggeringRetryStrategy_ThrowRetryLimitExceededException()
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var dbContext = sp.GetRequiredService<TestDbContext>();
             var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+            var stepId = Guid.NewGuid().ToString("N");
+
+            TestUser? result = null;
+
+            Assert.CatchAsync<RetryLimitExceededException>(async () =>
+            {
+                result = await executor.ExecuteAsync(stepId, async (context, ct) =>
+                    {
+                        var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+                        await context.Users.AddAsync(user, ct);
+                        await context.SaveChangesAsync(ct);
+                        await Task.Delay(TimeSpan.FromMilliseconds(50), ct);
+
+                        throw new TimeoutException("The operation has timed out.");
+                    },
+                    (context, ct) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", ct)
+                );
+            });
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public async Task ConcurrentOnceExecuteWithSameIdempotentKey_FirstSuccessTrue_OtherThrowDbUpdateException()
+        {
+            var sp = InitServiceCollection()
+                .BuildServiceProvider();
 
             var stepId = Guid.NewGuid().ToString("N");
-            var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+            const int taskCount = 5;
+            var tasks = new List<Task>(taskCount);
 
-            await executor.ExecuteAsync(stepId, async (context, token) =>
+            for (var i = 0; i < taskCount; i++)
             {
-                await CreateUser(context, user, token);
-                await context.SaveChangesAsync(token);
-            });
-            await dbContext.SaveChangesAsync();
+                tasks.Add(Task.Run(async () =>
+                {
+                    using var scope = sp.CreateScope();
+                    var executor = scope.ServiceProvider.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
 
-            var xUser = await dbContext.FindAsync<TestUser>(user.Id);
-            Assert.IsNotNull(xUser);
+                    await executor.ExecuteAsync(stepId, async (context, c) =>
+                        {
+                            await Task.Delay(1000, c);
+                            var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+                            await context.Users.AddAsync(user, c);
+                            await context.SaveChangesAsync(c);
+                        }
+                    );
+                }));
+            }
 
-            ValueTask<EntityEntry<TestUser>> CreateUser(TestDbContext context, TestUser newUser, CancellationToken token)
+            try
             {
-                return context.Users.AddAsync(newUser, token);
+                Task.WaitAll(tasks.ToArray());
+            }
+            catch (AggregateException aggregateEx)
+            {
+                var uniqueViolationExceptions = aggregateEx.InnerExceptions
+                    .Where(ex => ex is DbUpdateException
+                    {
+                        InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }
+                    }).ToArray();
+
+                Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(uniqueViolationExceptions.Length),
+                    "Все исключения должны быть связаны с нарушением уникальности ключа.");
+                Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(taskCount - 1));
+            }
+
+            using (var scope = sp.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+                var users = await dbContext.Users.Where(u => u.Name == "OnceExecuteTest").ToListAsync();
+                Assert.That(users.Count, Is.EqualTo(1));
             }
         }
 
@@ -153,7 +233,8 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                     await context.Users.AddAsync(user, token);
                     await context.SaveChangesAsync(token);
                 },
-                (context, token) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", token),
+                (context, token) =>
+                    context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteBeginTransactionTest", token),
                 efOptions,
                 cancellationToken: CancellationToken.None
             );
