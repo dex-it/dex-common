@@ -20,7 +20,7 @@ namespace Dex.Cap.Outbox.Neo4j
         public OutboxDataProviderNeo4j(
             ITransactionalGraphClient graphClient,
             IOptions<OutboxOptions> outboxOptions,
-            IOutboxRetryStrategy retryStrategy) : base(retryStrategy)
+            IOutboxRetryStrategy retryStrategy) : base(retryStrategy, outboxOptions)
         {
             _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
             _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));

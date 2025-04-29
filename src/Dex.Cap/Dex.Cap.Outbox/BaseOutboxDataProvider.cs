@@ -5,16 +5,19 @@ using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
 using Dex.Cap.Outbox.Options;
+using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox
 {
     internal abstract class BaseOutboxDataProvider<TDbContext> : IOutboxDataProvider<TDbContext>
     {
         private readonly IOutboxRetryStrategy _retryStrategy;
+        private readonly IOptions<OutboxOptions> _options;
 
-        protected BaseOutboxDataProvider(IOutboxRetryStrategy retryStrategy)
+        protected BaseOutboxDataProvider(IOutboxRetryStrategy retryStrategy, IOptions<OutboxOptions> options)
         {
             _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         public abstract Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService,
@@ -39,7 +42,9 @@ namespace Dex.Cap.Outbox
             outboxJob.Envelope.Error = exception?.ToString();
 
             var calculatedStartDate = _retryStrategy
-                .CalculateNextStartDate(new OutboxRetryStrategyOptions(outboxJob.Envelope.StartAtUtc, outboxJob.Envelope.Retries));
+                .CalculateNextStartDate(new OutboxRetryStrategyOptions(outboxJob.Envelope.StartAtUtc, outboxJob.Envelope.Retries), _options.Value.Retries);
+            _retryStrategy.ResetRetriesIfNeeded(_options.Value.Retries, outboxJob);
+
             outboxJob.Envelope.StartAtUtc = calculatedStartDate;
             outboxJob.Envelope.ScheduledStartIndexing = calculatedStartDate;
 
