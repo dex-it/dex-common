@@ -39,11 +39,16 @@ namespace Dex.Cap.Common.Ef.Extensions
                         throw new UnsavedChangesDetectedException(context,
                             "Can't complete action, unsaved changes detected");
 
+                    // Нельзя очищать ChangeTracker!
+                    // т.к. в случае ретрая стратегии можем потерять информацию о прочитанных данных, вызывающего кода
+
                     transactionScope.Complete();
 
                     return st.Result;
                 },
-                async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
+                async (_, st, ct) =>
+                    new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false),
+                        st.Result),
                 cancellationToken
             ).ConfigureAwait(false);
 
