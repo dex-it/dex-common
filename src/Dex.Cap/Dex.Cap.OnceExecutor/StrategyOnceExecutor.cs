@@ -22,11 +22,11 @@ namespace Dex.Cap.OnceExecutor
                 {
                     if (!await ExecutionStrategy.IsAlreadyExecutedAsync(argument, token).ConfigureAwait(false))
                     {
-                        await ExecutionStrategy.ExecuteAsync(argument, cancellationToken).ConfigureAwait(false);
-                        await OnExecuteCompletedAsync(cancellationToken).ConfigureAwait(false);
+                        await ExecutionStrategy.ExecuteAsync(argument, token).ConfigureAwait(false);
+                        await OnExecuteCompletedAsync(token).ConfigureAwait(false);
                     }
 
-                    return await ExecutionStrategy.ReadAsync(argument, cancellationToken).ConfigureAwait(false);
+                    return await ExecutionStrategy.ReadAsync(argument, token).ConfigureAwait(false);
                 },
                 async token => await ExecutionStrategy.IsAlreadyExecutedAsync(argument, token).ConfigureAwait(false),
                 cancellationToken).ConfigureAwait(false);
