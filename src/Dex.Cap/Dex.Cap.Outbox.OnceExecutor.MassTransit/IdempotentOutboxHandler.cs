@@ -12,7 +12,7 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// <typeparam name="TMessage"></typeparam>
 /// <typeparam name="TDbContext"></typeparam>
 public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
-    where TMessage : IOutboxMessage
+    where TMessage : class
 {
     private readonly IOnceExecutor<IEfOptions, TDbContext> _onceExecutor;
 
@@ -21,22 +21,28 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
     }
 
-    /// <inheritdoc />
-    public abstract Task ProcessMessage(TMessage message, CancellationToken cancellationToken);
+    protected abstract Task IdempotentProcess(TMessage message, CancellationToken cancellationToken);
 
-    /// <inheritdoc />
-    public async Task ProcessMessage(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
+    protected virtual string GetIdempotentKey(TMessage message) => GetIdempotentKeyInner(message);
+
+    public async Task Process(TMessage outboxMessage, CancellationToken cancellationToken)
     {
-        if (outboxMessage is not TMessage typedMessage)
-        {
-            throw new InvalidOperationException($"Unable cast IOutboxMessage to type: {typeof(TMessage)}");
-        }
-
         await _onceExecutor.ExecuteAsync(
-            outboxMessage.MessageId.ToString("N"),
-            async (_, token) => await ProcessMessage(typedMessage, token),
+            GetIdempotentKey(outboxMessage),
+            async (_, token) => await IdempotentProcess(outboxMessage, token),
             options: new EfOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew },
             cancellationToken: cancellationToken
         );
+    }
+
+    private static string GetIdempotentKeyInner<T>(T message)
+        where T : class
+    {
+        if (message is not IIdempotentKey key)
+        {
+            throw new ArgumentNullException(nameof(message));
+        }
+
+        return key.IdempotentKey;
     }
 }

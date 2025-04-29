@@ -1,5 +1,4 @@
 using System;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 
@@ -14,14 +13,15 @@ namespace Dex.Cap.Outbox
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
-        public IOutboxMessageHandler GetMessageHandler(IOutboxMessage outboxMessage)
+        public object GetMessageHandler(object outboxMessage)
         {
             ArgumentNullException.ThrowIfNull(outboxMessage);
 
-            var type = outboxMessage.GetType();
-            var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(type);
+            var messageType = outboxMessage.GetType();
+            var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(messageType);
+            var handler = _serviceProvider.GetService(handlerType);
 
-            if (_serviceProvider.GetService(handlerType) is IOutboxMessageHandler handler)
+            if (handler is not null)
             {
                 return handler;
             }

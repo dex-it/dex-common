@@ -1,11 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
-    public interface IOutboxMessageHandler
+    public interface IOutboxMessageHandler<in TMessage>
+        where TMessage : class
     {
-        Task ProcessMessage(IOutboxMessage outboxMessage, CancellationToken cancellationToken);
+        Task Process(TMessage message, CancellationToken cancellationToken);
     }
 }
