@@ -10,9 +10,66 @@ The template ensures that commands will not be lost.
 * Verifying the success of the operation.
 * Discriminate message type, for serialization
 
+### Registration
+```csharp
+// implement discriminator
+internal class OutboxTypeDiscriminator : BaseOutboxTypeDiscriminator
+{
+    public OutboxTypeDiscriminator()
+    {
+        Add<OutboxMessage>("15CAD1F5-4C0D-4816-B5D1-E2340144C4AA");
+    }
+}
+
+// implement OutboxMessage
+public class OutboxMessage : IOutboxMessage
+{
+    public string Args { get; init; }
+    public Guid MessageId { get; init; } = Guid.NewGuid();
+}
+
+// implement specific OutboxMessageHandler (if not, the OutboxMessage will be auto-published)
+public class OutboxMessageHandler : IOutboxMessageHandler<OutboxMessage>
+{
+    private readonly ILogger<OutboxMessageHandler> _logger;
+
+    public OutboxMessageHandler(ILogger<OutboxMessageHandler> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task ProcessMessage(OutboxMessage message, CancellationToken cancellationToken)
+    {
+        await Task.Delay(200, cancellationToken);
+        _logger.LogInformation("Processed message at {Now}, Args: {MessageArgs}", DateTime.Now, message.Args);
+    }
+
+    public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
+    {
+        return ProcessMessage((OutboxMessage) outbox, cancellationToken);
+    }
+}
+
+// ConfigureServices
+serviceCollection.AddOutbox<DbContext, OutboxTypeDiscriminator>();
+serviceCollection.RegisterOutboxScheduler(periodSeconds: 1, cleanupDays: 90);
+serviceCollection.AddScoped<IOutboxMessageHandler<OutboxMessage>, OutboxMessageHandler>(); // defining a specific handler
+serviceCollection.AddScoped(typeof(IOutboxMessageHandler<>), typeof(PublisherOutboxHandler<>)); // auto-publish any outbox message when a specific handler is not defined
+
+// OnModelCreating
+modelBuilder.OutboxModelCreating();
+// remarks: when using optimistic concurrency in PostgreSQL - it is necessary to exclude type OutboxEnvelope
+modelBuilder.UseXminAsConcurrencyToken(ignoreTypes: typeof(OutboxEnvelope));
+```
+
 ### Basic usage
 ```csharp
-await outboxService.ExecuteOperationAsync(
+// ctor
+private readonly IOutboxService<DbContext> _outboxService;
+
+// process
+var correlationId = Guid.NewGuid();
+await _outboxService.ExecuteOperationAsync(
     correlationId,
     state: new { Logger = logger },
     async (token, outboxContext) =>
@@ -20,10 +77,9 @@ await outboxService.ExecuteOperationAsync(
         outboxContext.State.Logger.LogDebug("DEBUG...");
 
         await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
-        await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "Command1" }, token);
-        await outboxContext.EnqueueAsync(new TestOutboxCommand2 { Args = "Command2" }, token);
+        await outboxContext.EnqueueAsync(new OutboxMessage { Args = "message1" }, token);
     },
-    CancellationToken.None);
+    cancellationToken);
 ```
 
 # Dex.Cap.OnceExecutor
@@ -36,10 +92,21 @@ Takes into account the need to return the value of an already performed operatio
 
 The basic usage is based on the idempotency key.
 
+### Registration
+```csharp
+// ConfigureServices
+serviceCollection.AddOnceExecutor<DbContext>();
+
+// OnModelCreating
+modelBuilder.OnceExecutorModelCreating();
+// remarks: when using optimistic concurrency in PostgreSQL - it is necessary to exclude type LastTransaction
+modelBuilder.UseXminAsConcurrencyToken(ignoreTypes: typeof(LastTransaction));
+```
+
 ### Basic usage
 ```csharp
 var serviceProvider = InitServiceCollection().BuildServiceProvider();
-var executor = serviceProvider.GetRequiredService<IOnceExecutor<TestDbContext>>();
+var executor = serviceProvider.GetRequiredService<IOnceExecutor<DbContext>>();
 var result = await executor.ExecuteAsync(
     idempotentKey,
     (dbContext, token) => dbContext.Users.AddAsync(user, token).AsTask(),
@@ -100,8 +167,6 @@ var executor = serviceProvider.GetRequiredService<IStrategyOnceExecutor<Concrete
 
 var result = await executor.ExecuteAsync(request, CancellationToken.None);
 ```
+
 ### Breaking Changes
 Dex.Cap.Outbox.Ef - 1.9.x: Add discriminator. Before use, you must implement type discriminator logic (IOutboxTypeDiscriminator).
-
-public static IServiceCollection AddOutbox<TDbContext, TDiscriminator>(this IServiceCollection serviceProvider,
-Action<IServiceProvider, OutboxRetryStrategyConfigurator>? retryStrategyImplementation = null)
