@@ -25,7 +25,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler
             }
 
             services.AddHealthChecks()
-                .AddCheck<OutboxHealthCheck>("outbox-scheduler", tags: new[] { "outbox-scheduler" });
+                .AddCheck<OutboxHealthCheck>("outbox-scheduler", tags: ["outbox-scheduler"]);
 
             services
                 .AddSingleton(new OutboxHandlerOptions

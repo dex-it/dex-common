@@ -1,7 +1,7 @@
-﻿using Dex.Pagination;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Linq;
 using Dex.Pagination.Conditions;
+using NUnit.Framework.Legacy;
 
 namespace Dex.Pagination.Test
 {
@@ -27,7 +27,7 @@ namespace Dex.Pagination.Test
             var a1 = _data.FilterPage(0, 0).ToList();
             var a2 = _data.Take(1).ToList();
 
-            Assert.True(a1.SequenceEqual(a2));
+            ClassicAssert.True(a1.SequenceEqual(a2));
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Dex.Pagination.Test
             var a1 = _data.FilterPage(1, 2).ToList();
             var a2 = _data.Take(2);
 
-            Assert.True(a1.SequenceEqual(a2));
+            ClassicAssert.True(a1.SequenceEqual(a2));
         }
 
         [Test]
@@ -45,7 +45,7 @@ namespace Dex.Pagination.Test
             var a1 = _data.FilterPage(2, 2).ToList();
             var a2 = _data.Skip(2).Take(2);
 
-            Assert.True(a1.SequenceEqual(a2));
+            ClassicAssert.True(a1.SequenceEqual(a2));
         }
 
         [Test]
@@ -54,7 +54,7 @@ namespace Dex.Pagination.Test
             var a1 = _data.FilterPage(new PageCondition(2, 100), 2).ToList();
             var a2 = _data.Skip(2).Take(2);
 
-            Assert.True(a1.SequenceEqual(a2));
+            ClassicAssert.True(a1.SequenceEqual(a2));
         }
 
         private record PageTestData

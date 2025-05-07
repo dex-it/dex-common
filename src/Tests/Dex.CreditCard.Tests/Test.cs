@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Dex.CreditCardType.Resolver;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Dex.CreditCard.Tests
 {
@@ -50,7 +51,7 @@ namespace Dex.CreditCard.Tests
         {
             foreach (var card in _validCards)
             {
-                Assert.AreEqual(card.Value, CreditCardTypeDetector.FindType(card.Key));
+                ClassicAssert.AreEqual(card.Value, CreditCardTypeDetector.FindType(card.Key));
             }
         }
 
@@ -62,14 +63,14 @@ namespace Dex.CreditCard.Tests
                 var hasValidCheckDigit = LuhnAlgorithm.HasValidCheckDigit(card.Key);
                 if(!hasValidCheckDigit)
                     TestContext.WriteLine(card.Key);
-                Assert.True(hasValidCheckDigit);
+                ClassicAssert.True(hasValidCheckDigit);
             }
         }
 
         [Test]
         public void LyhnCardTypeInvalidTest1()
         {
-            Assert.False(LuhnAlgorithm.HasValidCheckDigit(_invalidCard));
+            ClassicAssert.False(LuhnAlgorithm.HasValidCheckDigit(_invalidCard));
         }
 
         [Test]
@@ -129,7 +130,7 @@ namespace Dex.CreditCard.Tests
         {
             Assert.Catch<ArgumentException>(() =>
             {
-                Assert.False(LuhnAlgorithm.HasValidCheckDigit(arg));
+                ClassicAssert.False(LuhnAlgorithm.HasValidCheckDigit(arg));
             });
         }     
     }

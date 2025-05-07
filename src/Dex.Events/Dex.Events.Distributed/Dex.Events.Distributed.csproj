@@ -6,7 +6,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>distributed events</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.1</PackageVersion>
+        <PackageVersion>8.0.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -25,13 +25,16 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Dex.Extensions"/>
-        <PackageReference Include="MassTransit"/>
-        <PackageReference Include="MassTransit.Abstractions"/>
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
     <!--/Для NuGet-->
 
+    <ItemGroup>
+        <PackageReference Include="Dex.Extensions"/>
+        <PackageReference Include="MassTransit"/>
+        <PackageReference Include="MassTransit.Abstractions"/>
+    </ItemGroup>
+    
     <ItemGroup>
         <Compile Update="DistributedEventHandler.cs">
             <DependentUpon>IDistributedEventHandler.cs</DependentUpon>

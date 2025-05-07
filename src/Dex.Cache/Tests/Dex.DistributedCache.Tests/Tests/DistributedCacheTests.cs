@@ -256,7 +256,7 @@ namespace Dex.DistributedCache.Tests.Tests
             var actionExecutedContext = CreateDefaultActionExecutedContext();
             actionExecutedContext.Exception = new NullReferenceException("inner", new ArgumentException());
 
-            Assert.ThrowsAsync<CacheActionFilterException>(() =>
+            NUnit.Framework.Assert.ThrowsAsync<CacheActionFilterException>(() =>
                 cacheActionFilter.OnActionExecutionAsync(actionExecutingContext, () => Task.FromResult(actionExecutedContext)));
         }
 

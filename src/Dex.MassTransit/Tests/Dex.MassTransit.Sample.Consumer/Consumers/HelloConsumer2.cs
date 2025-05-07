@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Dex.MassTransit.Sample.Domain;
@@ -19,7 +18,7 @@ namespace Dex.MassTransit.Sample.Consumer.Consumers
         public Task Consume(ConsumeContext<HelloMessageDto> context)
         {
             _logger.LogInformation($"{context.Message.Hi} Uri: {context.Message.TestUri} SingleDevice = {context.Message.SingleDevice.ToString()} " +
-                                   $"Devices = {string.Join(',', context.Message.Devices.Select(d => d.DeviceToken + d.MobilePlatform))}");
+                                   $"Devices = {string.Join(',', context.Message.Devices!.Select(d => d.DeviceToken + d.MobilePlatform))}");
 
             return Task.CompletedTask;
         }

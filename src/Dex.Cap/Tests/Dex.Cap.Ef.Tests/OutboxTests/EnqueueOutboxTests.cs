@@ -104,7 +104,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
 
-            Assert.CatchAsync<InvalidOperationException>(async () => { await outboxService.EnqueueAsync(correlationId, new TestEmptyMessageId()); });
+            NUnit.Framework.Assert.CatchAsync<InvalidOperationException>(async () => { await outboxService.EnqueueAsync(correlationId, new TestEmptyMessageId()); });
         }
 
         [Test]
@@ -304,7 +304,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var correlationId = Guid.NewGuid();
             var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
 
-            Assert.CatchAsync<ArgumentOutOfRangeException>(async () =>
+            NUnit.Framework.Assert.CatchAsync<ArgumentOutOfRangeException>(async () =>
             {
                 // LockTimeout must be greater 10sec
                 await outboxService.EnqueueAsync(correlationId, command, lockTimeout: 9.Seconds());

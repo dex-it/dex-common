@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.1</PackageVersion>
+        <PackageVersion>8.0.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -22,23 +22,22 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
-    <!--/Для NuGet-->
-
     <!-- Source debugging -->
     <ItemGroup>
-        <PackageReference Include="MassTransit"/>
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Dex.Extensions"/>
-        <PackageReference Include="MassTransit.AmazonSQS"/>
-        <PackageReference Include="Microsoft.Extensions.Options"/>
-    </ItemGroup>
+    <!--/Для NuGet-->
 
     <ItemGroup>
         <ProjectReference Include="..\Dex.MassTransit.ActivityTrace\Dex.MassTransit.ActivityTrace.csproj"/>
         <ProjectReference Include="..\Dex.MassTransit\Dex.MassTransit.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Dex.Extensions"/>
+        <PackageReference Include="MassTransit"/>
+        <PackageReference Include="MassTransit.AmazonSQS"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
     </ItemGroup>
 
 </Project>

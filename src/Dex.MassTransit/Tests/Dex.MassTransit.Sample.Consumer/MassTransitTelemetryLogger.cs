@@ -26,7 +26,7 @@ namespace Dex.MassTransit.Sample.Consumer
         {
             if (value.Name == "MassTransit")
             {
-                value.Subscribe(_metricTracer);
+                value.Subscribe(_metricTracer!);
             }
         }
 

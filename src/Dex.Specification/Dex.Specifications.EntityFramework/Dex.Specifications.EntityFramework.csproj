@@ -4,7 +4,7 @@
         <PackageTags>dex;specifications;entityframework</PackageTags>
         <TargetFramework>net8.0</TargetFramework>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.0</PackageVersion>
+        <PackageVersion>8.0.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

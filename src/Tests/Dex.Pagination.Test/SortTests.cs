@@ -2,6 +2,7 @@ using System.Linq;
 using Dex.Pagination.Conditions;
 using Dex.TestDomain;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Dex.Pagination.Test
 {
@@ -18,7 +19,7 @@ namespace Dex.Pagination.Test
             var expectedQuery = dbContext.Employees.OrderByParams(new OrderCondition("Company.CreatedUtc"));
             var expectedSql = expectedQuery.ToSql();
 
-            Assert.AreEqual(expectedSql, sqlActual);
+            ClassicAssert.AreEqual(expectedSql, sqlActual);
         }
 
         [Test]
@@ -35,7 +36,7 @@ namespace Dex.Pagination.Test
             var a1 = array.AsQueryable().OrderByParams(new OrderCondition(nameof(SortTestData.Number), true));
             var a2 = array.OrderByDescending(x => x.Number);
 
-            Assert.True(a1.SequenceEqual(a2));
+            ClassicAssert.True(a1.SequenceEqual(a2));
         }
 
         [Test]
@@ -50,7 +51,7 @@ namespace Dex.Pagination.Test
             };
 
             var a1 = array.AsQueryable().ApplyCondition(new QueryCondition());
-            Assert.True(array.SequenceEqual(a1));
+            ClassicAssert.True(array.SequenceEqual(a1));
         }
 
         private record SortTestData

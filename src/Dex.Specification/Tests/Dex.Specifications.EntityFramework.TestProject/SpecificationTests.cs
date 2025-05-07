@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Dex.Specifications.Extensions;
 using NUnit.Framework;
 using Dex.TestDomain;
+using NUnit.Framework.Legacy;
 using DbContext = Dex.TestDomain.DbContext;
 
 namespace Dex.Specifications.EntityFramework.TestProject
@@ -29,7 +30,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
 
-            Assert.AreEqual(expressionSql, specificationSql);
+            ClassicAssert.AreEqual(expressionSql, specificationSql);
         }
 
         [Test]
@@ -45,7 +46,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
 
-            Assert.AreEqual(specificationSql, expressionSql);
+            ClassicAssert.AreEqual(specificationSql, expressionSql);
         }
 
         // [Test]
@@ -81,7 +82,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
 
-            Assert.AreEqual(specificationSql, expressionSql);
+            ClassicAssert.AreEqual(specificationSql, expressionSql);
         }
 
         // [Test]
@@ -117,7 +118,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
 
-            Assert.AreEqual(specificationSql, expressionSql);
+            ClassicAssert.AreEqual(specificationSql, expressionSql);
         }
 
         [Test]
@@ -140,7 +141,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             TestContext.WriteLine(specificationSql);
             TestContext.WriteLine(expressionSql);
             
-            Assert.AreEqual(specificationSql, expressionSql);
+            ClassicAssert.AreEqual(specificationSql, expressionSql);
         }
 
         [Test]
@@ -160,7 +161,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
 
-            Assert.AreEqual(specificationSql, expressionSql);
+            ClassicAssert.AreEqual(specificationSql, expressionSql);
         }
 
         [Test]
@@ -188,7 +189,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var result1 = list.Where(sp);
             var result2 = list.Where(query.Compile());
 
-            Assert.AreEqual(2, result1.Intersect(result2).Count());
+            ClassicAssert.AreEqual(2, result1.Intersect(result2).Count());
         }
 
         [Test]
@@ -210,7 +211,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             TestContext.WriteLine(specificationSql);
             TestContext.WriteLine(expressionSql);
             
-            Assert.AreEqual(specificationSql, expressionSql);
+            ClassicAssert.AreEqual(specificationSql, expressionSql);
         }
 
         // [Test]
@@ -249,7 +250,7 @@ namespace Dex.Specifications.EntityFramework.TestProject
             var specificationSql = GetSql(sp);
             var expressionSql = GetSql(query);
 
-            Assert.AreEqual(specificationSql, expressionSql);
+            ClassicAssert.AreEqual(specificationSql, expressionSql);
         }
 
         // [Test]
