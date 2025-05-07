@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dex.Lock.Async.Impl;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Dex.Lock.TestProject
 {
@@ -27,7 +28,7 @@ namespace Dex.Lock.TestProject
                 {
                     try
                     {
-                        collection.Add("Thread" + System.Environment.CurrentManagedThreadId);
+                        collection.Add("Thread" + Environment.CurrentManagedThreadId);
                     }
                     catch (Exception)
                     {
@@ -44,8 +45,8 @@ namespace Dex.Lock.TestProject
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
-            Assert.AreEqual(expected, list.Count);
-            Assert.IsFalse(isError);
+            ClassicAssert.AreEqual(expected, list.Count);
+            ClassicAssert.IsFalse(isError);
         }
     }
 }
