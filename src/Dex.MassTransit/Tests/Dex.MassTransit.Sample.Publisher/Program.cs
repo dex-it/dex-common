@@ -49,7 +49,9 @@ namespace Dex.MassTransit.Sample.Publisher
                     services.AddLogging(builder =>
                     {
                         builder.AddOpenTelemetry(options => options.AddConsoleExporter());
+#pragma warning disable CS0618 // Type or member is obsolete
                         builder.AddConsole(options => options.IncludeScopes = true);
+#pragma warning restore CS0618 // Type or member is obsolete
                     });
 
                     // register services

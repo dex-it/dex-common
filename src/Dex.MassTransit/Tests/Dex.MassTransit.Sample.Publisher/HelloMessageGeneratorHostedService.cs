@@ -11,6 +11,7 @@ namespace Dex.MassTransit.Sample.Publisher
 {
     internal class HelloMessageGeneratorHostedService : IHostedService
     {
+        // ReSharper disable once NotAccessedField.Local
         private readonly ISendEndpointProvider _sendEndpoint;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly ILogger<HelloMessageGeneratorHostedService> _logger;
@@ -42,7 +43,7 @@ namespace Dex.MassTransit.Sample.Publisher
                         Devices = new[]
                         {
                             new MobileDevice(MobilePlatform.Android, Guid.NewGuid().ToString()),
-                            new MobileDevice(MobilePlatform.IOS, Guid.NewGuid().ToString())
+                            new MobileDevice(MobilePlatform.Ios, Guid.NewGuid().ToString())
                         },
                         SingleDevice = new MobileDevice(MobilePlatform.Huawei, "huawei")
                     }, cancellationToken);

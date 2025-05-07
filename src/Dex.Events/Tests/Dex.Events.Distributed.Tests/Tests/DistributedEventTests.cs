@@ -21,7 +21,6 @@ namespace Dex.Events.Distributed.Tests.Tests
     public class DistributedEventTests : BaseTest
     {
         [TestCase(true)]
-        //[TestCase(false)]
         public async Task RaiseDistributedEventMultipleRegistrationsTest(bool isMainApproach)
         {
             await using var serviceProvider = InitServiceCollection()
@@ -67,7 +66,7 @@ namespace Dex.Events.Distributed.Tests.Tests
             await Task.Delay(100);
 
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
-            Assert.That(count, Is.EqualTo(2 * 2));
+            NUnit.Framework.Assert.That(count, Is.EqualTo(2 * 2));
             await harness.StopAsync();
         }
 
@@ -125,7 +124,7 @@ namespace Dex.Events.Distributed.Tests.Tests
             await Task.Delay(100);
 
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
-            Assert.That(count, Is.EqualTo(1));
+            NUnit.Framework.Assert.That(count, Is.EqualTo(1));
             await harness.StopAsync();
         }
 

@@ -27,7 +27,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            Assert.Catch<InvalidOperationException>(() =>
+            NUnit.Framework.Assert.Catch<InvalidOperationException>(() =>
             {
                 var id = Guid.NewGuid();
                 using (var aScope = TransactionScopeHelper
@@ -146,7 +146,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             var id = Guid.NewGuid();
             var id2 = Guid.NewGuid();
-            Assert.Catch<TransactionAbortedException>(() =>
+            NUnit.Framework.Assert.Catch<TransactionAbortedException>(() =>
             {
                 using (var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew,
                            IsolationLevel.ReadCommitted))

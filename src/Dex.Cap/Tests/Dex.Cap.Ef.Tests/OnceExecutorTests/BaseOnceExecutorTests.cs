@@ -50,7 +50,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
 
-            Assert.CatchAsync<DbUpdateException>(async () =>
+            NUnit.Framework.Assert.CatchAsync<DbUpdateException>(async () =>
             {
                 var user = new TestUser { Name = "DoubleInsertTest", Years = 18 };
 
@@ -107,7 +107,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
             TestUser? result = null;
 
-            Assert.CatchAsync<RetryLimitExceededException>(async () =>
+            NUnit.Framework.Assert.CatchAsync<RetryLimitExceededException>(async () =>
             {
                 result = await executor.ExecuteAsync(stepId, async (context, ct) =>
                     {
@@ -165,16 +165,16 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                         InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }
                     }).ToArray();
 
-                Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(uniqueViolationExceptions.Length),
+                NUnit.Framework.Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(uniqueViolationExceptions.Length),
                     "Все исключения должны быть связаны с нарушением уникальности ключа.");
-                Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(taskCount - 1));
+                NUnit.Framework.Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(taskCount - 1));
             }
 
             using (var scope = sp.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
                 var users = await dbContext.Users.Where(u => u.Name == "OnceExecuteTest").ToListAsync();
-                Assert.That(users.Count, Is.EqualTo(1));
+                NUnit.Framework.Assert.That(users.Count, Is.EqualTo(1));
             }
         }
 

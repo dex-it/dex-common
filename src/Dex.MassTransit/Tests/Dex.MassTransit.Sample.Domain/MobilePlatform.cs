@@ -4,7 +4,7 @@ namespace Dex.MassTransit.Sample.Domain
     {
         None,
         Android,
-        IOS,
+        Ios,
         Huawei,
     }
 }

@@ -1,8 +1,8 @@
 <Project>
 
   <PropertyGroup>
-    <FrameworkVersion>8.0.10</FrameworkVersion>
-    <EntityFrameworkVersion>8.0.10</EntityFrameworkVersion>
+    <FrameworkVersion>8.0.15</FrameworkVersion>
+    <EntityFrameworkVersion>8.0.15</EntityFrameworkVersion>
     <ExtensionsVersion>[8.0.0,9.0.0)</ExtensionsVersion>
   </PropertyGroup>
 
@@ -12,20 +12,20 @@
     <PackageReference Update="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" PrivateAssets="All" />
 
     <!--tests -->
-    <PackageReference Update="coverlet.collector" Version="6.0.2" />
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Update="xunit" Version="2.9.2" />
-    <PackageReference Update="NUnit" Version="3.14.0" />
-    <PackageReference Update="NUnit3TestAdapter" Version="4.6.0" />
-    <PackageReference Update="NUnit.Analyzers" Version="4.3.0" />
+    <PackageReference Update="coverlet.collector" Version="6.0.4" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Update="xunit" Version="2.9.3" />
+    <PackageReference Update="NUnit" Version="4.3.2" />
+    <PackageReference Update="NUnit3TestAdapter" Version="5.0.0" />
+    <PackageReference Update="NUnit.Analyzers" Version="4.7.0" />
 
     <!--microsoft extensions -->
     <PackageReference Update="Microsoft.Extensions.*" Version="$(ExtensionsVersion)" />
     <PackageReference Update="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
 
-    <PackageReference Update="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.10" />
+    <PackageReference Update="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.15" />
     <PackageReference Update="Microsoft.Extensions.Logging" Version="8.0.1" />
-    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
     <PackageReference Update="Microsoft.Extensions.Options" Version="8.0.2" />
     <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
@@ -34,21 +34,21 @@
     <PackageReference Update="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
     <PackageReference Update="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-    <PackageReference Update="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.10" />
+    <PackageReference Update="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.15" />
     <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
 
     <PackageReference Update="System.Threading.Channels" Version="8.0.0" />
-    
+
     <!--misc -->
-    <PackageReference Update="Npgsql" Version="8.0.5" />
-    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
+    <PackageReference Update="Npgsql" Version="8.0.7" />
+    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Update="Neo4jClient" Version="5.1.16" />
-    <PackageReference Update="MassTransit*" Version="8.2.5" />
-    <PackageReference Update="MassTransit.TestFramework" Version="8.0.16" />
-    
+    <PackageReference Update="MassTransit*" Version="8.4.0" />
+    <PackageReference Update="MassTransit.TestFramework" Version="8.4.0" />
+
     <!--microsoft asp.net core -->
     <PackageReference Update="Microsoft.AspNetCore.DataProtection*" Version="$(FrameworkVersion)"/>
-    
+
     <!--microsoft entity framework -->
     <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Relational" Version="$(EntityFrameworkVersion)" />
@@ -61,19 +61,6 @@
 	<PackageReference Update="Dex.Types" Version="1.0.26" />
 	<PackageReference Update="Dex.Extensions" Version="1.0.30" />
 	<PackageReference Update="Dex.Neo4J" Version="1.1.31" />
-
-    <!--grpc libs -->
-    <PackageReference Update="Google.Protobuf" Version="3.28.2" />
-    <PackageReference Update="Grpc.Net.ClientFactory" Version="2.66.0" />
-    <PackageReference Update="Grpc.Net.Client" Version="2.66.0" />
-    <PackageReference Update="Grpc.Tools" Version="2.67.0" />
-    <PackageReference Update="Grpc.AspNetCore.Server" Version="2.66.0" />
-
-    <!--mediatr -->
-    <PackageReference Update="MediatR" Version="12.4.1" />    
-
-    <!--Dex -->
-    <PackageReference Update="Dex.MassTransit.Rabbit" Version="8.0.1" />
 
   </ItemGroup>
 </Project>
