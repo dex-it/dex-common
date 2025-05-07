@@ -1,10 +1,10 @@
-﻿using Dex.Audit.ClientSample.Application.Commands.Users;
-using Dex.Audit.ClientSample.Application.Queries.Users;
+﻿using Dex.Audit.Sample.Client.Application.Commands.Users;
+using Dex.Audit.Sample.Client.Application.Queries.Users;
 using Dex.Audit.Sample.Shared.Api;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
+namespace Dex.Audit.Sample.Client.Infrastructure.Controllers;
 
 public class UsersController(ISender mediator) : BaseController
 {

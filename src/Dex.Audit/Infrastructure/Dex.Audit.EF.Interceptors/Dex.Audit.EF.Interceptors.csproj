@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>audit ef inteceptors</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.0</PackageVersion>
+        <PackageVersion>8.0.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

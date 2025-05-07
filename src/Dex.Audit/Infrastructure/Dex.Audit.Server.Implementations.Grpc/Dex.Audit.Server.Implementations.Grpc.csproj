@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>audit server implementations grpc</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.0</PackageVersion>
+        <PackageVersion>8.0.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -30,10 +30,10 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <PackageReference Include="Google.Protobuf" />
-        <PackageReference Include="Grpc.AspNetCore.Server"/>
-        <PackageReference Include="Grpc.Net.Client" />
-        <PackageReference Include="Grpc.Tools"/>
+        <PackageReference Include="Google.Protobuf" Version="3.30.2" />
+        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.71.0" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.71.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.72.0" />
     </ItemGroup>
 
     <ItemGroup>

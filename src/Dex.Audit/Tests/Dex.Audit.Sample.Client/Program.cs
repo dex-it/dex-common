@@ -1,4 +1,4 @@
-using Dex.Audit.ClientSample.Extensions;
+using Dex.Audit.Sample.Client.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 

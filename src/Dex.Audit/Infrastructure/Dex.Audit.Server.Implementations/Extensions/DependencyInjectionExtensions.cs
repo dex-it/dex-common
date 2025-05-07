@@ -1,13 +1,13 @@
 using Dex.Audit.Implementations.Common.Repositories;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using Dex.Audit.Server.Extensions;
-using Dex.Audit.Server.Grpc.Repositories;
-using Dex.Audit.Server.Grpc.Services;
+using Dex.Audit.Server.Implementations.Repositories;
+using Dex.Audit.Server.Implementations.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Dex.Audit.Server.Grpc.Extensions;
+namespace Dex.Audit.Server.Implementations.Extensions;
 
 /// <summary>
 /// A static class that contains extension methods for configuring dependencies.

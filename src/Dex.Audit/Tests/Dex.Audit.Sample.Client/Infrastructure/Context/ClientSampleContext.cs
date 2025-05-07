@@ -1,7 +1,7 @@
-﻿using Dex.Audit.ClientSample.Domain.Entities;
+﻿using Dex.Audit.Sample.Client.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ClientSample.Infrastructure.Context;
+namespace Dex.Audit.Sample.Client.Infrastructure.Context;
 
 public class ClientSampleContext(DbContextOptions<ClientSampleContext> dbContextOptions) : DbContext(dbContextOptions)
 {

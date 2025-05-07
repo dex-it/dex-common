@@ -1,7 +1,7 @@
 using Dex.Audit.Domain.Enums;
 using Dex.Audit.Server.Abstractions.Interfaces;
 
-namespace Dex.Audit.Server.Grpc.Services;
+namespace Dex.Audit.Server.Implementations.Grpc.Services;
 
 internal class AuditSettingsServiceWithGrpcNotifier(
     IAuditSettingsRepository eventsRepository,

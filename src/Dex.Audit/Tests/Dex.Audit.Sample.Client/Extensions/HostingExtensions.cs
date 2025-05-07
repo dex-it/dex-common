@@ -1,18 +1,18 @@
 ﻿using System.Text.Json.Serialization;
 using Dex.Audit.Client.Extensions;
-using Dex.Audit.Client.Grpc.Extensions;
+using Dex.Audit.Client.Implementations.Extensions;
 using Dex.Audit.Client.Workers;
-using Dex.Audit.ClientSample.Infrastructure.Context;
-using Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
 using Dex.Audit.EF.Interceptors.Extensions;
 using Dex.Audit.EF.Interceptors.Interfaces;
 using Dex.Audit.Logger.Extensions;
 using Dex.Audit.MediatR.Extensions;
+using Dex.Audit.Sample.Client.Infrastructure.Context;
+using Dex.Audit.Sample.Client.Infrastructure.Context.Interceptors;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Dex.Audit.ClientSample.Extensions;
+namespace Dex.Audit.Sample.Client.Extensions;
 
 /// <summary>
 /// Расширение регистрации сервисов и пайплайна

@@ -2,7 +2,7 @@
 using Dex.Audit.Sample.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ClientSample.Infrastructure.Context.Interceptors;
+namespace Dex.Audit.Sample.Client.Infrastructure.Context.Interceptors;
 
 internal class CustomInterceptionAndSendingEntriesService(IServiceProvider serviceProvider) : InterceptionAndSendingEntriesService(serviceProvider)
 {

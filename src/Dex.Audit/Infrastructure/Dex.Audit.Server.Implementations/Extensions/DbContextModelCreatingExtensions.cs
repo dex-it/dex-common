@@ -1,8 +1,8 @@
 ﻿using Dex.Audit.Domain.Entities;
-using Dex.Audit.Server.Grpc.EntityConfiguration;
+using Dex.Audit.Server.Implementations.EntityConfiguration;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.Server.Grpc.Extensions;
+namespace Dex.Audit.Server.Implementations.Extensions;
 
 public static class DbContextModelCreatingExtensions
 {

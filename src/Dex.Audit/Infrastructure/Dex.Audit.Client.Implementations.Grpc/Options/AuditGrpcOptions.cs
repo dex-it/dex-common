@@ -1,4 +1,4 @@
-﻿namespace Dex.Audit.Client.Grpc.Options;
+﻿namespace Dex.Audit.Client.Implementations.Grpc.Options;
 
 /// <summary>
 /// Options for enabling Grpc auditing.

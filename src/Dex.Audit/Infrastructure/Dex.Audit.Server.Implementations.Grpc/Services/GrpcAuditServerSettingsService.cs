@@ -1,11 +1,11 @@
 ﻿using AuditGrpcServer;
 using Dex.Audit.Server.Abstractions.Interfaces;
-using Dex.Audit.Server.Grpc.Extensions;
+using Dex.Audit.Server.Implementations.Grpc.Extensions;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Audit.Server.Grpc.Services;
+namespace Dex.Audit.Server.Implementations.Grpc.Services;
 
 public sealed class GrpcAuditServerSettingsService(
     IServiceProvider serviceProvider,

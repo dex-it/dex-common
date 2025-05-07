@@ -1,9 +1,9 @@
 ﻿using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
+using Dex.Audit.Sample.Server.Infrastructure.Context;
 using Dex.Audit.Sample.Shared.Enums;
-using Dex.Audit.ServerSample.Infrastructure.Context;
 
-namespace Dex.Audit.ServerSample.Extensions;
+namespace Dex.Audit.Sample.Server.Extensions;
 
 internal static class AuditDatabaseFillingHelper
 {

@@ -3,7 +3,7 @@ using Dex.Audit.Domain.Enums;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.Server.Grpc.Repositories;
+namespace Dex.Audit.Server.Implementations.Repositories;
 
 /// <summary>
 /// Simple implementation of <see cref="IAuditSettingsRepository"/>.

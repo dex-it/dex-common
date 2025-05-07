@@ -1,10 +1,10 @@
-﻿using Dex.Audit.ClientSample.Infrastructure.Context;
-using Dex.Audit.MediatR.Requests;
+﻿using Dex.Audit.MediatR.Requests;
+using Dex.Audit.Sample.Client.Infrastructure.Context;
 using Dex.Audit.Sample.Shared.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ClientSample.Application.Queries.Users;
+namespace Dex.Audit.Sample.Client.Application.Queries.Users;
 
 public class GetUserQueryHandler(ClientSampleContext clientSampleContext) : IRequestHandler<GetUserQuery, GetUserQueryResponse>
 {

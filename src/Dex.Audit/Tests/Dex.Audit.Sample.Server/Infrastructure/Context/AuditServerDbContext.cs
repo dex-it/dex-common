@@ -1,8 +1,8 @@
 ﻿using Dex.Audit.Domain.Entities;
-using Dex.Audit.Server.Grpc.Extensions;
+using Dex.Audit.Server.Implementations.Extensions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ServerSample.Infrastructure.Context;
+namespace Dex.Audit.Sample.Server.Infrastructure.Context;
 
 public class AuditServerDbContext : DbContext
 {

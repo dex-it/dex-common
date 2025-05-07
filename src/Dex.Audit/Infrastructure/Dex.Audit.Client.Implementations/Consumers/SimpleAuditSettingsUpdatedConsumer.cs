@@ -3,7 +3,7 @@ using Dex.Audit.Domain.Entities;
 using Dex.Audit.Implementations.Common.Dto;
 using MassTransit;
 
-namespace Dex.Audit.Client.Grpc.Consumers;
+namespace Dex.Audit.Client.Implementations.Consumers;
 
 /// <summary>
 /// Simple implementation of <see cref="IConsumer{T}"/> for <see cref="AuditSettingsDto"/>.

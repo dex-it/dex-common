@@ -3,7 +3,7 @@ using Dex.Audit.Implementations.Common.Dto;
 using Dex.Audit.Server.Abstractions.Interfaces;
 using MassTransit;
 
-namespace Dex.Audit.Server.Grpc.Services;
+namespace Dex.Audit.Server.Implementations.Services;
 
 /// <summary>
 /// Simple implementation of <see cref="IAuditServerSettingsService"/>.
