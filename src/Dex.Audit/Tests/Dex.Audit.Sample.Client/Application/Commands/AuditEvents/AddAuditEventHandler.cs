@@ -2,7 +2,7 @@
 using Dex.Audit.Client.Abstractions.Messages;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Application.Commands.AuditEvents;
+namespace Dex.Audit.Sample.Client.Application.Commands.AuditEvents;
 
 public class AddAuditEventHandler(IAuditWriter auditWriter) : IRequestHandler<AddAuditEventCommand>
 {

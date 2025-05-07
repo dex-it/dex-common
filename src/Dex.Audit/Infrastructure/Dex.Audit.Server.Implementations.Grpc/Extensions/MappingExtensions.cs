@@ -1,7 +1,7 @@
 ﻿using AuditGrpcServer;
 using Dex.Audit.Domain.Entities;
 
-namespace Dex.Audit.Server.Grpc.Extensions;
+namespace Dex.Audit.Server.Implementations.Grpc.Extensions;
 
 /// <summary>
 /// Mapping extensions.

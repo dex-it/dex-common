@@ -1,12 +1,12 @@
 ﻿using AuditGrpcServer;
 using Dex.Audit.Client.Abstractions.Interfaces;
-using Dex.Audit.Client.Grpc.Extensions;
+using Dex.Audit.Client.Implementations.Grpc.Extensions;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Audit.Client.Grpc.Workers;
+namespace Dex.Audit.Client.Implementations.Grpc.Workers;
 
 internal sealed class GrpcAuditBackgroundWorker(
     ILogger<GrpcAuditBackgroundWorker> logger,

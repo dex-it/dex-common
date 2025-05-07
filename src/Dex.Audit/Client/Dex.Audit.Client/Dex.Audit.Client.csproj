@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>audit client</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.1</PackageVersion>
+        <PackageVersion>8.0.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -34,7 +34,7 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
         <PackageReference Include="Microsoft.Extensions.Options"/>
-        <PackageReference Include="Dex.MassTransit.Rabbit" />
+        <PackageReference Include="Dex.MassTransit.Rabbit" Version="8.0.2" />
     </ItemGroup>
 
     <ItemGroup>

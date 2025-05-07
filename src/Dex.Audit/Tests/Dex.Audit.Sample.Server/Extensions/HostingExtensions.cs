@@ -1,15 +1,16 @@
 ﻿using System.Text.Json.Serialization;
+using Dex.Audit.Sample.Server.Infrastructure.Context;
 using Dex.Audit.Server.Extensions;
-using Dex.Audit.Server.Grpc.Extensions;
-using Dex.Audit.Server.Grpc.Services;
+using Dex.Audit.Server.Implementations.Extensions;
+using Dex.Audit.Server.Implementations.Grpc.Services;
+using Dex.Audit.Server.Implementations.Services;
 using Dex.Audit.Server.Workers;
-using Dex.Audit.ServerSample.Infrastructure.Context;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.System.Text.Json;
 
-namespace Dex.Audit.ServerSample.Extensions;
+namespace Dex.Audit.Sample.Server.Extensions;
 
 /// <summary>
 /// Расширение регистрации сервисов и пайплайна

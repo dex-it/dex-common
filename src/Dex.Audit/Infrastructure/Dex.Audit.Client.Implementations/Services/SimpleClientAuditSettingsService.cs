@@ -4,7 +4,7 @@ using Dex.Audit.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Audit.Client.Grpc.Services;
+namespace Dex.Audit.Client.Implementations.Services;
 
 /// <summary>
 /// Simple implementation of <see cref="IAuditSettingsService"/>

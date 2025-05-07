@@ -2,7 +2,7 @@
 using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
 
-namespace Dex.Audit.Client.Grpc.Extensions;
+namespace Dex.Audit.Client.Implementations.Grpc.Extensions;
 
 /// <summary>
 /// MappingExtensions.

@@ -1,10 +1,10 @@
-﻿using Dex.Audit.ClientSample.Infrastructure.Context;
-using Dex.Audit.MediatR.Requests;
+﻿using Dex.Audit.MediatR.Requests;
 using Dex.Audit.MediatR.Responses;
+using Dex.Audit.Sample.Client.Infrastructure.Context;
 using Dex.Audit.Sample.Shared.Enums;
 using MediatR;
 
-namespace Dex.Audit.ClientSample.Application.Commands.Users;
+namespace Dex.Audit.Sample.Client.Application.Commands.Users;
 
 public class UpdateUserHandler(ClientSampleContext context) : IRequestHandler<UpdateUserCommand, UpdateUserResponse>
 {

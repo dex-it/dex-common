@@ -10,7 +10,6 @@ namespace Dex.Audit.Logger;
 /// <summary>
 /// A background service for reading and sending events to a queue from <see cref="AuditLogger.BaseInfoChannel"/>.
 /// </summary>
-/// <param name="serviceScopeFactory"><see cref="IServiceProvider"/></param>
 internal sealed class AuditLoggerReader(
     IServiceProvider serviceScopeFactory,
     ILogger<AuditLoggerReader> logger,

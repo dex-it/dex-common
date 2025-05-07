@@ -2,7 +2,7 @@ using Dex.Audit.EF.Interceptors.Abstractions;
 
 // ReSharper disable EntityFramework.ModelValidation.UnlimitedStringLength
 
-namespace Dex.Audit.ClientSample.Domain.Entities;
+namespace Dex.Audit.Sample.Client.Domain.Entities;
 
 /// <summary>
 /// Пользователь системы

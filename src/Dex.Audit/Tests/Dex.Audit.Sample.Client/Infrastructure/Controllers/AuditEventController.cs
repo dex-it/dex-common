@@ -1,9 +1,9 @@
-﻿using Dex.Audit.ClientSample.Application.Commands.AuditEvents;
+﻿using Dex.Audit.Sample.Client.Application.Commands.AuditEvents;
 using Dex.Audit.Sample.Shared.Api;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Dex.Audit.ClientSample.Infrastructure.Controllers;
+namespace Dex.Audit.Sample.Client.Infrastructure.Controllers;
 
 public class AuditEventController(ISender mediator) : BaseController
 {

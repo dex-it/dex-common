@@ -1,9 +1,9 @@
-﻿using Dex.Audit.Client.Grpc.Consumers;
+﻿using Dex.Audit.Client.Implementations.Consumers;
 using Dex.Audit.Implementations.Common.Dto;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 
-namespace Dex.Audit.Client.Grpc.Extensions;
+namespace Dex.Audit.Client.Implementations.Extensions;
 
 /// <summary>
 /// MassTransit extensions for the client.

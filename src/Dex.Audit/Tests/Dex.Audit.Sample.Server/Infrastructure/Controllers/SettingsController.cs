@@ -1,12 +1,12 @@
 ﻿using Dex.Audit.Domain.Entities;
 using Dex.Audit.Domain.Enums;
+using Dex.Audit.Sample.Server.Infrastructure.Context;
 using Dex.Audit.Sample.Shared.Api;
 using Dex.Audit.Server.Abstractions.Interfaces;
-using Dex.Audit.ServerSample.Infrastructure.Context;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Audit.ServerSample.Infrastructure.Controllers;
+namespace Dex.Audit.Sample.Server.Infrastructure.Controllers;
 
 public class SettingsController : BaseController
 {

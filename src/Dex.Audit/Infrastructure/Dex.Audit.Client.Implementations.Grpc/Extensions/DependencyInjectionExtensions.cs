@@ -1,14 +1,14 @@
 using AuditGrpcServer;
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Client.Extensions;
-using Dex.Audit.Client.Grpc.Options;
-using Dex.Audit.Client.Grpc.Services;
-using Dex.Audit.Client.Grpc.Workers;
+using Dex.Audit.Client.Implementations.Grpc.Options;
+using Dex.Audit.Client.Implementations.Grpc.Services;
+using Dex.Audit.Client.Implementations.Grpc.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Dex.Audit.Client.Grpc.Extensions;
+namespace Dex.Audit.Client.Implementations.Grpc.Extensions;
 
 /// <summary>
 /// Static class containing extension methods for configuring dependencies with added Grpc support.

@@ -1,11 +1,11 @@
 ﻿using AuditGrpcServer;
 using Dex.Audit.Client.Abstractions.Interfaces;
-using Dex.Audit.Client.Grpc.Extensions;
+using Dex.Audit.Client.Implementations.Grpc.Extensions;
 using Dex.Audit.Domain.Entities;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 
-namespace Dex.Audit.Client.Grpc.Services;
+namespace Dex.Audit.Client.Implementations.Grpc.Services;
 
 /// <summary>
 /// Implementation of <see cref="IAuditSettingsService"/> service using Grpc.
