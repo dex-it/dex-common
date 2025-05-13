@@ -14,32 +14,33 @@ namespace Dex.Cap.OnceExecutor.Ef
     {
         private readonly TDbContext _dbContext;
 
-        public StrategyOnceExecutorEf(TDbContext dbContext, TExecutionStrategy executionStrategy) : base(executionStrategy)
+        public StrategyOnceExecutorEf(TDbContext dbContext, TExecutionStrategy executionStrategy)
+            : base(executionStrategy)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        protected override async Task<TResult?> ExecuteInTransactionAsync(
+        protected override Task<TResult?> ExecuteInTransactionAsync(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
             CancellationToken cancellationToken)
         {
             ExecutionStrategy.Options ??= new EfOptions();
 
-            return await _dbContext.ExecuteInTransactionScopeAsync(
-                    operation,
-                    verifySucceeded,
-                    ExecutionStrategy.Options.TransactionScopeOption,
-                    ExecutionStrategy.Options.IsolationLevel,
-                    ExecutionStrategy.Options.TimeoutInSeconds,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            return _dbContext.ExecuteInTransactionScopeAsync(
+                operation,
+                verifySucceeded,
+                ExecutionStrategy.Options.TransactionScopeOption,
+                ExecutionStrategy.Options.IsolationLevel,
+                ExecutionStrategy.Options.TimeoutInSeconds,
+                cancellationToken);
         }
 
         protected override Task OnExecuteCompletedAsync(CancellationToken cancellationToken)
         {
             if (_dbContext.ChangeTracker.HasChanges())
-                throw new UnsavedChangesDetectedException(_dbContext, "Can't complete action, unsaved changes detected");
+                throw new UnsavedChangesDetectedException(_dbContext,
+                    "Can't complete action, unsaved changes detected");
 
             return Task.CompletedTask;
         }

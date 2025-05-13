@@ -25,11 +25,11 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
 
     protected virtual string GetIdempotentKey(TMessage message) => GetIdempotentKeyInner(message);
 
-    public async Task Process(TMessage outboxMessage, CancellationToken cancellationToken)
+    public Task Process(TMessage outboxMessage, CancellationToken cancellationToken)
     {
-        await _onceExecutor.ExecuteAsync(
+        return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(outboxMessage),
-            async (_, token) => await IdempotentProcess(outboxMessage, token),
+            async (_, token) => await IdempotentProcess(outboxMessage, token).ConfigureAwait(false),
             options: new EfOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew },
             cancellationToken: cancellationToken
         );

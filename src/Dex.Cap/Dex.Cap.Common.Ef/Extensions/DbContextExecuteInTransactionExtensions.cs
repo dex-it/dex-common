@@ -13,7 +13,7 @@ namespace Dex.Cap.Common.Ef.Extensions
     public static class DbContextExecuteInTransactionExtensions
     {
         [SuppressMessage("Design", "CA1062:Проверить аргументы или открытые методы")]
-        public static async Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
+        public static Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
             this DbContext dbContext,
             TState state,
             Func<TState, CancellationToken, Task<TResult>> operation,
@@ -22,7 +22,7 @@ namespace Dex.Cap.Common.Ef.Extensions
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
-            => await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
+            => dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
                 new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
                 async (context, st, ct) =>
                 {
@@ -50,9 +50,9 @@ namespace Dex.Cap.Common.Ef.Extensions
                     new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false),
                         st.Result),
                 cancellationToken
-            ).ConfigureAwait(false);
+            );
 
-        public static async Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
+        public static Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
             this DbContext dbContext,
             Func<CancellationToken, Task<TResult>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
@@ -60,7 +60,7 @@ namespace Dex.Cap.Common.Ef.Extensions
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
-            => await dbContext.ExecuteInTransactionScopeAsync<object, TResult>(
+            => dbContext.ExecuteInTransactionScopeAsync<object, TResult>(
                 default!,
                 async (_, token) => await operation(token).ConfigureAwait(false),
                 async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
@@ -68,10 +68,10 @@ namespace Dex.Cap.Common.Ef.Extensions
                 isolationLevel,
                 timeoutInSeconds,
                 cancellationToken
-            ).ConfigureAwait(false);
+            );
 
         // without result
-        public static async Task ExecuteInTransactionScopeAsync<TState>(
+        public static Task ExecuteInTransactionScopeAsync<TState>(
             this DbContext dbContext,
             TState state,
             Func<TState, CancellationToken, Task> operation,
@@ -80,7 +80,7 @@ namespace Dex.Cap.Common.Ef.Extensions
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
-            => await dbContext.ExecuteInTransactionScopeAsync(
+            => dbContext.ExecuteInTransactionScopeAsync(
                 state,
                 async (st, ct) =>
                 {
@@ -92,9 +92,9 @@ namespace Dex.Cap.Common.Ef.Extensions
                 isolationLevel,
                 timeoutInSeconds,
                 cancellationToken
-            ).ConfigureAwait(false);
+            );
 
-        public static async Task ExecuteInTransactionScopeAsync(
+        public static Task ExecuteInTransactionScopeAsync(
             this DbContext dbContext,
             Func<CancellationToken, Task> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
@@ -102,7 +102,7 @@ namespace Dex.Cap.Common.Ef.Extensions
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
             uint timeoutInSeconds = 60,
             CancellationToken cancellationToken = default)
-            => await dbContext.ExecuteInTransactionScopeAsync<object>(
+            => dbContext.ExecuteInTransactionScopeAsync<object>(
                 default!,
                 async (_, token) => await operation(token).ConfigureAwait(false),
                 async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
@@ -110,7 +110,7 @@ namespace Dex.Cap.Common.Ef.Extensions
                 isolationLevel,
                 timeoutInSeconds,
                 cancellationToken
-            ).ConfigureAwait(false);
+            );
 
         private sealed class ExecutionStateAsync<TState, TResult>
         {

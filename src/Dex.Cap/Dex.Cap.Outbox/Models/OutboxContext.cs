@@ -21,11 +21,10 @@ namespace Dex.Cap.Outbox.Models
             State = state;
         }
 
-        public async Task<Guid> EnqueueAsync(object outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default)
+        public Task<Guid> EnqueueAsync(object outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default)
         {
-            return await OutboxService
-                .EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken)
-                .ConfigureAwait(false);
+            return OutboxService
+                .EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken);
         }
 
         public IOutboxTypeDiscriminator GetDiscriminator()

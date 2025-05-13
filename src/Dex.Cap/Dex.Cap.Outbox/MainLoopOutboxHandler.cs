@@ -39,7 +39,8 @@ internal sealed class MainLoopOutboxHandler<TDbContext> : IOutboxHandler
     {
         _logger.LogDebug("Outbox processor has been started");
 
-        var jobs = await _dataProvider.GetWaitingJobs(cancellationToken)
+        var jobs = await _dataProvider
+            .GetWaitingJobs(cancellationToken)
             .ConfigureAwait(false);
 
         if (jobs.Length <= 0)

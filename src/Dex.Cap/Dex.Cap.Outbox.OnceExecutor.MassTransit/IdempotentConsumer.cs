@@ -30,11 +30,11 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
     }
 
-    protected sealed override async Task Process(ConsumeContext<TMessage> context)
+    protected sealed override Task Process(ConsumeContext<TMessage> context)
     {
-        await _onceExecutor.ExecuteAsync(
+        return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
-            async (_, _) => await IdempotentProcess(context),
+            async (_, _) => await IdempotentProcess(context).ConfigureAwait(false),
             options: new EfOptions
             {
                 TransactionScopeOption = TransactionScopeOption.RequiresNew, TimeoutInSeconds = GetTimeoutInSeconds()
@@ -73,13 +73,13 @@ public abstract class IdempotentConsumer<TDbContext>
     /// <summary>
     /// Идемпотентное выполнение операции
     /// </summary>
-    protected async Task IdempotentProcess<TMessage>(
+    protected Task IdempotentProcess<TMessage>(
         ConsumeContext<TMessage> context,
         Func<TDbContext, CancellationToken, Task> operation,
         IEfOptions? options = default)
         where TMessage : class
     {
-        await _onceExecutor.ExecuteAsync(
+        return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
             operation,
             options: options ?? new EfOptions

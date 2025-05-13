@@ -23,16 +23,18 @@ namespace Dex.Cap.Outbox
             Discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
         }
 
-        public Task ExecuteOperationAsync<TState>(Guid correlationId, TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action,
+        public Task ExecuteOperationAsync<TState>(Guid correlationId, TState state,
+            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action,
             CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(action);
 
-            return _outboxDataProvider.ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken);
+            return _outboxDataProvider
+                .ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken);
         }
 
-        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null, TimeSpan? lockTimeout = null,
-            CancellationToken cancellationToken = default)
+        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null,
+            TimeSpan? lockTimeout = null, CancellationToken cancellationToken = default)
             where T : class
         {
             var messageType = message.GetType();
@@ -42,15 +44,19 @@ namespace Dex.Cap.Outbox
 
             var msgBody = _serializer.Serialize(messageType, message);
             var discriminator = Discriminator.ResolveDiscriminator(messageType);
-            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc, lockTimeout);
-            await _outboxDataProvider.Add(outboxEnvelope, cancellationToken).ConfigureAwait(false);
+            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc,
+                lockTimeout);
+
+            await _outboxDataProvider
+                .Add(outboxEnvelope, cancellationToken)
+                .ConfigureAwait(false);
 
             return envelopeId;
         }
 
-        public async Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken = default)
+        public Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken = default)
         {
-            return await _outboxDataProvider.IsExists(correlationId, cancellationToken).ConfigureAwait(false);
+            return _outboxDataProvider.IsExists(correlationId, cancellationToken);
         }
     }
 }
