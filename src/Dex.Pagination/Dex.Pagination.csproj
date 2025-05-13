@@ -5,11 +5,11 @@
         <Nullable>enable</Nullable>
         <LangVersion>default</LangVersion>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.0</PackageVersion>
+        <PackageVersion>6.0.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
-    
+
     <!--Для NuGet-->
     <PropertyGroup>
         <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
@@ -24,29 +24,29 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <!--/Для NuGet-->
-    
+
     <ItemGroup>
-      <Compile Update="Data\OrderCondition.cs">
-        <DependentUpon>ISortCondition.cs</DependentUpon>
-      </Compile>
-      <Compile Update="Data\PageFilter.cs">
-        <DependentUpon>IPageFilter.cs</DependentUpon>
-      </Compile>
-      <Compile Update="Data\FilterCondition.cs">
-        <DependentUpon>IFilterCondition.cs</DependentUpon>
-      </Compile>
-      <Compile Update="Data\QueryCondition.cs">
-        <DependentUpon>IComplexQueryCondition.cs</DependentUpon>
-      </Compile>
-      <Compile Update="Conditions\PageCondition.cs">
-        <DependentUpon>IPageCondition.cs</DependentUpon>
-      </Compile>
-      <Compile Update="Conditions\OrderCondition.cs">
-        <DependentUpon>IOrderCondition.cs</DependentUpon>
-      </Compile>
-      <Compile Update="Conditions\QueryCondition.cs">
-        <DependentUpon>IQueryCondition.cs</DependentUpon>
-      </Compile>
+        <Compile Update="Data\OrderCondition.cs">
+            <DependentUpon>ISortCondition.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Data\PageFilter.cs">
+            <DependentUpon>IPageFilter.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Data\FilterCondition.cs">
+            <DependentUpon>IFilterCondition.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Data\QueryCondition.cs">
+            <DependentUpon>IComplexQueryCondition.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Conditions\PageCondition.cs">
+            <DependentUpon>IPageCondition.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Conditions\OrderCondition.cs">
+            <DependentUpon>IOrderCondition.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Conditions\QueryCondition.cs">
+            <DependentUpon>IQueryCondition.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>
