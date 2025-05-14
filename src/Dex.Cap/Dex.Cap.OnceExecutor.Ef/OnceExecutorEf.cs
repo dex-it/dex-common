@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Models;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<IEfOptions, TDbContext>
+    internal sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<IEfTransactionOptions, TDbContext>
         where TDbContext : DbContext
     {
         protected override TDbContext Context { get; }
@@ -24,11 +25,11 @@ namespace Dex.Cap.OnceExecutor.Ef
         protected override Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
-            IEfOptions? options,
+            IEfTransactionOptions? options,
             CancellationToken cancellationToken)
             where TResult : default
         {
-            options ??= new EfOptions();
+            options ??= new EfTransactionOptions();
 
             return Context.ExecuteInTransactionScopeAsync(
                     operation, verifySucceeded, options.TransactionScopeOption, options.IsolationLevel,

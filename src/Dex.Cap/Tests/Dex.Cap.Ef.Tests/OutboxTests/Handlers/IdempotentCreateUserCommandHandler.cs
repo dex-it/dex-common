@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
@@ -15,7 +15,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
 
         public bool IsTransactional => true;
 
-        public IdempotentCreateUserCommandHandler(IOnceExecutor<IEfOptions, TestDbContext> onceExecutor,
+        public IdempotentCreateUserCommandHandler(IOnceExecutor<IEfTransactionOptions, TestDbContext> onceExecutor,
             TestDbContext dbContext) : base(onceExecutor)
         {
             _dbContext = dbContext;

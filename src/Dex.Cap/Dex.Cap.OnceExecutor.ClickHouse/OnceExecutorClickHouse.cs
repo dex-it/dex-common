@@ -8,7 +8,7 @@ using Octonica.ClickHouseClient;
 namespace Dex.Cap.OnceExecutor.ClickHouse
 {
     [SuppressMessage("Reliability", "CA2007:Попробуйте вызвать ConfigureAwait для ожидаемой задачи")]
-    public class OnceExecutorClickHouse : BaseOnceExecutor<IClickHouseOptions, ClickHouseConnection>
+    public class OnceExecutorClickHouse : BaseOnceExecutor<IClickHouseTransactionOptions, ClickHouseConnection>
     {
         protected override ClickHouseConnection Context { get; }
 
@@ -23,7 +23,7 @@ namespace Dex.Cap.OnceExecutor.ClickHouse
         protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
-            IClickHouseOptions? options,
+            IClickHouseTransactionOptions? options,
             CancellationToken cancellationToken)
             where TResult : default
         {

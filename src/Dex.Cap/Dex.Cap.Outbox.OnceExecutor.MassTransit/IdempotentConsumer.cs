@@ -1,6 +1,6 @@
 using System.Transactions;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.OnceExecutor.MassTransit.Extensions;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
@@ -13,39 +13,39 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// MessageId - ключ идемпотентности.
 /// Перед использованием, убедитесь что TDbContext зарегистрирован OnceExecutor
 /// </summary>
-/// <typeparam name="TMessage"></typeparam>
-/// <typeparam name="TDbContext"></typeparam>
 public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TMessage>
     where TMessage : class
 {
-    private const uint DefaultTimeoutInSeconds = 60;
-
-    private readonly IOnceExecutor<IEfOptions, TDbContext> _onceExecutor;
+    private readonly EfTransactionOptions _transactionOptions;
+    private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
 
     protected IdempotentConsumer(
-        IOnceExecutor<IEfOptions, TDbContext> onceExecutor,
+        IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor,
         ILogger logger)
         : base(logger)
     {
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
+        _transactionOptions = new EfTransactionOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew };
     }
 
     protected sealed override Task Process(ConsumeContext<TMessage> context)
     {
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.IsolationLevel = GetIsolationLevel();
+
         return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
             async (_, _) => await IdempotentProcess(context).ConfigureAwait(false),
-            options: new EfOptions
-            {
-                TransactionScopeOption = TransactionScopeOption.RequiresNew, TimeoutInSeconds = GetTimeoutInSeconds()
-            },
+            options: _transactionOptions,
             cancellationToken: context.CancellationToken
         );
     }
 
     protected abstract Task IdempotentProcess(ConsumeContext<TMessage> context);
 
-    protected virtual uint GetTimeoutInSeconds() => DefaultTimeoutInSeconds;
+    protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
+
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
 
     protected virtual string GetIdempotentKey(ConsumeContext<TMessage> context) => context.GetIdempotentKey();
 }
@@ -55,19 +55,18 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 /// MessageId - ключ идемпотентности.
 /// Перед использованием, убедитесь что TDbContext зарегистрирован OnceExecutor
 /// </summary>
-/// <typeparam name="TDbContext"></typeparam>
 public abstract class IdempotentConsumer<TDbContext>
 {
-    private const uint DefaultTimeoutInSeconds = 60;
-
-    private readonly IOnceExecutor<IEfOptions, TDbContext> _onceExecutor;
+    private readonly EfTransactionOptions _transactionOptions;
+    private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
 
     /// <summary>
     /// Конструктор
     /// </summary>
-    protected IdempotentConsumer(IOnceExecutor<IEfOptions, TDbContext> onceExecutor)
+    protected IdempotentConsumer(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
     {
         _onceExecutor = onceExecutor;
+        _transactionOptions = new EfTransactionOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew };
     }
 
     /// <summary>
@@ -75,22 +74,23 @@ public abstract class IdempotentConsumer<TDbContext>
     /// </summary>
     protected Task IdempotentProcess<TMessage>(
         ConsumeContext<TMessage> context,
-        Func<TDbContext, CancellationToken, Task> operation,
-        IEfOptions? options = default)
+        Func<TDbContext, CancellationToken, Task> operation)
         where TMessage : class
     {
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.IsolationLevel = GetIsolationLevel();
+
         return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
             operation,
-            options: options ?? new EfOptions
-            {
-                TransactionScopeOption = TransactionScopeOption.RequiresNew, TimeoutInSeconds = GetTimeoutInSeconds()
-            },
+            options: _transactionOptions,
             cancellationToken: context.CancellationToken
         );
     }
 
-    protected virtual uint GetTimeoutInSeconds() => DefaultTimeoutInSeconds;
+    protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
+
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
 
     protected virtual string GetIdempotentKey<TMessage>(ConsumeContext<TMessage> context)
         where TMessage : class => context.GetIdempotentKey();

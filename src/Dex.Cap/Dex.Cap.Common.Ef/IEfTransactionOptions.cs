@@ -1,8 +1,9 @@
 using System.Transactions;
+using Dex.Cap.Common.Interfaces;
 
-namespace Dex.Cap.OnceExecutor.Ef;
+namespace Dex.Cap.Common.Ef;
 
-public interface IEfOptions : IOnceExecutorOptions
+public interface IEfTransactionOptions : ITransactionOptions
 {
     public TransactionScopeOption TransactionScopeOption { get; set; }
 

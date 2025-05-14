@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>6.0</InformationalVersion>
-        <PackageVersion>6.0.2</PackageVersion>
+        <PackageVersion>6.0.3</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -36,12 +36,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
         <PackageReference Include="Npgsql"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="EfOptions.cs">
-            <DependentUpon>IEfOptions.cs</DependentUpon>
-        </Compile>
     </ItemGroup>
 
 </Project>

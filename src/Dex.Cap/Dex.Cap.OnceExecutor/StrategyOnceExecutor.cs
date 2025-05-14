@@ -1,12 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.OnceExecutor
 {
     public abstract class StrategyOnceExecutor<TArg, TOptions, TResult, TExecutionStrategy> : IStrategyOnceExecutor<TArg, TResult>
         where TExecutionStrategy : class, IOnceExecutionStrategy<TArg, TOptions, TResult>
-        where TOptions : IOnceExecutorOptions
+        where TOptions : ITransactionOptions
     {
         protected TExecutionStrategy ExecutionStrategy { get; }
 

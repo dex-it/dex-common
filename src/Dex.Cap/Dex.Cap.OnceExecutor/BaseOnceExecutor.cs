@@ -1,11 +1,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.OnceExecutor
 {
     public abstract class BaseOnceExecutor<TOptions, TDbContext> : IOnceExecutor<TOptions, TDbContext>, IOnceExecutor<TOptions>
-        where TOptions : IOnceExecutorOptions
+        where TOptions : ITransactionOptions
     {
         protected abstract TDbContext Context { get; }
 

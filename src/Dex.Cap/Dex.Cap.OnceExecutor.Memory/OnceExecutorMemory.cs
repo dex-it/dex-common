@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 namespace Dex.Cap.OnceExecutor.Memory;
 
 internal sealed class OnceExecutorMemory<TDistributedCache>
-    : BaseOnceExecutor<IOnceExecutorMemoryOptions, TDistributedCache>, IDisposable
+    : BaseOnceExecutor<IOnceExecutorMemoryTransactionOptions, TDistributedCache>, IDisposable
     where TDistributedCache : class, IDistributedCache
 {
     private const string KeyPrefix = "lt";
@@ -26,7 +26,7 @@ internal sealed class OnceExecutorMemory<TDistributedCache>
     protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
         Func<CancellationToken, Task<TResult?>> operation,
         Func<CancellationToken, Task<bool>> verifySucceeded,
-        IOnceExecutorMemoryOptions? options,
+        IOnceExecutorMemoryTransactionOptions? options,
         CancellationToken cancellationToken)
         where TResult : default
     {

@@ -1,16 +1,17 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public sealed class StrategyOnceExecutorEf<TArg, TResult, TExecutionStrategy, TDbContext>
-        : StrategyOnceExecutor<TArg, IEfOptions, TResult, TExecutionStrategy>
+    internal sealed class StrategyOnceExecutorEf<TArg, TResult, TExecutionStrategy, TDbContext>
+        : StrategyOnceExecutor<TArg, IEfTransactionOptions, TResult, TExecutionStrategy>
         where TDbContext : DbContext
-        where TExecutionStrategy : class, IOnceExecutionStrategy<TArg, IEfOptions, TResult>
+        where TExecutionStrategy : class, IOnceExecutionStrategy<TArg, IEfTransactionOptions, TResult>
     {
         private readonly TDbContext _dbContext;
 
@@ -25,7 +26,7 @@ namespace Dex.Cap.OnceExecutor.Ef
             Func<CancellationToken, Task<bool>> verifySucceeded,
             CancellationToken cancellationToken)
         {
-            ExecutionStrategy.Options ??= new EfOptions();
+            ExecutionStrategy.Options ??= new EfTransactionOptions();
 
             return _dbContext.ExecuteInTransactionScopeAsync(
                 operation,
