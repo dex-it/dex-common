@@ -13,12 +13,9 @@ public static class ConsumeContextExtensions
             return GetMessageIdValue(context.MessageId);
         }
 
-        if (key is { IdempotentKey: null } && context.Message is IOutboxMessage outboxMessage)
-        {
-            return GetMessageIdValue(outboxMessage.MessageId);
-        }
-
-        return key.IdempotentKey ?? GetMessageIdValue(context.MessageId);
+        return key is { IdempotentKey: null }
+            ? GetMessageIdValue(context.MessageId)
+            : key.IdempotentKey;
 
         string GetMessageIdValue(Guid? messageId)
         {

@@ -32,7 +32,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
             _logger.LogInformation(ServiceNameIsStatus, TypeName, "starting");
 
             // Решаем проблему "расщеплённого мозга".
-            await InitDelay(stoppingToken);
+            await InitDelay(stoppingToken).ConfigureAwait(false);
 
             await using (stoppingToken.Register(static s => ((ILogger)s!).LogInformation(ServiceNameIsStatus, TypeName, "stopping"), _logger))
             {
@@ -43,11 +43,11 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
                         var logger = (ILogger)scope.ServiceProvider.GetRequiredService(typeof(ILogger<OutboxCleanerBackgroundService>));
                         logger.LogDebug("Background service '{ServiceName}' Tick event", GetType());
 
-                        await OnTick(scope.ServiceProvider, logger, stoppingToken);
+                        await OnTick(scope.ServiceProvider, logger, stoppingToken).ConfigureAwait(false);
                     }
 
                     _logger.LogDebug("Pause for {Seconds} seconds", (int)_options.CleanupInterval.TotalSeconds);
-                    await Task.Delay(_options.CleanupInterval, stoppingToken);
+                    await Task.Delay(_options.CleanupInterval, stoppingToken).ConfigureAwait(false);
                 }
             }
         }
@@ -61,7 +61,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
             logger.LogDebug("Executing Outbox cleaner");
             try
             {
-                await service.Execute(_options.CleanupOlderThan, cancellationToken);
+                await service.Execute(_options.CleanupOlderThan, cancellationToken).ConfigureAwait(false);
                 logger.LogDebug("Outbox cleaner finished");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -75,11 +75,11 @@ namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices
             }
         }
 
-        private async Task InitDelay(CancellationToken cancellationToken)
+        private Task InitDelay(CancellationToken cancellationToken)
         {
             var initDelay = TimeSpan.FromMilliseconds(RandomNumberGenerator.GetInt32(20_000, 40_000));
             _logger.LogDebug("Initial delay for {Seconds} seconds to solve split brain problem", (int)initDelay.TotalSeconds);
-            await Task.Delay(initDelay, cancellationToken);
+            return Task.Delay(initDelay, cancellationToken);
         }
     }
 }

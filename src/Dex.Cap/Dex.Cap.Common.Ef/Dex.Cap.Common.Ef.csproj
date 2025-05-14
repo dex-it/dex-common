@@ -6,7 +6,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>shared EF exceptions, extentions and helpers</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.5</PackageVersion>
+        <PackageVersion>8.0.6</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -31,6 +31,16 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="EfTransactionOptions.cs">
+        <DependentUpon>IEfTransactionOptions.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj" />
     </ItemGroup>
 
 </Project>

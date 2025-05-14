@@ -15,7 +15,7 @@ namespace Dex.Events.Distributed.Tests.Services
         }
 
         public Task RaiseAsync<T>(T args, CancellationToken cancellationToken)
-            where T : class, IDistributedEventParams
+            where T : class
         {
             return Task.CompletedTask;
         }

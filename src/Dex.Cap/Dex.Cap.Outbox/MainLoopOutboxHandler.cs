@@ -24,7 +24,8 @@ namespace Dex.Cap.Outbox
         {
             logger.LogDebug("Outbox processor has been started");
 
-            var jobs = await dataProvider.GetWaitingJobs(cancellationToken)
+            var jobs = await dataProvider
+                .GetWaitingJobs(cancellationToken)
                 .ConfigureAwait(false);
 
             if (jobs.Length <= 0)

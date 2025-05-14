@@ -89,6 +89,33 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(OutboxMessageStatus.Failed, envelope.Status);
         }
+        
+        [Test]
+        public async Task TransactionalExecutionContextTest()
+        {
+            var sp = InitServiceCollection()
+                .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, TransactionalCreateUserCommandHandler>()
+                .BuildServiceProvider();
+
+            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
+            await outboxService.ExecuteOperationAsync(correlationId,
+                async (token, outboxContext) =>
+                {
+                    await outboxContext.EnqueueAsync(new TestUserCreatorCommand { UserName = name }, cancellationToken: token);
+                });
+
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            using var scope = sp.CreateScope();
+            var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            Assert.AreEqual(OutboxMessageStatus.Succeeded, envelope.Status);
+        }
 
         [Test]
         public async Task SimpleRunExecuteInTransactionWithoutContextTest1()
@@ -294,6 +321,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             Assert.AreEqual(num, threads.Distinct().Count());
             Assert.LessOrEqual((int)sw.Elapsed.TotalSeconds, 1);
+            return;
 
             async void RunOutboxHandler()
             {

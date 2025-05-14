@@ -22,7 +22,7 @@ namespace Dex.Cap.Outbox
 
         public abstract Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken);
 
-        public virtual async Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null,
+        public virtual Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null,
             Exception? exception = null)
         {
             ArgumentNullException.ThrowIfNull(outboxJob);
@@ -38,10 +38,10 @@ namespace Dex.Cap.Outbox
             outboxJob.Envelope.StartAtUtc = calculatedStartDate;
             outboxJob.Envelope.ScheduledStartIndexing = calculatedStartDate;
 
-            await CompleteJobAsync(outboxJob, cancellationToken).ConfigureAwait(false);
+            return CompleteJobAsync(outboxJob, cancellationToken);
         }
 
-        public virtual async Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken)
+        public virtual Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(outboxJob);
 
@@ -52,7 +52,7 @@ namespace Dex.Cap.Outbox
             outboxJob.Envelope.Error = null;
             outboxJob.Envelope.ScheduledStartIndexing = null;
 
-            await CompleteJobAsync(outboxJob, cancellationToken).ConfigureAwait(false);
+            return CompleteJobAsync(outboxJob, cancellationToken);
         }
 
         protected abstract Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken);

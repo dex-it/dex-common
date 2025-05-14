@@ -1,22 +1,23 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.OnceExecutor
 {
     public abstract class BaseOnceExecutor<TOptions, TDbContext> : IOnceExecutor<TOptions, TDbContext>, IOnceExecutor<TOptions>
-        where TOptions : IOnceExecutorOptions
+        where TOptions : ITransactionOptions
     {
         protected abstract TDbContext Context { get; }
 
-        public async Task<TResult?> ExecuteAsync<TResult>(
+        public Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator,
             Func<TDbContext, CancellationToken, Task<TResult?>>? selector,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            return await ExecuteInTransactionAsync(
+            return ExecuteInTransactionAsync(
                 async token =>
                 {
                     if (!await IsAlreadyExecutedAsync(idempotentKey, token).ConfigureAwait(false))
@@ -31,44 +32,44 @@ namespace Dex.Cap.OnceExecutor
                         : default;
                 },
                 async token => await IsAlreadyExecutedAsync(idempotentKey, token).ConfigureAwait(false),
-                options, cancellationToken).ConfigureAwait(false);
+                options, cancellationToken);
         }
 
-        public async Task ExecuteAsync(
+        public Task ExecuteAsync(
             string idempotentKey,
             Func<TDbContext, CancellationToken, Task> modificator,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            await ExecuteAsync<int>(idempotentKey, modificator, null, options, cancellationToken).ConfigureAwait(false);
+            return ExecuteAsync<int>(idempotentKey, modificator, null, options, cancellationToken);
         }
 
-        public async Task<TResult?> ExecuteAsync<TResult>(
+        public Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             Func<CancellationToken, Task<TResult?>> selector,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            return await ExecuteAsync(
+            return ExecuteAsync(
                 idempotentKey,
                 async (_, token) => await modificator(token).ConfigureAwait(false),
                 async (_, token) => await selector(token).ConfigureAwait(false),
                 options,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken);
         }
 
-        public async Task ExecuteAsync(
+        public Task ExecuteAsync(
             string idempotentKey,
             Func<CancellationToken, Task> modificator,
             TOptions? options,
             CancellationToken cancellationToken)
         {
-            await ExecuteAsync(
+            return ExecuteAsync(
                 idempotentKey,
                 async (_, token) => await modificator(token).ConfigureAwait(false),
                 options,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken);
         }
 
         protected abstract Task<TResult?> ExecuteInTransactionAsync<TResult>(

@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.5</PackageVersion>
+        <PackageVersion>8.0.6</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -30,6 +30,7 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
+        <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj"/>
         <ProjectReference Include="..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj"/>
         <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj"/>
         <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>

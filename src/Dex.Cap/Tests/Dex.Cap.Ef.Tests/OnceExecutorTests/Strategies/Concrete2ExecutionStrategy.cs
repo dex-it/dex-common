@@ -1,18 +1,18 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    internal sealed class Concrete2ExecutionStrategy : IOnceExecutionStrategy<Concrete2ExecutionStrategyRequest, IEfOptions, string>
+    internal sealed class Concrete2ExecutionStrategy : IOnceExecutionStrategy<Concrete2ExecutionStrategyRequest, IEfTransactionOptions, string>
     {
         private readonly TestDbContext _dbContext;
 
-        public IEfOptions? Options { get; set; }
+        public IEfTransactionOptions? Options { get; set; }
 
         public Concrete2ExecutionStrategy(TestDbContext dbContext)
         {

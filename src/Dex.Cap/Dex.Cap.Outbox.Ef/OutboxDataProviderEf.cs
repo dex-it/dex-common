@@ -27,48 +27,48 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 {
     private OutboxOptions Options => outboxOptions.Value;
 
-    public override async Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
+    public override Task ExecuteActionInTransaction<TState>(Guid correlationId,
+        IOutboxService<TDbContext> outboxService, TState state,
         Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(outboxService);
         ArgumentNullException.ThrowIfNull(action);
 
-        await dbContext.ExecuteInTransactionScopeAsync(
-                (_dbContext: dbContext, outboxService, state),
-                async (st, ct) =>
+        return dbContext.ExecuteInTransactionScopeAsync(
+            (_dbContext: dbContext, outboxService, state),
+            async (st, ct) =>
+            {
+                var (context, outbox, outerState) = st;
+
+                if (context.ChangeTracker.HasChanges())
+                    throw new UnsavedChangesDetectedException(context,
+                        "Can't start outbox action, unsaved changes detected");
+
+                try
                 {
-                    var (context, outbox, outerState) = st;
+                    var outboxContext =
+                        new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
+                    await action(ct, outboxContext).ConfigureAwait(false);
 
-                    if (context.ChangeTracker.HasChanges())
-                        throw new UnsavedChangesDetectedException(context,
-                            "Can't start outbox action, unsaved changes detected");
+                    // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
+                    var isOutboxMessageExists = context.ChangeTracker.Entries<OutboxEnvelope>()
+                        .Any(x => x.State is EntityState.Added or EntityState.Modified);
 
-                    try
+                    if (!isOutboxMessageExists)
                     {
-                        var outboxContext =
-                            new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
-                        await action(ct, outboxContext).ConfigureAwait(false);
-
-                        // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
-                        var isOutboxMessageExists = context.ChangeTracker.Entries<OutboxEnvelope>()
-                            .Any(x => x.State is EntityState.Added or EntityState.Modified);
-
-                        if (!isOutboxMessageExists)
-                        {
-                            await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
-                                .ConfigureAwait(false);
-                        }
-
-                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                        await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
+                            .ConfigureAwait(false);
                     }
-                    finally
-                    {
-                        context.ChangeTracker.Clear();
-                    }
-                },
-                async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
-                cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
+
+                    await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                }
+                finally
+                {
+                    context.ChangeTracker.Clear();
+                }
+            },
+            async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
+            cancellationToken: cancellationToken);
     }
 
     public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
@@ -84,8 +84,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     /// <exception cref="RetryLimitExceededException"/>
     public override async Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken)
     {
-        var outboxEnvelopes = await GetFreeMessages(cancellationToken)
-            .ConfigureAwait(false);
+        var outboxEnvelopes = await GetFreeMessages(cancellationToken).ConfigureAwait(false);
 
         return outboxEnvelopes.Select(x => (IOutboxLockedJob)new OutboxLockedJob(x)).ToArray();
     }
@@ -93,97 +92,101 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
     {
         var lockId = Guid.NewGuid(); // Ключ идемпотентности.
-        return dbContext.ExecuteInTransactionScopeAsync(new { LockId = lockId }, async (state, token) =>
+        return dbContext.ExecuteInTransactionScopeAsync(
+            new { LockId = lockId, DbContext = dbContext },
+            async (state, token) =>
             {
                 var sql = GenerateFetchPlatformSpecificSql(state.LockId);
 
-                var lockedEnvelopes = await dbContext.Set<OutboxEnvelope>()
+                var lockedEnvelopes = await state.DbContext
+                    .Set<OutboxEnvelope>()
                     .FromSqlRaw(sql)
                     .AsNoTracking()
-                    .ToListAsync(cancellationToken: token)
+                    .ToArrayAsync(cancellationToken: token)
                     .ConfigureAwait(false);
 
-                return lockedEnvelopes.ToArray();
+                return lockedEnvelopes;
             },
-            (state, token) => dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.CorrelationId == state.LockId, token),
+            async (state, token) => await state.DbContext.Set<OutboxEnvelope>()
+                .AnyAsync(x => x.CorrelationId == state.LockId, token).ConfigureAwait(false),
             TransactionScopeOption.RequiresNew,
             IsolationLevel.ReadCommitted,
             (uint)Options.GetFreeMessagesTimeout.TotalSeconds,
             cancellationToken: cancellationToken);
     }
 
-    public override async Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
+    public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
     {
-        return await dbContext.Set<OutboxEnvelope>().AnyAsync(x => x.CorrelationId == correlationId, cancellationToken).ConfigureAwait(false);
+        return dbContext
+            .Set<OutboxEnvelope>()
+            .AnyAsync(x => x.CorrelationId == correlationId, cancellationToken);
     }
 
     public override int GetFreeMessagesCount()
     {
-        return dbContext.Set<OutboxEnvelope>()
+        return dbContext
+            .Set<OutboxEnvelope>()
             .Count(o => o.Retries < Options.Retries && o.Status != OutboxMessageStatus.Succeeded);
     }
 
-
-    // private
-
     /// <exception cref="RetryLimitExceededException"/>
-    protected override async Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)
+    protected override Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)
     {
-        await dbContext.ExecuteInTransactionScopeAsync(
-                (_dbContext: dbContext, lockedJob, _logger: logger),
-                static async (state, ct) =>
+        return dbContext.ExecuteInTransactionScopeAsync(
+            (_dbContext: dbContext, lockedJob, _logger: logger),
+            static async (state, ct) =>
+            {
+                var (context, lockedJob, logger) = state;
+
+                var job = await context
+                    .Set<OutboxEnvelope>()
+                    .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
+                    .FirstOrDefaultAsync(ct)
+                    .ConfigureAwait(false);
+
+                if (job != null)
                 {
-                    var (dbContext, lockedJob, logger) = state;
+                    job.Status = lockedJob.Envelope.Status;
+                    job.Updated = lockedJob.Envelope.Updated;
+                    job.Retries = lockedJob.Envelope.Retries;
+                    job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
+                    job.Error = lockedJob.Envelope.Error;
+                    job.StartAtUtc = lockedJob.Envelope.StartAtUtc;
+                    job.ScheduledStartIndexing = lockedJob.Envelope.ScheduledStartIndexing;
+                    job.LockId = null;
 
-                    var job = await dbContext.Set<OutboxEnvelope>()
-                        .Where(WhereLockId(lockedJob.Envelope.Id, lockedJob.LockId))
-                        .FirstOrDefaultAsync(ct)
-                        .ConfigureAwait(false);
-
-                    if (job != null)
+                    try
                     {
-                        job.Status = lockedJob.Envelope.Status;
-                        job.Updated = lockedJob.Envelope.Updated;
-                        job.Retries = lockedJob.Envelope.Retries;
-                        job.ErrorMessage = lockedJob.Envelope.ErrorMessage;
-                        job.Error = lockedJob.Envelope.Error;
-                        job.StartAtUtc = lockedJob.Envelope.StartAtUtc;
-                        job.ScheduledStartIndexing = lockedJob.Envelope.ScheduledStartIndexing;
-                        job.LockId = null;
-
-                        try
-                        {
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                        }
-                        catch (DbUpdateException e)
-                        {
-                            logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
-                            // очищаем все что было в контексте
-                            dbContext.ChangeTracker.Clear();
-                            dbContext.Update(job);
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                        }
-                        finally
-                        {
-                            dbContext.ChangeTracker.Clear();
-                        }
+                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
                     }
+                    catch (DbUpdateException e)
+                    {
+                        logger.LogWarning(e, "Job {JobId} can not complete outbox action", job.Id);
+                        // очищаем все что было в контексте
+                        context.ChangeTracker.Clear();
+                        context.Update(job);
+                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        context.ChangeTracker.Clear();
+                    }
+                }
 
-                    // Истекло время блокировки.
-                },
-                static async (state, ct) =>
-                {
-                    var (dbContext, outboxJob, _) = state;
+                // Истекло время блокировки.
+            },
+            static async (state, ct) =>
+            {
+                var (context, outboxJob, _) = state;
 
-                    var existLocked = await dbContext.Set<OutboxEnvelope>()
-                        .AnyAsync(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId), ct)
-                        .ConfigureAwait(false);
+                var existLocked = await context.Set<OutboxEnvelope>()
+                    .AnyAsync(WhereLockId(outboxJob.Envelope.Id, outboxJob.LockId), ct)
+                    .ConfigureAwait(false);
 
-                    return !existLocked;
-                },
-                isolationLevel: IsolationLevel.RepeatableRead,
-                cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
+                return !existLocked;
+            },
+            isolationLevel: IsolationLevel.RepeatableRead,
+            cancellationToken: cancellationToken);
 
         static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
             x => x.Id == messageId && x.LockId == lockId &&
