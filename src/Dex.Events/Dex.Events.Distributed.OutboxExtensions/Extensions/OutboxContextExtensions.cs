@@ -16,7 +16,7 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
             CancellationToken cancellationToken = default)
             => outboxContext.EnqueueEventAsync<IBus>(outboxMessage, cancellationToken);
 
-        public static async Task<Guid> EnqueueEventAsync<TBus>(
+        public static Task<Guid> EnqueueEventAsync<TBus>(
             this IOutboxContext<object?, object?> outboxContext,
             object outboxMessage,
             CancellationToken cancellationToken = default)
@@ -25,8 +25,7 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
             if (outboxContext == null) throw new ArgumentNullException(nameof(outboxContext));
 
             var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage, outboxContext.GetDiscriminator());
-            return await outboxContext.EnqueueAsync(eventMessage, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+            return outboxContext.EnqueueAsync(eventMessage, cancellationToken: cancellationToken);
         }
     }
 }

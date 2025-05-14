@@ -14,13 +14,13 @@ namespace Dex.Events.Distributed
             _bus = bus;
         }
 
-        public async Task RaiseAsync<T>(T args, CancellationToken cancellationToken)
+        public Task RaiseAsync<T>(T args, CancellationToken cancellationToken)
             where T : class
         {
             // The Publish(T) and Publish(object) work differently:
             // - in the first method, the type is defined by typeof(T)
             // - in the second method, the type is defined by GetType()
-            await _bus.Publish(args as object, cancellationToken).ConfigureAwait(false);
+            return _bus.Publish(args as object, cancellationToken);
         }
     }
 }
