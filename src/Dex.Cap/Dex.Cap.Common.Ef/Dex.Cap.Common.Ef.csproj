@@ -33,4 +33,14 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="EfTransactionOptions.cs">
+        <DependentUpon>IEfTransactionOptions.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj" />
+    </ItemGroup>
+
 </Project>

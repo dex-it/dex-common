@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +26,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 .BuildServiceProvider();
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
@@ -68,7 +68,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
@@ -102,7 +102,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
             var stepId = Guid.NewGuid().ToString("N");
 
             TestUser? result = null;
@@ -140,7 +140,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 tasks.Add(Task.Run(async () =>
                 {
                     using var scope = sp.CreateScope();
-                    var executor = scope.ServiceProvider.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+                    var executor = scope.ServiceProvider.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
                     await executor.ExecuteAsync(stepId, async (context, c) =>
                         {
@@ -186,7 +186,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
             var logger = sp.GetRequiredService<ILogger<BaseOnceExecutorTests>>();
-            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
@@ -221,8 +221,8 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 .BuildServiceProvider();
 
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var executor = sp.GetRequiredService<IOnceExecutor<IEfOptions, TestDbContext>>();
-            var efOptions = new EfOptions { IsolationLevel = IsolationLevel.ReadCommitted };
+            var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
+            var efOptions = new EfTransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted };
 
             var stepId = Guid.NewGuid().ToString("N");
             var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };

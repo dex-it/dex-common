@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Models;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Dex.Cap.OnceExecutor.Ef
 {
-    public sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<IEfOptions, TDbContext>
+    internal sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<IEfTransactionOptions, TDbContext>
         where TDbContext : DbContext
     {
         protected override TDbContext Context { get; }
@@ -21,31 +22,29 @@ namespace Dex.Cap.OnceExecutor.Ef
             Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
+        protected override Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
-            IEfOptions? options,
+            IEfTransactionOptions? options,
             CancellationToken cancellationToken)
             where TResult : default
         {
-            options ??= new EfOptions();
+            options ??= new EfTransactionOptions();
 
-            return await Context.ExecuteInTransactionScopeAsync(
+            return Context.ExecuteInTransactionScopeAsync(
                     operation, verifySucceeded, options.TransactionScopeOption, options.IsolationLevel,
-                    options.TimeoutInSeconds, cancellationToken)
-                .ConfigureAwait(false);
+                    options.TimeoutInSeconds, cancellationToken);
         }
 
-        protected override async Task<bool> IsAlreadyExecutedAsync(string idempotentKey,
+        protected override Task<bool> IsAlreadyExecutedAsync(string idempotentKey,
             CancellationToken cancellationToken)
         {
-            return await Context.Set<LastTransaction>()
+            return Context.Set<LastTransaction>()
                 .AsNoTracking()
-                .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken)
-                .ConfigureAwait(false);
+                .AnyAsync(x => x.IdempotentKey == idempotentKey, cancellationToken);
         }
 
-        protected override async Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
+        protected override Task SaveIdempotentKeyAsync(string idempotentKey, CancellationToken cancellationToken)
         {
             // в случае использования ретрай стратегии EnableRetryOnFailure метод вызовется несколько раз
             // и если LastTransaction уже был добавлен в DbContext то меняем его State на Added
@@ -70,7 +69,7 @@ namespace Dex.Cap.OnceExecutor.Ef
                 existingEntry.State = EntityState.Added;
             }
 
-            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return Context.SaveChangesAsync(cancellationToken);
         }
 
         protected override Task OnModificationCompletedAsync(CancellationToken cancellationToken)

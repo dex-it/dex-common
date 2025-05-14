@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.1</PackageVersion>
+        <PackageVersion>8.0.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -35,6 +35,10 @@
         <Compile Update="StrategyOnceExecutor.cs">
             <DependentUpon>IStrategyOnceExecutor.cs</DependentUpon>
         </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj" />
     </ItemGroup>
 
 </Project>

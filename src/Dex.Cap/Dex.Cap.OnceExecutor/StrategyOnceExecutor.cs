@@ -1,12 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.OnceExecutor
 {
     public abstract class StrategyOnceExecutor<TArg, TOptions, TResult, TExecutionStrategy> : IStrategyOnceExecutor<TArg, TResult>
         where TExecutionStrategy : class, IOnceExecutionStrategy<TArg, TOptions, TResult>
-        where TOptions : IOnceExecutorOptions
+        where TOptions : ITransactionOptions
     {
         protected TExecutionStrategy ExecutionStrategy { get; }
 
@@ -15,9 +16,9 @@ namespace Dex.Cap.OnceExecutor
             ExecutionStrategy = executionStrategy ?? throw new ArgumentNullException(nameof(executionStrategy));
         }
 
-        public async Task<TResult?> ExecuteAsync(TArg argument, CancellationToken cancellationToken)
+        public Task<TResult?> ExecuteAsync(TArg argument, CancellationToken cancellationToken)
         {
-            return await ExecuteInTransactionAsync(
+            return ExecuteInTransactionAsync(
                 async token =>
                 {
                     if (!await ExecutionStrategy.IsAlreadyExecutedAsync(argument, token).ConfigureAwait(false))
@@ -29,7 +30,7 @@ namespace Dex.Cap.OnceExecutor
                     return await ExecutionStrategy.ReadAsync(argument, token).ConfigureAwait(false);
                 },
                 async token => await ExecutionStrategy.IsAlreadyExecutedAsync(argument, token).ConfigureAwait(false),
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken);
         }
 
         protected abstract Task<TResult?> ExecuteInTransactionAsync(

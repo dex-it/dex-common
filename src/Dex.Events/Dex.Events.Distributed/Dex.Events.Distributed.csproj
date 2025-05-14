@@ -6,7 +6,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>distributed events</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.2</PackageVersion>
+        <PackageVersion>8.0.3</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -34,7 +34,7 @@
         <PackageReference Include="MassTransit"/>
         <PackageReference Include="MassTransit.Abstractions"/>
     </ItemGroup>
-    
+
     <ItemGroup>
         <Compile Update="DistributedEventHandler.cs">
             <DependentUpon>IDistributedEventHandler.cs</DependentUpon>

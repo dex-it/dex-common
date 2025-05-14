@@ -2,17 +2,15 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using MassTransit;
 
 namespace Dex.Events.Distributed.OutboxExtensions
 {
     [SuppressMessage("ReSharper", "UnusedTypeParameter")]
-    public sealed class OutboxDistributedEventMessage<TBus> : IOutboxMessage
+    public sealed class OutboxDistributedEventMessage<TBus>
         where TBus : IBus
     {
-        public Guid MessageId { get; init; } = Guid.NewGuid();
         public string EventParams { get; }
         public string EventParamsType { get; }
 
@@ -24,7 +22,7 @@ namespace Dex.Events.Distributed.OutboxExtensions
         }
 
         public OutboxDistributedEventMessage(
-            IDistributedEventParams? outboxMessage,
+            object? outboxMessage,
             IOutboxTypeDiscriminator discriminator)
         {
             ArgumentNullException.ThrowIfNull(outboxMessage);

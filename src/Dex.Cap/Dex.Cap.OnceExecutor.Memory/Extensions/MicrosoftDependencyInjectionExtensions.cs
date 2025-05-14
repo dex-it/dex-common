@@ -19,7 +19,7 @@ public static class MicrosoftDependencyInjectionExtensions
         services.TryAdd(ServiceDescriptor.Singleton<TDistributedCache, TDistributedCache>());
 
         return services
-            .AddScoped(typeof(IOnceExecutor<IOnceExecutorMemoryOptions, IDistributedCache>), typeof(OnceExecutorMemory<TDistributedCache>))
-            .AddScoped(typeof(IOnceExecutor<IOnceExecutorMemoryOptions>), typeof(OnceExecutorMemory<TDistributedCache>));
+            .AddScoped(typeof(IOnceExecutor<IOnceExecutorMemoryTransactionOptions, IDistributedCache>), typeof(OnceExecutorMemory<TDistributedCache>))
+            .AddScoped(typeof(IOnceExecutor<IOnceExecutorMemoryTransactionOptions>), typeof(OnceExecutorMemory<TDistributedCache>));
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using Dex.Cap.Common.Ef;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,20 +13,20 @@ namespace Dex.Cap.OnceExecutor.Ef.Extensions
             ArgumentNullException.ThrowIfNull(serviceProvider);
 
             return serviceProvider
-                .AddScoped(typeof(IOnceExecutor<IEfOptions, TDbContext>), typeof(OnceExecutorEf<TDbContext>))
-                .AddScoped(typeof(IOnceExecutor<IEfOptions>), typeof(OnceExecutorEf<TDbContext>));
+                .AddScoped(typeof(IOnceExecutor<IEfTransactionOptions, TDbContext>), typeof(OnceExecutorEf<TDbContext>))
+                .AddScoped(typeof(IOnceExecutor<IEfTransactionOptions>), typeof(OnceExecutorEf<TDbContext>));
         }
 
         public static IServiceCollection AddStrategyOnceExecutor<TArg, TResult, TExecutionStrategy, TDbContext>(this IServiceCollection serviceProvider)
             where TDbContext : DbContext
-            where TExecutionStrategy : IOnceExecutionStrategy<TArg, IEfOptions, TResult>
+            where TExecutionStrategy : IOnceExecutionStrategy<TArg, IEfTransactionOptions, TResult>
         {
             ArgumentNullException.ThrowIfNull(serviceProvider);
 
             return serviceProvider
-                .AddScoped(typeof(IOnceExecutionStrategy<TArg, IEfOptions, TResult>), typeof(TExecutionStrategy))
+                .AddScoped(typeof(IOnceExecutionStrategy<TArg, IEfTransactionOptions, TResult>), typeof(TExecutionStrategy))
                 .AddScoped(typeof(IStrategyOnceExecutor<TArg, TResult>),
-                    typeof(StrategyOnceExecutorEf<TArg, TResult, IOnceExecutionStrategy<TArg, IEfOptions, TResult>, TDbContext>));
+                    typeof(StrategyOnceExecutorEf<TArg, TResult, IOnceExecutionStrategy<TArg, IEfTransactionOptions, TResult>, TDbContext>));
         }
     }
 }

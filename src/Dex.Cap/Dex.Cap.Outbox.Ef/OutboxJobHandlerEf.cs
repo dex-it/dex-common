@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
@@ -106,11 +106,11 @@ internal class OutboxJobHandlerEf<TDbContext>(
         var msg = serializer.Deserialize(messageType, job.Envelope.Content);
         logger.LogDebug("Message to processed: {Message}", msg);
 
-        if (msg is IOutboxMessage outboxMessage)
+        if (msg is not null)
         {
             if (msg is not EmptyOutboxMessage)
             {
-                await ProcessOutboxMessageScoped(outboxMessage, cancellationToken).ConfigureAwait(false);
+                await ProcessOutboxMessageScoped(msg, cancellationToken).ConfigureAwait(false);
             }
 
             await dataProvider.JobSucceed(job, cancellationToken).ConfigureAwait(false);
@@ -118,18 +118,25 @@ internal class OutboxJobHandlerEf<TDbContext>(
         else
         {
             job.Envelope.Retries = int.MaxValue;
-            ThrowUnableCast(job.Envelope.MessageType);
+            ThrowMsgIsNull();
         }
     }
 
-    private async Task ProcessOutboxMessageScoped(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
+    private async Task ProcessOutboxMessageScoped(object outboxMessage, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var handler = handlerFactory.GetMessageHandler(outboxMessage);
+        var processMessageMethod = handler.GetType().GetMethods().First(m => m is {Name: "Process"});
+        if (processMessageMethod == null)
+        {
+            throw new OutboxException($"Can't find Process method for handler type '{handler}'");
+        }
+
         try
         {
-            await handler.ProcessMessage(outboxMessage, cancellationToken).ConfigureAwait(false);
+            var task = (Task?)processMessageMethod.Invoke(handler, new[] { outboxMessage, cancellationToken });
+            await task!.ConfigureAwait(false);
         }
         finally
         {
@@ -142,8 +149,8 @@ internal class OutboxJobHandlerEf<TDbContext>(
     }
 
     [DoesNotReturn]
-    private static void ThrowUnableCast(string messageType)
+    private static void ThrowMsgIsNull()
     {
-        throw new OutboxException($"Message '{messageType}' are not of '{nameof(IOutboxMessage)}' type");
+        throw new OutboxException("Message is null");
     }
 }

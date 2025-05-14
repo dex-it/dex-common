@@ -5,12 +5,16 @@ namespace Dex.Cap.Common.Ef.Helpers
 {
     public static class TransactionScopeHelper
     {
-        public static TransactionScope CreateTransactionScope(TransactionScopeOption option, IsolationLevel isolationLevel)
+        private const uint DefaultTimeoutInSeconds = 60;
+
+        public static TransactionScope CreateTransactionScope(TransactionScopeOption option,
+            IsolationLevel isolationLevel)
         {
-            return CreateTransactionScope(option, isolationLevel, TimeSpan.FromSeconds(60));
+            return CreateTransactionScope(option, isolationLevel, TimeSpan.FromSeconds(DefaultTimeoutInSeconds));
         }
 
-        public static TransactionScope CreateTransactionScope(TransactionScopeOption option, IsolationLevel isolationLevel, TimeSpan timeout)
+        public static TransactionScope CreateTransactionScope(TransactionScopeOption option,
+            IsolationLevel isolationLevel, TimeSpan timeout)
         {
             var transactionOptions = new TransactionOptions
             {

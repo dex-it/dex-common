@@ -55,6 +55,9 @@
         <Compile Update="OnceExecutorTests\Strategies\Concrete3ExecutionStrategy.cs">
             <DependentUpon>Concrete3ExecutionStrategyRequest.cs</DependentUpon>
         </Compile>
+        <Compile Update="OutboxTests\Handlers\TransactionalCreateUserCommandHandler.cs">
+          <DependentUpon>TestUserCreatorCommand.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>

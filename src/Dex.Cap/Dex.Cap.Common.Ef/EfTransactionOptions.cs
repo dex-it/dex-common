@@ -1,8 +1,8 @@
 using System.Transactions;
 
-namespace Dex.Cap.OnceExecutor.Ef;
+namespace Dex.Cap.Common.Ef;
 
-public class EfOptions : IEfOptions
+public class EfTransactionOptions : IEfTransactionOptions
 {
     public TransactionScopeOption TransactionScopeOption { get; set; } = TransactionScopeOption.Required;
 

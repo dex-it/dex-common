@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using MassTransit;
 using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -108,9 +108,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
         public class TestMessageConsumer : IConsumer<ITestMessage>
         {
-            private readonly IOnceExecutor<IEfOptions, TestDbContext> _executor;
+            private readonly IOnceExecutor<IEfTransactionOptions, TestDbContext> _executor;
 
-            public TestMessageConsumer(IOnceExecutor<IEfOptions, TestDbContext> executor)
+            public TestMessageConsumer(IOnceExecutor<IEfTransactionOptions, TestDbContext> executor)
             {
                 _executor = executor;
             }
