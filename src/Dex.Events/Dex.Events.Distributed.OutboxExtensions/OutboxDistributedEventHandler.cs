@@ -2,7 +2,6 @@
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using MassTransit;
 
@@ -22,7 +21,7 @@ namespace Dex.Events.Distributed.OutboxExtensions
             _discriminator = discriminator;
         }
 
-        public async Task ProcessMessage(OutboxDistributedEventMessage<TBus> message,
+        public Task Process(OutboxDistributedEventMessage<TBus> message,
             CancellationToken cancellationToken)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
@@ -33,12 +32,7 @@ namespace Dex.Events.Distributed.OutboxExtensions
             // The Publish(T) and Publish(object) work differently:
             // - in the first method, the type is defined by typeof(T)
             // - in the second method, the type is defined by GetType()
-            await _bus.Publish(eventParams!, cancellationToken).ConfigureAwait(false);
-        }
-
-        public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
-        {
-            return ProcessMessage((OutboxDistributedEventMessage<TBus>)outbox, cancellationToken);
+            return _bus.Publish(eventParams!, cancellationToken);
         }
     }
 }

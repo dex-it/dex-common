@@ -10,7 +10,7 @@ namespace Dex.Events.Distributed
     /// </summary>
     /// <typeparam name="T">DistributedBaseEventParams</typeparam>
     public interface IDistributedEventHandler<in T> : IConsumer<T>, IDistributedEventHandler
-        where T : class, IDistributedEventParams
+        where T : class
     {
     }
 

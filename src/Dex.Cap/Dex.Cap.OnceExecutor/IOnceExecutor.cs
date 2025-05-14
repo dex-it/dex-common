@@ -1,11 +1,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.OnceExecutor
 {
     public interface IOnceExecutor<in TOptions, out TContext>
-        where TOptions : IOnceExecutorOptions
+        where TOptions : ITransactionOptions
     {
         Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,
@@ -22,7 +23,7 @@ namespace Dex.Cap.OnceExecutor
     }
 
     public interface IOnceExecutor<in TOptions>
-        where TOptions : IOnceExecutorOptions
+        where TOptions : ITransactionOptions
     {
         Task<TResult?> ExecuteAsync<TResult>(
             string idempotentKey,

@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.OnceExecutor
 {
@@ -7,7 +8,7 @@ namespace Dex.Cap.OnceExecutor
     /// Once execution strategy contract
     /// </summary>
     public interface IOnceExecutionStrategy<in TArg, TOptions, TResult>
-        where TOptions : IOnceExecutorOptions
+        where TOptions : ITransactionOptions
     {
         public TOptions? Options { get; set; }
 

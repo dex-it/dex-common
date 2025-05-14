@@ -10,25 +10,24 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
 {
     public static class OutboxServiceExtensions
     {
-        public static Task EnqueueEventAsync(
+        public static Task<Guid> EnqueueEventAsync(
             this IOutboxService<object?> outboxService,
             Guid correlationId,
-            IDistributedEventParams outboxMessage,
+            object outboxMessage,
             CancellationToken cancellationToken = default)
             => outboxService.EnqueueEventAsync<IBus>(correlationId, outboxMessage, cancellationToken);
 
-        public static async Task EnqueueEventAsync<TBus>(
+        public static Task<Guid> EnqueueEventAsync<TBus>(
             this IOutboxService<object?> outboxService,
             Guid correlationId,
-            IDistributedEventParams outboxMessage,
+            object outboxMessage,
             CancellationToken cancellationToken = default)
             where TBus : IBus
         {
             if (outboxService == null) throw new ArgumentNullException(nameof(outboxService));
 
             var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage, outboxService.Discriminator);
-            await outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+            return outboxService.EnqueueAsync(correlationId, eventMessage, cancellationToken: cancellationToken);
         }
     }
 }

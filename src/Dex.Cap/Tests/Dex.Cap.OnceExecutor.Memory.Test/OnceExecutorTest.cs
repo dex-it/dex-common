@@ -11,7 +11,7 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
         {
             var sp = AddOnceExecutor(5000);
 
-            var executor = sp.GetRequiredService<IOnceExecutor<IOnceExecutorMemoryOptions, IDistributedCache>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IOnceExecutorMemoryTransactionOptions, IDistributedCache>>();
 
             var idempotentKey = Guid.NewGuid().ToString("N");
             var toIncrement = 0;
@@ -35,7 +35,7 @@ namespace Dex.Cap.OnceExecutor.Memory.Test
             const int delay = 500;
             var sp = AddOnceExecutor(delay);
 
-            var executor = sp.GetRequiredService<IOnceExecutor<IOnceExecutorMemoryOptions, IDistributedCache>>();
+            var executor = sp.GetRequiredService<IOnceExecutor<IOnceExecutorMemoryTransactionOptions, IDistributedCache>>();
             var cache = sp.GetRequiredService<MemoryDistributedCache>();
             var idempotentKey = Guid.NewGuid().ToString("N");
 

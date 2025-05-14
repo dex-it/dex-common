@@ -8,7 +8,7 @@ using Neo4jClient.Transactions;
 namespace Dex.Cap.OnceExecutor.Neo4j
 {
     // ReSharper disable once InconsistentNaming
-    public class OnceExecutorNeo4j : BaseOnceExecutor<INeo4jOptions, ITransactionalGraphClient>
+    public class OnceExecutorNeo4j : BaseOnceExecutor<INeo4jTransactionOptions, ITransactionalGraphClient>
     {
         protected override ITransactionalGraphClient Context { get; }
 
@@ -20,7 +20,7 @@ namespace Dex.Cap.OnceExecutor.Neo4j
         protected override async Task<TResult?> ExecuteInTransactionAsync<TResult>(
             Func<CancellationToken, Task<TResult?>> operation,
             Func<CancellationToken, Task<bool>> verifySucceeded,
-            INeo4jOptions? options,
+            INeo4jTransactionOptions? options,
             CancellationToken cancellationToken)
             where TResult : default
         {

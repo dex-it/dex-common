@@ -4,10 +4,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox.Ef;
+using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 using Dex.Extensions;
@@ -35,13 +35,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var messageIds = new List<Guid>();
 
             var command = new TestOutboxCommand { Args = "hello world" };
-            messageIds.Add(command.MessageId);
-            logger.LogInformation("Command1 {MessageId}", ((IOutboxMessage)command).MessageId);
+            messageIds.Add(command.TestId);
+            logger.LogInformation("Command1 {MessageId}", command.TestId);
             await outboxService.EnqueueAsync(correlationId, command);
 
             var command2 = new TestOutboxCommand { Args = "hello world2" };
-            messageIds.Add(command2.MessageId);
-            logger.LogInformation("Command2 {MessageId}", ((IOutboxMessage)command2).MessageId);
+            messageIds.Add(command2.TestId);
+            logger.LogInformation("Command2 {MessageId}", command2.TestId);
 
             await outboxService.EnqueueAsync(correlationId, command2);
             await SaveChanges(sp);
@@ -58,7 +58,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             void OnTestCommandHandlerOnOnProcess(object _, TestOutboxCommand m)
             {
-                if (!messageIds.Contains(m.MessageId))
+                if (!messageIds.Contains(m.TestId))
                 {
                     throw new InvalidOperationException("MessageId not equals");
                 }
@@ -96,7 +96,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         }
 
         [Test]
-        public void FailedEmptyMessageIdRunTest()
+        public void FailedEnqueueMessageWithoutDiscriminator()
         {
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
@@ -104,7 +104,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var outboxService = sp.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
 
-            Assert.CatchAsync<InvalidOperationException>(async () => { await outboxService.EnqueueAsync(correlationId, new TestEmptyMessageId()); });
+            Assert.CatchAsync<DiscriminatorResolveException>(async () => { await outboxService.EnqueueAsync(correlationId, new TestEmptyMessageId()); });
         }
 
         [Test]

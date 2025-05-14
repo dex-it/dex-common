@@ -1,7 +1,7 @@
 using System.Transactions;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Interfaces;
 using Dex.Cap.OnceExecutor;
-using Dex.Cap.OnceExecutor.Ef;
 using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
@@ -9,34 +9,47 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// <summary>
 /// Идемпотентный обработчик сообщений аутбокса
 /// </summary>
-/// <typeparam name="TMessage"></typeparam>
-/// <typeparam name="TDbContext"></typeparam>
 public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
-    where TMessage : IOutboxMessage
+    where TMessage : class
 {
-    private readonly IOnceExecutor<IEfOptions, TDbContext> _onceExecutor;
+    private readonly EfTransactionOptions _transactionOptions;
+    private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
 
-    protected IdempotentOutboxHandler(IOnceExecutor<IEfOptions, TDbContext> onceExecutor)
+    protected IdempotentOutboxHandler(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
     {
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
+        _transactionOptions = new EfTransactionOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew };
     }
 
-    /// <inheritdoc />
-    public abstract Task ProcessMessage(TMessage message, CancellationToken cancellationToken);
+    protected abstract Task IdempotentProcess(TMessage message, CancellationToken cancellationToken);
 
-    /// <inheritdoc />
-    public async Task ProcessMessage(IOutboxMessage outboxMessage, CancellationToken cancellationToken)
+    protected virtual string GetIdempotentKey(TMessage message) => GetIdempotentKeyInner(message);
+
+    public Task Process(TMessage outboxMessage, CancellationToken cancellationToken)
     {
-        if (outboxMessage is not TMessage typedMessage)
-        {
-            throw new InvalidOperationException($"Unable cast IOutboxMessage to type: {typeof(TMessage)}");
-        }
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.IsolationLevel = GetIsolationLevel();
 
-        await _onceExecutor.ExecuteAsync(
-            outboxMessage.MessageId.ToString("N"),
-            async (_, token) => await ProcessMessage(typedMessage, token),
-            options: new EfOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew },
+        return _onceExecutor.ExecuteAsync(
+            GetIdempotentKey(outboxMessage),
+            async (_, token) => await IdempotentProcess(outboxMessage, token).ConfigureAwait(false),
+            options: _transactionOptions,
             cancellationToken: cancellationToken
         );
+    }
+
+    protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
+
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+
+    private static string GetIdempotentKeyInner<T>(T message)
+        where T : class
+    {
+        if (message is not IIdempotentKey key)
+        {
+            throw new ArgumentNullException(nameof(message));
+        }
+
+        return key.IdempotentKey;
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox.Models
@@ -22,9 +21,10 @@ namespace Dex.Cap.Outbox.Models
             State = state;
         }
 
-        public async Task EnqueueAsync(IOutboxMessage outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default)
+        public Task<Guid> EnqueueAsync(object outboxMessage, DateTime? startAtUtc = null, CancellationToken cancellationToken = default)
         {
-            await OutboxService.EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken).ConfigureAwait(false);
+            return OutboxService
+                .EnqueueAsync(CorrelationId, outboxMessage, startAtUtc, null, cancellationToken);
         }
 
         public IOutboxTypeDiscriminator GetDiscriminator()

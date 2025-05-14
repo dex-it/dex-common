@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Ef.Tests.OutboxMultiServiceTests.Discriminators;
 using Dex.Cap.Ef.Tests.OutboxMultiServiceTests.Handlers;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
@@ -32,10 +31,9 @@ public class OutboxWithMultipleServicesTests : BaseTest
         var processedCommandsCount = 0;
 
         // Сохраняем в outbox команду из первого сервиса
-        var messageId1 = await SaveCommandAsync(sp1, correlationId1,
-            new TestOutboxExternalServiceCommand { Args = "hello world" });
-
-        var messageIds = new List<Guid> { messageId1 };
+        var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
+        await SaveCommandAsync(sp1, correlationId1, cmd1);
+        var messageIds = new List<Guid> { cmd1.TestId };
 
         // Act
         // Инициируем работу с outbox во втором сервисе
@@ -55,12 +53,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
 
         void OnTestCommandHandler2OnProcess(object _, TestOutboxCommand m)
         {
-            ProcessMessage(m);
-        }
-
-        void ProcessMessage(IOutboxMessage message)
-        {
-            if (!messageIds.Contains(message.MessageId))
+            if (!messageIds.Contains(m.TestId))
             {
                 throw new InvalidOperationException("MessageId not equals");
             }
@@ -80,11 +73,12 @@ public class OutboxWithMultipleServicesTests : BaseTest
         var correlationId1 = Guid.NewGuid();
         var correlationId2 = Guid.NewGuid();
 
-        var messageId1 = await SaveCommandAsync(sp1, correlationId1,
-            new TestOutboxExternalServiceCommand { Args = "hello world" });
-        var messageId2 = await SaveCommandAsync(sp2, correlationId2, new TestOutboxCommand { Args = "hello world2" });
+        var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
+        await SaveCommandAsync(sp1, correlationId1, cmd1);
+        var cmd2 = new TestOutboxCommand { Args = "hello world2" };
+        await SaveCommandAsync(sp2, correlationId2, cmd2);
 
-        var messageIds = new List<Guid> { messageId1, messageId2 };
+        var messageIds = new List<Guid> { cmd1.TestId, cmd2.TestId };
         var processedCommandsCount = 0;
 
         TestCommandExternalServiceHandler.OnProcess += OnTestCommandHandler1OnProcess!;
@@ -111,17 +105,17 @@ public class OutboxWithMultipleServicesTests : BaseTest
 
         void OnTestCommandHandler1OnProcess(object _, TestOutboxExternalServiceCommand m)
         {
-            ProcessMessage(m);
+            if (!messageIds.Contains(m.TestId))
+            {
+                throw new InvalidOperationException("MessageId not equals");
+            }
+
+            Interlocked.Increment(ref processedCommandsCount);
         }
 
         void OnTestCommandHandler2OnProcess(object _, TestOutboxCommand m)
         {
-            ProcessMessage(m);
-        }
-
-        void ProcessMessage(IOutboxMessage message)
-        {
-            if (!messageIds.Contains(message.MessageId))
+            if (!messageIds.Contains(m.TestId))
             {
                 throw new InvalidOperationException("MessageId not equals");
             }
@@ -133,7 +127,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
     private ServiceProvider CreateServiceProvider<TDiscriminator, TCommand, THandler>(
         Func<IServiceCollection, IServiceCollection>? configure = null)
         where TDiscriminator : BaseOutboxTypeDiscriminator
-        where TCommand : class, IOutboxMessage
+        where TCommand : class
         where THandler : class, IOutboxMessageHandler<TCommand>
     {
         var serviceCollection = new ServiceCollection();
@@ -156,14 +150,12 @@ public class OutboxWithMultipleServicesTests : BaseTest
         return serviceCollection.BuildServiceProvider();
     }
 
-    private static async Task<Guid> SaveCommandAsync<TCommand>(ServiceProvider sp, Guid correlationId, TCommand command)
-        where TCommand : class, IOutboxMessage
+    private static async Task SaveCommandAsync<TCommand>(ServiceProvider sp, Guid correlationId, TCommand command)
+        where TCommand : class
     {
         var outboxService = sp.GetRequiredService<IOutboxService>();
         await outboxService.EnqueueAsync(correlationId, command);
         await SaveChanges(sp);
-
-        return command.MessageId;
     }
 
     private static async Task<OutboxEnvelope> GetEnvelope(ServiceProvider sp, Guid correlationId)
