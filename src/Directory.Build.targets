@@ -43,8 +43,8 @@
     <PackageReference Update="Npgsql" Version="8.0.7" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Update="Neo4jClient" Version="5.1.16" />
-    <PackageReference Update="MassTransit*" Version="8.4.0" />
-    <PackageReference Update="MassTransit.TestFramework" Version="8.4.0" />
+    <PackageReference Update="MassTransit*" Version="8.4.1" />
+    <PackageReference Update="MassTransit.TestFramework" Version="8.4.1" />
 
     <!--microsoft asp.net core -->
     <PackageReference Update="Microsoft.AspNetCore.DataProtection*" Version="$(FrameworkVersion)"/>
