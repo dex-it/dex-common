@@ -10,4 +10,6 @@ public interface IEfTransactionOptions : ITransactionOptions
     public IsolationLevel IsolationLevel { get; set; }
 
     public uint TimeoutInSeconds { get; set; }
+
+    public bool ClearChangeTrackerOnRetry { get; set; }
 }

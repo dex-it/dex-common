@@ -48,7 +48,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
             var correlationId = Guid.NewGuid();
             var name = "mmx_" + Guid.NewGuid();
@@ -57,18 +57,18 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             // act
             await outboxService.ExecuteOperationAsync(
                 correlationId,
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
                     // обязательно перед вызовом следующего этапа процесса - сохранить данные
                     await outboxContext.DbContext.SaveChangesAsync(token);
 
                     await outboxService.ExecuteOperationAsync(correlationId,
-                        async (t, context) =>
+                        async (context, t) =>
                         {
                             await context.DbContext.Users.AddAsync(new TestUser { Name = anotherName }, t);
-                        }, token);
-                }, CancellationToken.None);
+                        }, cancellationToken: token);
+                }, cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);

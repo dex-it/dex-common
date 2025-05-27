@@ -33,7 +33,7 @@ namespace Dex.Cap.OnceExecutor.Ef
 
             return Context.ExecuteInTransactionScopeAsync(
                     operation, verifySucceeded, options.TransactionScopeOption, options.IsolationLevel,
-                    options.TimeoutInSeconds, cancellationToken);
+                    options.TimeoutInSeconds, options.ClearChangeTrackerOnRetry, cancellationToken);
         }
 
         protected override Task<bool> IsAlreadyExecutedAsync(string idempotentKey,

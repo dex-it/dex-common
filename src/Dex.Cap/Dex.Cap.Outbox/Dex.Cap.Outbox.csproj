@@ -55,4 +55,8 @@
         <PackageReference Include="System.Diagnostics.DiagnosticSource"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -33,6 +33,7 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
             _transactionOptions.TransactionScopeOption,
             GetIsolationLevel(),
             GetTimeoutInSeconds(),
+            ClearChangeTrackerOnRetry(),
             cancellationToken);
     }
 
@@ -41,7 +42,9 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
         return Task.FromResult(false);
     }
 
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+
     protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
 
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+    protected virtual bool ClearChangeTrackerOnRetry() => _transactionOptions.ClearChangeTrackerOnRetry;
 }

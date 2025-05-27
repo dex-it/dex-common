@@ -8,6 +8,7 @@
         <VersionSuffix>alpha</VersionSuffix>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <!--Для NuGet-->

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Ef.Tests.OutboxTests.RetryStrategies;
 using Dex.Cap.Outbox.Extensions;
 using Dex.Cap.Outbox.Interfaces;
@@ -30,7 +31,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             TestErrorCommandHandler.Reset();
 
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 2 });
             await SaveChanges(serviceProvider);

@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    internal sealed class OutboxService<TDbContext> : IOutboxService<TDbContext>
+    internal sealed class OutboxService<TOptions, TDbContext> : IOutboxService<TOptions, TDbContext>
+        where TOptions : ITransactionOptions
     {
         public IOutboxTypeDiscriminator Discriminator { get; }
 
-        private readonly IOutboxDataProvider<TDbContext> _outboxDataProvider;
+        private readonly IOutboxDataProvider<TOptions, TDbContext> _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;
 
         public OutboxService(
-            IOutboxDataProvider<TDbContext> outboxDataProvider,
+            IOutboxDataProvider<TOptions, TDbContext> outboxDataProvider,
             IOutboxSerializer serializer,
             IOutboxTypeDiscriminator discriminator)
         {
@@ -23,14 +25,16 @@ namespace Dex.Cap.Outbox
             Discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
         }
 
-        public Task ExecuteOperationAsync<TState>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action,
+        public Task ExecuteOperationAsync<TState>(
+            Guid correlationId, TState state,
+            Func<IOutboxContext<TDbContext, TState>, CancellationToken, Task> action,
+            TOptions? options = default,
             CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(action);
 
             return _outboxDataProvider
-                .ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken);
+                .ExecuteActionInTransaction(correlationId, this, state, action, options, cancellationToken);
         }
 
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null,

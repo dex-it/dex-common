@@ -38,6 +38,7 @@ public abstract class TransactionalConsumer<TMessage, TDbContext> : BaseConsumer
             _transactionOptions.TransactionScopeOption,
             GetIsolationLevel(),
             GetTimeoutInSeconds(),
+            ClearChangeTrackerOnRetry(),
             context.CancellationToken);
     }
 
@@ -46,9 +47,11 @@ public abstract class TransactionalConsumer<TMessage, TDbContext> : BaseConsumer
         return Task.FromResult(false);
     }
 
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+
     protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
 
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+    protected virtual bool ClearChangeTrackerOnRetry() => _transactionOptions.ClearChangeTrackerOnRetry;
 }
 
 /// <summary>
@@ -71,9 +74,6 @@ public abstract class TransactionalConsumer<TDbContext>
         Func<TDbContext, CancellationToken, Task> operation)
         where TMessage : class
     {
-        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
-        _transactionOptions.IsolationLevel = GetIsolationLevel();
-
         return _dbContext.ExecuteInTransactionScopeAsync(
             state: (ConsumeContext: context, DbContext: _dbContext),
             operation: async (state, token) => await operation.Invoke(state.DbContext, token),
@@ -81,6 +81,7 @@ public abstract class TransactionalConsumer<TDbContext>
             transactionScopeOption: _transactionOptions.TransactionScopeOption,
             isolationLevel: GetIsolationLevel(),
             timeoutInSeconds: GetTimeoutInSeconds(),
+            clearChangeTrackerOnRetry: ClearChangeTrackerOnRetry(),
             cancellationToken: context.CancellationToken);
     }
 
@@ -90,7 +91,9 @@ public abstract class TransactionalConsumer<TDbContext>
         return Task.FromResult(false);
     }
 
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+
     protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
 
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+    protected virtual bool ClearChangeTrackerOnRetry() => _transactionOptions.ClearChangeTrackerOnRetry;
 }

@@ -1,4 +1,5 @@
 using System;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,8 @@ namespace Dex.Cap.Outbox.Ef.Extensions
 {
     public static class MicrosoftDependencyInjectionExtensions
     {
-        public static IServiceCollection AddOutbox<TDbContext, TDiscriminator>(this IServiceCollection serviceProvider,
+        public static IServiceCollection AddOutbox<TDbContext, TDiscriminator>(
+            this IServiceCollection serviceProvider,
             Action<IServiceProvider, OutboxRetryStrategyConfigurator>? retryStrategyImplementation = null)
             where TDbContext : DbContext
             where TDiscriminator : class, IOutboxTypeDiscriminator
@@ -19,13 +21,16 @@ namespace Dex.Cap.Outbox.Ef.Extensions
                 .AddSingleton<IOutboxTypeDiscriminator, TDiscriminator>()
                 .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()
                 .AddSingleton<IOutboxStatistic>(provider => provider.GetRequiredService<IOutboxMetricCollector>())
-                .AddScoped<IOutboxService<TDbContext>, OutboxService<TDbContext>>()
-                .AddScoped<IOutboxService>(provider => provider.GetRequiredService<IOutboxService<TDbContext>>())
+                .AddScoped<IOutboxService<IEfTransactionOptions, TDbContext>,
+                    OutboxService<IEfTransactionOptions, TDbContext>>()
+                .AddScoped<IOutboxService>(provider =>
+                    provider.GetRequiredService<IOutboxService<IEfTransactionOptions, TDbContext>>())
                 .AddScoped<IOutboxHandler, MainLoopOutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxJobHandler, OutboxJobHandlerEf<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
-                .AddScoped<IOutboxDataProvider<TDbContext>, OutboxDataProviderEf<TDbContext>>()
-                .AddScoped<IOutboxDataProvider>(provider => provider.GetRequiredService<IOutboxDataProvider<TDbContext>>())
+                .AddScoped<IOutboxDataProvider<IEfTransactionOptions, TDbContext>, OutboxDataProviderEf<TDbContext>>()
+                .AddScoped<IOutboxDataProvider>(provider =>
+                    provider.GetRequiredService<IOutboxDataProvider<IEfTransactionOptions, TDbContext>>())
                 .AddScoped<IOutboxCleanupDataProvider, OutboxCleanupDataProviderEf<TDbContext>>()
                 .AddScoped<IOutboxMessageHandlerFactory, OutboxMessageHandlerFactory>();
 

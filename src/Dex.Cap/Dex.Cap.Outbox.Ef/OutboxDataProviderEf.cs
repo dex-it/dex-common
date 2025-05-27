@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
@@ -22,21 +23,27 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     IOptions<OutboxOptions> outboxOptions,
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
     IOutboxRetryStrategy retryStrategy,
-    IOutboxTypeDiscriminator outboxTypeDiscriminator) : BaseOutboxDataProvider<TDbContext>(retryStrategy)
+    IOutboxTypeDiscriminator outboxTypeDiscriminator) : BaseOutboxDataProvider<IEfTransactionOptions, TDbContext>(retryStrategy)
     where TDbContext : DbContext
 {
     private OutboxOptions Options => outboxOptions.Value;
 
-    public override Task ExecuteActionInTransaction<TState>(Guid correlationId,
-        IOutboxService<TDbContext> outboxService, TState state,
-        Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
+    public override Task ExecuteActionInTransaction<TState>(
+        Guid correlationId,
+        IOutboxService<IEfTransactionOptions, TDbContext> outboxService,
+        TState state,
+        Func<IOutboxContext<TDbContext, TState>, CancellationToken, Task> action,
+        IEfTransactionOptions? options,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(outboxService);
         ArgumentNullException.ThrowIfNull(action);
+        
+        options ??= new EfTransactionOptions();
 
         return dbContext.ExecuteInTransactionScopeAsync(
-            (_dbContext: dbContext, outboxService, state),
-            async (st, ct) =>
+            state: (_dbContext: dbContext, outboxService, state),
+            operation: async (st, ct) =>
             {
                 var (context, outbox, outerState) = st;
 
@@ -47,8 +54,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                 try
                 {
                     var outboxContext =
-                        new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
-                    await action(ct, outboxContext).ConfigureAwait(false);
+                        new OutboxContext<IEfTransactionOptions, TDbContext, TState>(correlationId, outbox, context, outerState);
+                    await action(outboxContext, ct).ConfigureAwait(false);
 
                     // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
                     var isOutboxMessageExists = context.ChangeTracker.Entries<OutboxEnvelope>()
@@ -67,7 +74,11 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                     context.ChangeTracker.Clear();
                 }
             },
-            async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
+            verifySucceeded: async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
+            transactionScopeOption: options.TransactionScopeOption,
+            isolationLevel: options.IsolationLevel,
+            timeoutInSeconds: options.TimeoutInSeconds,
+            clearChangeTrackerOnRetry: options.ClearChangeTrackerOnRetry,
             cancellationToken: cancellationToken);
     }
 
@@ -112,6 +123,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             TransactionScopeOption.RequiresNew,
             IsolationLevel.ReadCommitted,
             (uint)Options.GetFreeMessagesTimeout.TotalSeconds,
+            clearChangeTrackerOnRetry: false,
             cancellationToken: cancellationToken);
     }
 
@@ -186,6 +198,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                 return !existLocked;
             },
             isolationLevel: IsolationLevel.RepeatableRead,
+            clearChangeTrackerOnRetry: false,
             cancellationToken: cancellationToken);
 
         static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>

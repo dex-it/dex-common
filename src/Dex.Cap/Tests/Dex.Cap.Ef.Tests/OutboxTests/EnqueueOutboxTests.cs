@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox.Ef;
@@ -116,7 +117,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             TestErrorCommandHandler.Reset();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 2 });
             await SaveChanges(sp);
@@ -149,7 +150,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var id = Guid.NewGuid();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestUserCreatorCommand { Id = id });
@@ -181,7 +182,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
 
             await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() });
             await outboxService.EnqueueAsync(Guid.NewGuid(), new TestUserCreatorCommand { Id = Guid.NewGuid() });
@@ -207,7 +208,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             TestErrorCommandHandler.Reset();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello" });
             await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 1 });
@@ -238,7 +239,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxCleanupDataProvider, OutboxCleanupDataProviderEf<TestDbContext>>()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             await outboxService.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" });
             await SaveChanges(sp);
 
@@ -269,7 +270,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             TestErrorCommandHandler.Reset();
 
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello" }, DateTime.UtcNow.AddMilliseconds(intervalMilliseconds));
             await SaveChanges(serviceProvider);

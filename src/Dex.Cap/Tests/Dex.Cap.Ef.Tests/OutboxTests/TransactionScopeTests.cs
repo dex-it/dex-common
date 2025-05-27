@@ -51,6 +51,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                             },
                             (_, _) => new ExecutionResult<int>(true, 0));
 
+                    // ReSharper disable once DisposeOnUsingVariable
                     aScope.Dispose(); // abort
                 }
             });
@@ -86,6 +87,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                         },
                         (_, _) => new ExecutionResult<int>(true, 0));
 
+                // ReSharper disable once DisposeOnUsingVariable
                 aScope.Dispose(); // abort
             }
 
@@ -128,6 +130,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     inner.Complete();
                 }
 
+                // ReSharper disable once DisposeOnUsingVariable
                 aScope.Dispose(); // abort
             }
 

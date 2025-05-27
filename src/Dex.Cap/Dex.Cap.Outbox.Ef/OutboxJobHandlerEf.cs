@@ -30,7 +30,9 @@ internal class OutboxJobHandlerEf<TDbContext>(
     ILogger<OutboxJobHandlerEf<TDbContext>> logger) : IOutboxJobHandler
     where TDbContext : DbContext
 {
-    private const string LockTimeoutMessage = "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}";
+    private const string LockTimeoutMessage =
+        "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}";
+
     private const string UserCanceledDbMessage = "Operation canceled due to user request";
     private const string UserCanceledMessageWithId = "Operation canceled due to user request. MessageId: {MessageId}";
 
@@ -56,24 +58,28 @@ internal class OutboxJobHandlerEf<TDbContext>(
             // Истекло время аренды блокировки.
         {
             logger.LogError(oce, LockTimeoutMessage, job.Envelope.Id);
-            await dataProvider.JobFail(job, default, "Lock is expired").ConfigureAwait(false);
+            await dataProvider.JobFail(job, "Lock is expired", cancellationToken: CancellationToken.None)
+                .ConfigureAwait(false);
         }
-        catch (OperationCanceledException oce) when (!job.LockToken.IsCancellationRequested && cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException oce) when (!job.LockToken.IsCancellationRequested &&
+                                                     cancellationToken.IsCancellationRequested)
             // Пользователь запросил отмену.
         {
             logger.LogError(oce, UserCanceledMessageWithId, job.Envelope.Id);
-            await UnlockJobOnUserCancel(job).ConfigureAwait(false); // Попытаться освободить блокировку раньше чем истечёт время аренды.
+            await UnlockJobOnUserCancel(job)
+                .ConfigureAwait(false); // Попытаться освободить блокировку раньше чем истечёт время аренды.
             throw;
         }
         catch (OutboxException ex)
         {
             logger.LogError(ex, "EnvelopeID: {MessageId} ", job.Envelope.Id);
-            await dataProvider.JobFail(job, default, ex.Message).ConfigureAwait(false);
+            await dataProvider.JobFail(job, ex.Message, cancellationToken: CancellationToken.None)
+                .ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to process {MessageId}", job.Envelope.Id);
-            await dataProvider.JobFail(job, default, ex.Message, ex).ConfigureAwait(false);
+            await dataProvider.JobFail(job, ex.Message, ex, CancellationToken.None).ConfigureAwait(false);
         }
     }
 
@@ -84,11 +90,14 @@ internal class OutboxJobHandlerEf<TDbContext>(
         linked.CancelAfter(1_000);
         try
         {
-            await dataProvider.JobFail(job, linked.Token, UserCanceledDbMessage).ConfigureAwait(false);
+            await dataProvider.JobFail(job, UserCanceledDbMessage, cancellationToken: linked.Token)
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException oce) when (!job.LockToken.IsCancellationRequested)
         {
-            logger.LogError(oce, "Could not release the message for 1 second after the user cancellation request. MessageId: {MessageId}", job.Envelope.Id);
+            logger.LogError(oce,
+                "Could not release the message for 1 second after the user cancellation request. MessageId: {MessageId}",
+                job.Envelope.Id);
         }
         catch (OperationCanceledException)
         {
@@ -127,7 +136,7 @@ internal class OutboxJobHandlerEf<TDbContext>(
         cancellationToken.ThrowIfCancellationRequested();
 
         var handler = handlerFactory.GetMessageHandler(outboxMessage);
-        var processMessageMethod = handler.GetType().GetMethods().First(m => m is {Name: "Process"});
+        var processMessageMethod = handler.GetType().GetMethods().First(m => m is { Name: "Process" });
         if (processMessageMethod == null)
         {
             throw new OutboxException($"Can't find Process method for handler type '{handler}'");
@@ -135,7 +144,7 @@ internal class OutboxJobHandlerEf<TDbContext>(
 
         try
         {
-            var task = (Task?)processMessageMethod.Invoke(handler, new[] { outboxMessage, cancellationToken });
+            var task = (Task?)processMessageMethod.Invoke(handler, [outboxMessage, cancellationToken]);
             await task!.ConfigureAwait(false);
         }
         finally

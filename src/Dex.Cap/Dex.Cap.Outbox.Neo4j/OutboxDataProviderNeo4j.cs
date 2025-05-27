@@ -16,18 +16,27 @@ namespace Dex.Cap.Outbox.Neo4j
         ITransactionalGraphClient graphClient,
         IOptions<OutboxOptions> outboxOptions,
         IOutboxRetryStrategy retryStrategy)
-        : BaseOutboxDataProvider<ITransactionalGraphClient>(retryStrategy)
+        : BaseOutboxDataProvider<INeo4jTransactionOptions, ITransactionalGraphClient>(retryStrategy)
     {
-        private readonly ITransactionalGraphClient _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
-        private readonly OutboxOptions _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
+        private readonly ITransactionalGraphClient _graphClient =
+            graphClient ?? throw new ArgumentNullException(nameof(graphClient));
 
-        public override Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<ITransactionalGraphClient> outboxService, TState state,
-            Func<CancellationToken, IOutboxContext<ITransactionalGraphClient, TState>, Task> action, CancellationToken cancellationToken)
+        private readonly OutboxOptions _outboxOptions =
+            outboxOptions.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
+
+        public override Task ExecuteActionInTransaction<TState>(
+            Guid correlationId,
+            IOutboxService<INeo4jTransactionOptions, ITransactionalGraphClient> outboxService,
+            TState state,
+            Func<IOutboxContext<ITransactionalGraphClient, TState>, CancellationToken, Task> action,
+            INeo4jTransactionOptions? options,
+            CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope,
+            CancellationToken cancellationToken)
         {
             await _graphClient.Cypher
                 .Create($"(outbox:{nameof(Outbox)})")
@@ -70,7 +79,8 @@ namespace Dex.Cap.Outbox.Neo4j
             throw new NotImplementedException();
         }
 
-        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope, CancellationToken cancellationToken)
+        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope,
+            CancellationToken cancellationToken)
         {
             await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
                 .WithParam("id", outboxEnvelope.Envelope.Id)

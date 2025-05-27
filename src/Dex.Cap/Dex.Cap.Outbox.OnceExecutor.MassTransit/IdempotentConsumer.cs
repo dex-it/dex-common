@@ -30,8 +30,9 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 
     protected sealed override Task Process(ConsumeContext<TMessage> context)
     {
-        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
         _transactionOptions.IsolationLevel = GetIsolationLevel();
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.ClearChangeTrackerOnRetry = ClearChangeTrackerOnRetry();
 
         return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
@@ -43,9 +44,11 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 
     protected abstract Task IdempotentProcess(ConsumeContext<TMessage> context);
 
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+
     protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
 
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+    protected virtual bool ClearChangeTrackerOnRetry() => _transactionOptions.ClearChangeTrackerOnRetry;
 
     protected virtual string GetIdempotentKey(ConsumeContext<TMessage> context) => context.GetIdempotentKey();
 }
@@ -77,8 +80,9 @@ public abstract class IdempotentConsumer<TDbContext>
         Func<TDbContext, CancellationToken, Task> operation)
         where TMessage : class
     {
-        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
         _transactionOptions.IsolationLevel = GetIsolationLevel();
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.ClearChangeTrackerOnRetry = ClearChangeTrackerOnRetry();
 
         return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
@@ -88,9 +92,11 @@ public abstract class IdempotentConsumer<TDbContext>
         );
     }
 
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+
     protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
 
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+    protected virtual bool ClearChangeTrackerOnRetry() => _transactionOptions.ClearChangeTrackerOnRetry;
 
     protected virtual string GetIdempotentKey<TMessage>(ConsumeContext<TMessage> context)
         where TMessage : class => context.GetIdempotentKey();

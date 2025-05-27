@@ -34,6 +34,7 @@ namespace Dex.Cap.OnceExecutor.Ef
                 ExecutionStrategy.Options.TransactionScopeOption,
                 ExecutionStrategy.Options.IsolationLevel,
                 ExecutionStrategy.Options.TimeoutInSeconds,
+                ExecutionStrategy.Options.ClearChangeTrackerOnRetry,
                 cancellationToken);
         }
 

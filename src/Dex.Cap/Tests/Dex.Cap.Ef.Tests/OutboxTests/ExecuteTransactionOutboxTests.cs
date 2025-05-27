@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 using Dex.Cap.Outbox.Interfaces;
@@ -25,18 +26,18 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, IdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
 
             // act
             var name = "mmx_" + Guid.NewGuid();
             var correlationId = Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlationId,
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     await outboxContext.EnqueueAsync(new TestUserCreatorCommand { UserName = name }, cancellationToken: token);
                 },
-                CancellationToken.None);
+                cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -61,18 +62,18 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, NonIdempotentCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
 
             // act
             var name = "mmx_" + Guid.NewGuid();
             var correlationId = Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlationId,
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     await outboxContext.EnqueueAsync(new TestUserCreatorCommand { UserName = name }, cancellationToken: token);
                 },
-                CancellationToken.None);
+                cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -97,13 +98,13 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                 .AddScoped<IOutboxMessageHandler<TestUserCreatorCommand>, TransactionalCreateUserCommandHandler>()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
 
             // act
             var name = "mmx_" + Guid.NewGuid();
             var correlationId = Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlationId,
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     await outboxContext.EnqueueAsync(new TestUserCreatorCommand { UserName = name }, cancellationToken: token);
                 });
@@ -113,7 +114,9 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // check
             using var scope = sp.CreateScope();
-            var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            var envelope = await GetDb(scope.ServiceProvider)
+                .Set<OutboxEnvelope>()
+                .FirstAsync(x => x.CorrelationId == correlationId);
             Assert.AreEqual(OutboxMessageStatus.Succeeded, envelope.Status);
         }
 
@@ -127,18 +130,18 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlation = Guid.NewGuid();
             var dbContext = sp.GetRequiredService<TestDbContext>();
 
             // act
             var name = "mmx_" + Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlation,
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
                     await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                }, CancellationToken.None);
+                }, cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -154,14 +157,17 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlationId = Guid.NewGuid();
             var dbContext = sp.GetRequiredService<TestDbContext>();
 
             // act
             var name = "mmx_" + Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlationId,
-                async (token, outboxContext) => { await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token); }, CancellationToken.None);
+                async (outboxContext, token) =>
+                {
+                    await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                }, cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -181,14 +187,14 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlation = Guid.NewGuid();
             var dbContext = sp.GetRequiredService<TestDbContext>();
 
             // act
             var name = "mmx_" + Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlation, new { Name = name, Age = 25 },
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     var entity = new TestUser
                     {
@@ -198,7 +204,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
                     await outboxContext.DbContext.Users.AddAsync(entity, token);
                     await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                }, CancellationToken.None);
+                }, cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -220,7 +226,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             TestCommandHandler.OnProcess += (_, _) => { count++; };
             TestCommand2Handler.OnProcess += (_, _) => { count++; };
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlation = Guid.NewGuid();
             var dbContext = sp.GetRequiredService<TestDbContext>();
             var logger = sp.GetService<ILogger<EnqueueOutboxTests>>();
@@ -228,14 +234,14 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // act
             var name = "mmx_" + Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlation, new { Logger = logger },
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     outboxContext.State.Logger?.LogDebug("DEBUG...");
 
                     await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
                     await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
                     await outboxContext.EnqueueAsync(new TestOutboxCommand2 { Args = "Command2" }, cancellationToken: token);
-                }, CancellationToken.None);
+                }, cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -255,7 +261,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => { count++; };
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var correlation = Guid.NewGuid();
             var testDbContext = sp.GetRequiredService<TestDbContext>();
             var failureCount = 2;
@@ -263,7 +269,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // act
             var name = "mmx_" + Guid.NewGuid();
             await outboxService.ExecuteOperationAsync(correlation,
-                async (token, outboxContext) =>
+                async (outboxContext, token) =>
                 {
                     await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
 
@@ -274,7 +280,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
                     }
 
                     await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                }, CancellationToken.None);
+                }, cancellationToken: CancellationToken.None);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -298,13 +304,14 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             TestDelayCommandHandler.OnProcess += (_, c) =>
             {
                 threads.Add(c.Args);
+                // ReSharper disable once AccessToDisposedClosure
                 ce.Signal();
             };
 
             var num = 0;
             var correlationId = Guid.NewGuid();
 
-            var outboxService = services.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = services.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
             await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
             await outboxService.EnqueueAsync(correlationId, new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });

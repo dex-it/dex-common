@@ -9,4 +9,6 @@ public class EfTransactionOptions : IEfTransactionOptions
     public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.ReadCommitted;
 
     public uint TimeoutInSeconds { get; set; } = 60;
+
+    public bool ClearChangeTrackerOnRetry { get; set; }
 }

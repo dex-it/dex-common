@@ -10,7 +10,7 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// Идемпотентный обработчик сообщений аутбокса
 /// </summary>
 public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
-    where TMessage : class
+    where TMessage : class, IIdempotentKey
 {
     private readonly EfTransactionOptions _transactionOptions;
     private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
@@ -27,8 +27,9 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
 
     public Task Process(TMessage outboxMessage, CancellationToken cancellationToken)
     {
-        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
         _transactionOptions.IsolationLevel = GetIsolationLevel();
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.ClearChangeTrackerOnRetry = ClearChangeTrackerOnRetry();
 
         return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(outboxMessage),
@@ -38,9 +39,11 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
         );
     }
 
+    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+
     protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
 
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
+    protected virtual bool ClearChangeTrackerOnRetry() => _transactionOptions.ClearChangeTrackerOnRetry;
 
     private static string GetIdempotentKeyInner<T>(T message)
         where T : class
