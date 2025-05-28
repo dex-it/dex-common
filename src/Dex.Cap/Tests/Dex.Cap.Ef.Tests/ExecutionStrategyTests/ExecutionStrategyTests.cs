@@ -51,8 +51,9 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
             var correlationId = Guid.NewGuid();
-            var name = "mmx_" + Guid.NewGuid();
-            var anotherName = "mmx_" + Guid.NewGuid();
+            var name = "mmx_name_" + Guid.NewGuid();
+            var anotherName = "mmx_anotherName_" + Guid.NewGuid();
+            var failureCount = 2;
 
             // act
             await outboxService.ExecuteOperationAsync(
@@ -67,6 +68,12 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                         async (context, t) =>
                         {
                             await context.DbContext.Users.AddAsync(new TestUser { Name = anotherName }, t);
+
+                            if (failureCount-- > 0)
+                            {
+                                TestContext.WriteLine("throw failure...");
+                                throw new TimeoutException();
+                            }
                         }, cancellationToken: token);
                 }, cancellationToken: CancellationToken.None);
 

@@ -10,5 +10,5 @@ public class EfTransactionOptions : IEfTransactionOptions
 
     public uint TimeoutInSeconds { get; set; } = 60;
 
-    public bool ClearChangeTrackerOnRetry { get; set; }
+    public bool ClearChangeTrackerOnRetry { get; set; } = true;
 }

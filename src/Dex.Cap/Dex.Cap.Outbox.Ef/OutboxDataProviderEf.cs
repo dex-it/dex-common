@@ -23,7 +23,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     IOptions<OutboxOptions> outboxOptions,
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
     IOutboxRetryStrategy retryStrategy,
-    IOutboxTypeDiscriminator outboxTypeDiscriminator) : BaseOutboxDataProvider<IEfTransactionOptions, TDbContext>(retryStrategy)
+    IOutboxTypeDiscriminator outboxTypeDiscriminator)
+    : BaseOutboxDataProvider<IEfTransactionOptions, TDbContext>(retryStrategy)
     where TDbContext : DbContext
 {
     private OutboxOptions Options => outboxOptions.Value;
@@ -38,7 +39,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     {
         ArgumentNullException.ThrowIfNull(outboxService);
         ArgumentNullException.ThrowIfNull(action);
-        
+
         options ??= new EfTransactionOptions();
 
         return dbContext.ExecuteInTransactionScopeAsync(
@@ -51,28 +52,22 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                     throw new UnsavedChangesDetectedException(context,
                         "Can't start outbox action, unsaved changes detected");
 
-                try
+                var outboxContext =
+                    new OutboxContext<IEfTransactionOptions, TDbContext, TState>(correlationId, outbox, context,
+                        outerState);
+                await action(outboxContext, ct).ConfigureAwait(false);
+
+                // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
+                var isOutboxMessageExists = context.ChangeTracker.Entries<OutboxEnvelope>()
+                    .Any(x => x.State is EntityState.Added or EntityState.Modified);
+
+                if (!isOutboxMessageExists)
                 {
-                    var outboxContext =
-                        new OutboxContext<IEfTransactionOptions, TDbContext, TState>(correlationId, outbox, context, outerState);
-                    await action(outboxContext, ct).ConfigureAwait(false);
-
-                    // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
-                    var isOutboxMessageExists = context.ChangeTracker.Entries<OutboxEnvelope>()
-                        .Any(x => x.State is EntityState.Added or EntityState.Modified);
-
-                    if (!isOutboxMessageExists)
-                    {
-                        await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
-                            .ConfigureAwait(false);
-                    }
-
-                    await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                    await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
+                        .ConfigureAwait(false);
                 }
-                finally
-                {
-                    context.ChangeTracker.Clear();
-                }
+
+                await context.SaveChangesAsync(ct).ConfigureAwait(false);
             },
             verifySucceeded: async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
             transactionScopeOption: options.TransactionScopeOption,

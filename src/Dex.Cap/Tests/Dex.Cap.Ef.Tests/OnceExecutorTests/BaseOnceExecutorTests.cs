@@ -114,6 +114,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                         var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
                         await context.Users.AddAsync(user, ct);
                         await context.SaveChangesAsync(ct);
+
                         await Task.Delay(TimeSpan.FromMilliseconds(50), ct);
 
                         throw new TimeoutException("The operation has timed out.");
@@ -140,7 +141,8 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                 tasks.Add(Task.Run(async () =>
                 {
                     using var scope = sp.CreateScope();
-                    var executor = scope.ServiceProvider.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
+                    var executor = scope.ServiceProvider
+                        .GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
                     await executor.ExecuteAsync(stepId, async (context, c) =>
                         {
@@ -165,7 +167,8 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests
                         InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }
                     }).ToArray();
 
-                NUnit.Framework.Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(uniqueViolationExceptions.Length),
+                NUnit.Framework.Assert.That(aggregateEx.InnerExceptions.Count,
+                    Is.EqualTo(uniqueViolationExceptions.Length),
                     "Все исключения должны быть связаны с нарушением уникальности ключа.");
                 NUnit.Framework.Assert.That(aggregateEx.InnerExceptions.Count, Is.EqualTo(taskCount - 1));
             }

@@ -7,6 +7,7 @@ using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
 
 namespace Dex.Cap.Common.Ef.Extensions;
 
@@ -21,7 +22,7 @@ public static class DbContextExecuteInTransactionExtensions
         TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
         IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
         uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = false,
+        bool clearChangeTrackerOnRetry = true,
         CancellationToken cancellationToken = default)
         => dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
             new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
@@ -48,12 +49,16 @@ public static class DbContextExecuteInTransactionExtensions
 
                     return st.Result;
                 }
-                finally
+                catch (Exception ex)
+                    when (ExecutionStrategy.CallOnWrappedException(ex,
+                              exHandle => (exHandle as NpgsqlException)?.IsTransient == true || exHandle is TimeoutException))
                 {
                     // Важно: очищать ChangeTracker только при явном указании
                     // т.к. в случае ретрая стратегии можем потерять информацию о прочитанных данных, вызывающего кода
                     if (clearChangeTrackerOnRetry)
                         context.ChangeTracker.Clear();
+
+                    throw;
                 }
             },
             async (_, st, ct) =>
@@ -69,7 +74,7 @@ public static class DbContextExecuteInTransactionExtensions
         TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
         IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
         uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = false,
+        bool clearChangeTrackerOnRetry = true,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync<object, TResult>(
             default!,
@@ -91,7 +96,7 @@ public static class DbContextExecuteInTransactionExtensions
         TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
         IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
         uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = false,
+        bool clearChangeTrackerOnRetry = true,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync(
             state,
@@ -115,7 +120,7 @@ public static class DbContextExecuteInTransactionExtensions
         TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
         IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
         uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = false,
+        bool clearChangeTrackerOnRetry = true,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync<object>(
             default!,
