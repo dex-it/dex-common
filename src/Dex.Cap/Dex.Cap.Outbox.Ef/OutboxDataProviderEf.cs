@@ -70,10 +70,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                 await context.SaveChangesAsync(ct).ConfigureAwait(false);
             },
             verifySucceeded: async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
-            transactionScopeOption: options.TransactionScopeOption,
-            isolationLevel: options.IsolationLevel,
-            timeoutInSeconds: options.TimeoutInSeconds,
-            clearChangeTrackerOnRetry: options.ClearChangeTrackerOnRetry,
+            options: options,
             cancellationToken: cancellationToken);
     }
 
@@ -115,10 +112,12 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             },
             async (state, token) => await state.DbContext.Set<OutboxEnvelope>()
                 .AnyAsync(x => x.CorrelationId == state.LockId, token).ConfigureAwait(false),
-            TransactionScopeOption.RequiresNew,
-            IsolationLevel.ReadCommitted,
-            (uint)Options.GetFreeMessagesTimeout.TotalSeconds,
-            clearChangeTrackerOnRetry: false,
+            new EfTransactionOptions
+            {
+                TransactionScopeOption = TransactionScopeOption.RequiresNew,
+                IsolationLevel = IsolationLevel.ReadCommitted,
+                TimeoutInSeconds = (uint)Options.GetFreeMessagesTimeout.TotalSeconds
+            },
             cancellationToken: cancellationToken);
     }
 
@@ -192,8 +191,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
                 return !existLocked;
             },
-            isolationLevel: IsolationLevel.RepeatableRead,
-            clearChangeTrackerOnRetry: false,
+            new EfTransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead },
             cancellationToken: cancellationToken);
 
         static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>

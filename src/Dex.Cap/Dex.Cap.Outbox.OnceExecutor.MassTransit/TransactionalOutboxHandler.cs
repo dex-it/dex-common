@@ -26,14 +26,15 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
 
     public Task Process(TMessage message, CancellationToken cancellationToken)
     {
+        _transactionOptions.IsolationLevel = GetIsolationLevel();
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.ClearChangeTrackerOnRetry = ClearChangeTrackerOnRetry();
+
         return _dbContext.ExecuteInTransactionScopeAsync(
             message,
             async (state, token) => await ProcessInTransaction(state, token).ConfigureAwait(false),
             async (state, token) => await VerifySucceeded(state, token).ConfigureAwait(false),
-            _transactionOptions.TransactionScopeOption,
-            GetIsolationLevel(),
-            GetTimeoutInSeconds(),
-            ClearChangeTrackerOnRetry(),
+            _transactionOptions,
             cancellationToken);
     }
 

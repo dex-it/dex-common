@@ -226,7 +226,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                         await context.ExecuteInTransactionScopeAsync
                         (context, async (c, t) => { await c.Users.AnyAsync(u => u.Name == "user", t); },
                             (_, _) => Task.FromResult(false),
-                            TransactionScopeOption.Suppress,
+                            new EfTransactionOptions { TransactionScopeOption = TransactionScopeOption.Suppress },
                             cancellationToken: ct);
                     },
                     (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));

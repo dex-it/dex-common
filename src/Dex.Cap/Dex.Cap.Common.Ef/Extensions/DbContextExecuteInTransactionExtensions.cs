@@ -1,8 +1,6 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -13,18 +11,20 @@ namespace Dex.Cap.Common.Ef.Extensions;
 
 public static class DbContextExecuteInTransactionExtensions
 {
-    [SuppressMessage("Design", "CA1062:Проверить аргументы или открытые методы")]
+    // ReSharper disable once CognitiveComplexity
     public static Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
         this DbContext dbContext,
         TState state,
         Func<TState, CancellationToken, Task<TResult>> operation,
         Func<TState, CancellationToken, Task<bool>> verifySucceeded,
-        TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-        uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = true,
+        IEfTransactionOptions? options = default,
         CancellationToken cancellationToken = default)
-        => dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
+    {
+        ArgumentNullException.ThrowIfNull(dbContext);
+
+        options ??= new EfTransactionOptions();
+
+        return dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
             new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
             async (context, st, ct) =>
             {
@@ -34,10 +34,10 @@ public static class DbContextExecuteInTransactionExtensions
 
                 try
                 {
-                    var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
+                    var timeout = TimeSpan.FromSeconds(options.TimeoutInSeconds);
 
                     using var transactionScope = TransactionScopeHelper
-                        .CreateTransactionScope(transactionScopeOption, isolationLevel, timeout);
+                        .CreateTransactionScope(options.TransactionScopeOption, options.IsolationLevel, timeout);
 
                     st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
@@ -51,11 +51,12 @@ public static class DbContextExecuteInTransactionExtensions
                 }
                 catch (Exception ex)
                     when (ExecutionStrategy.CallOnWrappedException(ex,
-                              exHandle => (exHandle as NpgsqlException)?.IsTransient == true || exHandle is TimeoutException))
+                              exHandle => (exHandle as NpgsqlException)?.IsTransient == true ||
+                                          exHandle is TimeoutException))
                 {
                     // Важно: очищать ChangeTracker только при явном указании
                     // т.к. в случае ретрая стратегии можем потерять информацию о прочитанных данных, вызывающего кода
-                    if (clearChangeTrackerOnRetry)
+                    if (options.ClearChangeTrackerOnRetry)
                         context.ChangeTracker.Clear();
 
                     throw;
@@ -66,24 +67,19 @@ public static class DbContextExecuteInTransactionExtensions
                     st.Result),
             cancellationToken
         );
+    }
 
     public static Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
         this DbContext dbContext,
         Func<CancellationToken, Task<TResult>> operation,
         Func<CancellationToken, Task<bool>> verifySucceeded,
-        TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-        uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = true,
+        IEfTransactionOptions? options = default,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync<object, TResult>(
             default!,
             async (_, token) => await operation(token).ConfigureAwait(false),
             async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
-            transactionScopeOption,
-            isolationLevel,
-            timeoutInSeconds,
-            clearChangeTrackerOnRetry,
+            options,
             cancellationToken
         );
 
@@ -93,10 +89,7 @@ public static class DbContextExecuteInTransactionExtensions
         TState state,
         Func<TState, CancellationToken, Task> operation,
         Func<TState, CancellationToken, Task<bool>> verifySucceeded,
-        TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-        uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = true,
+        IEfTransactionOptions? options = default,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync(
             state,
@@ -106,10 +99,7 @@ public static class DbContextExecuteInTransactionExtensions
                 return true;
             },
             verifySucceeded,
-            transactionScopeOption,
-            isolationLevel,
-            timeoutInSeconds,
-            clearChangeTrackerOnRetry,
+            options,
             cancellationToken
         );
 
@@ -117,19 +107,13 @@ public static class DbContextExecuteInTransactionExtensions
         this DbContext dbContext,
         Func<CancellationToken, Task> operation,
         Func<CancellationToken, Task<bool>> verifySucceeded,
-        TransactionScopeOption transactionScopeOption = TransactionScopeOption.Required,
-        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
-        uint timeoutInSeconds = 60,
-        bool clearChangeTrackerOnRetry = true,
+        IEfTransactionOptions? options = default,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync<object>(
             default!,
             async (_, token) => await operation(token).ConfigureAwait(false),
             async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
-            transactionScopeOption,
-            isolationLevel,
-            timeoutInSeconds,
-            clearChangeTrackerOnRetry,
+            options,
             cancellationToken
         );
 }

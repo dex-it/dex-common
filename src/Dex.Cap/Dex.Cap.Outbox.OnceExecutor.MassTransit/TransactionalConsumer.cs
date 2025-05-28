@@ -31,14 +31,15 @@ public abstract class TransactionalConsumer<TMessage, TDbContext> : BaseConsumer
 
     protected sealed override Task Process(ConsumeContext<TMessage> context)
     {
+        _transactionOptions.IsolationLevel = GetIsolationLevel();
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.ClearChangeTrackerOnRetry = ClearChangeTrackerOnRetry();
+
         return _dbContext.ExecuteInTransactionScopeAsync(
             context,
             async (state, _) => await ProcessInTransaction(state).ConfigureAwait(false),
             async (state, _) => await VerifySucceeded(state).ConfigureAwait(false),
-            _transactionOptions.TransactionScopeOption,
-            GetIsolationLevel(),
-            GetTimeoutInSeconds(),
-            ClearChangeTrackerOnRetry(),
+            _transactionOptions,
             context.CancellationToken);
     }
 
@@ -74,15 +75,16 @@ public abstract class TransactionalConsumer<TDbContext>
         Func<TDbContext, CancellationToken, Task> operation)
         where TMessage : class
     {
+        _transactionOptions.IsolationLevel = GetIsolationLevel();
+        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
+        _transactionOptions.ClearChangeTrackerOnRetry = ClearChangeTrackerOnRetry();
+
         return _dbContext.ExecuteInTransactionScopeAsync(
-            state: (ConsumeContext: context, DbContext: _dbContext),
-            operation: async (state, token) => await operation.Invoke(state.DbContext, token),
-            verifySucceeded: async (state, _) => await VerifySucceeded(state.ConsumeContext).ConfigureAwait(false),
-            transactionScopeOption: _transactionOptions.TransactionScopeOption,
-            isolationLevel: GetIsolationLevel(),
-            timeoutInSeconds: GetTimeoutInSeconds(),
-            clearChangeTrackerOnRetry: ClearChangeTrackerOnRetry(),
-            cancellationToken: context.CancellationToken);
+            (ConsumeContext: context, DbContext: _dbContext),
+            async (state, token) => await operation.Invoke(state.DbContext, token),
+            async (state, _) => await VerifySucceeded(state.ConsumeContext).ConfigureAwait(false),
+            _transactionOptions,
+            context.CancellationToken);
     }
 
     protected virtual Task<bool> VerifySucceeded<TMessage>(ConsumeContext<TMessage> context)
