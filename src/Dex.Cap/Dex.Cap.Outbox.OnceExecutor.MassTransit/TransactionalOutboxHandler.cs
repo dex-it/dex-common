@@ -1,4 +1,3 @@
-using System.Transactions;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
@@ -13,28 +12,24 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
     where TMessage : class
     where TDbContext : DbContext
 {
-    private readonly EfTransactionOptions _transactionOptions;
     private readonly TDbContext _dbContext;
 
     protected TransactionalOutboxHandler(TDbContext context)
     {
         _dbContext = context;
-        _transactionOptions = new EfTransactionOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew };
     }
+
+    protected virtual EfTransactionOptions TransactionOptions { private get; init; } = EfTransactionOptions.DefaultRequiresNew;
 
     protected abstract Task ProcessInTransaction(TMessage message, CancellationToken cancellationToken);
 
     public Task Process(TMessage message, CancellationToken cancellationToken)
     {
-        _transactionOptions.IsolationLevel = GetIsolationLevel();
-        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
-        _transactionOptions.ClearChangeTrackerOnRetry = ClearChangeTrackerOnRetry();
-
         return _dbContext.ExecuteInTransactionScopeAsync(
             message,
             async (state, token) => await ProcessInTransaction(state, token).ConfigureAwait(false),
             async (state, token) => await VerifySucceeded(state, token).ConfigureAwait(false),
-            _transactionOptions,
+            TransactionOptions,
             cancellationToken);
     }
 
@@ -42,10 +37,4 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
     {
         return Task.FromResult(false);
     }
-
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
-
-    protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
-
-    protected virtual bool ClearChangeTrackerOnRetry() => _transactionOptions.ClearChangeTrackerOnRetry;
 }

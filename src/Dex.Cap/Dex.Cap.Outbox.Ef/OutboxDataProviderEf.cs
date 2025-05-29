@@ -26,6 +26,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     : BaseOutboxDataProvider(retryStrategy)
     where TDbContext : DbContext
 {
+    private EfTransactionOptions? _freeMessageTransactionOptionsCache;
+
     private OutboxOptions Options => outboxOptions.Value;
 
     public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
@@ -48,9 +50,16 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
     public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
     {
+        _freeMessageTransactionOptionsCache ??= new EfTransactionOptions
+        {
+            TransactionScopeOption = TransactionScopeOption.RequiresNew,
+            IsolationLevel = IsolationLevel.ReadCommitted,
+            TimeoutInSeconds = (uint)Options.GetFreeMessagesTimeout.TotalSeconds
+        };
+
         var lockId = Guid.NewGuid(); // Ключ идемпотентности.
         return dbContext.ExecuteInTransactionScopeAsync(
-            new { LockId = lockId, DbContext = dbContext },
+            new {LockId = lockId, DbContext = dbContext},
             async (state, token) =>
             {
                 var sql = GenerateFetchPlatformSpecificSql(state.LockId);
@@ -66,12 +75,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             },
             async (state, token) => await state.DbContext.Set<OutboxEnvelope>()
                 .AnyAsync(x => x.CorrelationId == state.LockId, token).ConfigureAwait(false),
-            new EfTransactionOptions
-            {
-                TransactionScopeOption = TransactionScopeOption.RequiresNew,
-                IsolationLevel = IsolationLevel.ReadCommitted,
-                TimeoutInSeconds = (uint)Options.GetFreeMessagesTimeout.TotalSeconds
-            },
+            _freeMessageTransactionOptionsCache,
             cancellationToken: cancellationToken);
     }
 
@@ -145,7 +149,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
                 return !existLocked;
             },
-            new EfTransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead },
+            EfTransactionOptions.DefaultRepeatableRead,
             cancellationToken: cancellationToken);
 
         static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>
