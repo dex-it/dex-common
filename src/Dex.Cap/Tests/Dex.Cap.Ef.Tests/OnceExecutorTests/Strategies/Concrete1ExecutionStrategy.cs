@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.OnceExecutor;
@@ -13,7 +12,7 @@ namespace Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies
     {
         private readonly TestDbContext _dbContext;
 
-        public IEfTransactionOptions? Options { get; set; } = new EfTransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead };
+        public IEfTransactionOptions? Options { get; set; } = EfTransactionOptions.DefaultRepeatableRead;
 
         public Concrete1ExecutionStrategy(TestDbContext dbContext)
         {

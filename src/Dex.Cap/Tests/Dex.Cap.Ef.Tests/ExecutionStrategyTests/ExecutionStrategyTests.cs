@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
@@ -229,7 +228,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                         await context.ExecuteInTransactionScopeAsync
                         (context, async (c, t) => { await c.Users.AnyAsync(u => u.Name == "user", t); },
                             (_, _) => Task.FromResult(false),
-                            new EfTransactionOptions { TransactionScopeOption = TransactionScopeOption.Suppress },
+                            EfTransactionOptions.DefaultSuppress,
                             cancellationToken: ct);
                     },
                     (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
