@@ -26,7 +26,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     : BaseOutboxDataProvider(retryStrategy)
     where TDbContext : DbContext
 {
-    private EfTransactionOptions? _freeMessageTransactionOptionsCache;
+    private EfTransactionOptions? _transactionOptions;
 
     private OutboxOptions Options => outboxOptions.Value;
 
@@ -50,7 +50,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
     public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
     {
-        _freeMessageTransactionOptionsCache ??= new EfTransactionOptions
+        _transactionOptions ??= new EfTransactionOptions
         {
             TransactionScopeOption = TransactionScopeOption.RequiresNew,
             IsolationLevel = IsolationLevel.ReadCommitted,
@@ -59,7 +59,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
         var lockId = Guid.NewGuid(); // Ключ идемпотентности.
         return dbContext.ExecuteInTransactionScopeAsync(
-            new {LockId = lockId, DbContext = dbContext},
+            new { LockId = lockId, DbContext = dbContext },
             async (state, token) =>
             {
                 var sql = GenerateFetchPlatformSpecificSql(state.LockId);
@@ -75,7 +75,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             },
             async (state, token) => await state.DbContext.Set<OutboxEnvelope>()
                 .AnyAsync(x => x.CorrelationId == state.LockId, token).ConfigureAwait(false),
-            _freeMessageTransactionOptionsCache,
+            _transactionOptions,
             cancellationToken: cancellationToken);
     }
 

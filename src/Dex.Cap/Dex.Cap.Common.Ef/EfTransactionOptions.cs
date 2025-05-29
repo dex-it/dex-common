@@ -13,7 +13,13 @@ public class EfTransactionOptions : IEfTransactionOptions
     public bool ClearChangeTrackerOnRetry { get; init; } = true;
 
     public static readonly EfTransactionOptions Default = new();
-    public static readonly EfTransactionOptions DefaultRepeatableRead = new() {IsolationLevel = IsolationLevel.RepeatableRead};
-    public static readonly EfTransactionOptions DefaultRequiresNew = new() {TransactionScopeOption = TransactionScopeOption.RequiresNew};
-    public static readonly EfTransactionOptions DefaultSuppress = new() {TransactionScopeOption = TransactionScopeOption.Suppress};
+
+    public static readonly EfTransactionOptions DefaultRepeatableRead =
+        new() { IsolationLevel = IsolationLevel.RepeatableRead };
+
+    public static readonly EfTransactionOptions DefaultRequiresNew =
+        new() { TransactionScopeOption = TransactionScopeOption.RequiresNew };
+
+    public static readonly EfTransactionOptions DefaultSuppress = new()
+        { TransactionScopeOption = TransactionScopeOption.Suppress };
 }

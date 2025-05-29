@@ -17,7 +17,8 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 {
     private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } = EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
+        EfTransactionOptions.DefaultRequiresNew;
 
     protected IdempotentConsumer(
         IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor,
@@ -59,7 +60,8 @@ public abstract class IdempotentConsumer<TDbContext>
         _onceExecutor = onceExecutor;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } = EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
+        EfTransactionOptions.DefaultRequiresNew;
 
     /// <summary>
     /// Идемпотентное выполнение операции

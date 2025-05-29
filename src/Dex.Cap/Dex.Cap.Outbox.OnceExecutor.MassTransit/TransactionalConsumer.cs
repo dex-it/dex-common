@@ -24,7 +24,8 @@ public abstract class TransactionalConsumer<TMessage, TDbContext> : BaseConsumer
         _dbContext = context;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } = EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
+        EfTransactionOptions.DefaultRequiresNew;
 
     protected abstract Task ProcessInTransaction(ConsumeContext<TMessage> context);
 
@@ -57,14 +58,14 @@ public abstract class TransactionalConsumer<TDbContext>
         _dbContext = context;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } = EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
+        EfTransactionOptions.DefaultRequiresNew;
 
     protected Task ProcessInTransaction<TMessage>(
         ConsumeContext<TMessage> context,
         Func<TDbContext, CancellationToken, Task> operation)
         where TMessage : class
     {
-
         return _dbContext.ExecuteInTransactionScopeAsync(
             (ConsumeContext: context, DbContext: _dbContext),
             async (state, token) => await operation.Invoke(state.DbContext, token),
