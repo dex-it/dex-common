@@ -8,9 +8,10 @@ namespace Dex.Cap.Outbox
 {
     internal sealed class OutboxService : IOutboxService
     {
+        public IOutboxTypeDiscriminator Discriminator { get; }
+
         private readonly IOutboxDataProvider _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;
-        private readonly IOutboxTypeDiscriminator _discriminator;
 
         public OutboxService(
             IOutboxDataProvider outboxDataProvider,
@@ -19,7 +20,7 @@ namespace Dex.Cap.Outbox
         {
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
+            Discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
         }
 
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null,
@@ -30,7 +31,7 @@ namespace Dex.Cap.Outbox
             var envelopeId = Guid.NewGuid();
 
             var msgBody = _serializer.Serialize(messageType, message);
-            var discriminator = _discriminator.ResolveDiscriminator(messageType);
+            var discriminator = Discriminator.ResolveDiscriminator(messageType);
             var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc,
                 lockTimeout);
 

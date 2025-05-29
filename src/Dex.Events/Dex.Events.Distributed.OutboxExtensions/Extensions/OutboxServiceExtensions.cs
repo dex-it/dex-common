@@ -11,14 +11,14 @@ namespace Dex.Events.Distributed.OutboxExtensions.Extensions
     public static class OutboxServiceExtensions
     {
         public static Task<Guid> EnqueueEventAsync(
-            this IOutboxService<object?> outboxService,
+            this IOutboxService outboxService,
             Guid correlationId,
             object outboxMessage,
             CancellationToken cancellationToken = default)
             => outboxService.EnqueueEventAsync<IBus>(correlationId, outboxMessage, cancellationToken);
 
         public static Task<Guid> EnqueueEventAsync<TBus>(
-            this IOutboxService<object?> outboxService,
+            this IOutboxService outboxService,
             Guid correlationId,
             object outboxMessage,
             CancellationToken cancellationToken = default)
