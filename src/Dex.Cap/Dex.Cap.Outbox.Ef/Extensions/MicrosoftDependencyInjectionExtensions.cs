@@ -1,5 +1,4 @@
 using System;
-using Dex.Cap.Common.Ef;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.EntityFrameworkCore;
@@ -21,16 +20,11 @@ namespace Dex.Cap.Outbox.Ef.Extensions
                 .AddSingleton<IOutboxTypeDiscriminator, TDiscriminator>()
                 .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()
                 .AddSingleton<IOutboxStatistic>(provider => provider.GetRequiredService<IOutboxMetricCollector>())
-                .AddScoped<IOutboxService<IEfTransactionOptions, TDbContext>,
-                    OutboxService<IEfTransactionOptions, TDbContext>>()
-                .AddScoped<IOutboxService>(provider =>
-                    provider.GetRequiredService<IOutboxService<IEfTransactionOptions, TDbContext>>())
+                .AddScoped<IOutboxService, OutboxService>()
                 .AddScoped<IOutboxHandler, MainLoopOutboxHandler<TDbContext>>()
                 .AddScoped<IOutboxJobHandler, OutboxJobHandlerEf<TDbContext>>()
                 .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
-                .AddScoped<IOutboxDataProvider<IEfTransactionOptions, TDbContext>, OutboxDataProviderEf<TDbContext>>()
-                .AddScoped<IOutboxDataProvider>(provider =>
-                    provider.GetRequiredService<IOutboxDataProvider<IEfTransactionOptions, TDbContext>>())
+                .AddScoped<IOutboxDataProvider, OutboxDataProviderEf<TDbContext>>()
                 .AddScoped<IOutboxCleanupDataProvider, OutboxCleanupDataProviderEf<TDbContext>>()
                 .AddScoped<IOutboxMessageHandlerFactory, OutboxMessageHandlerFactory>();
 

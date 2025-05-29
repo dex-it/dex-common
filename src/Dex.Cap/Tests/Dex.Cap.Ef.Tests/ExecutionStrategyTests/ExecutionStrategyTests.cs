@@ -48,40 +48,43 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var correlationId = Guid.NewGuid();
             var name = "mmx_name_" + Guid.NewGuid();
             var anotherName = "mmx_anotherName_" + Guid.NewGuid();
             var failureCount = 2;
 
             // act
-            await outboxService.ExecuteOperationAsync(
-                correlationId,
-                async (outboxContext, token) =>
+            await dbContext.ExecuteInTransactionScopeAsync(
+                dbContext,
+                async (context, token) =>
                 {
-                    await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    await context.Users.AddAsync(new TestUser { Name = name }, token);
                     // обязательно перед вызовом следующего этапа процесса - сохранить данные
-                    await outboxContext.DbContext.SaveChangesAsync(token);
+                    await dbContext.SaveChangesAsync(token);
 
-                    await outboxService.ExecuteOperationAsync(correlationId,
-                        async (context, t) =>
+                    await context.ExecuteInTransactionScopeAsync(
+                        context,
+                        async (dbContextInner, ct) =>
                         {
-                            await context.DbContext.Users.AddAsync(new TestUser { Name = anotherName }, t);
+                            await dbContextInner.Users.AddAsync(new TestUser { Name = anotherName }, ct);
 
                             if (failureCount-- > 0)
                             {
                                 TestContext.WriteLine("throw failure...");
                                 throw new TimeoutException();
                             }
-                        }, cancellationToken: token);
-                }, cancellationToken: CancellationToken.None);
+
+                            await dbContextInner.SaveChangesAsync(ct);
+                        },
+                        (_, _) => Task.FromResult(false),
+                        cancellationToken: token);
+                },
+                (_, _) => Task.FromResult(false));
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            Assert.IsTrue(await outboxService.IsOperationExistsAsync(correlationId, CancellationToken.None));
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == anotherName));
         }

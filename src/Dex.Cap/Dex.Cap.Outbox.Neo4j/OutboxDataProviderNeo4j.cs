@@ -16,24 +16,13 @@ namespace Dex.Cap.Outbox.Neo4j
         ITransactionalGraphClient graphClient,
         IOptions<OutboxOptions> outboxOptions,
         IOutboxRetryStrategy retryStrategy)
-        : BaseOutboxDataProvider<INeo4jTransactionOptions, ITransactionalGraphClient>(retryStrategy)
+        : BaseOutboxDataProvider(retryStrategy)
     {
         private readonly ITransactionalGraphClient _graphClient =
             graphClient ?? throw new ArgumentNullException(nameof(graphClient));
 
         private readonly OutboxOptions _outboxOptions =
             outboxOptions.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
-
-        public override Task ExecuteActionInTransaction<TState>(
-            Guid correlationId,
-            IOutboxService<INeo4jTransactionOptions, ITransactionalGraphClient> outboxService,
-            TState state,
-            Func<IOutboxContext<ITransactionalGraphClient, TState>, CancellationToken, Task> action,
-            INeo4jTransactionOptions? options,
-            CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
 
         public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope,
             CancellationToken cancellationToken)

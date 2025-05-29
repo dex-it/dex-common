@@ -30,6 +30,7 @@
     <!--Для NuGet-->
 
     <ItemGroup>
+        <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj" />
         <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
     </ItemGroup>
 

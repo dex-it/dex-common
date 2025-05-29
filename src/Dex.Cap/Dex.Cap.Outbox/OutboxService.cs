@@ -1,40 +1,25 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    internal sealed class OutboxService<TOptions, TDbContext> : IOutboxService<TOptions, TDbContext>
-        where TOptions : ITransactionOptions
+    internal sealed class OutboxService : IOutboxService
     {
-        public IOutboxTypeDiscriminator Discriminator { get; }
-
-        private readonly IOutboxDataProvider<TOptions, TDbContext> _outboxDataProvider;
+        private readonly IOutboxDataProvider _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;
+        private readonly IOutboxTypeDiscriminator _discriminator;
 
         public OutboxService(
-            IOutboxDataProvider<TOptions, TDbContext> outboxDataProvider,
+            IOutboxDataProvider outboxDataProvider,
             IOutboxSerializer serializer,
             IOutboxTypeDiscriminator discriminator)
         {
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            Discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
-        }
-
-        public Task ExecuteOperationAsync<TState>(
-            Guid correlationId, TState state,
-            Func<IOutboxContext<TDbContext, TState>, CancellationToken, Task> action,
-            TOptions? options = default,
-            CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(action);
-
-            return _outboxDataProvider
-                .ExecuteActionInTransaction(correlationId, this, state, action, options, cancellationToken);
+            _discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
         }
 
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null,
@@ -42,12 +27,10 @@ namespace Dex.Cap.Outbox
             where T : class
         {
             var messageType = message.GetType();
-            var envelopeId = messageType == typeof(EmptyOutboxMessage)
-                ? Guid.Empty
-                : Guid.NewGuid();
+            var envelopeId = Guid.NewGuid();
 
             var msgBody = _serializer.Serialize(messageType, message);
-            var discriminator = Discriminator.ResolveDiscriminator(messageType);
+            var discriminator = _discriminator.ResolveDiscriminator(messageType);
             var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc,
                 lockTimeout);
 

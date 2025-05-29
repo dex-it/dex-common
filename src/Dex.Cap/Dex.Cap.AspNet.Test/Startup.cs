@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Ef;
 using Dex.Cap.Outbox.AspNetScheduler;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
@@ -100,7 +99,7 @@ namespace Dex.Cap.AspNet.Test
                             for (var i = 0; i < 10; i++)
                             {
                                 var client = scope2.ServiceProvider
-                                    .GetRequiredService<IOutboxService<IEfTransactionOptions, TestDbContext>>();
+                                    .GetRequiredService<IOutboxService>();
                                 var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
                                 await client.EnqueueAsync(Guid.NewGuid(),
                                     new TestOutboxCommand { Args = "hello world" });

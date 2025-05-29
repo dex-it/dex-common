@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
-using Dex.Cap.Outbox.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -117,10 +116,7 @@ internal class OutboxJobHandlerEf<TDbContext>(
 
         if (msg is not null)
         {
-            if (msg is not EmptyOutboxMessage)
-            {
-                await ProcessOutboxMessageScoped(msg, cancellationToken).ConfigureAwait(false);
-            }
+            await ProcessOutboxMessageScoped(msg, cancellationToken).ConfigureAwait(false);
 
             await dataProvider.JobSucceed(job, cancellationToken).ConfigureAwait(false);
         }

@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
     public interface IOutboxService
     {
-        /// <summary>
-        /// Outbox Type Discriminator
-        /// </summary>
-        IOutboxTypeDiscriminator Discriminator { get; }
-
         /// <summary>
         /// Perform only publish outbox message to queue.
         /// This method don't check Transaction, only append outbox message to change context.
@@ -31,42 +25,6 @@ namespace Dex.Cap.Outbox.Interfaces
         /// </summary>
         Task<bool> IsOperationExistsAsync(
             Guid correlationId,
-            CancellationToken cancellationToken = default);
-    }
-
-    public interface IOutboxService<in TOptions, out TDbContext> : IOutboxService
-        where TOptions : ITransactionOptions
-    {
-        /// <summary>
-        /// Execute operation and publish message to outbox queue into transaction.
-        /// </summary>
-        /// <param name="correlationId">CorrelationId</param>
-        /// <param name="action">A delegate representing an executable operation that returns Task />.</param>
-        /// <param name="options">TransactionOptions</param>
-        /// <param name="cancellationToken">CancellationToken</param>
-        Task ExecuteOperationAsync(
-            Guid correlationId,
-            Func<IOutboxContext<TDbContext, object?>, CancellationToken, Task> action,
-            TOptions? options = default,
-            CancellationToken cancellationToken = default)
-        {
-            return ExecuteOperationAsync(correlationId, default, action, options, cancellationToken);
-        }
-
-        /// <summary>
-        /// Execute operation and publish message to outbox queue into transaction.
-        /// </summary>
-        /// <param name="correlationId">CorrelationId</param>
-        /// <param name="state">The state that will be passed to the usefulAction.</param>
-        /// <param name="action">A delegate representing an executable operation that returns Task />.</param>
-        /// <param name="options">TransactionOptions</param>
-        /// <param name="cancellationToken">CancellationToken</param>
-        /// <typeparam name="TState">The type of the state.</typeparam>
-        Task ExecuteOperationAsync<TState>(
-            Guid correlationId,
-            TState state,
-            Func<IOutboxContext<TDbContext, TState>, CancellationToken, Task> action,
-            TOptions? options = default,
             CancellationToken cancellationToken = default);
     }
 }

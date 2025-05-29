@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
 using Dex.Cap.Outbox.Models;
@@ -9,20 +8,10 @@ using Dex.Cap.Outbox.Options;
 
 namespace Dex.Cap.Outbox
 {
-    internal abstract class BaseOutboxDataProvider<TOptions, TDbContext>(IOutboxRetryStrategy retryStrategy)
-        : IOutboxDataProvider<TOptions, TDbContext>
-        where TOptions : ITransactionOptions
+    internal abstract class BaseOutboxDataProvider(IOutboxRetryStrategy retryStrategy) : IOutboxDataProvider
     {
         private readonly IOutboxRetryStrategy _retryStrategy =
             retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
-
-        public abstract Task ExecuteActionInTransaction<TState>(
-            Guid correlationId,
-            IOutboxService<TOptions, TDbContext> outboxService,
-            TState state,
-            Func<IOutboxContext<TDbContext, TState>, CancellationToken, Task> action,
-            TOptions? options,
-            CancellationToken cancellationToken);
 
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
         public abstract Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);

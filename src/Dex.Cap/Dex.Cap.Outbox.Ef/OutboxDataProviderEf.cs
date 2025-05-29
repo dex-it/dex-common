@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dex.Cap.Common.Ef;
-using Dex.Cap.Common.Ef.Exceptions;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
@@ -24,55 +23,10 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
     IOutboxRetryStrategy retryStrategy,
     IOutboxTypeDiscriminator outboxTypeDiscriminator)
-    : BaseOutboxDataProvider<IEfTransactionOptions, TDbContext>(retryStrategy)
+    : BaseOutboxDataProvider(retryStrategy)
     where TDbContext : DbContext
 {
     private OutboxOptions Options => outboxOptions.Value;
-
-    public override Task ExecuteActionInTransaction<TState>(
-        Guid correlationId,
-        IOutboxService<IEfTransactionOptions, TDbContext> outboxService,
-        TState state,
-        Func<IOutboxContext<TDbContext, TState>, CancellationToken, Task> action,
-        IEfTransactionOptions? options,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(outboxService);
-        ArgumentNullException.ThrowIfNull(action);
-
-        options ??= new EfTransactionOptions();
-
-        return dbContext.ExecuteInTransactionScopeAsync(
-            state: (_dbContext: dbContext, outboxService, state),
-            operation: async (st, ct) =>
-            {
-                var (context, outbox, outerState) = st;
-
-                if (context.ChangeTracker.HasChanges())
-                    throw new UnsavedChangesDetectedException(context,
-                        "Can't start outbox action, unsaved changes detected");
-
-                var outboxContext =
-                    new OutboxContext<IEfTransactionOptions, TDbContext, TState>(correlationId, outbox, context,
-                        outerState);
-                await action(outboxContext, ct).ConfigureAwait(false);
-
-                // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
-                var isOutboxMessageExists = context.ChangeTracker.Entries<OutboxEnvelope>()
-                    .Any(x => x.State is EntityState.Added or EntityState.Modified);
-
-                if (!isOutboxMessageExists)
-                {
-                    await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
-                        .ConfigureAwait(false);
-                }
-
-                await context.SaveChangesAsync(ct).ConfigureAwait(false);
-            },
-            verifySucceeded: async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
-            options: options,
-            cancellationToken: cancellationToken);
-    }
 
     public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
     {
