@@ -14,7 +14,7 @@ namespace Dex.Extensions
             return Regex.Replace(source, pattern, replacement);
         }
 
-        public static bool IsNullOrEmpty(this string source)
+        public static bool IsNullOrEmpty(this string? source)
         {
             return string.IsNullOrEmpty(source);
         }
