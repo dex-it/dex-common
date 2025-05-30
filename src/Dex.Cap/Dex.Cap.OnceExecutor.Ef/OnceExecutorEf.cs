@@ -29,11 +29,7 @@ namespace Dex.Cap.OnceExecutor.Ef
             CancellationToken cancellationToken)
             where TResult : default
         {
-            options ??= new EfTransactionOptions();
-
-            return Context.ExecuteInTransactionScopeAsync(
-                    operation, verifySucceeded, options.TransactionScopeOption, options.IsolationLevel,
-                    options.TimeoutInSeconds, cancellationToken);
+            return Context.ExecuteInTransactionScopeAsync(operation, verifySucceeded, options, cancellationToken);
         }
 
         protected override Task<bool> IsAlreadyExecutedAsync(string idempotentKey,

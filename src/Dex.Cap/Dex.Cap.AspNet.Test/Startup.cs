@@ -43,26 +43,27 @@ namespace Dex.Cap.AspNet.Test
             // configure resource
             var serviceName = "dex.cap.aspnet.test";
             var serviceVersion = "1.0";
-            var resourceBuilder =
-                ResourceBuilder
-                    .CreateDefault()
-                    .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
-                    .AddAttributes(new Dictionary<string, object>
-                    {
-                        ["environment.name"] = "test",
-                        ["team.name"] = "backend"
-                    });
+            ResourceBuilder
+                .CreateDefault()
+                .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["environment.name"] = "test",
+                    ["team.name"] = "backend"
+                });
 
             // add telemetry exporter
             services.AddOpenTelemetry()
-                .ConfigureResource(
-                    builder =>
-                    {
-                        builder.AddService("outbox"); // sample to export
-                    }).WithMetrics(builder => builder.AddConsoleExporter());
+                .ConfigureResource(builder =>
+                {
+                    builder.AddService("outbox"); // sample to export
+                }).WithMetrics(builder => builder.AddConsoleExporter());
 
 
-            services.AddDbContext<TestDbContext>(builder => { builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")); });
+            services.AddDbContext<TestDbContext>(builder =>
+            {
+                builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
+            });
 
             services.AddOutbox<TestDbContext, TestDiscriminator>();
             services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
@@ -97,9 +98,11 @@ namespace Dex.Cap.AspNet.Test
                             using var scope2 = app.ApplicationServices.CreateScope();
                             for (var i = 0; i < 10; i++)
                             {
-                                var client = scope2.ServiceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+                                var client = scope2.ServiceProvider
+                                    .GetRequiredService<IOutboxService>();
                                 var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
-                                await client.EnqueueAsync(Guid.NewGuid(), new TestOutboxCommand { Args = "hello world" });
+                                await client.EnqueueAsync(Guid.NewGuid(),
+                                    new TestOutboxCommand { Args = "hello world" });
                                 await db2.SaveChangesAsync();
                             }
 
@@ -114,7 +117,8 @@ namespace Dex.Cap.AspNet.Test
 
         private static async Task HealthReportResponseWriter(HttpContext context, HealthReport report)
         {
-            var jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+            var jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                { Converters = { new JsonStringEnumConverter() } };
             await context.Response.WriteAsync(JsonSerializer.Serialize(new
                 {
                     report.Status,

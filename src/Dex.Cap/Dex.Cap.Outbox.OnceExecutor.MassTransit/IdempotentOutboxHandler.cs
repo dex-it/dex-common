@@ -1,4 +1,3 @@
-using System.Transactions;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Interfaces;
 using Dex.Cap.OnceExecutor;
@@ -10,16 +9,17 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// Идемпотентный обработчик сообщений аутбокса
 /// </summary>
 public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
-    where TMessage : class
+    where TMessage : class, IIdempotentKey
 {
-    private readonly EfTransactionOptions _transactionOptions;
     private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
 
     protected IdempotentOutboxHandler(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
     {
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
-        _transactionOptions = new EfTransactionOptions { TransactionScopeOption = TransactionScopeOption.RequiresNew };
     }
+
+    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
+        EfTransactionOptions.DefaultRequiresNew;
 
     protected abstract Task IdempotentProcess(TMessage message, CancellationToken cancellationToken);
 
@@ -27,20 +27,13 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
 
     public Task Process(TMessage outboxMessage, CancellationToken cancellationToken)
     {
-        _transactionOptions.TimeoutInSeconds = GetTimeoutInSeconds();
-        _transactionOptions.IsolationLevel = GetIsolationLevel();
-
         return _onceExecutor.ExecuteAsync(
             GetIdempotentKey(outboxMessage),
             async (_, token) => await IdempotentProcess(outboxMessage, token).ConfigureAwait(false),
-            options: _transactionOptions,
+            options: TransactionOptions,
             cancellationToken: cancellationToken
         );
     }
-
-    protected virtual uint GetTimeoutInSeconds() => _transactionOptions.TimeoutInSeconds;
-
-    protected virtual IsolationLevel GetIsolationLevel() => _transactionOptions.IsolationLevel;
 
     private static string GetIdempotentKeyInner<T>(T message)
         where T : class

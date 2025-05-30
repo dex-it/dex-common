@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-using Dex.Cap.Common.Ef.Exceptions;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Jobs;
@@ -22,54 +22,13 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     IOptions<OutboxOptions> outboxOptions,
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
     IOutboxRetryStrategy retryStrategy,
-    IOutboxTypeDiscriminator outboxTypeDiscriminator) : BaseOutboxDataProvider<TDbContext>(retryStrategy)
+    IOutboxTypeDiscriminator outboxTypeDiscriminator)
+    : BaseOutboxDataProvider(retryStrategy)
     where TDbContext : DbContext
 {
+    private EfTransactionOptions? _transactionOptions;
+
     private OutboxOptions Options => outboxOptions.Value;
-
-    public override Task ExecuteActionInTransaction<TState>(Guid correlationId,
-        IOutboxService<TDbContext> outboxService, TState state,
-        Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(outboxService);
-        ArgumentNullException.ThrowIfNull(action);
-
-        return dbContext.ExecuteInTransactionScopeAsync(
-            (_dbContext: dbContext, outboxService, state),
-            async (st, ct) =>
-            {
-                var (context, outbox, outerState) = st;
-
-                if (context.ChangeTracker.HasChanges())
-                    throw new UnsavedChangesDetectedException(context,
-                        "Can't start outbox action, unsaved changes detected");
-
-                try
-                {
-                    var outboxContext =
-                        new OutboxContext<TDbContext, TState>(correlationId, outbox, context, outerState);
-                    await action(ct, outboxContext).ConfigureAwait(false);
-
-                    // проверяем есть ли в изменениях хоть одно аутбокс сообщение, если нет добавляем пустышку
-                    var isOutboxMessageExists = context.ChangeTracker.Entries<OutboxEnvelope>()
-                        .Any(x => x.State is EntityState.Added or EntityState.Modified);
-
-                    if (!isOutboxMessageExists)
-                    {
-                        await outbox.EnqueueAsync(correlationId, EmptyOutboxMessage.Empty, cancellationToken: ct)
-                            .ConfigureAwait(false);
-                    }
-
-                    await context.SaveChangesAsync(ct).ConfigureAwait(false);
-                }
-                finally
-                {
-                    context.ChangeTracker.Clear();
-                }
-            },
-            async (_, ct) => await IsExists(correlationId, ct).ConfigureAwait(false),
-            cancellationToken: cancellationToken);
-    }
 
     public override Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
     {
@@ -91,6 +50,13 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
     public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
     {
+        _transactionOptions ??= new EfTransactionOptions
+        {
+            TransactionScopeOption = TransactionScopeOption.RequiresNew,
+            IsolationLevel = IsolationLevel.ReadCommitted,
+            TimeoutInSeconds = (uint)Options.GetFreeMessagesTimeout.TotalSeconds
+        };
+
         var lockId = Guid.NewGuid(); // Ключ идемпотентности.
         return dbContext.ExecuteInTransactionScopeAsync(
             new { LockId = lockId, DbContext = dbContext },
@@ -109,9 +75,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             },
             async (state, token) => await state.DbContext.Set<OutboxEnvelope>()
                 .AnyAsync(x => x.CorrelationId == state.LockId, token).ConfigureAwait(false),
-            TransactionScopeOption.RequiresNew,
-            IsolationLevel.ReadCommitted,
-            (uint)Options.GetFreeMessagesTimeout.TotalSeconds,
+            _transactionOptions,
             cancellationToken: cancellationToken);
     }
 
@@ -185,7 +149,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
                 return !existLocked;
             },
-            isolationLevel: IsolationLevel.RepeatableRead,
+            EfTransactionOptions.DefaultRepeatableRead,
             cancellationToken: cancellationToken);
 
         static Expression<Func<OutboxEnvelope, bool>> WhereLockId(Guid messageId, Guid lockId) =>

@@ -4,10 +4,11 @@
         <TargetFramework>net8.0</TargetFramework>
         <PackageTags>outbox business-transaction consistency NEO4J implementation</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.3</PackageVersion>
+        <PackageVersion>8.1.0</PackageVersion>
         <VersionSuffix>alpha</VersionSuffix>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -29,6 +30,7 @@
     <!--Для NuGet-->
 
     <ItemGroup>
+        <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj" />
         <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
     </ItemGroup>
 

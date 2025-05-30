@@ -6,15 +6,15 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox
 {
-    internal sealed class OutboxService<TDbContext> : IOutboxService<TDbContext>
+    internal sealed class OutboxService : IOutboxService
     {
         public IOutboxTypeDiscriminator Discriminator { get; }
 
-        private readonly IOutboxDataProvider<TDbContext> _outboxDataProvider;
+        private readonly IOutboxDataProvider _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;
 
         public OutboxService(
-            IOutboxDataProvider<TDbContext> outboxDataProvider,
+            IOutboxDataProvider outboxDataProvider,
             IOutboxSerializer serializer,
             IOutboxTypeDiscriminator discriminator)
         {
@@ -23,24 +23,12 @@ namespace Dex.Cap.Outbox
             Discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
         }
 
-        public Task ExecuteOperationAsync<TState>(Guid correlationId, TState state,
-            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action,
-            CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(action);
-
-            return _outboxDataProvider
-                .ExecuteActionInTransaction(correlationId, this, state, action, cancellationToken);
-        }
-
         public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null,
             TimeSpan? lockTimeout = null, CancellationToken cancellationToken = default)
             where T : class
         {
             var messageType = message.GetType();
-            var envelopeId = messageType == typeof(EmptyOutboxMessage)
-                ? Guid.Empty
-                : Guid.NewGuid();
+            var envelopeId = Guid.NewGuid();
 
             var msgBody = _serializer.Serialize(messageType, message);
             var discriminator = Discriminator.ResolveDiscriminator(messageType);

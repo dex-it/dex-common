@@ -8,12 +8,10 @@ using Dex.Cap.Outbox.Options;
 
 namespace Dex.Cap.Outbox
 {
-    internal abstract class BaseOutboxDataProvider<TDbContext>(IOutboxRetryStrategy retryStrategy) : IOutboxDataProvider<TDbContext>
+    internal abstract class BaseOutboxDataProvider(IOutboxRetryStrategy retryStrategy) : IOutboxDataProvider
     {
-        private readonly IOutboxRetryStrategy _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
-
-        public abstract Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService,
-            TState state, Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
+        private readonly IOutboxRetryStrategy _retryStrategy =
+            retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
 
         public abstract Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
         public abstract Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
@@ -22,8 +20,11 @@ namespace Dex.Cap.Outbox
 
         public abstract Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken);
 
-        public virtual Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null,
-            Exception? exception = null)
+        public virtual Task JobFail(
+            IOutboxLockedJob outboxJob,
+            string? errorMessage = null,
+            Exception? exception = null,
+            CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(outboxJob);
 
@@ -33,8 +34,8 @@ namespace Dex.Cap.Outbox
             outboxJob.Envelope.ErrorMessage = errorMessage;
             outboxJob.Envelope.Error = exception?.ToString();
 
-            var calculatedStartDate = _retryStrategy
-                .CalculateNextStartDate(new OutboxRetryStrategyOptions(outboxJob.Envelope.StartAtUtc, outboxJob.Envelope.Retries));
+            var calculatedStartDate = _retryStrategy.CalculateNextStartDate(
+                new OutboxRetryStrategyOptions(outboxJob.Envelope.StartAtUtc, outboxJob.Envelope.Retries));
             outboxJob.Envelope.StartAtUtc = calculatedStartDate;
             outboxJob.Envelope.ScheduledStartIndexing = calculatedStartDate;
 

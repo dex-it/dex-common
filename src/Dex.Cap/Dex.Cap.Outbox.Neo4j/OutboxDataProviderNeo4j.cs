@@ -16,18 +16,16 @@ namespace Dex.Cap.Outbox.Neo4j
         ITransactionalGraphClient graphClient,
         IOptions<OutboxOptions> outboxOptions,
         IOutboxRetryStrategy retryStrategy)
-        : BaseOutboxDataProvider<ITransactionalGraphClient>(retryStrategy)
+        : BaseOutboxDataProvider(retryStrategy)
     {
-        private readonly ITransactionalGraphClient _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
-        private readonly OutboxOptions _outboxOptions = outboxOptions?.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
+        private readonly ITransactionalGraphClient _graphClient =
+            graphClient ?? throw new ArgumentNullException(nameof(graphClient));
 
-        public override Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<ITransactionalGraphClient> outboxService, TState state,
-            Func<CancellationToken, IOutboxContext<ITransactionalGraphClient, TState>, Task> action, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+        private readonly OutboxOptions _outboxOptions =
+            outboxOptions.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
 
-        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken)
+        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope,
+            CancellationToken cancellationToken)
         {
             await _graphClient.Cypher
                 .Create($"(outbox:{nameof(Outbox)})")
@@ -70,7 +68,8 @@ namespace Dex.Cap.Outbox.Neo4j
             throw new NotImplementedException();
         }
 
-        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope, CancellationToken cancellationToken)
+        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope,
+            CancellationToken cancellationToken)
         {
             await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
                 .WithParam("id", outboxEnvelope.Envelope.Id)

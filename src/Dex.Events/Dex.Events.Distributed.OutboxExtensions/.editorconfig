@@ -1,3 +1,13 @@
 [*.cs]
 
+# CS1591: Отсутствует комментарий XML дл¤ открытого видимого типа или члена
+dotnet_diagnostic.CS1591.severity = none
+
+# CA1031: Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = none
+
+# CA1812: Avoid uninstantiated internal classes
 dotnet_diagnostic.CA1812.severity = none
+
+#[CA1848] For improved performance, use the LoggerMessage delegates instead of calling 'LoggerExtensions.LogTrace(ILogger, string, params object[])'
+dotnet_diagnostic.CA1848.severity = none

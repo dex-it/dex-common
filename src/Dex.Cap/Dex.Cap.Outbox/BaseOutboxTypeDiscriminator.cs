@@ -2,7 +2,6 @@
 using System.Linq;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
-using Dex.Cap.Outbox.Models;
 using Dex.Types;
 
 namespace Dex.Cap.Outbox;
@@ -10,11 +9,6 @@ namespace Dex.Cap.Outbox;
 public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
 {
     private UniqueValueDictionary<string, Type> Discriminator { get; } = new();
-
-    protected BaseOutboxTypeDiscriminator()
-    {
-        Add<EmptyOutboxMessage>(nameof(EmptyOutboxMessage));
-    }
 
     public string[] GetDiscriminators()
     {

@@ -6,22 +6,17 @@ using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox.Interfaces
 {
-    internal interface IOutboxDataProvider<TDbContext> : IOutboxDataProvider
-    {
-        Task ExecuteActionInTransaction<TState>(Guid correlationId, IOutboxService<TDbContext> outboxService, TState state,
-            Func<CancellationToken, IOutboxContext<TDbContext, TState>, Task> action, CancellationToken cancellationToken);
-    }
-
     internal interface IOutboxDataProvider
     {
-        Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken);
-        Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken);
+        Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken = default);
+        Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope, CancellationToken cancellationToken = default);
+        Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken = default);
 
-        Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken);
-        Task JobFail(IOutboxLockedJob outboxJob, CancellationToken cancellationToken, string? errorMessage = null, Exception? exception = null);
-        Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken);
+        Task JobFail(IOutboxLockedJob outboxJob, string? errorMessage = null, Exception? exception = null,
+            CancellationToken cancellationToken = default);
 
-        Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken);
+        Task JobSucceed(IOutboxLockedJob outboxJob, CancellationToken cancellationToken = default);
+        Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken = default);
         int GetFreeMessagesCount();
     }
 }

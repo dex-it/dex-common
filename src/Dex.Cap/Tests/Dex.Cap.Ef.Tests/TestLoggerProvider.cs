@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
+#pragma warning disable CS8633 // Nullability in constraints for type parameter doesn't match the constraints for type parameter in implicitly implemented interface method'.
 
 namespace Dex.Cap.Ef.Tests
 {

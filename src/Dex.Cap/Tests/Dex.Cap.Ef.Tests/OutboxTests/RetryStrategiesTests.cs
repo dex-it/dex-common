@@ -30,7 +30,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             TestErrorCommandHandler.Reset();
 
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
             var correlationId = Guid.NewGuid();
             await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 2 });
             await SaveChanges(serviceProvider);

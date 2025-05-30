@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
@@ -48,33 +47,43 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
             var sp = InitServiceCollection()
                 .BuildServiceProvider();
 
-            var outboxService = sp.GetRequiredService<IOutboxService<TestDbContext>>();
             var dbContext = sp.GetRequiredService<TestDbContext>();
-            var correlationId = Guid.NewGuid();
-            var name = "mmx_" + Guid.NewGuid();
-            var anotherName = "mmx_" + Guid.NewGuid();
+            var name = "mmx_name_" + Guid.NewGuid();
+            var anotherName = "mmx_anotherName_" + Guid.NewGuid();
+            var failureCount = 2;
 
             // act
-            await outboxService.ExecuteOperationAsync(
-                correlationId,
-                async (token, outboxContext) =>
+            await dbContext.ExecuteInTransactionScopeAsync(
+                dbContext,
+                async (context, token) =>
                 {
-                    await outboxContext.DbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    await context.Users.AddAsync(new TestUser { Name = name }, token);
                     // обязательно перед вызовом следующего этапа процесса - сохранить данные
-                    await outboxContext.DbContext.SaveChangesAsync(token);
+                    await dbContext.SaveChangesAsync(token);
 
-                    await outboxService.ExecuteOperationAsync(correlationId,
-                        async (t, context) =>
+                    await context.ExecuteInTransactionScopeAsync(
+                        context,
+                        async (dbContextInner, ct) =>
                         {
-                            await context.DbContext.Users.AddAsync(new TestUser { Name = anotherName }, t);
-                        }, token);
-                }, CancellationToken.None);
+                            await dbContextInner.Users.AddAsync(new TestUser { Name = anotherName }, ct);
+
+                            if (failureCount-- > 0)
+                            {
+                                TestContext.WriteLine("throw failure...");
+                                throw new TimeoutException();
+                            }
+
+                            await dbContextInner.SaveChangesAsync(ct);
+                        },
+                        (_, _) => Task.FromResult(false),
+                        cancellationToken: token);
+                },
+                (_, _) => Task.FromResult(false));
 
             var handler = sp.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
 
             // check
-            Assert.IsTrue(await outboxService.IsOperationExistsAsync(correlationId, CancellationToken.None));
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == anotherName));
         }
@@ -219,7 +228,7 @@ namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests
                         await context.ExecuteInTransactionScopeAsync
                         (context, async (c, t) => { await c.Users.AnyAsync(u => u.Name == "user", t); },
                             (_, _) => Task.FromResult(false),
-                            TransactionScopeOption.Suppress,
+                            EfTransactionOptions.DefaultSuppress,
                             cancellationToken: ct);
                     },
                     (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));

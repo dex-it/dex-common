@@ -13,8 +13,6 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
         private readonly TestDbContext _dbContext;
         public static int CountDown { get; set; }
 
-        public bool IsTransactional => true;
-
         public IdempotentCreateUserCommandHandler(IOnceExecutor<IEfTransactionOptions, TestDbContext> onceExecutor,
             TestDbContext dbContext) : base(onceExecutor)
         {

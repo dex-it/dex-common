@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Events.Distributed.Extensions;
 using Dex.Events.Distributed.OutboxExtensions.Extensions;
@@ -33,14 +34,17 @@ namespace Dex.Events.Distributed.Tests.Tests
                         // main approach
                         if (isMainApproach)
                         {
-                            busFactoryConfigurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context,
-                                serviceName: "Test");
+                            busFactoryConfigurator
+                                .SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(
+                                    context, serviceName: "Test");
                         }
                         else
                         {
                             // alternate
-                            context.RegisterReceiveEndpoint<OnUserAdded, TestOnUserAddedHandler>(busFactoryConfigurator, createSeparateQueue: true);
-                            context.RegisterReceiveEndpoint<OnUserAdded, TestOnUserAddedHandler2>(busFactoryConfigurator, createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<OnUserAdded, TestOnUserAddedHandler>(busFactoryConfigurator,
+                                createSeparateQueue: true);
+                            context.RegisterReceiveEndpoint<OnUserAdded, TestOnUserAddedHandler2>(
+                                busFactoryConfigurator, createSeparateQueue: true);
                         }
                     });
                 })
@@ -98,10 +102,13 @@ namespace Dex.Events.Distributed.Tests.Tests
                 {
                     c.RegisterEventHandler<TestOnUserAddedHandler>(_ => { });
                     c.RegisterEventHandler<TestOnUserAddedHandlerRaiseException>(x =>
-                        x.UseMessageRetry(rc => rc.SetRetryPolicy(filter => filter.Interval(5, TimeSpan.FromMilliseconds(50)))));
+                        x.UseMessageRetry(rc =>
+                            rc.SetRetryPolicy(filter => filter.Interval(5, TimeSpan.FromMilliseconds(50)))));
 
                     c.UsingInMemory((context, configurator) =>
-                        configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandlerRaiseException>(context));
+                        configurator
+                            .SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler,
+                                TestOnUserAddedHandlerRaiseException>(context));
                 })
                 .BuildServiceProvider();
 
@@ -137,7 +144,9 @@ namespace Dex.Events.Distributed.Tests.Tests
                 {
                     c.RegisterAllEventHandlers();
                     c.UsingInMemory((context, configurator) =>
-                        configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context));
+                        configurator
+                            .SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(
+                                context));
                 })
                 .BuildServiceProvider();
 
@@ -175,7 +184,9 @@ namespace Dex.Events.Distributed.Tests.Tests
                 {
                     c.RegisterAllEventHandlers();
                     c.UsingInMemory((context, configurator) =>
-                        configurator.SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(context));
+                        configurator
+                            .SubscribeEventHandlers<OnUserAdded, TestOnUserAddedHandler, TestOnUserAddedHandler2>(
+                                context));
                 })
                 .BuildServiceProvider();
 
@@ -187,20 +198,25 @@ namespace Dex.Events.Distributed.Tests.Tests
             var harness = serviceProvider.GetRequiredService<IBusControl>();
             await harness.StartAsync();
 
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
             var userId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-            await outboxService.ExecuteOperationAsync(Guid.NewGuid(), new { Entity = user },
-                async (token, outboxContext) =>
+            await dbContext.ExecuteInTransactionScopeAsync(
+                new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
+                async (state, token) =>
                 {
-                    var entity = outboxContext.State.Entity;
-                    await outboxContext.DbContext.Users.AddAsync(entity, token);
+                    var entity = state.Entity;
+                    await state.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                    await outboxContext.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id }, token);
-                }, CancellationToken.None);
+                    await state.OutboxService.EnqueueAsync(correlationId,
+                        new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(correlationId,
+                        new OnUserAdded { CustomerId = entity.Id }, token);
+                    await state.DbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -233,20 +249,26 @@ namespace Dex.Events.Distributed.Tests.Tests
             var harness = serviceProvider.GetRequiredService<IBusControl>();
             await harness.StartAsync();
 
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
             var userId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-            await outboxService.ExecuteOperationAsync(Guid.NewGuid(), new { Entity = user },
-                async (token, outboxContext) =>
+            await dbContext.ExecuteInTransactionScopeAsync(
+                new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
+                async (state, token) =>
                 {
-                    var entity = outboxContext.State.Entity;
-                    await outboxContext.DbContext.Users.AddAsync(entity, token);
+                    var entity = state.Entity;
+                    await state.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                    await outboxContext.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id }, token);
-                }, CancellationToken.None);
+                    await state.OutboxService.EnqueueAsync(correlationId,
+                        new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(correlationId,
+                        new OnUserAdded { CustomerId = entity.Id }, token);
+                    await state.DbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -263,8 +285,10 @@ namespace Dex.Events.Distributed.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IBus>>, TestOutboxDistributedEventHandler<IBus>>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IExternalBus>>, TestOutboxDistributedEventHandler<IExternalBus>>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IBus>>,
+                    TestOutboxDistributedEventHandler<IBus>>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IExternalBus>>,
+                    TestOutboxDistributedEventHandler<IExternalBus>>()
                 .BuildServiceProvider();
 
             var count = 0;
@@ -272,21 +296,29 @@ namespace Dex.Events.Distributed.Tests.Tests
             TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
             TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
             var userId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-            await outboxService.ExecuteOperationAsync(Guid.NewGuid(), new { Entity = user },
-                async (token, outboxContext) =>
+            await dbContext.ExecuteInTransactionScopeAsync(
+                new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
+                async (state, token) =>
                 {
-                    var entity = outboxContext.State.Entity;
-                    await outboxContext.DbContext.Users.AddAsync(entity, token);
+                    var entity = state.Entity;
+                    await state.DbContext.Users.AddAsync(entity, token);
 
-                    await outboxContext.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                    await outboxContext.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id }, token);
-                    await outboxContext.EnqueueEventAsync<IExternalBus>(new OnUserAdded { CustomerId = entity.Id }, token);
-                }, CancellationToken.None);
+                    await state.OutboxService.EnqueueAsync(correlationId,
+                        new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(correlationId,
+                        new OnUserAdded { CustomerId = entity.Id }, token);
+                    await state.OutboxService.EnqueueEventAsync<IExternalBus>(correlationId,
+                        new OnUserAdded { CustomerId = entity.Id },
+                        token);
+                    await state.DbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
@@ -302,8 +334,10 @@ namespace Dex.Events.Distributed.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IBus>>, TestOutboxDistributedEventHandler<IBus>>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IExternalBus>>, TestOutboxDistributedEventHandler<IExternalBus>>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IBus>>,
+                    TestOutboxDistributedEventHandler<IBus>>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IExternalBus>>,
+                    TestOutboxDistributedEventHandler<IExternalBus>>()
                 .BuildServiceProvider();
 
             var count = 0;
@@ -311,7 +345,7 @@ namespace Dex.Events.Distributed.Tests.Tests
             TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
             TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService<TestDbContext>>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
             var userId = Guid.NewGuid();
@@ -319,14 +353,17 @@ namespace Dex.Events.Distributed.Tests.Tests
 
             dbContext.Set<User>().Add(user);
             var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world" }, cancellationToken: CancellationToken.None);
-            await outboxService.EnqueueEventAsync(correlationId, new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
-            await outboxService.EnqueueEventAsync<IExternalBus>(correlationId, new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
+            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world" },
+                cancellationToken: CancellationToken.None);
+            await outboxService.EnqueueEventAsync(correlationId, new OnUserAdded { CustomerId = user.Id },
+                CancellationToken.None);
+            await outboxService.EnqueueEventAsync<IExternalBus>(correlationId, new OnUserAdded { CustomerId = user.Id },
+                CancellationToken.None);
             await dbContext.SaveChangesAsync();
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
             await handler.ProcessAsync(CancellationToken.None);
-            
+
             await Task.Delay(100);
 
             Assert.AreEqual(3, count);

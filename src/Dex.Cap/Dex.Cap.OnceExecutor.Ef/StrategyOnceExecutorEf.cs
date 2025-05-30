@@ -26,14 +26,10 @@ namespace Dex.Cap.OnceExecutor.Ef
             Func<CancellationToken, Task<bool>> verifySucceeded,
             CancellationToken cancellationToken)
         {
-            ExecutionStrategy.Options ??= new EfTransactionOptions();
-
             return _dbContext.ExecuteInTransactionScopeAsync(
                 operation,
                 verifySucceeded,
-                ExecutionStrategy.Options.TransactionScopeOption,
-                ExecutionStrategy.Options.IsolationLevel,
-                ExecutionStrategy.Options.TimeoutInSeconds,
+                ExecutionStrategy.Options,
                 cancellationToken);
         }
 
