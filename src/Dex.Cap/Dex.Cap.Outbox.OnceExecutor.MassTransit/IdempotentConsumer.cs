@@ -17,9 +17,16 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 {
     private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
-        EfTransactionOptions.DefaultRequiresNew;
+    //todo: после обновления с net8 на net10 использовать ключевое слово field
+    private EfTransactionOptions? _transactionOptions;
+    private EfTransactionOptions TransactionOptions => _transactionOptions ??= TransactionOptionsInit;
 
+    /// <summary>
+    /// Переопределить EfTransactionOptions
+    /// </summary>
+    protected virtual EfTransactionOptions TransactionOptionsInit => EfTransactionOptions.DefaultRequiresNew;
+
+    /// <inheritdoc/>
     protected IdempotentConsumer(
         IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor,
         ILogger logger)
@@ -28,6 +35,7 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
     }
 
+    /// <inheritdoc/>
     protected sealed override Task Process(ConsumeContext<TMessage> context)
     {
         return _onceExecutor.ExecuteAsync(
@@ -38,8 +46,14 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
         );
     }
 
+    /// <summary>
+    /// Идемпотентное выполнение операции
+    /// </summary>
     protected abstract Task IdempotentProcess(ConsumeContext<TMessage> context);
 
+    /// <summary>
+    /// Вычисление ключа идемпотентности
+    /// </summary>
     protected virtual string GetIdempotentKey(ConsumeContext<TMessage> context) => context.GetIdempotentKey();
 }
 
@@ -60,8 +74,14 @@ public abstract class IdempotentConsumer<TDbContext>
         _onceExecutor = onceExecutor;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
-        EfTransactionOptions.DefaultRequiresNew;
+    //todo: после обновления с net8 на net10 использовать ключевое слово field
+    private EfTransactionOptions? _transactionOptions;
+    private EfTransactionOptions TransactionOptions => _transactionOptions ??= TransactionOptionsInit;
+
+    /// <summary>
+    /// Переопределить EfTransactionOptions
+    /// </summary>
+    protected virtual EfTransactionOptions TransactionOptionsInit => EfTransactionOptions.DefaultRequiresNew;
 
     /// <summary>
     /// Идемпотентное выполнение операции
@@ -79,6 +99,9 @@ public abstract class IdempotentConsumer<TDbContext>
         );
     }
 
+    /// <summary>
+    /// Вычисление ключа идемпотентности
+    /// </summary>
     protected virtual string GetIdempotentKey<TMessage>(ConsumeContext<TMessage> context)
         where TMessage : class => context.GetIdempotentKey();
 }
