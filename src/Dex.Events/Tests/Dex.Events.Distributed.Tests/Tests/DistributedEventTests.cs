@@ -202,7 +202,6 @@ namespace Dex.Events.Distributed.Tests.Tests
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
             var userId = Guid.NewGuid();
-            var correlationId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
             await dbContext.ExecuteInTransactionScopeAsync(
                 new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
@@ -211,10 +210,10 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = state.Entity;
                     await state.DbContext.Users.AddAsync(entity, token);
 
-                    await state.OutboxService.EnqueueAsync(correlationId,
-                        new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                    await state.OutboxService.EnqueueEventAsync(correlationId,
-                        new OnUserAdded { CustomerId = entity.Id }, token);
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
+                        cancellationToken: token);
                     await state.DbContext.SaveChangesAsync(token);
                 }, (_, _) => Task.FromResult(false));
 
@@ -253,7 +252,6 @@ namespace Dex.Events.Distributed.Tests.Tests
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
             var userId = Guid.NewGuid();
-            var correlationId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
             await dbContext.ExecuteInTransactionScopeAsync(
                 new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
@@ -262,11 +260,10 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = state.Entity;
                     await state.DbContext.Users.AddAsync(entity, token);
 
-                    await state.OutboxService.EnqueueAsync(correlationId,
-                        new TestOutboxCommand { Args = "hello world" },
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
                         cancellationToken: token);
-                    await state.OutboxService.EnqueueEventAsync(correlationId,
-                        new OnUserAdded { CustomerId = entity.Id }, token);
+                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
+                        cancellationToken: token);
                     await state.DbContext.SaveChangesAsync(token);
                 }, (_, _) => Task.FromResult(false));
 
@@ -300,7 +297,6 @@ namespace Dex.Events.Distributed.Tests.Tests
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
             var userId = Guid.NewGuid();
-            var correlationId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
             await dbContext.ExecuteInTransactionScopeAsync(
                 new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
@@ -309,14 +305,13 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = state.Entity;
                     await state.DbContext.Users.AddAsync(entity, token);
 
-                    await state.OutboxService.EnqueueAsync(correlationId,
-                        new TestOutboxCommand { Args = "hello world" },
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
                         cancellationToken: token);
-                    await state.OutboxService.EnqueueEventAsync(correlationId,
-                        new OnUserAdded { CustomerId = entity.Id }, token);
-                    await state.OutboxService.EnqueueEventAsync<IExternalBus>(correlationId,
+                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
+                        cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync<IExternalBus>(
                         new OnUserAdded { CustomerId = entity.Id },
-                        token);
+                        cancellationToken: token);
                     await state.DbContext.SaveChangesAsync(token);
                 }, (_, _) => Task.FromResult(false));
 
@@ -352,13 +347,9 @@ namespace Dex.Events.Distributed.Tests.Tests
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
 
             dbContext.Set<User>().Add(user);
-            var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "hello world" },
-                cancellationToken: CancellationToken.None);
-            await outboxService.EnqueueEventAsync(correlationId, new OnUserAdded { CustomerId = user.Id },
-                CancellationToken.None);
-            await outboxService.EnqueueEventAsync<IExternalBus>(correlationId, new OnUserAdded { CustomerId = user.Id },
-                CancellationToken.None);
+            await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
+            await outboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = user.Id });
+            await outboxService.EnqueueEventAsync<IExternalBus>(new OnUserAdded { CustomerId = user.Id });
             await dbContext.SaveChangesAsync();
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
