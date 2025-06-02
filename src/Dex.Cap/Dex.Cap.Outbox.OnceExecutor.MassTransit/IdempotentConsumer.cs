@@ -17,21 +17,10 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 {
     private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
 
-    //todo: после обновления с net8 на net10 использовать ключевое слово field
-    private EfTransactionOptions? _transactionOptions;
-    private EfTransactionOptions TransactionOptions
-    {
-        get
-        {
-            _transactionOptions ??= TransactionOptionsInit;
-            return _transactionOptions;
-        }
-    }
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptionsInit => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
 
     /// <inheritdoc/>
     protected IdempotentConsumer(
@@ -81,21 +70,10 @@ public abstract class IdempotentConsumer<TDbContext>
         _onceExecutor = onceExecutor;
     }
 
-    //todo: после обновления с net8 на net10 использовать ключевое слово field
-    private EfTransactionOptions? _transactionOptions;
-    private EfTransactionOptions TransactionOptions
-    {
-        get
-        {
-            _transactionOptions ??= TransactionOptionsInit;
-            return _transactionOptions;
-        }
-    }
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptionsInit => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
 
     /// <summary>
     /// Идемпотентное выполнение операции
