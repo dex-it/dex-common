@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,9 +28,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // init messages before 
             var outboxService = sp.GetRequiredService<IOutboxService>();
-            var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 1" });
-            await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - 2" });
+            await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "concurrency world - 1" });
+            await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "concurrency world - 2" });
             await SaveChanges(sp);
 
             // run handlers
@@ -56,7 +54,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // add extra messages
             for (var i = 2; i < allMessageCount; i++)
             {
-                await outboxService.EnqueueAsync(correlationId, new TestOutboxCommand { Args = "concurrency world - " + i });
+                await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "concurrency world - " + i });
             }
 
             await SaveChanges(sp);

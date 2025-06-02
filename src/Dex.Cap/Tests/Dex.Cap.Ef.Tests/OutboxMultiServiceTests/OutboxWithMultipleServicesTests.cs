@@ -32,7 +32,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
 
         // Сохраняем в outbox команду из первого сервиса
         var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
-        await SaveCommandAsync(sp1, correlationId1, cmd1);
+        await SaveCommandAsync(sp1, cmd1, correlationId1);
         var messageIds = new List<Guid> { cmd1.TestId };
 
         // Act
@@ -74,9 +74,9 @@ public class OutboxWithMultipleServicesTests : BaseTest
         var correlationId2 = Guid.NewGuid();
 
         var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
-        await SaveCommandAsync(sp1, correlationId1, cmd1);
+        await SaveCommandAsync(sp1, cmd1, correlationId1);
         var cmd2 = new TestOutboxCommand { Args = "hello world2" };
-        await SaveCommandAsync(sp2, correlationId2, cmd2);
+        await SaveCommandAsync(sp2, cmd2, correlationId2);
 
         var messageIds = new List<Guid> { cmd1.TestId, cmd2.TestId };
         var processedCommandsCount = 0;
@@ -150,11 +150,11 @@ public class OutboxWithMultipleServicesTests : BaseTest
         return serviceCollection.BuildServiceProvider();
     }
 
-    private static async Task SaveCommandAsync<TCommand>(ServiceProvider sp, Guid correlationId, TCommand command)
+    private static async Task SaveCommandAsync<TCommand>(ServiceProvider sp, TCommand command, Guid? correlationId = null)
         where TCommand : class
     {
         var outboxService = sp.GetRequiredService<IOutboxService>();
-        await outboxService.EnqueueAsync(correlationId, command);
+        await outboxService.EnqueueAsync(command, correlationId);
         await SaveChanges(sp);
     }
 

@@ -9,6 +9,8 @@ namespace Dex.Cap.Outbox
     internal sealed class OutboxService : IOutboxService
     {
         public IOutboxTypeDiscriminator Discriminator { get; }
+        public Guid CorrelationId { get; }
+
 
         private readonly IOutboxDataProvider _outboxDataProvider;
         private readonly IOutboxSerializer _serializer;
@@ -21,9 +23,10 @@ namespace Dex.Cap.Outbox
             _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             Discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
+            CorrelationId = Guid.NewGuid();
         }
 
-        public async Task<Guid> EnqueueAsync<T>(Guid correlationId, T message, DateTime? startAtUtc = null,
+        public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId = null, DateTime? startAtUtc = null,
             TimeSpan? lockTimeout = null, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -32,8 +35,8 @@ namespace Dex.Cap.Outbox
 
             var msgBody = _serializer.Serialize(messageType, message);
             var discriminator = Discriminator.ResolveDiscriminator(messageType);
-            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId, discriminator, msgBody, startAtUtc,
-                lockTimeout);
+            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, discriminator, msgBody,
+                startAtUtc, lockTimeout);
 
             await _outboxDataProvider
                 .Add(outboxEnvelope, cancellationToken)
@@ -42,9 +45,10 @@ namespace Dex.Cap.Outbox
             return envelopeId;
         }
 
-        public Task<bool> IsOperationExistsAsync(Guid correlationId, CancellationToken cancellationToken = default)
+        public Task<bool> IsOperationExistsAsync(Guid? correlationId = null,
+            CancellationToken cancellationToken = default)
         {
-            return _outboxDataProvider.IsExists(correlationId, cancellationToken);
+            return _outboxDataProvider.IsExists(correlationId ?? CorrelationId, cancellationToken);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.OutboxTests.RetryStrategies;
 using Dex.Cap.Outbox.Extensions;
@@ -21,7 +20,8 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
         [TestCase(1000, 0, OutboxMessageStatus.Failed, "Incremental")]
         [TestCase(100, 1, OutboxMessageStatus.Succeeded, "Exponential")]
         [TestCase(1000, 0, OutboxMessageStatus.Failed, "Exponential")]
-        public async Task IncrementalRetry_ProcessMessage(int intervalMs, int expectedCount, OutboxMessageStatus expectedStatus, string retryStrategyName)
+        public async Task IncrementalRetry_ProcessMessage(int intervalMs, int expectedCount,
+            OutboxMessageStatus expectedStatus, string retryStrategyName)
         {
             var serviceProvider = InitServiceCollection(strategyConfigure: strategyConfigurator =>
                     ConfigureStrategy(intervalMs, retryStrategyName, strategyConfigurator))
@@ -31,8 +31,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             TestErrorCommandHandler.Reset();
 
             var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
-            var correlationId = Guid.NewGuid();
-            await outboxService.EnqueueAsync(correlationId, new TestErrorOutboxCommand { MaxCount = 2 });
+            await outboxService.EnqueueAsync(new TestErrorOutboxCommand { MaxCount = 2 });
             await SaveChanges(serviceProvider);
 
             var count = 0;
@@ -49,12 +48,14 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             // check
 
             using var scope = serviceProvider.CreateScope();
-            var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>().FirstAsync(x => x.CorrelationId == correlationId);
+            var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>()
+                .FirstAsync(x => x.CorrelationId == outboxService.CorrelationId);
             Assert.AreEqual(expectedStatus, envelope.Status);
             Assert.AreEqual(expectedCount, count);
         }
 
-        private static void ConfigureStrategy(int interval, string retryStrategyName, OutboxRetryStrategyConfigurator configurator)
+        private static void ConfigureStrategy(int interval, string retryStrategyName,
+            OutboxRetryStrategyConfigurator configurator)
         {
             switch (retryStrategyName)
             {

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -101,8 +100,7 @@ namespace Dex.Cap.AspNet.Test
                                 var client = scope2.ServiceProvider
                                     .GetRequiredService<IOutboxService>();
                                 var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
-                                await client.EnqueueAsync(Guid.NewGuid(),
-                                    new TestOutboxCommand { Args = "hello world" });
+                                await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
                                 await db2.SaveChangesAsync();
                             }
 
