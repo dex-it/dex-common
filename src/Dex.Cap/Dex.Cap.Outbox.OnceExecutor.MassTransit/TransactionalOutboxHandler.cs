@@ -19,8 +19,21 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
         _dbContext = context;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
-        EfTransactionOptions.DefaultRequiresNew;
+    //todo: после обновления с net8 на net10 использовать ключевое слово field
+    private EfTransactionOptions? _transactionOptions;
+    private EfTransactionOptions TransactionOptions
+    {
+        get
+        {
+            _transactionOptions ??= TransactionOptionsInit;
+            return _transactionOptions;
+        }
+    }
+
+    /// <summary>
+    /// Переопределить EfTransactionOptions
+    /// </summary>
+    protected virtual EfTransactionOptions TransactionOptionsInit => EfTransactionOptions.DefaultRequiresNew;
 
     protected abstract Task ProcessInTransaction(TMessage message, CancellationToken cancellationToken);
 

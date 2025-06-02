@@ -19,7 +19,14 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 
     //todo: после обновления с net8 на net10 использовать ключевое слово field
     private EfTransactionOptions? _transactionOptions;
-    private EfTransactionOptions TransactionOptions => _transactionOptions ??= TransactionOptionsInit;
+    private EfTransactionOptions TransactionOptions
+    {
+        get
+        {
+            _transactionOptions ??= TransactionOptionsInit;
+            return _transactionOptions;
+        }
+    }
 
     /// <summary>
     /// Переопределить EfTransactionOptions
@@ -76,7 +83,14 @@ public abstract class IdempotentConsumer<TDbContext>
 
     //todo: после обновления с net8 на net10 использовать ключевое слово field
     private EfTransactionOptions? _transactionOptions;
-    private EfTransactionOptions TransactionOptions => _transactionOptions ??= TransactionOptionsInit;
+    private EfTransactionOptions TransactionOptions
+    {
+        get
+        {
+            _transactionOptions ??= TransactionOptionsInit;
+            return _transactionOptions;
+        }
+    }
 
     /// <summary>
     /// Переопределить EfTransactionOptions
