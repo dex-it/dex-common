@@ -24,8 +24,10 @@ public abstract class TransactionalConsumer<TMessage, TDbContext> : BaseConsumer
         _dbContext = context;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
-        EfTransactionOptions.DefaultRequiresNew;
+    /// <summary>
+    /// Переопределить EfTransactionOptions
+    /// </summary>
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
 
     protected abstract Task ProcessInTransaction(ConsumeContext<TMessage> context);
 
@@ -58,8 +60,10 @@ public abstract class TransactionalConsumer<TDbContext>
         _dbContext = context;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
-        EfTransactionOptions.DefaultRequiresNew;
+    /// <summary>
+    /// Переопределить EfTransactionOptions
+    /// </summary>
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
 
     protected Task ProcessInTransaction<TMessage>(
         ConsumeContext<TMessage> context,

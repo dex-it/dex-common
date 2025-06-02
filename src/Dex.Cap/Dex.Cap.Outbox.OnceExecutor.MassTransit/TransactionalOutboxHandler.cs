@@ -19,8 +19,10 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
         _dbContext = context;
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
-        EfTransactionOptions.DefaultRequiresNew;
+    /// <summary>
+    /// Переопределить EfTransactionOptions
+    /// </summary>
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
 
     protected abstract Task ProcessInTransaction(TMessage message, CancellationToken cancellationToken);
 

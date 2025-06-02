@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.OnceExecutor.MassTransit;
@@ -25,9 +24,8 @@ namespace Dex.Cap.Ef.Tests.OutboxPublishTests
             var harness = sp.GetRequiredService<ITestHarness>();
             await harness.Start();
 
-            var correlationId = Guid.NewGuid();
             var command = new TestOutboxCommand { Args = "hello world" };
-            await outboxService.EnqueueAsync(correlationId, command);
+            await outboxService.EnqueueAsync(command);
             await SaveChanges(sp);
 
             var handler = sp.GetRequiredService<IOutboxHandler>();

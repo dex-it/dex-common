@@ -18,8 +18,10 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
         _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
     }
 
-    protected virtual EfTransactionOptions TransactionOptions { private get; init; } =
-        EfTransactionOptions.DefaultRequiresNew;
+    /// <summary>
+    /// Переопределить EfTransactionOptions
+    /// </summary>
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
 
     protected abstract Task IdempotentProcess(TMessage message, CancellationToken cancellationToken);
 
