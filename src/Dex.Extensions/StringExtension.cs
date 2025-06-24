@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,12 +15,12 @@ namespace Dex.Extensions
             return Regex.Replace(source, pattern, replacement);
         }
 
-        public static bool IsNullOrEmpty(this string? source)
+        public static bool IsNullOrEmpty([NotNullWhen(false)] this string? source)
         {
             return string.IsNullOrEmpty(source);
         }
 
-        public static bool IsNullOrWhiteSpace(this string source)
+        public static bool IsNullOrWhiteSpace([NotNullWhen(false)] this string? source)
         {
             return string.IsNullOrWhiteSpace(source);
         }
