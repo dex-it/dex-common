@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Frozen;
 using System.Linq;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
@@ -10,6 +11,9 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
 {
     private UniqueValueDictionary<string, Type> Discriminator { get; } = new();
 
+    private FrozenDictionary<string, Type>? _discriminatorFrozenCache;
+    private FrozenDictionary<Type, string>? _discriminatorInvertedFrozenCache;
+
     public string[] GetDiscriminators()
     {
         return Discriminator.Keys.ToArray();
@@ -17,11 +21,13 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
 
     protected void Add(string discriminator, Type value)
     {
+        InvalidateFrozenCache();
         Discriminator.Add(discriminator, value);
     }
 
     protected void Add<T>(string discriminator)
     {
+        InvalidateFrozenCache();
         Add(discriminator, typeof(T));
     }
 
@@ -29,10 +35,10 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
     {
         ArgumentNullException.ThrowIfNull(type);
 
-        if (!Discriminator.TryGetKey(type, out var discriminator))
-        {
+        _discriminatorInvertedFrozenCache ??= Discriminator.ToFrozenDictionary(x => x.Value, y => y.Key);
+
+        if (_discriminatorInvertedFrozenCache.TryGetValue(type, out var discriminator) is false)
             throw new DiscriminatorResolveException($"Can't find discriminator for Type - {type.FullName}.");
-        }
 
         return discriminator;
     }
@@ -41,11 +47,17 @@ public abstract class BaseOutboxTypeDiscriminator : IOutboxTypeDiscriminator
     {
         ArgumentNullException.ThrowIfNull(discriminator);
 
-        if (!Discriminator.TryGetValue(discriminator, out var type))
-        {
+        _discriminatorFrozenCache ??= Discriminator.ToFrozenDictionary();
+
+        if (_discriminatorFrozenCache.TryGetValue(discriminator, out var type) is false)
             throw new DiscriminatorResolveTypeException($"Can't find Type for discriminator - {discriminator}.");
-        }
 
         return type;
+    }
+
+    private void InvalidateFrozenCache()
+    {
+        _discriminatorFrozenCache = null;
+        _discriminatorInvertedFrozenCache = null;
     }
 }
