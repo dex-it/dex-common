@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Dex.Extensions
@@ -42,7 +43,20 @@ namespace Dex.Extensions
             }
         }
 
-        public static async Task ForEachAsync<T>(this IEnumerable<T> source, Func<T, Task> action)
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в коллекции.
+        /// Действие не поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IEnumerable<T> source, 
+            Func<T, Task> action, 
+            CancellationToken cancellationToken = default
+            )
         {
             if (source == null)
             {
@@ -56,6 +70,7 @@ namespace Dex.Extensions
 
             foreach (var obj in source)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 await action(obj).ConfigureAwait(false);
             }
         }
