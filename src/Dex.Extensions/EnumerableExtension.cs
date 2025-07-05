@@ -75,6 +75,38 @@ namespace Dex.Extensions
             }
         }
 
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в коллекции.
+        /// Действие поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие с поддержкой CancellationToken.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IEnumerable<T> source, 
+            Func<T, CancellationToken, Task> action, 
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            foreach (var obj in source)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await action(obj, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         public static void NullSafeForEach<T>(this IEnumerable<T>? source, Action<T> action)
         {
             if (source != null) ForEach(source, action);
