@@ -4,6 +4,6 @@ namespace Dex.Entity
 {
     public interface ICreatedUtc
     {
-        DateTime CreatedUtc { get; set; }
+        DateTime CreatedUtc { get; }
     }
 }
