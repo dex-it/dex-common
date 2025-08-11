@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -15,12 +16,14 @@ namespace Dex.Extensions
             return string.Join(separator, collection);
         }
 
-        public static IEnumerable<T> Replace<T>(this IEnumerable<T> collection, Func<T, bool> matchFunc, Func<T, T> replaceFunc)
+        public static IEnumerable<T> Replace<T>(this IEnumerable<T> collection, Func<T, bool> matchFunc,
+            Func<T, T> replaceFunc)
         {
             return collection.Select(arg => matchFunc(arg) ? replaceFunc(arg) : arg);
         }
 
-        public static IEnumerable<T> Replace<T>(this IEnumerable<T> collection, Func<T, int, bool> matchFunc, Func<T, int, T> replaceFunc)
+        public static IEnumerable<T> Replace<T>(this IEnumerable<T> collection, Func<T, int, bool> matchFunc,
+            Func<T, int, T> replaceFunc)
         {
             return collection.Select((arg, i) => matchFunc(arg, i) ? replaceFunc(arg, i) : arg);
         }
@@ -43,6 +46,8 @@ namespace Dex.Extensions
             }
         }
 
+        #region ForEachAsync (IEnumerable)
+
         /// <summary>
         /// Асинхронно выполняет указанное действие для каждого элемента в коллекции.
         /// Действие не поддерживает токен отмены.
@@ -50,43 +55,14 @@ namespace Dex.Extensions
         /// <typeparam name="T">Тип элемента.</typeparam>
         /// <param name="source">Исходная коллекция.</param>
         /// <param name="action">Асинхронное действие.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Задача, представляющая выполнение всех действий.</returns>
         public static async Task ForEachAsync<T>(
-            this IEnumerable<T> source, 
-            Func<T, Task> action, 
-            CancellationToken cancellationToken = default
-            )
-        {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
-            foreach (var obj in source)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await action(obj).ConfigureAwait(false);
-            }
-        }
-
-        /// <summary>
-        /// Асинхронно выполняет указанное действие для каждого элемента в коллекции.
-        /// Действие поддерживает токен отмены.
-        /// </summary>
-        /// <typeparam name="T">Тип элемента.</typeparam>
-        /// <param name="source">Исходная коллекция.</param>
-        /// <param name="action">Асинхронное действие с поддержкой CancellationToken.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <returns>Задача, представляющая выполнение всех действий.</returns>
-        public static async Task ForEachAsync<T>(
-            this IEnumerable<T> source, 
-            Func<T, CancellationToken, Task> action, 
+            this IEnumerable<T> source,
+            Func<T, Task> action,
+            bool continueOnError = false,
             CancellationToken cancellationToken = default
         )
         {
@@ -100,12 +76,497 @@ namespace Dex.Extensions
                 throw new ArgumentNullException(nameof(action));
             }
 
+            List<Exception> exceptions = new List<Exception>();
+
             foreach (var obj in source)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await action(obj, cancellationToken).ConfigureAwait(false);
+
+                try
+                {
+                    await action(obj).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (continueOnError)
+                {
+                    exceptions.Add(exception);
+                }
+            }
+
+            if (exceptions.Any())
+            {
+                throw new AggregateException(exceptions);
             }
         }
+
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в коллекции.
+        /// Действие не поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
+        /// <param name="maxDegreeOfParallelism">Максимальное количество задач, обрабатываемых одновременно.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IEnumerable<T> source,
+            Func<T, Task> action,
+            int maxDegreeOfParallelism,
+            bool continueOnError = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            if (maxDegreeOfParallelism < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+            }
+
+            ConcurrentBag<Exception> exceptions = new ConcurrentBag<Exception>();
+
+            List<Task> tasks = new List<Task>();
+
+            using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
+
+            foreach (var obj in source)
+            {
+                T localObj = obj;
+
+                var localSemaphore = semaphore;
+
+                await semaphore.WaitAsync().ConfigureAwait(false);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                var task = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await action(localObj).ConfigureAwait(false);
+                        }
+                        catch (Exception exception) when (continueOnError)
+                        {
+                            exceptions.Add(exception);
+                        }
+                        finally
+                        {
+                            localSemaphore.Release();
+                        }
+                    }
+                );
+
+                tasks.Add(task);
+            }
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            if (exceptions.Any())
+            {
+                throw new AggregateException(exceptions);
+            }
+        }
+
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в коллекции.
+        /// Действие поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие с поддержкой CancellationToken.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IEnumerable<T> source,
+            Func<T, CancellationToken, Task> action,
+            bool continueOnError = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            List<Exception> exceptions = new List<Exception>();
+
+            foreach (var obj in source)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    await action(obj, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (continueOnError)
+                {
+                    exceptions.Add(exception);
+                }
+            }
+
+            if (exceptions.Any())
+            {
+                throw new AggregateException(exceptions);
+            }
+        }
+
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в коллекции.
+        /// Действие поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие с поддержкой CancellationToken.</param>
+        /// <param name="maxDegreeOfParallelism">Максимальное количество задач, обрабатываемых одновременно.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IEnumerable<T> source,
+            Func<T, CancellationToken, Task> action,
+            int maxDegreeOfParallelism,
+            bool continueOnError = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            if (maxDegreeOfParallelism < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+            }
+
+            List<Exception> exceptions = new List<Exception>();
+
+            List<Task> tasks = new List<Task>();
+
+            using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
+
+            foreach (var obj in source)
+            {
+                T localObj = obj;
+
+                var localSemaphore = semaphore;
+
+                await semaphore.WaitAsync().ConfigureAwait(false);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                var task = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await action(localObj, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception exception) when (continueOnError)
+                        {
+                            exceptions.Add(exception);
+                        }
+                        finally
+                        {
+                            localSemaphore.Release();
+                        }
+                    }
+                );
+
+                tasks.Add(task);
+            }
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            if (exceptions.Any())
+            {
+                throw new AggregateException(exceptions);
+            }
+        }
+
+        #endregion
+
+        #region ForEachAsync (IAsyncEnumerable)
+
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в асинхронной коллекции.
+        /// Действие не поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IAsyncEnumerable<T> source,
+            Func<T, Task> action,
+            bool continueOnError = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            List<Exception> exceptions = new List<Exception>();
+
+            await foreach (var obj in source.ConfigureAwait(false))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    await action(obj).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (continueOnError)
+                {
+                    exceptions.Add(exception);
+                }
+            }
+
+            if (exceptions.Any())
+                throw new AggregateException(exceptions);
+        }
+
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в асинхронной коллекции.
+        /// Действие не поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие.</param>
+        /// <param name="maxDegreeOfParallelism">Максимальное количество задач, обрабатываемых одновременно.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IAsyncEnumerable<T> source,
+            Func<T, Task> action,
+            int maxDegreeOfParallelism,
+            bool continueOnError = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            if (maxDegreeOfParallelism < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+            }
+
+            ConcurrentBag<Exception> exceptions = new();
+            List<Task> tasks = new();
+
+            using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
+
+            await foreach (var obj in source.ConfigureAwait(false))
+            {
+                await semaphore.WaitAsync().ConfigureAwait(false);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                var localObj = obj;
+                var localSemaphore = semaphore;
+
+                var task = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await action(localObj).ConfigureAwait(false);
+                    }
+                    catch (Exception exception) when (continueOnError)
+                    {
+                        exceptions.Add(exception);
+                    }
+                    finally
+                    {
+                        localSemaphore.Release();
+                    }
+                });
+
+                tasks.Add(task);
+            }
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            if (!exceptions.IsEmpty)
+                throw new AggregateException(exceptions);
+        }
+
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в асинхронной коллекции.
+        /// Действие поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие с поддержкой CancellationToken.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IAsyncEnumerable<T> source,
+            Func<T, CancellationToken, Task> action,
+            bool continueOnError = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            List<Exception> exceptions = new();
+
+            await foreach (var obj in source.ConfigureAwait(false))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    await action(obj, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (continueOnError)
+                {
+                    exceptions.Add(exception);
+                }
+            }
+
+            if (exceptions.Any())
+                throw new AggregateException(exceptions);
+        }
+
+        /// <summary>
+        /// Асинхронно выполняет указанное действие для каждого элемента в асинхронной коллекции.
+        /// Действие поддерживает токен отмены.
+        /// </summary>
+        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="source">Исходная коллекция.</param>
+        /// <param name="action">Асинхронное действие с поддержкой CancellationToken.</param>
+        /// <param name="maxDegreeOfParallelism">Максимальное количество задач, обрабатываемых одновременно.</param>
+        /// <param name="continueOnError">Если <c>true</c>, исключения в действии будут проигнорированы, но в конце
+        /// выбросится AggregateException.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Задача, представляющая выполнение всех действий.</returns>
+        public static async Task ForEachAsync<T>(
+            this IAsyncEnumerable<T> source,
+            Func<T, CancellationToken, Task> action,
+            int maxDegreeOfParallelism,
+            bool continueOnError = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            if (maxDegreeOfParallelism < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+            }
+
+            ConcurrentBag<Exception> exceptions = new();
+            List<Task> tasks = new();
+
+            using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
+
+            await foreach (var obj in source.ConfigureAwait(false))
+            {
+                await semaphore.WaitAsync().ConfigureAwait(false);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                var localObj = obj;
+                var localSemaphore = semaphore;
+
+                var task = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await action(localObj, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception exception) when (continueOnError)
+                    {
+                        exceptions.Add(exception);
+                    }
+                    finally
+                    {
+                        localSemaphore.Release();
+                    }
+                });
+
+                tasks.Add(task);
+            }
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            if (!exceptions.IsEmpty)
+                throw new AggregateException(exceptions);
+        }
+
+        #endregion
 
         public static void NullSafeForEach<T>(this IEnumerable<T>? source, Action<T> action)
         {
@@ -163,7 +624,7 @@ namespace Dex.Extensions
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            return ((IEnumerable<T>) source).Append(elements).ToArray();
+            return ((IEnumerable<T>)source).Append(elements).ToArray();
         }
 
         public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
@@ -180,7 +641,7 @@ namespace Dex.Extensions
                 throw new ArgumentOutOfRangeException(nameof(partitionSize));
 
             return instance
-                .Select((value, index) => new {Index = index, Value = value})
+                .Select((value, index) => new { Index = index, Value = value })
                 .GroupBy(item => item.Index / partitionSize)
                 .Select(item => item.Select(x => x.Value));
         }
