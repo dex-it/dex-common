@@ -49,7 +49,7 @@
         <PackageReference Update="System.Runtime.Serialization.Primitives" Version="4.3.0"/>
         <PackageReference Update="System.Data.SqlClient" Version="4.9.0"/>
         <PackageReference Update="System.Threading.Tasks.Extensions" Version="4.5.4"/>
-        <PackageReference Update="System.Text.Json" Version="8.0.6" />
+        <PackageReference Update="System.Text.Json" Version="8.0.6"/>
 
         <!--misc -->
         <PackageReference Update="Npgsql" Version="8.0.7"/>
@@ -58,7 +58,7 @@
         <PackageReference Update="MassTransit*" Version="8.5.2"/>
         <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>
         <PackageReference Update="RazorLight" Version="2.3.1"/>
-        <PackageReference Update="OpenTelemetry*" Version="1.12.0"/>
+        <PackageReference Update="OpenTelemetry*" Version="1.9.0"/> <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нельзя -->
         <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.3"/>
         <PackageReference Update="MediatR" Version="12.5.0"/>
         <PackageReference Update="Swashbuckle.AspNetCore" Version="8.1.4"/>
