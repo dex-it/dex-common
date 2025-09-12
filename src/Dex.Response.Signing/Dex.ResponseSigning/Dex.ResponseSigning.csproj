@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-      <TargetFramework>net8.0</TargetFramework>
-      <ImplicitUsings>enable</ImplicitUsings>
-      <Nullable>enable</Nullable>
-      <VersionPrefix>8.0.0</VersionPrefix>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <VersionPrefix>8.0.0</VersionPrefix>
     </PropertyGroup>
-    
+
     <!--Для NuGet-->
     <PropertyGroup>
         <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Response.Signing/Dex.ResponseSigning</PackageProjectUrl>
@@ -22,20 +22,20 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
     <!--/Для NuGet-->
-    
+
     <ItemGroup>
-      <EmbeddedResource Include="Certificate\ResponseSigning.pfx" />
+        <EmbeddedResource Include="Certificate\ResponseSigning.pfx"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-      <PackageReference Include="System.Text.Json" Version="8.0.5" />
+        <PackageReference Include="System.Text.Json"/>
     </ItemGroup>
 
 </Project>
