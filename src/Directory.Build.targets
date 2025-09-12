@@ -40,6 +40,7 @@
         <PackageReference Update="System.Diagnostics.DiagnosticSource" Version="8.0.1"/>
         <PackageReference Update="System.ComponentModel.Annotations" Version="5.0.0"/>
         <PackageReference Update="System.Threading.Channels" Version="8.0.0"/>
+        <PackageReference Update="System.Runtime.Serialization.Primitives" Version="4.3.0"/>
 
         <!--misc -->
         <PackageReference Update="Npgsql" Version="8.0.7"/>
