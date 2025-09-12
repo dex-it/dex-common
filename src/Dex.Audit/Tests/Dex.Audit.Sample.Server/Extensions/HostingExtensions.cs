@@ -83,6 +83,7 @@ internal static class HostingExtensions
 
         // Additional
         services.AddHostedService<RefreshCacheWorker>();
+        services.AddMemoryCache();
 
         services.AddGrpc();
 

@@ -45,6 +45,7 @@ internal static class HostingExtensions
             });
         services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(nameof(RabbitMqOptions)));
         services.AddScoped<IDistributedCache, MemoryDistributedCache>();
+        services.AddMemoryCache();
 
         // Audit simple Client
         services.AddSimpleAuditClient(builder.Configuration);

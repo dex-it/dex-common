@@ -27,14 +27,13 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
-    <!--/Для NuGet-->
 
     <ItemGroup>
-      <PackageReference Include="MediatR" Version="12.5.0" />
+        <PackageReference Include="MediatR"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
+        <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj"/>
     </ItemGroup>
 
 </Project>

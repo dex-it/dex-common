@@ -30,19 +30,19 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
-      <PackageReference Include="Google.Protobuf" Version="3.30.2" />
-      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
-      <PackageReference Include="Grpc.Net.Client" Version="2.71.0" />
-      <PackageReference Include="Grpc.Tools" Version="2.72.0" />
+        <PackageReference Include="Google.Protobuf"/>
+        <PackageReference Include="Grpc.Net.ClientFactory"/>
+        <PackageReference Include="Grpc.Net.Client"/>
+        <PackageReference Include="Grpc.Tools"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="Protos/AuditSettingsService.proto" GrpcServices="AuditClient" />
+        <Protobuf Include="Protos/AuditSettingsService.proto" GrpcServices="AuditClient"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
-      <ProjectReference Include="..\..\Client\Dex.Audit.Client\Dex.Audit.Client.csproj" />
+        <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj"/>
+        <ProjectReference Include="..\..\Client\Dex.Audit.Client\Dex.Audit.Client.csproj"/>
     </ItemGroup>
 
 </Project>

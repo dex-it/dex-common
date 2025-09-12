@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using Dex.Audit.Client.Abstractions.Interfaces;
 using Dex.Audit.Domain.Entities;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +18,12 @@ public class SimpleClientAuditSettingsService(
     IConfiguration configuration,
     ILogger<SimpleClientAuditSettingsService> logger) : IAuditSettingsService
 {
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = {new JsonStringEnumConverter()}
+    };
+
     public async Task<AuditSettings?> GetOrGetAndUpdateSettingsAsync(string eventType, CancellationToken cancellationToken = default)
     {
         var setting = await settingsCacheRepository
@@ -55,8 +62,8 @@ public class SimpleClientAuditSettingsService(
 
             using var result =
                 await httpClient.GetAsync(
-                    configuration.GetConnectionString("AuditServerSettingsAddress"),
-                    cancellationToken)
+                        configuration.GetConnectionString("AuditServerSettingsAddress"),
+                        cancellationToken)
                     .ConfigureAwait(false);
 
             await using var stream = await result
@@ -64,14 +71,11 @@ public class SimpleClientAuditSettingsService(
                 .ReadAsStreamAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            return await JsonSerializer.DeserializeAsync<AuditSettings[]?>(
-                stream,
-                cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+            return await JsonSerializer.DeserializeAsync<AuditSettings[]>(stream, JsonSerializerOptions, cancellationToken);
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, exception.Message);
+            logger.LogError(exception, "{Method} failed", nameof(GetSettingsFromServerAsync));
             return [];
         }
     }

@@ -8,25 +8,25 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.Client.Implementations.Grpc\Dex.Audit.Client.Implementations.Grpc.csproj" />
-        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.Client.Implementations\Dex.Audit.Client.Implementations.csproj" />
-        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.EF.Interceptors\Dex.Audit.EF.Interceptors.csproj" />
-        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.Logger\Dex.Audit.Logger.csproj" />
-        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.MediatR\Dex.Audit.MediatR.csproj" />
-        <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj" />
-        <ProjectReference Include="..\..\Client\Dex.Audit.Client\Dex.Audit.Client.csproj" />
-        <ProjectReference Include="..\Dex.Audit.Sample.Shared\Dex.Audit.Sample.Shared.csproj" />
+        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.Client.Implementations.Grpc\Dex.Audit.Client.Implementations.Grpc.csproj"/>
+        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.Client.Implementations\Dex.Audit.Client.Implementations.csproj"/>
+        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.EF.Interceptors\Dex.Audit.EF.Interceptors.csproj"/>
+        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.Logger\Dex.Audit.Logger.csproj"/>
+        <ProjectReference Include="..\..\Infrastructure\Dex.Audit.MediatR\Dex.Audit.MediatR.csproj"/>
+        <ProjectReference Include="..\..\Client\Dex.Audit.Client.Abstractions\Dex.Audit.Client.Abstractions.csproj"/>
+        <ProjectReference Include="..\..\Client\Dex.Audit.Client\Dex.Audit.Client.csproj"/>
+        <ProjectReference Include="..\Dex.Audit.Sample.Shared\Dex.Audit.Sample.Shared.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6"/>
-        <PackageReference Include="StackExchange.Redis" Version="2.8.0" />
-        <PackageReference Include="StackExchange.Redis.Extensions.AspNetCore" Version="10.2.0" />
-        <PackageReference Include="StackExchange.Redis.Extensions.System.Text.Json" Version="10.2.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.2"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory"/>
+        <PackageReference Include="StackExchange.Redis"/>
+        <PackageReference Include="StackExchange.Redis.Extensions.AspNetCore"/>
+        <PackageReference Include="StackExchange.Redis.Extensions.System.Text.Json"/>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.Swagger"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI"/>
     </ItemGroup>
 
 </Project>
