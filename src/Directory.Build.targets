@@ -16,6 +16,8 @@
         <PackageReference Update="NUnit" Version="4.4.0"/>
         <PackageReference Update="NUnit3TestAdapter" Version="5.1.0"/>
         <PackageReference Update="NUnit.Analyzers" Version="4.10.0"/>
+        <PackageReference Update="HttpContextMoq" Version="1.7.0"/>
+        <PackageReference Update="Moq" Version="4.20.72"/>
 
         <!--microsoft extensions -->
         <PackageReference Update="Microsoft.Extensions.Hosting" Version="8.0.1"/>
@@ -59,10 +61,16 @@
         <PackageReference Update="StackExchange.Redis.Extensions.Core" Version="11.0.0"/>
 
         <!--microsoft asp.net core -->
-        <PackageReference Update="Microsoft.OpenApi" Version="2.3.1" />
+        <PackageReference Update="Microsoft.OpenApi" Version="2.3.1"/>
+        <PackageReference Update="Microsoft.Net.Http.Headers" Version="$(FrameworkVersion)"/>
         <PackageReference Update="Microsoft.AspNetCore.Mvc" Version="2.3.0"/>
         <PackageReference Update="Microsoft.AspNetCore.DataProtection*" Version="$(FrameworkVersion)"/>
         <PackageReference Update="Microsoft.AspNetCore.Mvc.RazorPages" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Http.Extensions" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.3.0"/>
 
         <!--microsoft entity framework -->
         <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(FrameworkVersion)"/>
@@ -78,7 +86,7 @@
         <PackageReference Update="Dex.Neo4J" Version="1.1.31"/>
         <PackageReference Update="Dex.MassTransit.Rabbit" Version="8.0.3"/>
 
-        <!--tests -->
+        <!--Grpc -->
         <PackageReference Update="Google.Protobuf" Version="3.32.1"/>
         <PackageReference Update="Grpc.Net.ClientFactory" Version="2.71.0"/>
         <PackageReference Update="Grpc.Net.Client" Version="2.71.0"/>

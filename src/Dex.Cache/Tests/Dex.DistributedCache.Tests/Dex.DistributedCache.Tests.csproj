@@ -7,24 +7,24 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="HttpContextMoq" Version="1.6.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.2.0" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-        <PackageReference Include="Moq" Version="4.20.72" />
-        <PackageReference Include="NUnit" />
-        <PackageReference Include="NUnit3TestAdapter" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="HttpContextMoq"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures"/>
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug"/>
+        <PackageReference Include="Moq"/>
+        <PackageReference Include="NUnit"/>
+        <PackageReference Include="NUnit3TestAdapter"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Dex.DistributedCache\Dex.DistributedCache.csproj" />
+        <ProjectReference Include="..\..\Dex.DistributedCache\Dex.DistributedCache.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Services\UserIdServiceTest.cs">
-        <DependentUpon>IUserIdServiceTest.cs</DependentUpon>
-      </Compile>
+        <Compile Update="Services\UserIdServiceTest.cs">
+            <DependentUpon>IUserIdServiceTest.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>
