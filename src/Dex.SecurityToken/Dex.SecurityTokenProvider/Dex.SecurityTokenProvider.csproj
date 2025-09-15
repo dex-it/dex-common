@@ -7,7 +7,7 @@
         <LangVersion>default</LangVersion>
         <PackageTags>security token management, dataprotection</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.1</PackageVersion>
+        <PackageVersion>8.0.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
