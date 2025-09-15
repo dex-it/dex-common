@@ -95,7 +95,7 @@
 
         <!--dex libs -->
         <PackageReference Update="Dex.Types" Version="1.0.27"/>
-        <PackageReference Update="Dex.Extensions" Version="1.0.33"/>
+        <PackageReference Update="Dex.Extensions" Version="1.0.32"/>
         <PackageReference Update="Dex.Neo4J" Version="1.1.32"/>
         <PackageReference Update="Dex.MassTransit.Rabbit" Version="8.0.4"/>
 
