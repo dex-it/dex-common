@@ -47,7 +47,7 @@ namespace Dex.Cap.Ef.Tests
                 {
                     if (IsRetryStrategy)
                     {
-                        options.EnableRetryOnFailure(3);    
+                        options.EnableRetryOnFailure(3);
                     }
                 });
 

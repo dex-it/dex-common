@@ -5,23 +5,23 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>default</LangVersion>
-		<IsPackable>false</IsPackable>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
-      <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
-      <PackageReference Include="Microsoft.NET.Test.Sdk" />
-      <PackageReference Include="xunit" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Console"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+        <PackageReference Include="xunit"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Dex.SecurityToken.DistributedStorage\Dex.SecurityToken.DistributedStorage.csproj" />
-      <ProjectReference Include="..\..\Dex.SecurityTokenProvider\Dex.SecurityTokenProvider.csproj" />
+        <ProjectReference Include="..\..\Dex.SecurityToken.DistributedStorage\Dex.SecurityToken.DistributedStorage.csproj"/>
+        <ProjectReference Include="..\..\Dex.SecurityTokenProvider\Dex.SecurityTokenProvider.csproj"/>
     </ItemGroup>
 
 </Project>

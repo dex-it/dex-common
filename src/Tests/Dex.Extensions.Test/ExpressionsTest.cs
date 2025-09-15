@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using NUnit.Framework;
 
 namespace Dex.Extensions.Test

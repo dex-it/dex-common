@@ -5,11 +5,11 @@
         <Nullable>enable</Nullable>
         <LangVersion>default</LangVersion>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.1</PackageVersion>
+        <PackageVersion>8.0.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
-    
+
     <!--Для NuGet-->
     <PropertyGroup>
         <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
@@ -24,7 +24,7 @@
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
     <!--/Для NuGet-->
-    
+
     <ItemGroup>
       <Compile Update="Data\OrderCondition.cs">
         <DependentUpon>ISortCondition.cs</DependentUpon>

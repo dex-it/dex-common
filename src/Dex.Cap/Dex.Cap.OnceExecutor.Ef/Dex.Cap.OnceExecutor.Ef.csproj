@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.1.0</PackageVersion>
+        <PackageVersion>8.1.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -35,6 +35,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
         <PackageReference Include="Npgsql"/>
     </ItemGroup>
 

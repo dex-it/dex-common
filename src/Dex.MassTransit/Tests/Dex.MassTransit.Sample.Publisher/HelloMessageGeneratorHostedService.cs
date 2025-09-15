@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.MassTransit.Sample.Domain;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -12,30 +13,30 @@ namespace Dex.MassTransit.Sample.Publisher
     internal class HelloMessageGeneratorHostedService : IHostedService
     {
         // ReSharper disable once NotAccessedField.Local
-        private readonly ISendEndpointProvider _sendEndpoint;
-        private readonly IPublishEndpoint _publishEndpoint;
         private readonly ILogger<HelloMessageGeneratorHostedService> _logger;
+        private readonly IServiceProvider _serviceProvider;
         private readonly CancellationTokenSource _tokenSource = new();
 
-        public HelloMessageGeneratorHostedService(ISendEndpointProvider sendEndpoint, IPublishEndpoint publishEndpoint,
-            ILogger<HelloMessageGeneratorHostedService> logger)
+        public HelloMessageGeneratorHostedService(ILogger<HelloMessageGeneratorHostedService> logger, IServiceProvider serviceProvider)
         {
-            _sendEndpoint = sendEndpoint ?? throw new ArgumentNullException(nameof(sendEndpoint));
-            _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _serviceProvider = serviceProvider;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             while (!_tokenSource.Token.IsCancellationRequested)
             {
+                await using var scope = _serviceProvider.CreateAsyncScope();
+                var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+
                 //await _sendEndpoint.Send(new HelloMessageDto() {Hi = "Send, Hi wo, " + DateTime.UtcNow.ToString("T")}, cancellationToken);
                 var publishHiThere = "Publish, Hi there, " + DateTime.UtcNow.ToString("T");
 
                 var act = new Activity("Publish Test Messqge");
                 act.Start();
 
-                await _publishEndpoint.Publish(
+                await publishEndpoint.Publish(
                     new HelloMessageDto
                     {
                         Hi = publishHiThere,
