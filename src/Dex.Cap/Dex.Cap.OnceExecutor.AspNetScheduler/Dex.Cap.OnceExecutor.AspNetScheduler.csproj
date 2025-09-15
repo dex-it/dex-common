@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.1.0</PackageVersion>
+        <PackageVersion>8.0.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -26,17 +26,14 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
-    <!--/Для NuGet-->
+    <!--Для NuGet-->
 
     <ItemGroup>
-        <ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj"/>
-        <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
-        <PackageReference Include="Npgsql"/>
+      <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,18 +1,15 @@
+using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.AspNet.Test
-{
-    public class TestDbContext : DbContext
-    {
-        public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
-        {
-        }
+namespace Dex.Cap.AspNet.Test;
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-            modelBuilder.OutboxModelCreating();
-        }
+public class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.OutboxModelCreating();
+        modelBuilder.OnceExecutorModelCreating();
     }
 }
