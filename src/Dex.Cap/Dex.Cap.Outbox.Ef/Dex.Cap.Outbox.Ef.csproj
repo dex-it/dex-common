@@ -5,7 +5,6 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>outbox business-transaction consistency EF implementation</PackageTags>
-        <LangVersion>default</LangVersion>
         <InformationalVersion>8.0</InformationalVersion>
         <PackageVersion>8.1.2</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>

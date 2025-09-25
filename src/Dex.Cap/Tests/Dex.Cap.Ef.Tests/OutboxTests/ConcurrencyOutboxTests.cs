@@ -26,7 +26,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
-            // init messages before 
+            // init messages before
             var outboxService = sp.GetRequiredService<IOutboxService>();
             await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "concurrency world - 1" });
             await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "concurrency world - 2" });
@@ -34,7 +34,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests
 
             // run handlers
             const int handlerCount = 8;
-            var tasks = new List<Task>();
+            var tasks = new List<Task>(handlerCount);
             for (var i = 0; i < handlerCount; i++)
             {
                 tasks.Add(Task.Run(async () =>
