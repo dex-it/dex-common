@@ -55,7 +55,7 @@
         <PackageReference Update="Npgsql" Version="8.0.7"/>
         <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11"/>
         <PackageReference Update="Neo4jClient" Version="5.1.20"/>
-        <PackageReference Update="MassTransit*" Version="8.5.2"/>
+        <PackageReference Update="MassTransit*" Version="8.5.3"/>
         <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>
         <PackageReference Update="RazorLight" Version="2.3.1"/>
         <PackageReference Update="OpenTelemetry*" Version="1.9.0"/> <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нельзя -->
