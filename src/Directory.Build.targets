@@ -11,10 +11,10 @@
 
         <!--tests -->
         <PackageReference Update="coverlet.collector" Version="6.0.4"/>
-        <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+        <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.0.0"/>
         <PackageReference Update="xunit" Version="2.9.3"/>
         <PackageReference Update="NUnit" Version="4.4.0"/>
-        <PackageReference Update="NUnit3TestAdapter" Version="5.1.0"/>
+        <PackageReference Update="NUnit3TestAdapter" Version="5.2.0"/>
         <PackageReference Update="NUnit.Analyzers" Version="4.10.0"/>
         <PackageReference Update="HttpContextMoq" Version="1.7.0"/>
         <PackageReference Update="Moq" Version="4.20.72"/>
@@ -52,13 +52,13 @@
         <PackageReference Update="System.Text.Json" Version="8.0.6"/>
 
         <!--misc -->
-        <PackageReference Update="Npgsql" Version="8.0.7"/>
+        <PackageReference Update="Npgsql" Version="8.0.8"/>
         <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11"/>
         <PackageReference Update="Neo4jClient" Version="5.1.20"/>
-        <PackageReference Update="MassTransit*" Version="8.5.3"/>
+        <PackageReference Update="MassTransit*" Version="8.5.4"/>
         <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>
         <PackageReference Update="RazorLight" Version="2.3.1"/>
-        <PackageReference Update="OpenTelemetry*" Version="1.9.0"/> <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нельзя -->
+        <PackageReference Update="OpenTelemetry*" Version="1.9.0"/> <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нежелательно -->
         <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.3"/>
         <PackageReference Update="MediatR" Version="12.5.0"/>
         <PackageReference Update="Swashbuckle.AspNetCore" Version="8.1.4"/>
