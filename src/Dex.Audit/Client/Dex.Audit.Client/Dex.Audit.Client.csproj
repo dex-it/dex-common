@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>audit client</PackageTags>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.5</PackageVersion>
+        <PackageVersion>8.0.6</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
