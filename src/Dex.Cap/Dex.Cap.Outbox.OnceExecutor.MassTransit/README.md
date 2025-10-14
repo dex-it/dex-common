@@ -45,7 +45,7 @@ conf.AddConsumer<CustomConsumer>(configurator => configurator.UseDefaultConfigur
 ```csharp
 services.AddOutbox<AppDbContext>();
 
-services.AddScoped(typeof(IOutboxMessageHandler<>), typeof(PublisherOutboxHandler<>));
+services.AddOutboxPublisher();
 ```
 
 ## IdempotentOutboxHandler

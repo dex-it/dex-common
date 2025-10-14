@@ -108,7 +108,7 @@ public class Startup(IConfiguration configuration)
                                     .GetRequiredService<IOutboxService>();
                                 var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
                                 await client.EnqueueAsync(new TestOutboxCommand {Args = "hello world"});
-                                await db2.SaveChangesAsync();
+                                await SaveChangesWithRetryAsync(db2);
                             }
 
                             await Task.Delay(500);
@@ -119,6 +119,30 @@ public class Startup(IConfiguration configuration)
             catch (Exception e)
             {
                 Debug.Fail(e.Message, e.StackTrace);
+            }
+        }
+
+        async Task SaveChangesWithRetryAsync(DbContext db)
+        {
+            var attempt = 0;
+            const int maxRetries = 10;
+            const int delayMilliseconds = 100;
+
+            while (attempt < maxRetries)
+            {
+                try
+                {
+                    await db.SaveChangesAsync();
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    attempt++;
+                    Console.WriteLine($"SaveChangesAsync failed. Attempt {attempt} of {maxRetries}. Error: {ex.Message}");
+
+                    // Ждём перед повторной попыткой
+                    await Task.Delay(delayMilliseconds);
+                }
             }
         }
     }

@@ -3,8 +3,8 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
         <Nullable>enable</Nullable>
-        <InformationalVersion>1.0</InformationalVersion>
-        <PackageVersion>1.2.32</PackageVersion>
+        <InformationalVersion>1.2</InformationalVersion>
+        <PackageVersion>1.2.33</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
