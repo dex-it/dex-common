@@ -1,6 +1,6 @@
 ﻿using System.Collections.Frozen;
 
-namespace Dex.TransientExceptionsHandler;
+namespace Dex.TransientExceptions;
 
 /// <summary>
 /// Позволяет настроить перехват временных ошибок в UseRetryConfiguration и UseRedeliveryRetryConfiguration

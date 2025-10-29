@@ -1,15 +1,15 @@
 ﻿using System.Collections.Frozen;
 using System.Net;
 using System.Net.Sockets;
-using Dex.TransientExceptionsHandler.Exceptions;
-using Dex.TransientExceptionsHandler.Helpers;
+using Dex.TransientExceptions.Exceptions;
+using Dex.TransientExceptions.Helpers;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Refit;
 using StackExchange.Redis;
 
-namespace Dex.TransientExceptionsHandler;
+namespace Dex.TransientExceptions;
 
 public partial class TransientExceptionsHandler
 {

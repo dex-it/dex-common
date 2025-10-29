@@ -1,4 +1,4 @@
-namespace Dex.TransientExceptionsHandler.Helpers;
+namespace Dex.TransientExceptions.Helpers;
 
 internal static class ExceptionExtensions
 {

@@ -37,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Extensions.Test", "Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Types.Tests", "Tests\Dex.Types.Tests\Dex.Types.Tests.csproj", "{6D4537FB-06F2-4209-AD8F-1CE29C3624B4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.TransientExceptionsHandler", "Dex.TransientExceptionsHandler\Dex.TransientExceptionsHandler\Dex.TransientExceptionsHandler.csproj", "{2720CBF4-61A2-4C01-A5B0-FDF7889FA50C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.TransientExceptions", "Dex.TransientExceptionsHandler\Dex.TransientExceptions\Dex.TransientExceptions.csproj", "{2720CBF4-61A2-4C01-A5B0-FDF7889FA50C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

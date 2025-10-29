@@ -1,4 +1,4 @@
-﻿namespace Dex.TransientExceptionsHandler.Exceptions;
+﻿namespace Dex.TransientExceptions.Exceptions;
 
 public class TransientException : Exception
 {
