@@ -22,14 +22,18 @@ public partial class TransientExceptionsHandler
     /// </summary>
     public bool IsFrozen { get; private set; }
 
-    public TransientExceptionsHandler(IEnumerable<Type>? exceptionTypes = null, int? innerExceptionsSearchDepth = null, bool toSeal = false)
+    public TransientExceptionsHandler(IEnumerable<Type>? exceptionTypes = null, int? innerExceptionsSearchDepth = null,
+        bool toSeal = false)
     {
         _innerExceptionsSearchDepth = innerExceptionsSearchDepth is > 0
             ? innerExceptionsSearchDepth.Value
             : DefaultInnerExceptionSearchDepth;
 
-        if (exceptionTypes is not null) Add(exceptionTypes);
-        if (toSeal) ToSeal();
+        if (exceptionTypes is not null)
+            Add(exceptionTypes);
+
+        if (toSeal)
+            ToSeal();
     }
 
     /// <summary>
@@ -37,7 +41,11 @@ public partial class TransientExceptionsHandler
     /// </summary>
     public TransientExceptionsHandler Add(IEnumerable<Type> exceptionTypes)
     {
-        foreach (var exceptionType in exceptionTypes) Add(exceptionType);
+        ArgumentNullException.ThrowIfNull(exceptionTypes);
+
+        foreach (var exceptionType in exceptionTypes)
+            Add(exceptionType);
+
         return this;
     }
 
@@ -46,7 +54,10 @@ public partial class TransientExceptionsHandler
     /// </summary>
     public TransientExceptionsHandler Add(Type exceptionType)
     {
-        if (IsFrozen) throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is frozen.");
+        ArgumentNullException.ThrowIfNull(exceptionType);
+
+        if (IsFrozen)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is frozen.");
 
         if (exceptionType.IsSubclassOf(typeof(Exception)) || exceptionType == typeof(Exception))
             _transientExceptionsConfig!.Add(exceptionType);
@@ -61,9 +72,11 @@ public partial class TransientExceptionsHandler
     /// </summary>
     public TransientExceptionsHandler Add<T>(Func<T, bool> predicate) where T : Exception
     {
-        if (IsFrozen) throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is frozen.");
+        if (IsFrozen)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is frozen.");
 
         _transientExceptionsPredicateConfig!.Add(typeof(T), (Func<Exception, bool>)predicate);
+
         return this;
     }
 
@@ -72,12 +85,17 @@ public partial class TransientExceptionsHandler
     /// </summary>
     public bool Check(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
+
         if (IsFrozen is false)
             throw new InvalidOperationException(
                 $"Завершите настройку {nameof(TransientExceptionsHandler)} и вызовите {nameof(ToSeal)} перед использованием {nameof(Check)}");
 
-        if (ExceptionsCheckInternal(_transientExceptions!, exception, _innerExceptionsSearchDepth)) return true;
-        if (PredicateCheckInternal(_transientExceptionsPredicate!, exception, _innerExceptionsSearchDepth)) return true;
+        if (ExceptionsCheckInternal(_transientExceptions!, exception, _innerExceptionsSearchDepth))
+            return true;
+
+        if (PredicateCheckInternal(_transientExceptionsPredicate!, exception, _innerExceptionsSearchDepth))
+            return true;
 
         return StaticCheck(exception, _innerExceptionsSearchDepth);
     }

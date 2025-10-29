@@ -13,7 +13,7 @@ namespace Dex.TransientExceptionsHandler;
 
 public partial class TransientExceptionsHandler
 {
-    public const int DefaultInnerExceptionSearchDepth = 10;
+    private const int DefaultInnerExceptionSearchDepth = 10;
 
     public static TransientExceptionsHandler Default { get; } = new(toSeal: true);
 
@@ -75,15 +75,21 @@ public partial class TransientExceptionsHandler
 
     public static bool StaticCheck(Exception exception, int innerExceptionsSearchDepth)
     {
-        if (ExceptionsCheckInternal(StaticTransientExceptions, exception, innerExceptionsSearchDepth)) return true;
-        if (PredicateCheckInternal(StaticTransientExceptionsPredicate, exception, innerExceptionsSearchDepth)) return true;
+        ArgumentNullException.ThrowIfNull(exception);
+
+        if (ExceptionsCheckInternal(StaticTransientExceptions, exception, innerExceptionsSearchDepth))
+            return true;
+
+        if (PredicateCheckInternal(StaticTransientExceptionsPredicate, exception, innerExceptionsSearchDepth))
+            return true;
 
         return false;
     }
 
     private static bool ExceptionsCheckInternal(FrozenSet<Type> exceptions, Exception exception, int innerExceptionsSearchDepth)
     {
-        if (exceptions.Count <= 0) return false;
+        if (exceptions.Count <= 0)
+            return false;
 
         // main exception check
         if (exceptions.Contains(exception.GetType()) || exceptions.Any(x => x.IsInstanceOfType(exception)))
@@ -99,7 +105,8 @@ public partial class TransientExceptionsHandler
 
     private static bool PredicateCheckInternal(FrozenDictionary<Type, Func<Exception, bool>> exceptions, Exception exception, int innerExceptionsSearchDepth)
     {
-        if (exceptions.Count <= 0) return false;
+        if (exceptions.Count <= 0)
+            return false;
 
         // main exception check
         if (exceptions.TryGetValue(exception.GetType(), out var predicate))
@@ -115,5 +122,10 @@ public partial class TransientExceptionsHandler
         return false;
     }
 
-    public static implicit operator Func<Exception, bool>(TransientExceptionsHandler handler) => handler.Check;
+    public static implicit operator Func<Exception, bool>(TransientExceptionsHandler handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        return handler.Check;
+    }
 }
