@@ -40,8 +40,4 @@
         <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj"/>
-    </ItemGroup>
-
 </Project>

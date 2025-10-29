@@ -9,6 +9,20 @@
         <PackageVersion>8.0.0</PackageVersion>
     </PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="Grpc.Core.Api"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Npgsql"/>
+        <PackageReference Include="Refit"/>
+        <PackageReference Include="StackExchange.Redis"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="StaticTransientExceptionsHandler.cs">
+            <DependentUpon>TransientExceptionsHandler.cs</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
     <!--Для NuGet-->
     <PropertyGroup>
         <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
