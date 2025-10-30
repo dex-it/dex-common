@@ -46,7 +46,7 @@ services.AddOnceExecutor<AppDbContext>();
 - OperationCanceledException
 - RedisConnectionException
 - RedisTimeoutException
-- Dex.TransientExceptions.Exceptions.TransientException (все ошибки оттнаследованные от этой станут трансиентными)
+- Dex.TransientExceptions.Exceptions.TransientException (все ошибки, оттнаследованные от этой, станут трансиентными)
 - NpgsqlException (с флагом IsTransient)
 - HttpRequestException (со статусом кодами 408, 429 и любым 5XX)
 - Refit.ApiException (со статусом кодами 408, 429 и любым 5XX)
@@ -88,7 +88,7 @@ private static TransientExceptionsHandler BuildCustomHandler()
     builder.SetInnerExceptionsSearchDepth(99);
 
     // отключает стандартные проверки из TransientExceptionsHandler.Default конфига, оставляя только те, которые были явно добавлены в текущий билдер
-    // НЕОБЯЗАТЕЛЬНО: по умолчанию, если этот метод не был вызван, все явно добавленные ошибки будут дополнены и теми, что уже определены в TransientExceptionsHandler.Default
+    // НЕОБЯЗАТЕЛЬНО: по умолчанию, если этот метод не был вызван, все явно добавленные ошибки будут дополнены и теми, что уже были определены в TransientExceptionsHandler.Default
     builder.DisableDefaultBehaviour();
 
     // ОБЯЗАТЕЛЬНО: требуется явно вызвать Build после завершения конфигурирования, до начала использования
@@ -97,7 +97,7 @@ private static TransientExceptionsHandler BuildCustomHandler()
 ```
 #### Альтернативный пример быстрого добавления TransientExceptionsHandler.DefaultEntityNotFound
 ```csharp
-    // В этом примере создается конфиг, включающий дефолтные настройки + 1 новая безусловно трансиентная ошибка (включая наследников): EntityNotFoundException
+    // В этом примере создается конфиг, включающий дефолтные настройки TransientExceptionsHandler.Default + 1 новая безусловно трансиентная ошибка (включая наследников): EntityNotFoundException
     
     public static TransientExceptionsHandler DefaultEntityNotFound { get; } = new([typeof(EntityNotFoundException)], disableDefaultBehaviour: false, runBuild: true);
 ```
