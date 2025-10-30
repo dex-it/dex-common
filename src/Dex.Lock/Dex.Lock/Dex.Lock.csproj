@@ -27,12 +27,4 @@
     </ItemGroup>
     <!--/Для NuGet-->
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-        <PackageReference Include="Nullable">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="System.Threading.Tasks.Extensions"/>
-    </ItemGroup>
-
 </Project>

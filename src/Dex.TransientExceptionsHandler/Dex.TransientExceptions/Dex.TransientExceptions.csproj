@@ -1,18 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageTags>dex; transient exceptions</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.1.3</PackageVersion>
-        <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
-        <FileVersion>$(PackageVersion)</FileVersion>
+        <PackageVersion>8.0.0</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
     <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -29,11 +28,17 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <ProjectReference Include="..\Dex.Cap.Outbox\Dex.Cap.Outbox.csproj"/>
+        <PackageReference Include="Grpc.Core.Api"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Npgsql"/>
+        <PackageReference Include="Refit"/>
+        <PackageReference Include="StackExchange.Redis"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
+        <Compile Update="StaticTransientExceptionsHandler.cs">
+            <DependentUpon>TransientExceptionsHandler.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>
