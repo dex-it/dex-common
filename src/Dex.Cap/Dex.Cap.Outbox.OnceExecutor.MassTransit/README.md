@@ -97,9 +97,9 @@ private static TransientExceptionsHandler BuildCustomHandler()
 ```
 #### Альтернативный пример быстрого добавления TransientExceptionsHandler.DefaultEntityNotFound
 ```csharp
-    // В этом примере создается конфиг, включающий дефолтные настройки TransientExceptionsHandler.Default + 1 новая безусловно трансиентная ошибка (включая наследников): EntityNotFoundException
+// В этом примере создается конфиг, включающий дефолтные настройки TransientExceptionsHandler.Default + 1 новая безусловно трансиентная ошибка (включая наследников): EntityNotFoundException
     
-    public static TransientExceptionsHandler DefaultEntityNotFound { get; } = new([typeof(EntityNotFoundException)], disableDefaultBehaviour: false, runBuild: true);
+public static TransientExceptionsHandler DefaultEntityNotFound { get; } = new([typeof(EntityNotFoundException)], disableDefaultBehaviour: false, runBuild: true);
 ```
 
 # Shared.Outbox
