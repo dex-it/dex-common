@@ -15,7 +15,7 @@ public partial class TransientExceptionsHandler
 {
     private const int DefaultInnerExceptionSearchDepth = 10;
 
-    public static TransientExceptionsHandler Default { get; } = new(toSeal: true);
+    public static TransientExceptionsHandler Default { get; } = new(runBuild: true);
 
     private static readonly FrozenSet<Type> StaticTransientExceptions = ((Type[])
     [
@@ -124,8 +124,9 @@ public partial class TransientExceptionsHandler
 
     public static implicit operator Func<Exception, bool>(TransientExceptionsHandler handler)
     {
-        ArgumentNullException.ThrowIfNull(handler);
-
-        return handler.Check;
+        ArgumentNullException.ThrowIfNull(handler, nameof(handler));
+        return handler.ToFunc();
     }
+
+    public Func<Exception, bool> ToFunc() => Check;
 }
