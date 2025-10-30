@@ -46,7 +46,7 @@ services.AddOnceExecutor<AppDbContext>();
 - OperationCanceledException
 - RedisConnectionException
 - RedisTimeoutException
-- Dex.TransientExceptions.Exceptions.TransientException (все ошибки, оттнаследованные от этой, станут трансиентными)
+- Dex.TransientExceptions.Exceptions.TransientException (все ошибки, унаследованные от этой, станут трансиентными)
 - NpgsqlException (с флагом IsTransient)
 - HttpRequestException (со статусом кодами 408, 429 и любым 5XX)
 - Refit.ApiException (со статусом кодами 408, 429 и любым 5XX)
