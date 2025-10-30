@@ -64,7 +64,7 @@ conf.AddConsumer<CustomConsumer>(configurator => configurator.UseDefaultConfigur
 
 #### Пример добавления TransientExceptionsHandler.Custom
 
-```
+```csharp
 /// <summary>
 /// Для лучшей производительности рекомендуется единожды выполнить конфигурацию BuildCustomHandler()
 /// После чего, сохранить готовый к использованию экземпляр в статическом поле и передать во все использующие его флоу
@@ -96,7 +96,7 @@ private static TransientExceptionsHandler BuildCustomHandler()
 }
 ```
 #### Альтернативный пример быстрого добавления TransientExceptionsHandler.DefaultEntityNotFound
-```
+```csharp
     // В этом примере создается конфиг, включающий дефолтные настройки + 1 новая безусловно трансиентная ошибка (включая наследников): EntityNotFoundException
     
     public static TransientExceptionsHandler DefaultEntityNotFound { get; } = new([typeof(EntityNotFoundException)], disableDefaultBehaviour: false, runBuild: true);
