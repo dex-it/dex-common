@@ -7,8 +7,8 @@ namespace Dex.TransientExceptions;
 /// </summary>
 public partial class TransientExceptionsHandler
 {
-    private readonly bool _disableDefaultBehaviour;
-    private readonly int _innerExceptionsSearchDepth;
+    private bool _disableDefaultBehaviour;
+    private int _innerExceptionsSearchDepth;
 
     private HashSet<Type>? _transientExceptionsPreBuildConfig = [];
     private Dictionary<Type, Func<Exception, bool>>? _transientExceptionsPredicatePreBuildConfig = new();
@@ -107,7 +107,32 @@ public partial class TransientExceptionsHandler
         return !_disableDefaultBehaviour && StaticCheck(exception, _innerExceptionsSearchDepth);
     }
 
-    public void Build()
+    /// <summary>
+    /// Отключить стандартные проверки трансиентности
+    /// </summary>
+    public TransientExceptionsHandler DisableDefaultBehaviour()
+    {
+        if (BuildCompleted)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
+
+        _disableDefaultBehaviour = true;
+
+        return this;
+    }
+
+    public TransientExceptionsHandler SetInnerExceptionsSearchDepth(int depth)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(0, depth, nameof(depth));
+
+        if (BuildCompleted)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
+
+        _innerExceptionsSearchDepth = depth;
+
+        return this;
+    }
+
+    public TransientExceptionsHandler Build()
     {
         if (BuildCompleted)
             throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
@@ -119,5 +144,7 @@ public partial class TransientExceptionsHandler
 
         _transientExceptionsPreBuildConfig = null;
         _transientExceptionsPredicatePreBuildConfig = null;
+
+        return this;
     }
 }
