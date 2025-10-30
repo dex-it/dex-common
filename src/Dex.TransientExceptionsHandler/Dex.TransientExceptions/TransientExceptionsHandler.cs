@@ -7,10 +7,11 @@ namespace Dex.TransientExceptions;
 /// </summary>
 public partial class TransientExceptionsHandler
 {
-    private readonly int _innerExceptionsSearchDepth;
+    private bool _disableDefaultBehaviour;
+    private int _innerExceptionsSearchDepth;
 
-    private HashSet<Type>? _transientExceptionsConfig = [];
-    private Dictionary<Type, Func<Exception, bool>>? _transientExceptionsPredicateConfig = new();
+    private HashSet<Type>? _transientExceptionsPreBuildConfig = [];
+    private Dictionary<Type, Func<Exception, bool>>? _transientExceptionsPredicatePreBuildConfig = new();
 
     private FrozenSet<Type>? _transientExceptions;
     private FrozenDictionary<Type, Func<Exception, bool>>? _transientExceptionsPredicate;
@@ -20,11 +21,16 @@ public partial class TransientExceptionsHandler
     /// <br/>
     /// True - настройка завершена: можно делать только Check
     /// </summary>
-    public bool IsFrozen { get; private set; }
+    public bool BuildCompleted { get; private set; }
 
-    public TransientExceptionsHandler(IEnumerable<Type>? exceptionTypes = null, int? innerExceptionsSearchDepth = null,
-        bool toSeal = false)
+    public TransientExceptionsHandler(
+        IEnumerable<Type>? exceptionTypes = null,
+        int? innerExceptionsSearchDepth = null,
+        bool runBuild = false,
+        bool disableDefaultBehaviour = false)
     {
+        _disableDefaultBehaviour = disableDefaultBehaviour;
+
         _innerExceptionsSearchDepth = innerExceptionsSearchDepth is > 0
             ? innerExceptionsSearchDepth.Value
             : DefaultInnerExceptionSearchDepth;
@@ -32,8 +38,8 @@ public partial class TransientExceptionsHandler
         if (exceptionTypes is not null)
             Add(exceptionTypes);
 
-        if (toSeal)
-            ToSeal();
+        if (runBuild)
+            Build();
     }
 
     /// <summary>
@@ -56,11 +62,11 @@ public partial class TransientExceptionsHandler
     {
         ArgumentNullException.ThrowIfNull(exceptionType);
 
-        if (IsFrozen)
-            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is frozen.");
+        if (BuildCompleted)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
 
         if (exceptionType.IsSubclassOf(typeof(Exception)) || exceptionType == typeof(Exception))
-            _transientExceptionsConfig!.Add(exceptionType);
+            _transientExceptionsPreBuildConfig!.Add(exceptionType);
         else
             throw new ArgumentException($"Type {exceptionType} is not a valid exception type.");
 
@@ -72,10 +78,10 @@ public partial class TransientExceptionsHandler
     /// </summary>
     public TransientExceptionsHandler Add<T>(Func<T, bool> predicate) where T : Exception
     {
-        if (IsFrozen)
-            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is frozen.");
+        if (BuildCompleted)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
 
-        _transientExceptionsPredicateConfig!.Add(typeof(T), (Func<Exception, bool>)predicate);
+        _transientExceptionsPredicatePreBuildConfig!.Add(typeof(T), (Func<Exception, bool>)predicate);
 
         return this;
     }
@@ -87,9 +93,9 @@ public partial class TransientExceptionsHandler
     {
         ArgumentNullException.ThrowIfNull(exception);
 
-        if (IsFrozen is false)
+        if (BuildCompleted is false)
             throw new InvalidOperationException(
-                $"Завершите настройку {nameof(TransientExceptionsHandler)} и вызовите {nameof(ToSeal)} перед использованием {nameof(Check)}");
+                $"Завершите настройку {nameof(TransientExceptionsHandler)} и вызовите {nameof(Build)} перед использованием {nameof(Check)}");
 
         if (ExceptionsCheckInternal(_transientExceptions!, exception, _innerExceptionsSearchDepth))
             return true;
@@ -97,17 +103,48 @@ public partial class TransientExceptionsHandler
         if (PredicateCheckInternal(_transientExceptionsPredicate!, exception, _innerExceptionsSearchDepth))
             return true;
 
-        return StaticCheck(exception, _innerExceptionsSearchDepth);
+        // run default behaviour if it is not disabled
+        return !_disableDefaultBehaviour && StaticCheck(exception, _innerExceptionsSearchDepth);
     }
 
-    public void ToSeal()
+    /// <summary>
+    /// Отключить стандартные проверки трансиентности
+    /// </summary>
+    public TransientExceptionsHandler DisableDefaultBehaviour()
     {
-        IsFrozen = true;
+        if (BuildCompleted)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
 
-        _transientExceptions = _transientExceptionsConfig!.ToFrozenSet();
-        _transientExceptionsPredicate = _transientExceptionsPredicateConfig!.ToFrozenDictionary();
+        _disableDefaultBehaviour = true;
 
-        _transientExceptionsConfig = null;
-        _transientExceptionsPredicateConfig = null;
+        return this;
+    }
+
+    public TransientExceptionsHandler SetInnerExceptionsSearchDepth(int depth)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(0, depth, nameof(depth));
+
+        if (BuildCompleted)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
+
+        _innerExceptionsSearchDepth = depth;
+
+        return this;
+    }
+
+    public TransientExceptionsHandler Build()
+    {
+        if (BuildCompleted)
+            throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
+
+        BuildCompleted = true;
+
+        _transientExceptions = _transientExceptionsPreBuildConfig!.ToFrozenSet();
+        _transientExceptionsPredicate = _transientExceptionsPredicatePreBuildConfig!.ToFrozenDictionary();
+
+        _transientExceptionsPreBuildConfig = null;
+        _transientExceptionsPredicatePreBuildConfig = null;
+
+        return this;
     }
 }

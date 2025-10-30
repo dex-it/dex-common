@@ -6,6 +6,8 @@ internal static class ExceptionExtensions
     {
         ArgumentNullException.ThrowIfNull(exception);
 
+        if (count <= 0) yield break;
+
         var innerException = exception;
         do
         {

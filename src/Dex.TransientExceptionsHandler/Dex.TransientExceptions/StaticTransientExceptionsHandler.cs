@@ -15,7 +15,22 @@ public partial class TransientExceptionsHandler
 {
     private const int DefaultInnerExceptionSearchDepth = 10;
 
-    public static TransientExceptionsHandler Default { get; } = new(toSeal: true);
+    /// <summary>
+    /// Стандартная конфигурация, включает наиболее распространенные временные ошибки
+    /// TimeoutException, IOException, SocketException, OperationCanceledException
+    /// HttpCodes: 408, 429, 5XX
+    /// </summary>
+    public static TransientExceptionsHandler Default { get; } = new(runBuild: true);
+
+    /// <summary>
+    /// Все ошибки будут считаться трансиентными
+    /// </summary>
+    public static TransientExceptionsHandler RetryAll { get; } = new([typeof(Exception)], runBuild: true);
+
+    /// <summary>
+    /// Никакие ошибки не будут считаться трансиентными
+    /// </summary>
+    public static TransientExceptionsHandler RetryDisable { get; } = new(disableDefaultBehaviour: true, runBuild: true);
 
     private static readonly FrozenSet<Type> StaticTransientExceptions = ((Type[])
     [
@@ -124,8 +139,9 @@ public partial class TransientExceptionsHandler
 
     public static implicit operator Func<Exception, bool>(TransientExceptionsHandler handler)
     {
-        ArgumentNullException.ThrowIfNull(handler);
-
-        return handler.Check;
+        ArgumentNullException.ThrowIfNull(handler, nameof(handler));
+        return handler.ToFunc();
     }
+
+    public Func<Exception, bool> ToFunc() => Check;
 }
