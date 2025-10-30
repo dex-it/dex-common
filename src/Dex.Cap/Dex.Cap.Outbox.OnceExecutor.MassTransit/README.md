@@ -62,7 +62,7 @@ conf.AddConsumer<CustomConsumer>(configurator => configurator.UseDefaultConfigur
 
 Если стандартные конфигурации определения трансиентных ошибок не подходят, можно определить кастомную:
 
-### Пример добавления TransientExceptionsHandler.Custom
+#### Пример добавления TransientExceptionsHandler.Custom
 
 ```
 /// <summary>
@@ -94,6 +94,12 @@ private static TransientExceptionsHandler BuildCustomHandler()
     // ОБЯЗАТЕЛЬНО: требуется явно вызвать Build после завершения конфигурирования, до начала использования
     return builder.Build();
 }
+```
+#### Альтернативный пример быстрого добавления TransientExceptionsHandler.DefaultEntityNotFound
+```
+    // В этом примере создается конфиг, включающий дефолтные настройки + 1 новая безусловно трансиентная ошибка (включая наследников): EntityNotFoundException
+    
+    public static TransientExceptionsHandler DefaultEntityNotFound { get; } = new([typeof(EntityNotFoundException)], disableDefaultBehaviour: false, runBuild: true);
 ```
 
 # Shared.Outbox
