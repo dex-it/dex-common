@@ -52,7 +52,7 @@ services.AddOnceExecutor<AppDbContext>();
 - WebException (со статусом ConnectFailure, Timeout, NameResolutionFailure, ProxyNameResolutionFailure, SendFailure, ReceiveFailure, KeepAliveFailure,
   PipelineFailure, ProtocolError, Pending)
 
-##### Альтернативные глобальные метки трансиентности
+##### Глобальные метки трансиентности
 - Все ошибки с интерфейсом-меткой ITransientException всегда будут безусловно трансиентными, независимо от конфигурации.
 - Все ошибки с интерфейсом-меткой ITransientExceptionCandidate будут условно трансиентными, независимо от конфигурации. Условие трансиентности необходимо реализовать внутри ошибки, согласно интерфейсу.
 
