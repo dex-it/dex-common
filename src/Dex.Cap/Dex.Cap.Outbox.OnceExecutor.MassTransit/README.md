@@ -35,7 +35,7 @@ services.AddOnceExecutor<AppDbContext>();
 - TransientExceptionsHandler.Default
 - TransientExceptionsHandler.RetryAll
 
-Стандартные трансиентные ошибки в Default конфигурации:
+##### Стандартные трансиентные ошибки в Default конфигурации:
 
 - TimeoutException
 - IOException
@@ -52,7 +52,9 @@ services.AddOnceExecutor<AppDbContext>();
 - WebException (со статусом ConnectFailure, Timeout, NameResolutionFailure, ProxyNameResolutionFailure, SendFailure, ReceiveFailure, KeepAliveFailure,
   PipelineFailure, ProtocolError, Pending)
 
-При этом, все ошибки с интерфейсом-меткой ITransientException всегда будут трансиентными, независимо от конфигурации.
+##### Глобальные метки трансиентности
+- Все ошибки с интерфейсом-меткой ITransientException всегда будут безусловно трансиентными, независимо от конфигурации.
+- Все ошибки с интерфейсом-меткой ITransientExceptionCandidate будут условно трансиентными, независимо от конфигурации. Условие трансиентности необходимо реализовать внутри ошибки, согласно интерфейсу.
 
 ### Пример использования
 
@@ -100,6 +102,25 @@ private static TransientExceptionsHandler BuildCustomHandler()
 // В этом примере создается конфиг, включающий дефолтные настройки TransientExceptionsHandler.Default + 1 новая безусловно трансиентная ошибка (включая наследников): EntityNotFoundException
     
 public static TransientExceptionsHandler DefaultEntityNotFound { get; } = new([typeof(EntityNotFoundException)], disableDefaultBehaviour: false, runBuild: true);
+```
+
+#### Глобальное конфигурирование трансиентности ошибок
+```csharp
+/// <summary>
+/// Всегда трансиентная ошибка
+/// </summary>
+public class TransientException : Exception, ITransientException;
+
+/// <summary>
+/// Условно-трансиентная ошибка
+/// </summary>
+public class MayBeTransientException : Exception, ITransientExceptionCandidate
+{
+    /// <summary>
+    /// Условие трансиентности
+    /// </summary>
+    public bool IsTransient => Message.Contains("some transient code mark", StringComparison.InvariantCulture);
+}
 ```
 
 # Shared.Outbox

@@ -1,7 +1,9 @@
 ﻿namespace Dex.TransientExceptions.Exceptions;
 
-public class TransientException : Exception, ITransientException
+public class TransientException : Exception, ITransientException, ITransientExceptionCandidate
 {
+    public bool IsTransient => true;
+
     public TransientException()
     {
     }

@@ -6,7 +6,7 @@
         <PackageTags>dex; transient exceptions</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>8.0.2</PackageVersion>
+        <PackageVersion>8.0.3</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
