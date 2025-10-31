@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using Dex.TransientExceptions.Exceptions;
 
 namespace Dex.TransientExceptions;
 
@@ -96,6 +97,9 @@ public partial class TransientExceptionsHandler
         if (BuildCompleted is false)
             throw new InvalidOperationException(
                 $"Завершите настройку {nameof(TransientExceptionsHandler)} и вызовите {nameof(Build)} перед использованием {nameof(Check)}");
+
+        if (exception is ITransientException)
+            return true;
 
         if (ExceptionsCheckInternal(_transientExceptions!, exception, _innerExceptionsSearchDepth))
             return true;

@@ -6,7 +6,7 @@
         <PackageTags>dex; transient exceptions</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>8.0.1</PackageVersion>
+        <PackageVersion>8.0.2</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
@@ -38,6 +38,9 @@
     <ItemGroup>
         <Compile Update="StaticTransientExceptionsHandler.cs">
             <DependentUpon>TransientExceptionsHandler.cs</DependentUpon>
+        </Compile>
+        <Compile Update="Exceptions\TransientException.cs">
+          <DependentUpon>ITransientException.cs</DependentUpon>
         </Compile>
     </ItemGroup>
 

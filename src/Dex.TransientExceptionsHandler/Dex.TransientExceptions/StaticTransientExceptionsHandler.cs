@@ -27,11 +27,6 @@ public partial class TransientExceptionsHandler
     /// </summary>
     public static TransientExceptionsHandler RetryAll { get; } = new([typeof(Exception)], runBuild: true);
 
-    /// <summary>
-    /// Никакие ошибки не будут считаться трансиентными
-    /// </summary>
-    public static TransientExceptionsHandler RetryDisable { get; } = new(disableDefaultBehaviour: true, runBuild: true);
-
     private static readonly FrozenSet<Type> StaticTransientExceptions = ((Type[])
     [
         typeof(TimeoutException),

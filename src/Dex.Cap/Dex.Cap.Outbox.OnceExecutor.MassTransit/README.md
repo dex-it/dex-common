@@ -34,7 +34,6 @@ services.AddOnceExecutor<AppDbContext>();
 
 - TransientExceptionsHandler.Default
 - TransientExceptionsHandler.RetryAll
-- TransientExceptionsHandler.RetryDisable
 
 Стандартные трансиентные ошибки в Default конфигурации:
 
@@ -46,13 +45,14 @@ services.AddOnceExecutor<AppDbContext>();
 - OperationCanceledException
 - RedisConnectionException
 - RedisTimeoutException
-- Dex.TransientExceptions.Exceptions.TransientException (все ошибки, унаследованные от этой, станут трансиентными)
 - NpgsqlException (с флагом IsTransient)
 - HttpRequestException (со статусом кодами 408, 429 и любым 5XX)
 - Refit.ApiException (со статусом кодами 408, 429 и любым 5XX)
 - RpcException (со статусом Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted)
 - WebException (со статусом ConnectFailure, Timeout, NameResolutionFailure, ProxyNameResolutionFailure, SendFailure, ReceiveFailure, KeepAliveFailure,
   PipelineFailure, ProtocolError, Pending)
+
+При этом, все ошибки с интерфейсом-меткой ITransientException всегда будут трансиентными, независимо от конфигурации.
 
 ### Пример использования
 

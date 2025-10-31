@@ -1,6 +1,6 @@
 ﻿namespace Dex.TransientExceptions.Exceptions;
 
-public class TransientException : Exception
+public class TransientException : Exception, ITransientException
 {
     public TransientException()
     {
