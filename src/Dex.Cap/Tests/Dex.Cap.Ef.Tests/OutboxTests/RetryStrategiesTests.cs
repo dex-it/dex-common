@@ -11,61 +11,60 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests.OutboxTests
+namespace Dex.Cap.Ef.Tests.OutboxTests;
+
+public class RetryStrategiesTests : BaseTest
 {
-    public class RetryStrategiesTests : BaseTest
+    [Test]
+    [TestCase(100, 1, OutboxMessageStatus.Succeeded, "Incremental")]
+    [TestCase(1000, 0, OutboxMessageStatus.Failed, "Incremental")]
+    [TestCase(100, 1, OutboxMessageStatus.Succeeded, "Exponential")]
+    [TestCase(1000, 0, OutboxMessageStatus.Failed, "Exponential")]
+    public async Task IncrementalRetry_ProcessMessage(int intervalMs, int expectedCount,
+        OutboxMessageStatus expectedStatus, string retryStrategyName)
     {
-        [Test]
-        [TestCase(100, 1, OutboxMessageStatus.Succeeded, "Incremental")]
-        [TestCase(1000, 0, OutboxMessageStatus.Failed, "Incremental")]
-        [TestCase(100, 1, OutboxMessageStatus.Succeeded, "Exponential")]
-        [TestCase(1000, 0, OutboxMessageStatus.Failed, "Exponential")]
-        public async Task IncrementalRetry_ProcessMessage(int intervalMs, int expectedCount,
-            OutboxMessageStatus expectedStatus, string retryStrategyName)
+        var serviceProvider = InitServiceCollection(strategyConfigure: strategyConfigurator =>
+                ConfigureStrategy(intervalMs, retryStrategyName, strategyConfigurator))
+            .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
+            .BuildServiceProvider();
+
+        TestErrorCommandHandler.Reset();
+
+        var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
+        await outboxService.EnqueueAsync(new TestErrorOutboxCommand { MaxCount = 2 });
+        await SaveChanges(serviceProvider);
+
+        var count = 0;
+        TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
+        var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+
+        var repeat = 5;
+        while (repeat-- > 0)
         {
-            var serviceProvider = InitServiceCollection(strategyConfigure: strategyConfigurator =>
-                    ConfigureStrategy(intervalMs, retryStrategyName, strategyConfigurator))
-                .AddScoped<IOutboxMessageHandler<TestErrorOutboxCommand>, TestErrorCommandHandler>()
-                .BuildServiceProvider();
-
-            TestErrorCommandHandler.Reset();
-
-            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
-            await outboxService.EnqueueAsync(new TestErrorOutboxCommand { MaxCount = 2 });
-            await SaveChanges(serviceProvider);
-
-            var count = 0;
-            TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
-            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
-
-            var repeat = 5;
-            while (repeat-- > 0)
-            {
-                await handler.ProcessAsync(CancellationToken.None);
-                await Task.Delay(100);
-            }
-
-            // check
-
-            using var scope = serviceProvider.CreateScope();
-            var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>()
-                .FirstAsync(x => x.CorrelationId == outboxService.CorrelationId);
-            Assert.AreEqual(expectedStatus, envelope.Status);
-            Assert.AreEqual(expectedCount, count);
+            await handler.ProcessAsync(CancellationToken.None);
+            await Task.Delay(100);
         }
 
-        private static void ConfigureStrategy(int interval, string retryStrategyName,
-            OutboxRetryStrategyConfigurator configurator)
+        // check
+
+        using var scope = serviceProvider.CreateScope();
+        var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>()
+            .FirstAsync(x => x.CorrelationId == outboxService.CorrelationId);
+        Assert.AreEqual(expectedStatus, envelope.Status);
+        Assert.AreEqual(expectedCount, count);
+    }
+
+    private static void ConfigureStrategy(int interval, string retryStrategyName,
+        OutboxRetryStrategyConfigurator configurator)
+    {
+        switch (retryStrategyName)
         {
-            switch (retryStrategyName)
-            {
-                case "Incremental":
-                    configurator.UseOutboxIncrementalRetryStrategy(interval.MilliSeconds());
-                    break;
-                case "Exponential":
-                    configurator.UseOutboxExponentialRetryStrategy(interval.MilliSeconds());
-                    break;
-            }
+            case "Incremental":
+                configurator.UseOutboxIncrementalRetryStrategy(interval.MilliSeconds());
+                break;
+            case "Exponential":
+                configurator.UseOutboxExponentialRetryStrategy(interval.MilliSeconds());
+                break;
         }
     }
 }

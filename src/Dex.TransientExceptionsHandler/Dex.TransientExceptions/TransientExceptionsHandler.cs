@@ -97,7 +97,8 @@ public partial class TransientExceptionsHandler
             throw new InvalidOperationException(
                 $"Завершите настройку {nameof(TransientExceptionsHandler)} и вызовите {nameof(Build)} перед использованием {nameof(Check)}");
 
-        if (TransientExceptionInterfaceCheck(exception, _innerExceptionsSearchDepth)) return true;
+        if (TransientExceptionInterfaceCheck(exception, _innerExceptionsSearchDepth))
+            return true;
 
         if (ExceptionsCheckInternal(_transientExceptions!, exception, _innerExceptionsSearchDepth))
             return true;

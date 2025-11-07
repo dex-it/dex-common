@@ -1,7 +1,6 @@
-﻿namespace Dex.Cap.Outbox.Interfaces
+﻿namespace Dex.Cap.Outbox.Interfaces;
+
+public interface IOutboxMessageHandlerFactory
 {
-    public interface IOutboxMessageHandlerFactory
-    {
-        object GetMessageHandler(object outboxMessage);
-    }
+    object GetMessageHandler(object outboxMessage);
 }

@@ -9,72 +9,71 @@ using Dex.Cap.Outbox.Options;
 using Microsoft.Extensions.Options;
 using Neo4jClient.Transactions;
 
-namespace Dex.Cap.Outbox.Neo4j
+namespace Dex.Cap.Outbox.Neo4j;
+
+// ReSharper disable once InconsistentNaming
+internal sealed class OutboxDataProviderNeo4j(
+    ITransactionalGraphClient graphClient,
+    IOptions<OutboxOptions> outboxOptions,
+    IOutboxRetryStrategy retryStrategy)
+    : BaseOutboxDataProvider(retryStrategy)
 {
-    // ReSharper disable once InconsistentNaming
-    internal sealed class OutboxDataProviderNeo4j(
-        ITransactionalGraphClient graphClient,
-        IOptions<OutboxOptions> outboxOptions,
-        IOutboxRetryStrategy retryStrategy)
-        : BaseOutboxDataProvider(retryStrategy)
+    private readonly ITransactionalGraphClient _graphClient =
+        graphClient ?? throw new ArgumentNullException(nameof(graphClient));
+
+    private readonly OutboxOptions _outboxOptions =
+        outboxOptions.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
+
+    public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope,
+        CancellationToken cancellationToken)
     {
-        private readonly ITransactionalGraphClient _graphClient =
-            graphClient ?? throw new ArgumentNullException(nameof(graphClient));
+        await _graphClient.Cypher
+            .Create($"(outbox:{nameof(Outbox)})")
+            .Set("outbox = {outbox}").WithParam("outbox", outboxEnvelope)
+            .ExecuteWithoutResultsAsync();
 
-        private readonly OutboxOptions _outboxOptions =
-            outboxOptions.Value ?? throw new ArgumentNullException(nameof(outboxOptions));
+        return outboxEnvelope;
+    }
 
-        public override async Task<OutboxEnvelope> Add(OutboxEnvelope outboxEnvelope,
-            CancellationToken cancellationToken)
-        {
-            await _graphClient.Cypher
-                .Create($"(outbox:{nameof(Outbox)})")
-                .Set("outbox = {outbox}").WithParam("outbox", outboxEnvelope)
-                .ExecuteWithoutResultsAsync();
+    public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 
-            return outboxEnvelope;
-        }
+    public override async Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken)
+    {
+        var outboxes = await GetFreeMessages(cancellationToken);
+        return outboxes.Select(IOutboxLockedJob (x) => new OutboxLockedJob(x)).ToArray();
+    }
 
-        public override Task<bool> IsExists(Guid correlationId, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+    /// <exception cref="OperationCanceledException"/>
+    public override async Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
+    {
+        const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
+        const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
 
-        public override async Task<IOutboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken)
-        {
-            var outboxes = await GetFreeMessages(cancellationToken);
-            return outboxes.Select(x => (IOutboxLockedJob)new OutboxLockedJob(x)).ToArray();
-        }
+        var potentialFree = await _graphClient.Cypher.Match($"(o:{nameof(Outbox)})")
+            .Where((OutboxEnvelope o) => o.Retries < _outboxOptions.Retries)
+            .AndWhere((OutboxEnvelope o) => o.Status == failedStatus || o.Status == newStatus)
+            .Return<OutboxEnvelope>("o")
+            .OrderBy("o.Created")
+            .Limit(_outboxOptions.MessagesToProcess)
+            .ResultsAsync;
 
-        /// <exception cref="OperationCanceledException"/>
-        public override async Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
-        {
-            const OutboxMessageStatus failedStatus = OutboxMessageStatus.Failed;
-            const OutboxMessageStatus newStatus = OutboxMessageStatus.New;
+        return potentialFree.ToArray();
+    }
 
-            var potentialFree = await _graphClient.Cypher.Match($"(o:{nameof(Outbox)})")
-                .Where((OutboxEnvelope o) => o.Retries < _outboxOptions.Retries)
-                .AndWhere((OutboxEnvelope o) => o.Status == failedStatus || o.Status == newStatus)
-                .Return<OutboxEnvelope>("o")
-                .OrderBy("o.Created")
-                .Limit(_outboxOptions.MessagesToProcess)
-                .ResultsAsync;
+    public override int GetFreeMessagesCount()
+    {
+        throw new NotImplementedException();
+    }
 
-            return potentialFree.ToArray();
-        }
-
-        public override int GetFreeMessagesCount()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope,
-            CancellationToken cancellationToken)
-        {
-            await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
-                .WithParam("id", outboxEnvelope.Envelope.Id)
-                .Set("o = {outbox}").WithParam("outbox", outboxEnvelope)
-                .ExecuteWithoutResultsAsync();
-        }
+    protected override async Task CompleteJobAsync(IOutboxLockedJob outboxEnvelope,
+        CancellationToken cancellationToken)
+    {
+        await _graphClient.Cypher.Merge($"(o:{nameof(Outbox)} {{ Id: {{id}} }})")
+            .WithParam("id", outboxEnvelope.Envelope.Id)
+            .Set("o = {outbox}").WithParam("outbox", outboxEnvelope)
+            .ExecuteWithoutResultsAsync();
     }
 }

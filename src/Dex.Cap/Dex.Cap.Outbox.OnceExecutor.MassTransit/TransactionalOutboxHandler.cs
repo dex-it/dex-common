@@ -8,17 +8,10 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// <summary>
 /// Выполнение операции в транзакции
 /// </summary>
-public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
-    where TMessage : class
+public abstract class TransactionalOutboxHandler<TMessage, TDbContext>(TDbContext context) : IOutboxMessageHandler<TMessage>
+    where TMessage : class, IOutboxMessage
     where TDbContext : DbContext
 {
-    private readonly TDbContext _dbContext;
-
-    protected TransactionalOutboxHandler(TDbContext context)
-    {
-        _dbContext = context;
-    }
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
@@ -28,7 +21,7 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
 
     public Task Process(TMessage message, CancellationToken cancellationToken)
     {
-        return _dbContext.ExecuteInTransactionScopeAsync(
+        return context.ExecuteInTransactionScopeAsync(
             message,
             async (state, token) => await ProcessInTransaction(state, token).ConfigureAwait(false),
             async (state, token) => await VerifySucceeded(state, token).ConfigureAwait(false),
@@ -36,8 +29,5 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext> : IOutbox
             cancellationToken);
     }
 
-    protected virtual Task<bool> VerifySucceeded(TMessage message, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(false);
-    }
+    protected virtual Task<bool> VerifySucceeded(TMessage message, CancellationToken cancellationToken) => Task.FromResult(false);
 }

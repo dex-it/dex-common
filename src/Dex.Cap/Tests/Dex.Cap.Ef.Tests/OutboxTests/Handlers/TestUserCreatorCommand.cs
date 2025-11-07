@@ -1,12 +1,16 @@
 ﻿using System;
 using Dex.Cap.Common.Interfaces;
+using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
+namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers;
+
+public class TestUserCreatorCommand : IIdempotentKey, IOutboxMessage
 {
-    public class TestUserCreatorCommand : IIdempotentKey
-    {
-        public Guid Id { get; set; }
-        public string? UserName { get; set; }
-        public string IdempotentKey { get; init; } = Guid.NewGuid().ToString("N");
-    }
+    public static string OutboxMessageType => "6262F3D6-498F-4820-B372-6C3425824CD9";
+
+    public Guid Id { get; init; }
+
+    public string? UserName { get; init; }
+
+    public string IdempotentKey { get; init; } = Guid.NewGuid().ToString("N");
 }

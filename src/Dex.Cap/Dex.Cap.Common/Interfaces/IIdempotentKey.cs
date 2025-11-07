@@ -1,7 +1,6 @@
-﻿namespace Dex.Cap.Common.Interfaces
+﻿namespace Dex.Cap.Common.Interfaces;
+
+public interface IIdempotentKey
 {
-    public interface IIdempotentKey
-    {
-        string IdempotentKey { get; }
-    }
+    string IdempotentKey { get; }
 }

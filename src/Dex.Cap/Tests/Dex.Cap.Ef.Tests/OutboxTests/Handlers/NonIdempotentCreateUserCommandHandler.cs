@@ -5,26 +5,25 @@ using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers
+namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers;
+
+public class NonIdempotentCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
 {
-    public class NonIdempotentCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
+    private readonly DbContext _dbContext;
+    public static int CountDown { get; set; }
+
+    public NonIdempotentCreateUserCommandHandler(TestDbContext dbContext)
     {
-        private readonly DbContext _dbContext;
-        public static int CountDown { get; set; }
+        _dbContext = dbContext;
+    }
 
-        public NonIdempotentCreateUserCommandHandler(TestDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
+    public async Task Process(TestUserCreatorCommand message, CancellationToken cancellationToken)
+    {
+        _dbContext.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
 
-        public async Task Process(TestUserCreatorCommand message, CancellationToken cancellationToken)
-        {
-            _dbContext.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
+        if (CountDown-- > 0)
+            throw new InvalidOperationException("CountDown > 0");
 
-            if (CountDown-- > 0)
-                throw new InvalidOperationException("CountDown > 0");
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

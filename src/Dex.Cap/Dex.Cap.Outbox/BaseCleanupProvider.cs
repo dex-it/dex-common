@@ -3,13 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Cap.Outbox
+namespace Dex.Cap.Outbox;
+
+internal abstract class BaseCleanupProvider : IOutboxCleanupDataProvider
 {
-    internal abstract class BaseCleanupProvider : IOutboxCleanupDataProvider
+    public virtual Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
     {
-        public virtual Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(0);
-        }
+        return Task.FromResult(0);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -21,10 +22,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     TDbContext dbContext,
     IOptions<OutboxOptions> outboxOptions,
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
-    IOutboxRetryStrategy retryStrategy,
-    IOutboxTypeDiscriminator outboxTypeDiscriminator)
-    : BaseOutboxDataProvider(retryStrategy)
-    where TDbContext : DbContext
+    IOutboxRetryStrategy retryStrategy) : BaseOutboxDataProvider(retryStrategy) where TDbContext : DbContext
 {
     private EfTransactionOptions? _transactionOptions;
 
@@ -45,7 +43,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     {
         var outboxEnvelopes = await GetFreeMessages(cancellationToken).ConfigureAwait(false);
 
-        return outboxEnvelopes.Select(x => (IOutboxLockedJob)new OutboxLockedJob(x)).ToArray();
+        return outboxEnvelopes.Select(IOutboxLockedJob (x) => new OutboxLockedJob(x)).ToArray();
     }
 
     public override Task<OutboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
@@ -59,7 +57,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
 
         var lockId = Guid.NewGuid(); // Ключ идемпотентности.
         return dbContext.ExecuteInTransactionScopeAsync(
-            new { LockId = lockId, DbContext = dbContext },
+            new {LockId = lockId, DbContext = dbContext},
             async (state, token) =>
             {
                 var sql = GenerateFetchPlatformSpecificSql(state.LockId);
@@ -161,45 +159,43 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     private string GenerateFetchPlatformSpecificSql(Guid lockId)
     {
         var providerName = dbContext.Database.ProviderName;
-        if (providerName == "Npgsql.EntityFrameworkCore.PostgreSQL")
-        {
-            const string cScheduledStartIndexing = nameof(OutboxEnvelope.ScheduledStartIndexing);
-            const string cRetries = nameof(OutboxEnvelope.Retries);
-            const string cStatus = nameof(OutboxEnvelope.Status);
-            const string cLockId = nameof(OutboxEnvelope.LockId);
-            const string cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
-            const string cLockTimeout = nameof(OutboxEnvelope.LockTimeout);
-            const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
-            const string cMessageType = nameof(OutboxEnvelope.MessageType);
 
-            var discriminators = outboxTypeDiscriminator.GetDiscriminators();
-            var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
+        if (providerName is not "Npgsql.EntityFrameworkCore.PostgreSQL")
+            throw new NotSupportedException($"The provider {providerName} is not supported.");
 
-            var sql = $@"
-                WITH cte AS (
-                    SELECT ""Id""
-                    FROM {NameConst.SchemaName}.{NameConst.TableName}
-                    WHERE ""{cScheduledStartIndexing}"" IS NOT NULL
-                      AND ""{cMessageType}"" IN ({discriminatorsSql})
-                      AND CURRENT_TIMESTAMP >= ""{cStartAtUtc}""
-                      AND ""{cRetries}"" < {Options.Retries}
-                      AND (""{cStatus}"" = {OutboxMessageStatus.New:D} OR ""{cStatus}"" = {OutboxMessageStatus.Failed:D})
-                      AND (""{cLockId}"" IS NULL OR ""{cLockExpirationTimeUtc}"" IS NULL OR ""{cLockExpirationTimeUtc}"" < CURRENT_TIMESTAMP)
-                    ORDER BY ""{cScheduledStartIndexing}""
-                    LIMIT {Options.MessagesToProcess}
-                    FOR UPDATE SKIP LOCKED
-                )
-                UPDATE {NameConst.SchemaName}.{NameConst.TableName} AS oe
-                SET 
-                    ""{cLockId}"" = '{lockId:D}',
-                    ""{cLockExpirationTimeUtc}"" = CURRENT_TIMESTAMP + oe.""{cLockTimeout}""
-                FROM cte
-                WHERE oe.""Id"" = cte.""Id""
-                RETURNING oe.*;
-            ";
-            return sql;
-        }
+        const string cScheduledStartIndexing = nameof(OutboxEnvelope.ScheduledStartIndexing);
+        const string cRetries = nameof(OutboxEnvelope.Retries);
+        const string cStatus = nameof(OutboxEnvelope.Status);
+        const string cLockId = nameof(OutboxEnvelope.LockId);
+        const string cLockExpirationTimeUtc = nameof(OutboxEnvelope.LockExpirationTimeUtc);
+        const string cLockTimeout = nameof(OutboxEnvelope.LockTimeout);
+        const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
+        const string cMessageType = nameof(OutboxEnvelope.MessageType);
 
-        throw new NotSupportedException($"The provider {providerName} is not supported.");
+        var discriminators = IOutboxMessage.CurrentDomainOutboxMessageTypes.Select(x => x.Key);
+        var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
+
+        return $"""
+                                WITH cte AS (
+                                    SELECT "Id"
+                                    FROM {NameConst.SchemaName}.{NameConst.TableName}
+                                    WHERE "{cScheduledStartIndexing}" IS NOT NULL
+                                      AND "{cMessageType}" IN ({discriminatorsSql})
+                                      AND CURRENT_TIMESTAMP >= "{cStartAtUtc}"
+                                      AND "{cRetries}" < {Options.Retries}
+                                      AND ("{cStatus}" = {OutboxMessageStatus.New:D} OR "{cStatus}" = {OutboxMessageStatus.Failed:D})
+                                      AND ("{cLockId}" IS NULL OR "{cLockExpirationTimeUtc}" IS NULL OR "{cLockExpirationTimeUtc}" < CURRENT_TIMESTAMP)
+                                    ORDER BY "{cScheduledStartIndexing}"
+                                    LIMIT {Options.MessagesToProcess}
+                                    FOR UPDATE SKIP LOCKED
+                                )
+                                UPDATE {NameConst.SchemaName}.{NameConst.TableName} AS oe
+                                SET 
+                                    "{cLockId}" = '{lockId:D}',
+                                    "{cLockExpirationTimeUtc}" = CURRENT_TIMESTAMP + oe."{cLockTimeout}"
+                                FROM cte
+                                WHERE oe."Id" = cte."Id"
+                                RETURNING oe.*;
+                """;
     }
 }
