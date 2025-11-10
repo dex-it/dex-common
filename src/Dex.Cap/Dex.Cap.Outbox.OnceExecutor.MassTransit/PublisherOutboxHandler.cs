@@ -9,6 +9,8 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// <typeparam name="TMessage">Объект события</typeparam>
 public class PublisherOutboxHandler<TMessage>(IPublishEndpoint publishEndpoint) : IOutboxMessageHandler<TMessage> where TMessage : class, IOutboxMessage
 {
+    public static bool IsAutoPublisher => true;
+
     /// <inheritdoc />
     public Task Process(TMessage message, CancellationToken cancellationToken) => publishEndpoint.Publish(message, cancellationToken);
 }

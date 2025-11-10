@@ -1,23 +1,30 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 
 namespace Dex.Cap.Outbox;
 
-internal sealed class OutboxService(IOutboxDataProvider outboxDataProvider, IOutboxSerializer serializer) : IOutboxService
+internal sealed class OutboxService(
+    IOutboxDataProvider outboxDataProvider,
+    IOutboxSerializer serializer,
+    IOutboxTypeDiscriminatorProvider outboxTypeDiscriminatorProvider) : IOutboxService
 {
     public Guid CorrelationId { get; } = Guid.NewGuid();
 
     public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId, DateTime? startAtUtc, TimeSpan? lockTimeout, CancellationToken cToken)
         where T : class, IOutboxMessage
     {
+        if (outboxTypeDiscriminatorProvider.SupportedDiscriminators.Contains(T.OutboxTypeId) is false)
+            throw new DiscriminatorResolveException($"Сообщения {T.OutboxTypeId} нт поддерживаются в данном сервисе");
+
         var messageType = message.GetType();
         var envelopeId = Guid.NewGuid();
 
         var msgBody = serializer.Serialize(messageType, message);
-        var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, T.OutboxMessageType, msgBody, startAtUtc, lockTimeout);
+        var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, T.OutboxTypeId, msgBody, startAtUtc, lockTimeout);
 
         await outboxDataProvider
             .Add(outboxEnvelope, cToken)

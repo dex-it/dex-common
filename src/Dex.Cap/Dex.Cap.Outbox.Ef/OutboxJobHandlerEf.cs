@@ -19,6 +19,7 @@ internal class OutboxJobHandlerEf<TDbContext>(
     IOutboxSerializer serializer,
     IOutboxMessageHandlerFactory handlerFactory,
     TDbContext dbContext,
+    IOutboxTypeDiscriminatorProvider outboxTypeDiscriminatorProvider,
     ILogger<OutboxJobHandlerEf<TDbContext>> logger) : IOutboxJobHandler where TDbContext : DbContext
 {
     private const string LockTimeoutMessage =
@@ -102,7 +103,7 @@ internal class OutboxJobHandlerEf<TDbContext>(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (IOutboxMessage.CurrentDomainOutboxMessageTypes.TryGetValue(job.Envelope.MessageType, out var messageType) is false)
+        if (outboxTypeDiscriminatorProvider.CurrentDomainOutboxMessageTypes.TryGetValue(job.Envelope.MessageType, out var messageType) is false)
             throw new DiscriminatorResolveTypeException($"Can't find Type for discriminator - {job.Envelope.MessageType}.");
 
         var msg = serializer.Deserialize(messageType, job.Envelope.Content);
@@ -126,8 +127,8 @@ internal class OutboxJobHandlerEf<TDbContext>(
         cancellationToken.ThrowIfCancellationRequested();
 
         var handler = handlerFactory.GetMessageHandler(outboxMessage);
-        var processMessageMethod = handler.GetType().GetMethods().First(m => m is {Name: "Process"});
-        if (processMessageMethod == null)
+        var processMessageMethod = handler.GetType().GetMethods().FirstOrDefault(m => m is {Name: "Process"});
+        if (processMessageMethod is null)
         {
             throw new OutboxException($"Can't find Process method for handler type '{handler}'");
         }

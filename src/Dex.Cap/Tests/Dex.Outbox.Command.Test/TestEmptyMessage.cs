@@ -4,5 +4,5 @@ namespace Dex.Outbox.Command.Test;
 
 public class TestEmptyMessageId : IOutboxMessage
 {
-    public static string OutboxMessageType => null!;
+    public static string OutboxTypeId => nameof(TestEmptyMessageId);
 }

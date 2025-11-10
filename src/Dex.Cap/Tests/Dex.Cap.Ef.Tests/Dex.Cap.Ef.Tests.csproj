@@ -22,7 +22,6 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
         <PackageReference Include="NUnit"/>
-        <PackageReference Include="NUnit3TestAdapter"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     </ItemGroup>
 
@@ -70,10 +69,10 @@
             <DependentUpon>appsettings.json</DependentUpon>
         </None>
         <Content Update="appsettings.local.json">
-          <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-          <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-          <DependentUpon>appsettings.json</DependentUpon>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+            <DependentUpon>appsettings.json</DependentUpon>
         </Content>
     </ItemGroup>
 

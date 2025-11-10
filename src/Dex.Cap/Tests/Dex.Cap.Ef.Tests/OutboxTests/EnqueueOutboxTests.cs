@@ -76,7 +76,7 @@ public class EnqueueOutboxTests : BaseTest
 
         NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () =>
         {
-            await outboxService.EnqueueAsync(new TestEmptyMessageId());
+            await outboxService.EnqueueAsync(new TestEmptyMessageDisallowAutoPublish());
         });
     }
 

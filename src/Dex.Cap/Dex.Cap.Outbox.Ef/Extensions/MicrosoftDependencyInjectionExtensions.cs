@@ -16,6 +16,7 @@ public static class MicrosoftDependencyInjectionExtensions
 
         serviceProvider
             .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()
+            .AddSingleton<IOutboxTypeDiscriminatorProvider, OutboxTypeDiscriminatorProvider>()
             .AddSingleton<IOutboxStatistic>(provider => provider.GetRequiredService<IOutboxMetricCollector>())
             .AddScoped<IOutboxService, OutboxService>()
             .AddScoped<IOutboxHandler, MainLoopOutboxHandler<TDbContext>>()

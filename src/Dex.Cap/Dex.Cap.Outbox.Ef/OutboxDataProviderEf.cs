@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -22,7 +21,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     TDbContext dbContext,
     IOptions<OutboxOptions> outboxOptions,
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
-    IOutboxRetryStrategy retryStrategy) : BaseOutboxDataProvider(retryStrategy) where TDbContext : DbContext
+    IOutboxRetryStrategy retryStrategy,
+    IOutboxTypeDiscriminatorProvider discriminatorProvider) : BaseOutboxDataProvider(retryStrategy) where TDbContext : DbContext
 {
     private EfTransactionOptions? _transactionOptions;
 
@@ -61,6 +61,9 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             async (state, token) =>
             {
                 var sql = GenerateFetchPlatformSpecificSql(state.LockId);
+
+                if (sql is null)
+                    return [];
 
                 var lockedEnvelopes = await state.DbContext
                     .Set<OutboxEnvelope>()
@@ -156,7 +159,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     }
 
     // TODO вынести в провайдер
-    private string GenerateFetchPlatformSpecificSql(Guid lockId)
+    private string? GenerateFetchPlatformSpecificSql(Guid lockId)
     {
         var providerName = dbContext.Database.ProviderName;
 
@@ -172,7 +175,11 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
         const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
         const string cMessageType = nameof(OutboxEnvelope.MessageType);
 
-        var discriminators = IOutboxMessage.CurrentDomainOutboxMessageTypes.Select(x => x.Key);
+        var discriminators = discriminatorProvider.SupportedDiscriminators;
+
+        if (discriminators.Count is 0)
+            return null;
+
         var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
 
         return $"""
