@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Frozen;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dex.Cap.Outbox.Interfaces;
 
@@ -9,7 +11,7 @@ public interface IOutboxTypeDiscriminatorProvider
     /// Дискриминаторы, обработку которых поддерживает текущий сервис
     /// </summary>
     /// <returns></returns>
-    FrozenSet<string> SupportedDiscriminators { get; }
+    Task<FrozenSet<string>> GetSupportedDiscriminators(CancellationToken cToken = default);
 
     /// <summary>
     /// Все дискриминаторы, известные этому сервису

@@ -3,8 +3,11 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Outbox;
@@ -18,42 +21,42 @@ internal sealed class OutboxTypeDiscriminatorProvider(
     private FrozenDictionary<string, Type>? _currentDomainOutboxMessageTypes;
     private FrozenSet<string>? _supportedDiscriminators;
 
-    public FrozenSet<string> SupportedDiscriminators
+    public async Task<FrozenSet<string>> GetSupportedDiscriminators(CancellationToken cToken)
     {
-        get
+        _supportedDiscriminators ??= (await SupportedDiscriminatorsInternal()).ToFrozenSet();
+        return _supportedDiscriminators;
+
+        async Task<string[]> SupportedDiscriminatorsInternal()
         {
-            _supportedDiscriminators ??= SupportedDiscriminatorsInternal().ToFrozenSet();
-            return _supportedDiscriminators;
+            var result = new List<string>(CurrentDomainOutboxMessageTypes.Count);
 
-            string[] SupportedDiscriminatorsInternal()
+            await using var scope = serviceProvider.CreateAsyncScope();
+
+            foreach (var (id, discriminatorType) in CurrentDomainOutboxMessageTypes)
             {
-                var result = new List<string>(CurrentDomainOutboxMessageTypes.Count);
-                foreach (var (id, discriminatorType) in CurrentDomainOutboxMessageTypes)
+                var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(discriminatorType);
+                var handler = scope.ServiceProvider.GetService(handlerType);
+
+                // нет подходящего хендлера
+                if (handler is null)
                 {
-                    var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(discriminatorType);
-                    var handler = serviceProvider.GetService(handlerType);
-
-                    // нет подходящего хендлера
-                    if (handler is null)
-                    {
-                        logger.LogWarning("Для сообщения {DiscriminatorId} нет подходящего хендлера", id);
-                        continue;
-                    }
-
-                    // для сообщения есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию
-                    if (IsMessageAllowingAutoPublish(discriminatorType) is false && HandlerIsAutoPublisher(handler))
-                    {
-                        logger.LogWarning("Для сообщения {DiscriminatorId} есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию", id);
-                        continue;
-                    }
-
-                    // текущий сервис поддерживает обработку этого сообщения
-                    result.Add(id);
-                    logger.LogInformation("Текущий сервис поддерживает обработку сообщения {DiscriminatorId}", id);
+                    logger.LogWarning("Для сообщения {DiscriminatorId} нет подходящего хендлера", id);
+                    continue;
                 }
 
-                return result.ToArray();
+                // для сообщения есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию
+                if (IsMessageAllowingAutoPublish(discriminatorType) is false && HandlerIsAutoPublisher(handler))
+                {
+                    logger.LogWarning("Для сообщения {DiscriminatorId} есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию", id);
+                    continue;
+                }
+
+                // текущий сервис поддерживает обработку этого сообщения
+                result.Add(id);
+                logger.LogInformation("Текущий сервис поддерживает обработку сообщения {DiscriminatorId}", id);
             }
+
+            return result.ToArray();
         }
     }
 

@@ -60,7 +60,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             new {LockId = lockId, DbContext = dbContext},
             async (state, token) =>
             {
-                var sql = GenerateFetchPlatformSpecificSql(state.LockId);
+                var sql = await GenerateFetchPlatformSpecificSql(state.LockId, token);
 
                 if (sql is null)
                     return [];
@@ -159,7 +159,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     }
 
     // TODO вынести в провайдер
-    private string? GenerateFetchPlatformSpecificSql(Guid lockId)
+    private async Task<string?> GenerateFetchPlatformSpecificSql(Guid lockId, CancellationToken cToken)
     {
         var providerName = dbContext.Database.ProviderName;
 
@@ -175,7 +175,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
         const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
         const string cMessageType = nameof(OutboxEnvelope.MessageType);
 
-        var discriminators = discriminatorProvider.SupportedDiscriminators;
+        var discriminators = await discriminatorProvider.GetSupportedDiscriminators(cToken);
 
         if (discriminators.Count is 0)
             return null;
