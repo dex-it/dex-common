@@ -22,7 +22,7 @@ public interface IOutboxService
         Guid? correlationId = null,
         DateTime? startAtUtc = null,
         TimeSpan? lockTimeout = null,
-        CancellationToken cToken = default)
+        CancellationToken cancellationToken = default)
         where T : class, IOutboxMessage;
 
     /// <summary>

@@ -37,7 +37,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
             async (state, token) =>
             {
                 await state.outboxService.EnqueueAsync(new TestUserCreatorCommand { UserName = name },
-                    cToken: token);
+                    cancellationToken: token);
                 await state.dbContext.SaveChangesAsync(token);
             },
             (_, _) => Task.FromResult(false));
@@ -81,7 +81,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
             async (state, token) =>
             {
                 await state.outboxService.EnqueueAsync(new TestUserCreatorCommand { UserName = name },
-                    cToken: token);
+                    cancellationToken: token);
                 await state.dbContext.SaveChangesAsync(token);
             },
             (_, _) => Task.FromResult(false));
@@ -154,7 +154,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
             {
                 await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
                 await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cToken: token);
+                    cancellationToken: token);
                 await state.dbContext.SaveChangesAsync(token);
             },
             (_, _) => Task.FromResult(false));
@@ -194,7 +194,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
                 await state.DbContext.Users.AddAsync(entity, token);
                 await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cToken: token);
+                    cancellationToken: token);
                 await state.DbContext.SaveChangesAsync(token);
             }, (_, _) => Task.FromResult(false));
 
@@ -232,9 +232,9 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
                 await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
                 await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cToken: token);
+                    cancellationToken: token);
                 await state.outboxService.EnqueueAsync(new TestOutboxCommand2 { Args = "Command2" },
-                    cToken: token);
+                    cancellationToken: token);
                 await state.dbContext.SaveChangesAsync(token);
             }, (_, _) => Task.FromResult(false));
 
@@ -275,7 +275,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
                 }
 
                 await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cToken: token);
+                    cancellationToken: token);
                 await state.dbContext.SaveChangesAsync(token);
             }, (_, _) => Task.FromResult(false));
 
