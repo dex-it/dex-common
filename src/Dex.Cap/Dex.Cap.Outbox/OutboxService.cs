@@ -19,14 +19,14 @@ internal sealed class OutboxService(
     {
         var supportedDiscriminators = await discriminatorProvider.GetSupportedDiscriminators(cancellationToken);
 
-        if (supportedDiscriminators.Contains(T.OutboxTypeId) is false)
-            throw new DiscriminatorResolveException($"Сообщения {T.OutboxTypeId} нт поддерживаются в данном сервисе");
+        if (supportedDiscriminators.Contains(message.OutboxTypeId) is false)
+            throw new DiscriminatorResolveException($"Сообщения {message.OutboxTypeId} нт поддерживаются в данном сервисе");
 
         var messageType = message.GetType();
         var envelopeId = Guid.NewGuid();
 
         var msgBody = serializer.Serialize(messageType, message);
-        var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, T.OutboxTypeId, msgBody, startAtUtc, lockTimeout);
+        var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, message.OutboxTypeId, msgBody, startAtUtc, lockTimeout);
 
         await outboxDataProvider
             .Add(outboxEnvelope, cancellationToken)

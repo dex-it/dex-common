@@ -11,7 +11,7 @@ public interface IOutboxMessageHandler<in TMessage> where TMessage : class, IOut
     /// IOutboxMessage может отказаться от автоматической публикации и требовать явной реализации отдельного хендлера с помощью
     /// <code>IOutboxMessage.AllowAutoPublishing = false</code>
     /// </summary>
-    static virtual bool IsAutoPublisher => false;
+    bool IsAutoPublisher => false;
 
     Task Process(TMessage message, CancellationToken cancellationToken);
 }
