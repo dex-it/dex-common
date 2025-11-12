@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Frozen;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Dex.Cap.Outbox.Interfaces;

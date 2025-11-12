@@ -9,6 +9,14 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// <typeparam name="TMessage">Объект события</typeparam>
 public class PublisherOutboxHandler<TMessage>(IPublishEndpoint publishEndpoint) : IOutboxMessageHandler<TMessage> where TMessage : class, IOutboxMessage
 {
+    /// <summary>
+    /// Является ли хендлер автопаблишером.
+    /// <br/>
+    /// Некоторые сообщения могут требовать явную реализацию отдельного хендлера, если для IOutboxMessage указать:
+    /// <code>
+    /// AllowAutoPublishing = false;
+    /// </code>
+    /// </summary>
     public static bool IsAutoPublisher => true;
 
     /// <inheritdoc />

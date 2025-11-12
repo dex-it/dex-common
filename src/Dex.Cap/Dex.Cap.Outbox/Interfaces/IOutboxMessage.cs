@@ -1,5 +1,8 @@
 namespace Dex.Cap.Outbox.Interfaces;
 
+/// <summary>
+/// Сообщение аутбокса
+/// </summary>
 public interface IOutboxMessage
 {
     /// <summary>
