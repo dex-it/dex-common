@@ -6,7 +6,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>outbox distributed events</PackageTags>
         <InformationalVersion>8.1</InformationalVersion>
-        <PackageVersion>8.1.4</PackageVersion>
+        <PackageVersion>8.2.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
