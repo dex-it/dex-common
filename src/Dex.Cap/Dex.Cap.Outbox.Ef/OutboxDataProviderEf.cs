@@ -175,7 +175,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
         const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
         const string cMessageType = nameof(OutboxEnvelope.MessageType);
 
-        var discriminators = await discriminatorProvider.GetSupportedDiscriminators(cToken);
+        var discriminators = await discriminatorProvider.GetSupportedDiscriminators();
 
         if (discriminators.Count is 0)
             return null;

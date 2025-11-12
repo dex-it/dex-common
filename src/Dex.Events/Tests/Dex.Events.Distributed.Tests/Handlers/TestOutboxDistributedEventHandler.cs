@@ -3,21 +3,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Events.Distributed.OutboxExtensions;
-using MassTransit;
 
 namespace Dex.Events.Distributed.Tests.Handlers
 {
-    public sealed class TestOutboxDistributedEventHandler<TBus> : IOutboxMessageHandler<OutboxDistributedEventMessage<TBus>>
-        where TBus : IBus
+    public sealed class TestOutboxDistributedEventHandler : IOutboxMessageHandler<OutboxDistributedEventMessage>
     {
-        public static event EventHandler<OutboxDistributedEventMessage<TBus>> OnProcess;
+        public static event EventHandler<OutboxDistributedEventMessage> OnProcess;
 
-        public Task Process(OutboxDistributedEventMessage<TBus> message, CancellationToken cancellationToken)
+        public Task Process(OutboxDistributedEventMessage message, CancellationToken cancellationToken)
         {
-            if (message == null) throw new ArgumentNullException(nameof(message));
+            ArgumentNullException.ThrowIfNull(message);
 
-            Console.WriteLine(
-                $"{nameof(TestOutboxDistributedEventHandler<TBus>)} - Processed command at {DateTime.Now}, Args: {message.EventParams}, {message.EventParamsType}");
+            Console.WriteLine($"{nameof(TestOutboxDistributedEventHandler)} - Processed command at {DateTime.Now}, Args: {message.EventParams}, {message.EventParamsType}");
             OnProcess?.Invoke(null, message);
 
             return Task.CompletedTask;

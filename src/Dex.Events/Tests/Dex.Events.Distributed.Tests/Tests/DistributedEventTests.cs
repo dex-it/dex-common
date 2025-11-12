@@ -9,7 +9,6 @@ using Dex.Events.Distributed.OutboxExtensions;
 using Dex.Events.Distributed.Tests.Events;
 using Dex.Events.Distributed.Tests.Handlers;
 using Dex.Events.Distributed.Tests.Models;
-using Dex.Events.Distributed.Tests.Services;
 using Dex.MassTransit.Rabbit;
 using MassTransit;
 using MassTransit.Testing;
@@ -282,16 +281,12 @@ namespace Dex.Events.Distributed.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IBus>>,
-                    TestOutboxDistributedEventHandler<IBus>>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IExternalBus>>,
-                    TestOutboxDistributedEventHandler<IExternalBus>>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage>, TestOutboxDistributedEventHandler>()
                 .BuildServiceProvider();
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-            TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
-            TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
+            TestOutboxDistributedEventHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
             var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
@@ -305,13 +300,8 @@ namespace Dex.Events.Distributed.Tests.Tests
                     var entity = state.Entity;
                     await state.DbContext.Users.AddAsync(entity, token);
 
-                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                        cancellationToken: token);
-                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
-                        cancellationToken: token);
-                    await state.OutboxService.EnqueueEventAsync<IExternalBus>(
-                        new OnUserAdded { CustomerId = entity.Id },
-                        cancellationToken: token);
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id }, cancellationToken: token);
                     await state.DbContext.SaveChangesAsync(token);
                 }, (_, _) => Task.FromResult(false));
 
@@ -320,7 +310,7 @@ namespace Dex.Events.Distributed.Tests.Tests
 
             await Task.Delay(100);
 
-            Assert.AreEqual(3, count);
+            Assert.AreEqual(2, count);
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
         }
 
@@ -329,16 +319,13 @@ namespace Dex.Events.Distributed.Tests.Tests
         {
             await using var serviceProvider = InitServiceCollection()
                 .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IBus>>,
-                    TestOutboxDistributedEventHandler<IBus>>()
-                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage<IExternalBus>>,
-                    TestOutboxDistributedEventHandler<IExternalBus>>()
+                .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage>, TestOutboxDistributedEventHandler>()
+
                 .BuildServiceProvider();
 
             var count = 0;
             TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-            TestOutboxDistributedEventHandler<IBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
-            TestOutboxDistributedEventHandler<IExternalBus>.OnProcess += (_, _) => Interlocked.Increment(ref count);
+            TestOutboxDistributedEventHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
 
             var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
             var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
@@ -349,7 +336,6 @@ namespace Dex.Events.Distributed.Tests.Tests
             dbContext.Set<User>().Add(user);
             await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
             await outboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = user.Id });
-            await outboxService.EnqueueEventAsync<IExternalBus>(new OnUserAdded { CustomerId = user.Id });
             await dbContext.SaveChangesAsync();
 
             var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
@@ -357,7 +343,7 @@ namespace Dex.Events.Distributed.Tests.Tests
 
             await Task.Delay(100);
 
-            Assert.AreEqual(3, count);
+            Assert.AreEqual(2, count);
             Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
         }
     }

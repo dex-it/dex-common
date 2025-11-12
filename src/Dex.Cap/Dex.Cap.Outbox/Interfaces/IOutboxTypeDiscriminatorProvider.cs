@@ -11,7 +11,7 @@ public interface IOutboxTypeDiscriminatorProvider
     /// Дискриминаторы, обработку которых поддерживает текущий сервис
     /// </summary>
     /// <returns></returns>
-    Task<FrozenSet<string>> GetSupportedDiscriminators(CancellationToken cToken = default);
+    Task<FrozenSet<string>> GetSupportedDiscriminators();
 
     /// <summary>
     /// Все дискриминаторы, известные этому сервису

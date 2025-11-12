@@ -17,7 +17,7 @@ internal sealed class OutboxService(
     public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId, DateTime? startAtUtc, TimeSpan? lockTimeout, CancellationToken cancellationToken)
         where T : class, IOutboxMessage
     {
-        var supportedDiscriminators = await discriminatorProvider.GetSupportedDiscriminators(cancellationToken);
+        var supportedDiscriminators = await discriminatorProvider.GetSupportedDiscriminators();
 
         if (supportedDiscriminators.Contains(message.OutboxTypeId) is false)
             throw new DiscriminatorResolveException($"Сообщения {message.OutboxTypeId} нт поддерживаются в данном сервисе");

@@ -18,7 +18,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
     private FrozenDictionary<string, Type>? _currentDomainOutboxMessageTypes;
     private FrozenSet<string>? _supportedDiscriminators;
 
-    public async Task<FrozenSet<string>> GetSupportedDiscriminators(CancellationToken cToken)
+    public async Task<FrozenSet<string>> GetSupportedDiscriminators()
     {
         _supportedDiscriminators ??= (await SupportedDiscriminatorsInternal()).ToFrozenSet();
         return _supportedDiscriminators;
@@ -69,7 +69,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
                 var messageTypes = AppDomain.CurrentDomain.GetAssemblies()
                     .Where(a => a.IsDynamic is false)
                     .SelectMany(assembly => assembly.GetTypes())
-                    .Where(t => typeof(IOutboxMessage).IsAssignableFrom(t) && t is {IsAbstract: false, IsInterface: false});
+                    .Where(t => typeof(IOutboxMessage).IsAssignableFrom(t) && t is {IsAbstract: false, IsInterface: false, ContainsGenericParameters: false});
 
                 return messageTypes
                     .Select(type =>
