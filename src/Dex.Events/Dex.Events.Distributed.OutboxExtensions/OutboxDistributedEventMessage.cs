@@ -6,38 +6,37 @@ using Dex.Cap.Outbox.Interfaces;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
-namespace Dex.Events.Distributed.OutboxExtensions
+namespace Dex.Events.Distributed.OutboxExtensions;
+
+[SuppressMessage("ReSharper", "UnusedTypeParameter")]
+public sealed class OutboxDistributedEventMessage : IOutboxMessage
 {
-    [SuppressMessage("ReSharper", "UnusedTypeParameter")]
-    public sealed class OutboxDistributedEventMessage : IOutboxMessage
+    public string OutboxTypeId => nameof(OutboxDistributedEventMessage);
+
+    public string EventParams { get; }
+
+    public string EventParamsType { get; }
+
+    [Obsolete("For serialization only")]
+    public OutboxDistributedEventMessage()
     {
-        public string OutboxTypeId => nameof(OutboxDistributedEventMessage);
+    }
 
-        public string EventParams { get; }
+    [JsonConstructor]
+    public OutboxDistributedEventMessage(string eventParams, string eventParamsType)
+    {
+        EventParams = eventParams;
+        EventParamsType = eventParamsType;
+    }
 
-        public string EventParamsType { get; }
+    public OutboxDistributedEventMessage(IOutboxMessage outboxMessage)
+    {
+        ArgumentNullException.ThrowIfNull(outboxMessage);
 
-        [Obsolete("For serialization only")]
-        public OutboxDistributedEventMessage()
-        {
-        }
+        var messageType = outboxMessage.GetType();
+        var eventParams = JsonSerializer.Serialize(outboxMessage, messageType);
 
-        [JsonConstructor]
-        public OutboxDistributedEventMessage(string eventParams, string eventParamsType)
-        {
-            EventParams = eventParams;
-            EventParamsType = eventParamsType;
-        }
-
-        public OutboxDistributedEventMessage(IOutboxMessage outboxMessage)
-        {
-            ArgumentNullException.ThrowIfNull(outboxMessage);
-
-            var messageType = outboxMessage.GetType();
-            var eventParams = JsonSerializer.Serialize(outboxMessage, messageType);
-
-            EventParams = eventParams;
-            EventParamsType = outboxMessage.OutboxTypeId;
-        }
+        EventParams = eventParams;
+        EventParamsType = outboxMessage.OutboxTypeId;
     }
 }

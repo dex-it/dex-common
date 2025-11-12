@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace Dex.Events.Distributed.Tests.Models
+namespace Dex.Events.Distributed.Tests.Models;
+
+public class DistributedCustomerEventParams
 {
-    public class DistributedCustomerEventParams
-    {
-        public Guid CustomerId { get; init; }
-    }
+    public Guid CustomerId { get; init; }
 }
