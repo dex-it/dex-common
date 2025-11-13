@@ -126,7 +126,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
         if (handlerIsAutoPublisherProperty is null)
             throw new InvalidOperationException($"Не удалось получить свойство {isAutoPublisherPropertyName}, проверьте совместимость версий пакетов");
 
-        var handlerIsAutoPublisherValue = handlerIsAutoPublisherProperty.GetValue(null);
+        var handlerIsAutoPublisherValue = handlerIsAutoPublisherProperty.GetValue(handler);
 
         return handlerIsAutoPublisherValue is bool handlerIsAutoPublisher
             ? handlerIsAutoPublisher
