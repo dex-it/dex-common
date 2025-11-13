@@ -1,54 +1,43 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
+using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
 
-namespace Dex.Cap.Outbox
+namespace Dex.Cap.Outbox;
+
+internal sealed class OutboxService(
+    IOutboxDataProvider outboxDataProvider,
+    IOutboxSerializer serializer,
+    IOutboxTypeDiscriminatorProvider discriminatorProvider) : IOutboxService
 {
-    internal sealed class OutboxService : IOutboxService
+    public Guid CorrelationId { get; } = Guid.NewGuid();
+
+    public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId, DateTime? startAtUtc, TimeSpan? lockTimeout, CancellationToken cancellationToken)
+        where T : class, IOutboxMessage
     {
-        public IOutboxTypeDiscriminator Discriminator { get; }
-        public Guid CorrelationId { get; }
+        var supportedDiscriminators = discriminatorProvider.GetSupportedDiscriminators();
 
+        if (supportedDiscriminators.Contains(message.OutboxTypeId) is false)
+            throw new DiscriminatorResolveException($"Сообщение {message.OutboxTypeId} не поддерживается в данном сервисе");
 
-        private readonly IOutboxDataProvider _outboxDataProvider;
-        private readonly IOutboxSerializer _serializer;
+        var messageType = message.GetType();
+        var envelopeId = Guid.NewGuid();
 
-        public OutboxService(
-            IOutboxDataProvider outboxDataProvider,
-            IOutboxSerializer serializer,
-            IOutboxTypeDiscriminator discriminator)
-        {
-            _outboxDataProvider = outboxDataProvider ?? throw new ArgumentNullException(nameof(outboxDataProvider));
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            Discriminator = discriminator ?? throw new ArgumentNullException(nameof(discriminator));
-            CorrelationId = Guid.NewGuid();
-        }
+        var msgBody = serializer.Serialize(messageType, message);
+        var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, message.OutboxTypeId, msgBody, startAtUtc, lockTimeout);
 
-        public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId = null, DateTime? startAtUtc = null,
-            TimeSpan? lockTimeout = null, CancellationToken cancellationToken = default)
-            where T : class
-        {
-            var messageType = message.GetType();
-            var envelopeId = Guid.NewGuid();
+        await outboxDataProvider
+            .Add(outboxEnvelope, cancellationToken)
+            .ConfigureAwait(false);
 
-            var msgBody = _serializer.Serialize(messageType, message);
-            var discriminator = Discriminator.ResolveDiscriminator(messageType);
-            var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, discriminator, msgBody,
-                startAtUtc, lockTimeout);
+        return envelopeId;
+    }
 
-            await _outboxDataProvider
-                .Add(outboxEnvelope, cancellationToken)
-                .ConfigureAwait(false);
-
-            return envelopeId;
-        }
-
-        public Task<bool> IsOperationExistsAsync(Guid? correlationId = null,
-            CancellationToken cancellationToken = default)
-        {
-            return _outboxDataProvider.IsExists(correlationId ?? CorrelationId, cancellationToken);
-        }
+    public Task<bool> IsOperationExistsAsync(Guid? correlationId, CancellationToken cToken)
+    {
+        return outboxDataProvider.IsExists(correlationId ?? CorrelationId, cToken);
     }
 }

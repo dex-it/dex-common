@@ -5,8 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.3</PackageVersion>
+        <InformationalVersion>8.2</InformationalVersion>
+        <PackageVersion>8.2.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

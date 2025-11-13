@@ -8,16 +8,9 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// <summary>
 /// Идемпотентный обработчик сообщений аутбокса
 /// </summary>
-public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMessageHandler<TMessage>
-    where TMessage : class, IIdempotentKey
+public abstract class IdempotentOutboxHandler<TMessage, TDbContext>(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
+    : IOutboxMessageHandler<TMessage> where TMessage : class, IIdempotentKey, IOutboxMessage
 {
-    private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
-
-    protected IdempotentOutboxHandler(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
-    {
-        _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
-    }
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
@@ -29,7 +22,7 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
 
     public Task Process(TMessage outboxMessage, CancellationToken cancellationToken)
     {
-        return _onceExecutor.ExecuteAsync(
+        return onceExecutor.ExecuteAsync(
             GetIdempotentKey(outboxMessage),
             async (_, token) => await IdempotentProcess(outboxMessage, token).ConfigureAwait(false),
             options: TransactionOptions,
@@ -37,14 +30,8 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext> : IOutboxMes
         );
     }
 
-    private static string GetIdempotentKeyInner<T>(T message)
-        where T : class
-    {
-        if (message is not IIdempotentKey key)
-        {
-            throw new ArgumentNullException(nameof(message));
-        }
-
-        return key.IdempotentKey;
-    }
+    private static string GetIdempotentKeyInner<T>(T message) where T : class
+        => message is IIdempotentKey key
+            ? key.IdempotentKey
+            : throw new ArgumentNullException(nameof(message));
 }

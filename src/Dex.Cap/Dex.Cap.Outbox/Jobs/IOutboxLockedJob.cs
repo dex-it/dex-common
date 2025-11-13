@@ -2,25 +2,24 @@
 using System.Threading;
 using Dex.Cap.Outbox.Models;
 
-namespace Dex.Cap.Outbox.Jobs
+namespace Dex.Cap.Outbox.Jobs;
+
+public interface IOutboxLockedJob : IDisposable
 {
-    public interface IOutboxLockedJob : IDisposable
-    {
-        /// <summary>
-        /// Ключ идемпотентности.
-        /// </summary>
-        Guid LockId { get; }
+    /// <summary>
+    /// Ключ идемпотентности.
+    /// </summary>
+    Guid LockId { get; }
 
-        OutboxEnvelope Envelope { get; }
+    OutboxEnvelope Envelope { get; }
 
-        /// <summary>
-        /// Отражает время жизни захваченной блокировки.
-        /// </summary>
-        CancellationToken LockToken { get; }
+    /// <summary>
+    /// Отражает время жизни захваченной блокировки.
+    /// </summary>
+    CancellationToken LockToken { get; }
 
-        /// <summary>
-        /// Таймаут операции
-        /// </summary>
-        TimeSpan Timeout { get; }
-    }
+    /// <summary>
+    /// Таймаут операции
+    /// </summary>
+    TimeSpan Timeout { get; }
 }

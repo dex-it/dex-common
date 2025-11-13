@@ -2,6 +2,7 @@
 # You can modify the rules from these initially generated values to suit your own policies
 # You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 [*.cs]
+max_line_length = 170
 
 # CS1591: Отсутствует комментарий XML дл¤ открытого видимого типа или члена
 dotnet_diagnostic.CS1591.severity = none

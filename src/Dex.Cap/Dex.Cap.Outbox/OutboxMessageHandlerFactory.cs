@@ -2,31 +2,18 @@ using System;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Cap.Outbox
+namespace Dex.Cap.Outbox;
+
+internal sealed class OutboxMessageHandlerFactory(IServiceProvider serviceProvider) : IOutboxMessageHandlerFactory
 {
-    internal sealed class OutboxMessageHandlerFactory : IOutboxMessageHandlerFactory
+    public object GetMessageHandler(object outboxMessage)
     {
-        private readonly IServiceProvider _serviceProvider;
+        ArgumentNullException.ThrowIfNull(outboxMessage);
 
-        public OutboxMessageHandlerFactory(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        }
+        var messageType = outboxMessage.GetType();
+        var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(messageType);
+        var handler = serviceProvider.GetService(handlerType);
 
-        public object GetMessageHandler(object outboxMessage)
-        {
-            ArgumentNullException.ThrowIfNull(outboxMessage);
-
-            var messageType = outboxMessage.GetType();
-            var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(messageType);
-            var handler = _serviceProvider.GetService(handlerType);
-
-            if (handler is not null)
-            {
-                return handler;
-            }
-
-            throw new OutboxException($"Can't resolve message handler for '{handlerType}'");
-        }
+        return handler ?? throw new OutboxException($"Can't resolve message handler for '{handlerType}'");
     }
 }

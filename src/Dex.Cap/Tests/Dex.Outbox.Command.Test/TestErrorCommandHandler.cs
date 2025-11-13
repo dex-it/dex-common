@@ -4,27 +4,26 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.Interfaces;
 
-namespace Dex.Outbox.Command.Test
+namespace Dex.Outbox.Command.Test;
+
+public class TestErrorCommandHandler : IOutboxMessageHandler<TestErrorOutboxCommand>
 {
-    public class TestErrorCommandHandler : IOutboxMessageHandler<TestErrorOutboxCommand>
+    public static event EventHandler OnProcess;
+    public static void Reset() => Count = 0;
+
+    private static int Count { get; set; }
+
+    public Task Process(TestErrorOutboxCommand message, CancellationToken cancellationToken)
     {
-        public static event EventHandler OnProcess;
-        public static void Reset() => Count = 0;
+        Count++;
 
-        private static int Count { get; set; }
+        Console.WriteLine($"TestErrorCommandHandler - Try processed command at {DateTime.Now}, MaxCount: {message.MaxCount}");
 
-        public Task Process(TestErrorOutboxCommand message, CancellationToken cancellationToken)
-        {
-            Count++;
+        if (message.MaxCount > Count) throw new InvalidDataException();
 
-            Console.WriteLine($"TestErrorCommandHandler - Try processed command at {DateTime.Now}, MaxCount: {message.MaxCount}");
+        Console.WriteLine($"TestErrorCommandHandler - Processed command at {DateTime.Now}, Count: {message.MaxCount}");
 
-            if (message.MaxCount > Count) throw new InvalidDataException();
-
-            Console.WriteLine($"TestErrorCommandHandler - Processed command at {DateTime.Now}, Count: {message.MaxCount}");
-
-            OnProcess?.Invoke(this, EventArgs.Empty);
-            return Task.CompletedTask;
-        }
+        OnProcess?.Invoke(this, EventArgs.Empty);
+        return Task.CompletedTask;
     }
 }

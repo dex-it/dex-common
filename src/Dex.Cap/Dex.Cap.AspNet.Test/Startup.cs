@@ -62,7 +62,7 @@ public class Startup(IConfiguration configuration)
 
         services.AddDbContext<TestDbContext>(builder => { builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")); });
 
-        services.AddOutbox<TestDbContext, TestDiscriminator>();
+        services.AddOutbox<TestDbContext>();
         services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
         services.RegisterOutboxScheduler(periodSeconds: 1);
 

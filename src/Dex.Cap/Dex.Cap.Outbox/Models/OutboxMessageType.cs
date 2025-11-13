@@ -1,8 +1,7 @@
-﻿namespace Dex.Cap.Outbox.Models
+﻿namespace Dex.Cap.Outbox.Models;
+
+public enum OutboxMessageType
 {
-    public enum OutboxMessageType
-    {
-        Event,
-        Command
-    }
+    Event,
+    Command
 }

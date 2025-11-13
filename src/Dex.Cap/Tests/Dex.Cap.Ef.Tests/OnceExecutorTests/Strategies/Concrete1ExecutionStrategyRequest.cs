@@ -1,7 +1,6 @@
-namespace Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies
+namespace Dex.Cap.Ef.Tests.OnceExecutorTests.Strategies;
+
+public class Concrete1ExecutionStrategyRequest
 {
-    public class Concrete1ExecutionStrategyRequest
-    {
-        public string? Value { get; set; }
-    }
+    public string? Value { get; set; }
 }

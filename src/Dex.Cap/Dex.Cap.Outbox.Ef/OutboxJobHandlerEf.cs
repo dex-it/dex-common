@@ -14,20 +14,13 @@ namespace Dex.Cap.Outbox.Ef;
 /// <summary>
 /// Обработчик одного OutboxJob. Изолирует необходимые ресурсы для этого
 /// </summary>
-/// <param name="dataProvider"></param>
-/// <param name="serializer"></param>
-/// <param name="discriminator"></param>
-/// <param name="handlerFactory"></param>
-/// <param name="dbContext"></param>
-/// <param name="logger"></param>
 internal class OutboxJobHandlerEf<TDbContext>(
     IOutboxDataProvider dataProvider,
     IOutboxSerializer serializer,
-    IOutboxTypeDiscriminator discriminator,
     IOutboxMessageHandlerFactory handlerFactory,
     TDbContext dbContext,
-    ILogger<OutboxJobHandlerEf<TDbContext>> logger) : IOutboxJobHandler
-    where TDbContext : DbContext
+    IOutboxTypeDiscriminatorProvider outboxTypeDiscriminatorProvider,
+    ILogger<OutboxJobHandlerEf<TDbContext>> logger) : IOutboxJobHandler where TDbContext : DbContext
 {
     private const string LockTimeoutMessage =
         "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}";
@@ -110,7 +103,9 @@ internal class OutboxJobHandlerEf<TDbContext>(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var messageType = discriminator.ResolveType(job.Envelope.MessageType);
+        if (outboxTypeDiscriminatorProvider.CurrentDomainOutboxMessageTypes.TryGetValue(job.Envelope.MessageType, out var messageType) is false)
+            throw new DiscriminatorResolveTypeException($"Can't find Type for discriminator - {job.Envelope.MessageType}.");
+
         var msg = serializer.Deserialize(messageType, job.Envelope.Content);
         logger.LogDebug("Message to processed: {Message}", msg);
 
@@ -132,8 +127,8 @@ internal class OutboxJobHandlerEf<TDbContext>(
         cancellationToken.ThrowIfCancellationRequested();
 
         var handler = handlerFactory.GetMessageHandler(outboxMessage);
-        var processMessageMethod = handler.GetType().GetMethods().First(m => m is { Name: "Process" });
-        if (processMessageMethod == null)
+        var processMessageMethod = handler.GetType().GetMethods().FirstOrDefault(m => m is {Name: "Process"});
+        if (processMessageMethod is null)
         {
             throw new OutboxException($"Can't find Process method for handler type '{handler}'");
         }
