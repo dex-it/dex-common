@@ -16,7 +16,7 @@ internal sealed class OutboxService(
     public Guid CorrelationId { get; } = Guid.NewGuid();
 
     public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId, DateTime? startAtUtc, TimeSpan? lockTimeout, CancellationToken cancellationToken)
-        where T : class, IOutboxMessage
+        where T : class, IOutboxMessage, new()
     {
         var supportedDiscriminators = discriminatorProvider.GetSupportedDiscriminators();
 

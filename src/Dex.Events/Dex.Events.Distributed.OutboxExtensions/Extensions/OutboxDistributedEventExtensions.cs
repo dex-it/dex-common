@@ -7,6 +7,6 @@ public static class OutboxDistributedEventExtensions
 {
     public static IServiceCollection RegisterOutboxDistributedEventHandler(this IServiceCollection services)
     {
-        return  services.AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage>, OutboxDistributedEventHandler>();
+        return services.AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage>, OutboxDistributedEventHandler>();
     }
 }

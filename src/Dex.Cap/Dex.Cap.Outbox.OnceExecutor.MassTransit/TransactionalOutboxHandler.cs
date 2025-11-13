@@ -10,7 +10,7 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// Выполнение операции в транзакции
 /// </summary>
 public abstract class TransactionalOutboxHandler<TMessage, TDbContext>(TDbContext context) : IOutboxMessageHandler<TMessage>
-    where TMessage : class, IOutboxMessage
+    where TMessage : class, IOutboxMessage, new()
     where TDbContext : DbContext
 {
     /// <summary>

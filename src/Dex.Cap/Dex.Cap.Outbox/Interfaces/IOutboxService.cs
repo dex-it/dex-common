@@ -24,7 +24,7 @@ public interface IOutboxService
         DateTime? startAtUtc = null,
         TimeSpan? lockTimeout = null,
         CancellationToken cancellationToken = default)
-        where T : class, IOutboxMessage;
+        where T : class, IOutboxMessage, new();
 
     /// <summary>
     /// Check if operation with correlationId already exists.
