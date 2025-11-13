@@ -30,28 +30,35 @@ internal sealed class OutboxTypeDiscriminatorProvider(
 
             foreach (var (id, discriminatorType) in CurrentDomainOutboxMessageTypes)
             {
-                var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(discriminatorType);
-                var handler = scope.ServiceProvider.GetService(handlerType);
-
-                // нет подходящего хендлера
-                if (handler is null)
+                try
                 {
-                    logger.LogWarning("Для сообщения {DiscriminatorId} - {MessageType} нет подходящего хендлера", id, discriminatorType.FullName);
-                    continue;
-                }
+                    var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(discriminatorType);
+                    var handler = scope.ServiceProvider.GetService(handlerType);
 
-                // для сообщения есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию
-                if (IsMessageAllowingAutoPublish(discriminatorType) is false && IsAutoPublisherHandler(handler))
+                    // нет подходящего хендлера
+                    if (handler is null)
+                    {
+                        logger.LogWarning("Для сообщения {DiscriminatorId} - {MessageType} нет подходящего хендлера", id, discriminatorType.FullName);
+                        continue;
+                    }
+
+                    // для сообщения есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию
+                    if (IsMessageAllowingAutoPublish(discriminatorType) is false && IsAutoPublisherHandler(handler))
+                    {
+                        logger.LogWarning(
+                            "Для сообщения {DiscriminatorId} - {MessageType} есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию", id,
+                            discriminatorType.FullName);
+                        continue;
+                    }
+
+                    // текущий сервис поддерживает обработку этого сообщения
+                    result.Add(id);
+                    logger.LogInformation("Текущий сервис поддерживает обработку сообщения {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
+                }
+                catch (Exception e)
                 {
-                    logger.LogWarning(
-                        "Для сообщения {DiscriminatorId} - {MessageType} есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию", id,
-                        discriminatorType.FullName);
-                    continue;
+                    logger.LogError(e, "Не удалось зарегестрировать сообщение {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
                 }
-
-                // текущий сервис поддерживает обработку этого сообщения
-                result.Add(id);
-                logger.LogInformation("Текущий сервис поддерживает обработку сообщения {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
             }
 
             return result.ToArray();
@@ -70,7 +77,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
                 var messageTypes = AppDomain.CurrentDomain.GetAssemblies()
                     .Where(a => a.IsDynamic is false)
                     .SelectMany(assembly => assembly.GetTypes())
-                    .Where(t => typeof(IOutboxMessage).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false, ContainsGenericParameters: false });
+                    .Where(t => typeof(IOutboxMessage).IsAssignableFrom(t) && t is {IsAbstract: false, IsInterface: false, ContainsGenericParameters: false});
 
                 return messageTypes
                     .Select(type =>
