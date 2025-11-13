@@ -10,11 +10,7 @@ namespace Dex.Events.Distributed;
 /// </summary>
 /// <typeparam name="T">DistributedBaseEventParams</typeparam>
 public interface IDistributedEventHandler<in T> : IConsumer<T>, IDistributedEventHandler
-    where T : class
-{
-}
+    where T : class;
 
 [SuppressMessage("Design", "CA1040:Не используйте пустые интерфейсы")]
-public interface IDistributedEventHandler : IConsumer
-{
-}
+public interface IDistributedEventHandler : IConsumer;

@@ -9,7 +9,8 @@ using MassTransit;
 
 namespace Dex.Events.Distributed.OutboxExtensions;
 
-public sealed class OutboxDistributedEventHandler(IBus bus, IOutboxTypeDiscriminatorProvider discriminatorProvider) : IOutboxMessageHandler<OutboxDistributedEventMessage>
+public sealed class OutboxDistributedEventHandler(IBus bus, IOutboxTypeDiscriminatorProvider discriminatorProvider)
+    : IOutboxMessageHandler<OutboxDistributedEventMessage>
 {
     public Task Process(OutboxDistributedEventMessage message, CancellationToken cancellationToken)
     {

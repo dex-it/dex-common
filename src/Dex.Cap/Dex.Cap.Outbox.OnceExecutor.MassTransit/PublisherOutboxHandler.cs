@@ -1,3 +1,4 @@
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using MassTransit;
 
@@ -17,7 +18,7 @@ public class PublisherOutboxHandler<TMessage>(IPublishEndpoint publishEndpoint) 
     /// AllowAutoPublishing = false;
     /// </code>
     /// </summary>
-    public static bool IsAutoPublisher => true;
+    public bool IsAutoPublisher => true;
 
     /// <inheritdoc />
     public Task Process(TMessage message, CancellationToken cancellationToken) => publishEndpoint.Publish(message, cancellationToken);

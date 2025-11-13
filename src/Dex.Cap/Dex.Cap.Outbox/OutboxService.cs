@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
@@ -17,10 +18,10 @@ internal sealed class OutboxService(
     public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId, DateTime? startAtUtc, TimeSpan? lockTimeout, CancellationToken cancellationToken)
         where T : class, IOutboxMessage
     {
-        var supportedDiscriminators = await discriminatorProvider.GetSupportedDiscriminators();
+        var supportedDiscriminators = discriminatorProvider.GetSupportedDiscriminators();
 
         if (supportedDiscriminators.Contains(message.OutboxTypeId) is false)
-            throw new DiscriminatorResolveException($"Сообщения {message.OutboxTypeId} нт поддерживаются в данном сервисе");
+            throw new DiscriminatorResolveException($"Сообщение {message.OutboxTypeId} не поддерживается в данном сервисе");
 
         var messageType = message.GetType();
         var envelopeId = Guid.NewGuid();

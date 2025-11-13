@@ -2,16 +2,17 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Common.Interfaces;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace Dex.Events.Distributed.OutboxExtensions;
 
 [SuppressMessage("ReSharper", "UnusedTypeParameter")]
+[SuppressMessage("Performance", "CA1822:Пометьте члены как статические")]
 public sealed class OutboxDistributedEventMessage : IOutboxMessage
 {
-    public string OutboxTypeId => nameof(OutboxDistributedEventMessage);
+    public string OutboxTypeId => "OutboxDistributedEvent";
 
     public string EventParams { get; }
 

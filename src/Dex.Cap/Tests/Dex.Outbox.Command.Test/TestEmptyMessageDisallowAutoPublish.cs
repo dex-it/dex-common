@@ -1,10 +1,10 @@
-using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Outbox.Command.Test;
 
 public class TestEmptyMessageDisallowAutoPublish : IOutboxMessage
 {
-    public static bool AllowAutoPublishing => false;
+    public bool AllowAutoPublishing => false;
 
     public string OutboxTypeId => nameof(TestEmptyMessageDisallowAutoPublish);
 }

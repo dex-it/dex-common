@@ -60,7 +60,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
             new {LockId = lockId, DbContext = dbContext},
             async (state, token) =>
             {
-                var sql = await GenerateFetchPlatformSpecificSql(state.LockId, token);
+                var sql = GenerateFetchPlatformSpecificSql(state.LockId);
 
                 if (sql is null)
                     return [];
@@ -159,7 +159,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     }
 
     // TODO вынести в провайдер
-    private async Task<string?> GenerateFetchPlatformSpecificSql(Guid lockId, CancellationToken cToken)
+    private string? GenerateFetchPlatformSpecificSql(Guid lockId)
     {
         var providerName = dbContext.Database.ProviderName;
 
@@ -175,7 +175,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
         const string cStartAtUtc = nameof(OutboxEnvelope.StartAtUtc);
         const string cMessageType = nameof(OutboxEnvelope.MessageType);
 
-        var discriminators = await discriminatorProvider.GetSupportedDiscriminators();
+        var discriminators = discriminatorProvider.GetSupportedDiscriminators();
 
         if (discriminators.Count is 0)
             return null;
@@ -183,26 +183,26 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
         var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
 
         return $"""
-                                WITH cte AS (
-                                    SELECT "Id"
-                                    FROM {NameConst.SchemaName}.{NameConst.TableName}
-                                    WHERE "{cScheduledStartIndexing}" IS NOT NULL
-                                      AND "{cMessageType}" IN ({discriminatorsSql})
-                                      AND CURRENT_TIMESTAMP >= "{cStartAtUtc}"
-                                      AND "{cRetries}" < {Options.Retries}
-                                      AND ("{cStatus}" = {OutboxMessageStatus.New:D} OR "{cStatus}" = {OutboxMessageStatus.Failed:D})
-                                      AND ("{cLockId}" IS NULL OR "{cLockExpirationTimeUtc}" IS NULL OR "{cLockExpirationTimeUtc}" < CURRENT_TIMESTAMP)
-                                    ORDER BY "{cScheduledStartIndexing}"
-                                    LIMIT {Options.MessagesToProcess}
-                                    FOR UPDATE SKIP LOCKED
-                                )
-                                UPDATE {NameConst.SchemaName}.{NameConst.TableName} AS oe
-                                SET 
-                                    "{cLockId}" = '{lockId:D}',
-                                    "{cLockExpirationTimeUtc}" = CURRENT_TIMESTAMP + oe."{cLockTimeout}"
-                                FROM cte
-                                WHERE oe."Id" = cte."Id"
-                                RETURNING oe.*;
+                WITH cte AS (
+                    SELECT "Id"
+                    FROM {NameConst.SchemaName}.{NameConst.TableName}
+                    WHERE "{cScheduledStartIndexing}" IS NOT NULL
+                      AND "{cMessageType}" IN ({discriminatorsSql})
+                      AND CURRENT_TIMESTAMP >= "{cStartAtUtc}"
+                      AND "{cRetries}" < {Options.Retries}
+                      AND ("{cStatus}" = {OutboxMessageStatus.New:D} OR "{cStatus}" = {OutboxMessageStatus.Failed:D})
+                      AND ("{cLockId}" IS NULL OR "{cLockExpirationTimeUtc}" IS NULL OR "{cLockExpirationTimeUtc}" < CURRENT_TIMESTAMP)
+                    ORDER BY "{cScheduledStartIndexing}"
+                    LIMIT {Options.MessagesToProcess}
+                    FOR UPDATE SKIP LOCKED
+                )
+                UPDATE {NameConst.SchemaName}.{NameConst.TableName} AS oe
+                SET 
+                    "{cLockId}" = '{lockId:D}',
+                    "{cLockExpirationTimeUtc}" = CURRENT_TIMESTAMP + oe."{cLockTimeout}"
+                FROM cte
+                WHERE oe."Id" = cte."Id"
+                RETURNING oe.*;
                 """;
     }
 }

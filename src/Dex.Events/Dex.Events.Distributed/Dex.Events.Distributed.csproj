@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>distributed events</PackageTags>
-        <InformationalVersion>8.0</InformationalVersion>
+        <InformationalVersion>8.2</InformationalVersion>
         <PackageVersion>8.2.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>

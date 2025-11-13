@@ -1,4 +1,4 @@
-namespace Dex.Cap.Outbox.Interfaces;
+namespace Dex.Cap.Common.Interfaces;
 
 /// <summary>
 /// Сообщение аутбокса
@@ -6,7 +6,7 @@ namespace Dex.Cap.Outbox.Interfaces;
 public interface IOutboxMessage
 {
     /// <summary>
-    /// Уникальный id типа сообщения в аутбоксе
+    /// Уникальный id типа сообщения в аутбоксе.
     /// Используется для сопоставления входящих сообщений и принимающими обработчиками
     /// </summary>
     string OutboxTypeId { get; }

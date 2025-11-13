@@ -1,5 +1,6 @@
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

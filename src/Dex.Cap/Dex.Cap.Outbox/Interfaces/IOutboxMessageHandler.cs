@@ -1,9 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Interfaces;
 
-public interface IOutboxMessageHandler<in TMessage> where TMessage : class, IOutboxMessage
+public interface IOutboxMessageHandler<in TMessage>
+    where TMessage : class, IOutboxMessage
 {
     /// <summary>
     /// Предназначен ли данный хендлер для автоматической публикации сообщений любых типов

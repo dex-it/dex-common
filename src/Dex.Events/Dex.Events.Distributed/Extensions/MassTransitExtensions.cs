@@ -33,8 +33,7 @@ public static class MassTransitExtensions
             .Replace("`", string.Empty, StringComparison.OrdinalIgnoreCase);
         var fullName = $"Event_{serviceName}_{queueName}_{consumerName}";
 
-        configurator.ReceiveEndpoint(fullName,
-            x => x.ConfigureConsumer(registrationContext, typeof(TDistributedEventHandler)));
+        configurator.ReceiveEndpoint(fullName, x => x.ConfigureConsumer(registrationContext, typeof(TDistributedEventHandler)));
 
         return configurator;
     }

@@ -1,4 +1,4 @@
-﻿using Dex.Cap.Outbox.Interfaces;
+﻿using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Events.Distributed.Tests.Handlers;
 

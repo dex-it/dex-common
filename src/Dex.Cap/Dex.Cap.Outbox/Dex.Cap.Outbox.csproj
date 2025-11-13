@@ -5,7 +5,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <Nullable>enable</Nullable>
         <PackageTags>outbox business-transaction consistency</PackageTags>
-        <InformationalVersion>8.0</InformationalVersion>
+        <InformationalVersion>8.2</InformationalVersion>
         <PackageVersion>8.2.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
@@ -54,6 +54,10 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
         <PackageReference Include="Microsoft.Extensions.Options"/>
         <PackageReference Include="System.Diagnostics.DiagnosticSource"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dex.Cap.Common\Dex.Cap.Common.csproj" />
     </ItemGroup>
 
 </Project>
