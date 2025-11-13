@@ -8,7 +8,7 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// Автоматически публикует объект, из аутбокса в очередь, заинтересованные сервисы могут получать эти события
 /// </summary>
 /// <typeparam name="TMessage">Объект события</typeparam>
-public class PublisherOutboxHandler<TMessage>(IPublishEndpoint publishEndpoint) : IOutboxMessageHandler<TMessage> where TMessage : class, IOutboxMessage
+public class PublisherOutboxHandler<TMessage>(IPublishEndpoint publishEndpoint) : IOutboxMessageHandler<TMessage> where TMessage : class, IOutboxMessage, new()
 {
     /// <summary>
     /// Является ли хендлер автопаблишером.

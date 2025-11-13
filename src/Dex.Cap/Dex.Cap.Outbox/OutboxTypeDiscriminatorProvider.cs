@@ -134,8 +134,8 @@ internal sealed class OutboxTypeDiscriminatorProvider(
     }
 
     //todo: убрать и заменить на nameof(IOutboxMessageHandler<>.IsAutoPublisher после обновления до net10
-    private abstract class OutboxMessageExample : IOutboxMessage
+    private class OutboxMessageExample : IOutboxMessage
     {
-        public string OutboxTypeId => string.Empty;
+        public string OutboxTypeId => nameof(OutboxMessageExample);
     }
 }

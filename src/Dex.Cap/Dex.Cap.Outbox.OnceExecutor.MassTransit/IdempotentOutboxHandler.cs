@@ -9,7 +9,7 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// Идемпотентный обработчик сообщений аутбокса
 /// </summary>
 public abstract class IdempotentOutboxHandler<TMessage, TDbContext>(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
-    : IOutboxMessageHandler<TMessage> where TMessage : class, IIdempotentKey, IOutboxMessage
+    : IOutboxMessageHandler<TMessage> where TMessage : class, IIdempotentKey, IOutboxMessage, new()
 {
     /// <summary>
     /// Переопределить EfTransactionOptions

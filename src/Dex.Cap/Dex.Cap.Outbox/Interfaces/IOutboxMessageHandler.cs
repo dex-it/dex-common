@@ -5,7 +5,7 @@ using Dex.Cap.Common.Interfaces;
 namespace Dex.Cap.Outbox.Interfaces;
 
 public interface IOutboxMessageHandler<in TMessage>
-    where TMessage : class, IOutboxMessage
+    where TMessage : class, IOutboxMessage, new()
 {
     /// <summary>
     /// Предназначен ли данный хендлер для автоматической публикации сообщений любых типов
