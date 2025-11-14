@@ -10,6 +10,7 @@ using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
+using Dex.Cap.Outbox.OnceExecutor.MassTransit.Extensions;
 using Dex.Extensions;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
@@ -70,6 +71,22 @@ public class EnqueueOutboxTests : BaseTest
     public void FailedEnqueueMessageWithoutDiscriminator()
     {
         var sp = InitServiceCollection()
+            .AddScoped(typeof(IOutboxMessageHandler<>), typeof(TestAutoPublisher<>))
+            .BuildServiceProvider();
+
+        var outboxService = sp.GetRequiredService<IOutboxService>();
+
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () =>
+        {
+            await outboxService.EnqueueAsync(new TestEmptyMessage());
+        });
+    }
+
+    [Test]
+    public void FailedEnqueueMessageWithoutAutoPublish()
+    {
+        var sp = InitServiceCollection()
+            .AddScoped(typeof(IOutboxMessageHandler<>), typeof(TestAutoPublisher<>))
             .BuildServiceProvider();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();

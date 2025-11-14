@@ -84,11 +84,15 @@ internal sealed class OutboxTypeDiscriminatorProvider(
                     {
                         var discriminatorProperty = type.GetProperty(nameof(IOutboxMessage.OutboxTypeId));
 
-                        if (discriminatorProperty?.GetValue(Activator.CreateInstance(type)) is not string discriminator || string.IsNullOrEmpty(discriminator))
-                            throw new DiscriminatorResolveException($"Для сообщения аутбокса {type.FullName} не задан дискриминатор");
+                        if (discriminatorProperty?.GetValue(null) is not string discriminator || string.IsNullOrWhiteSpace(discriminator))
+                        {
+                            logger.LogError("Для сообщения аутбокса {TypeName} не задан дискриминатор", type.FullName);
+                            discriminator = string.Empty;
+                        }
 
                         return new KeyValuePair<string, Type>(discriminator, type);
                     })
+                    .Where(x => string.IsNullOrWhiteSpace(x.Key) is false)
                     .ToDictionary();
             }
         }
@@ -109,7 +113,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
         if (messageAllowAutoPublishProperty is null)
             throw new InvalidOperationException($"Не удалось получить свойство {messageAllowAutoPublishPropertyName}, проверьте совместимость версий пакетов");
 
-        var messageAllowAutoPublishValue = messageAllowAutoPublishProperty.GetValue(Activator.CreateInstance(message));
+        var messageAllowAutoPublishValue = messageAllowAutoPublishProperty.GetValue(null);
 
         return messageAllowAutoPublishValue is bool messageAllowAutoPublish
             ? messageAllowAutoPublish
@@ -133,7 +137,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
         if (handlerIsAutoPublisherProperty is null)
             throw new InvalidOperationException($"Не удалось получить свойство {isAutoPublisherPropertyName}, проверьте совместимость версий пакетов");
 
-        var handlerIsAutoPublisherValue = handlerIsAutoPublisherProperty.GetValue(handler);
+        var handlerIsAutoPublisherValue = handlerIsAutoPublisherProperty.GetValue(null);
 
         return handlerIsAutoPublisherValue is bool handlerIsAutoPublisher
             ? handlerIsAutoPublisher
@@ -141,8 +145,8 @@ internal sealed class OutboxTypeDiscriminatorProvider(
     }
 
     //todo: убрать и заменить на nameof(IOutboxMessageHandler<>.IsAutoPublisher после обновления до net10
-    private class OutboxMessageExample : IOutboxMessage
+    private abstract class OutboxMessageExample : IOutboxMessage
     {
-        public string OutboxTypeId => nameof(OutboxMessageExample);
+        public static string OutboxTypeId => nameof(OutboxMessageExample);
     }
 }

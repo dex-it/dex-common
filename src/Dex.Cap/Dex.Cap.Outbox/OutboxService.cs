@@ -16,18 +16,18 @@ internal sealed class OutboxService(
     public Guid CorrelationId { get; } = Guid.NewGuid();
 
     public async Task<Guid> EnqueueAsync<T>(T message, Guid? correlationId, DateTime? startAtUtc, TimeSpan? lockTimeout, CancellationToken cancellationToken)
-        where T : class, IOutboxMessage, new()
+        where T : class, IOutboxMessage
     {
         var supportedDiscriminators = discriminatorProvider.GetSupportedDiscriminators();
 
-        if (supportedDiscriminators.Contains(message.OutboxTypeId) is false)
-            throw new DiscriminatorResolveException($"Сообщение {message.OutboxTypeId} не поддерживается в данном сервисе");
+        if (supportedDiscriminators.Contains(T.OutboxTypeId) is false)
+            throw new DiscriminatorResolveException($"Сообщение {T.OutboxTypeId} не поддерживается в данном сервисе");
 
         var messageType = message.GetType();
         var envelopeId = Guid.NewGuid();
 
         var msgBody = serializer.Serialize(messageType, message);
-        var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, message.OutboxTypeId, msgBody, startAtUtc, lockTimeout);
+        var outboxEnvelope = new OutboxEnvelope(envelopeId, correlationId ?? CorrelationId, T.OutboxTypeId, msgBody, startAtUtc, lockTimeout);
 
         await outboxDataProvider
             .Add(outboxEnvelope, cancellationToken)

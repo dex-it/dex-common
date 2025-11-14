@@ -122,7 +122,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
     }
 
     private ServiceProvider CreateServiceProvider<TCommand, THandler>(
-        Func<IServiceCollection, IServiceCollection>? configure = null) where TCommand : class, IOutboxMessage, new()
+        Func<IServiceCollection, IServiceCollection>? configure = null) where TCommand : class, IOutboxMessage
         where THandler : class, IOutboxMessageHandler<TCommand>, new()
     {
         var serviceCollection = new ServiceCollection();
@@ -145,7 +145,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
         return serviceCollection.BuildServiceProvider();
     }
 
-    private static async Task SaveCommandAsync<TCommand>(ServiceProvider sp, TCommand command, Guid? correlationId) where TCommand : class, IOutboxMessage, new()
+    private static async Task SaveCommandAsync<TCommand>(ServiceProvider sp, TCommand command, Guid? correlationId) where TCommand : class, IOutboxMessage
     {
         var outboxService = sp.GetRequiredService<IOutboxService>();
         await outboxService.EnqueueAsync(command, correlationId);

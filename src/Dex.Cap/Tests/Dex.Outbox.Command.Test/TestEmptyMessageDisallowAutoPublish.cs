@@ -4,7 +4,7 @@ namespace Dex.Outbox.Command.Test;
 
 public class TestEmptyMessageDisallowAutoPublish : IOutboxMessage
 {
-    public bool AllowAutoPublishing => false;
+    public static bool AllowAutoPublishing => false;
 
-    public string OutboxTypeId => nameof(TestEmptyMessageDisallowAutoPublish);
+    public static string OutboxTypeId => nameof(TestEmptyMessageDisallowAutoPublish);
 }

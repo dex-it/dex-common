@@ -6,5 +6,5 @@ public class TestOutboxCommand : IOutboxMessage
 {
     public string Args { get; set; }
 
-    public string OutboxTypeId => nameof(TestOutboxCommand);
+    public static string OutboxTypeId => nameof(TestOutboxCommand);
 }
