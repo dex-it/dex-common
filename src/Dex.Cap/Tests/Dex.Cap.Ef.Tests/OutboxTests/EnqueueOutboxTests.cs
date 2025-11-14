@@ -10,7 +10,6 @@ using Dex.Cap.Outbox.Ef;
 using Dex.Cap.Outbox.Exceptions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
-using Dex.Cap.Outbox.OnceExecutor.MassTransit.Extensions;
 using Dex.Extensions;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
