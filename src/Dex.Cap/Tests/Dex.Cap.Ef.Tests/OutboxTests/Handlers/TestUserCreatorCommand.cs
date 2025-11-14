@@ -5,7 +5,7 @@ namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 
 public class TestUserCreatorCommand : IIdempotentKey, IOutboxMessage
 {
-    public string OutboxTypeId => "6262F3D6-498F-4820-B372-6C3425824CD9";
+    public static string OutboxTypeId => "6262F3D6-498F-4820-B372-6C3425824CD9";
 
     public Guid Id { get; init; }
 

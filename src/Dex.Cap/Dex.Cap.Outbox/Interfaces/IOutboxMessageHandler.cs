@@ -5,7 +5,7 @@ using Dex.Cap.Common.Interfaces;
 namespace Dex.Cap.Outbox.Interfaces;
 
 public interface IOutboxMessageHandler<in TMessage>
-    where TMessage : class, IOutboxMessage, new()
+    where TMessage : class, IOutboxMessage
 {
     /// <summary>
     /// Предназначен ли данный хендлер для автоматической публикации сообщений любых типов
@@ -13,7 +13,7 @@ public interface IOutboxMessageHandler<in TMessage>
     /// IOutboxMessage может отказаться от автоматической публикации и требовать явной реализации отдельного хендлера с помощью
     /// <code>IOutboxMessage.AllowAutoPublishing = false</code>
     /// </summary>
-    bool IsAutoPublisher => false;
+    static virtual bool IsAutoPublisher => false;
 
     Task Process(TMessage message, CancellationToken cancellationToken);
 }

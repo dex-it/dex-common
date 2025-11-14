@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dex.Cap.Common.Interfaces;
+using Dex.Cap.Outbox.Exceptions;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
@@ -12,7 +13,7 @@ namespace Dex.Events.Distributed.OutboxExtensions;
 [SuppressMessage("Performance", "CA1822:Пометьте члены как статические")]
 public sealed class OutboxDistributedEventMessage : IOutboxMessage
 {
-    public string OutboxTypeId => "OutboxDistributedEvent";
+    public static string OutboxTypeId => "OutboxDistributedEvent";
 
     public string EventParams { get; }
 
@@ -37,7 +38,12 @@ public sealed class OutboxDistributedEventMessage : IOutboxMessage
         var messageType = outboxMessage.GetType();
         var eventParams = JsonSerializer.Serialize(outboxMessage, messageType);
 
+        var discriminatorProperty = messageType.GetProperty(nameof(IOutboxMessage.OutboxTypeId));
+
+        if (discriminatorProperty?.GetValue(null) is not string discriminator || string.IsNullOrEmpty(discriminator))
+            throw new DiscriminatorResolveException($"Для сообщения аутбокса {messageType.FullName} не задан дискриминатор");
+
         EventParams = eventParams;
-        EventParamsType = outboxMessage.OutboxTypeId;
+        EventParamsType = discriminator;
     }
 }

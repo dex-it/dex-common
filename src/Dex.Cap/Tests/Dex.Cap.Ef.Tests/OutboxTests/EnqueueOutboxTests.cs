@@ -70,6 +70,22 @@ public class EnqueueOutboxTests : BaseTest
     public void FailedEnqueueMessageWithoutDiscriminator()
     {
         var sp = InitServiceCollection()
+            .AddScoped(typeof(IOutboxMessageHandler<>), typeof(TestAutoPublisher<>))
+            .BuildServiceProvider();
+
+        var outboxService = sp.GetRequiredService<IOutboxService>();
+
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () =>
+        {
+            await outboxService.EnqueueAsync(new TestEmptyMessage());
+        });
+    }
+
+    [Test]
+    public void FailedEnqueueMessageWithoutAutoPublish()
+    {
+        var sp = InitServiceCollection()
+            .AddScoped(typeof(IOutboxMessageHandler<>), typeof(TestAutoPublisher<>))
             .BuildServiceProvider();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
