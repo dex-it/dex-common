@@ -16,51 +16,55 @@ internal sealed class OutboxTypeDiscriminatorProvider(
     private FrozenDictionary<string, Type>? _currentDomainOutboxMessageTypes;
     private FrozenSet<string>? _supportedDiscriminators;
 
-    public FrozenSet<string> GetSupportedDiscriminators()
+    public FrozenSet<string> SupportedDiscriminators
     {
-        _supportedDiscriminators ??= GetSupportedDiscriminatorsInternal().ToFrozenSet();
-        return _supportedDiscriminators;
-
-        string[] GetSupportedDiscriminatorsInternal()
+        get
         {
-            var result = new List<string>(CurrentDomainOutboxMessageTypes.Count);
+            _supportedDiscriminators ??= GetSupportedDiscriminatorsInternal().ToFrozenSet();
+            return _supportedDiscriminators;
 
-            using var scope = serviceProvider.CreateScope();
-
-            foreach (var (id, discriminatorType) in CurrentDomainOutboxMessageTypes)
+            string[] GetSupportedDiscriminatorsInternal()
             {
-                try
+                var result = new List<string>(CurrentDomainOutboxMessageTypes.Count);
+
+                using var scope = serviceProvider.CreateScope();
+
+                foreach (var (id, discriminatorType) in CurrentDomainOutboxMessageTypes)
                 {
-                    var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(discriminatorType);
-                    var handler = scope.ServiceProvider.GetService(handlerType);
-
-                    // нет подходящего хендлера
-                    if (handler is null)
+                    try
                     {
-                        logger.LogWarning("Для сообщения {DiscriminatorId} - {MessageType} нет подходящего хендлера", id, discriminatorType.FullName);
-                        continue;
-                    }
+                        var handlerType = typeof(IOutboxMessageHandler<>).MakeGenericType(discriminatorType);
+                        var handler = scope.ServiceProvider.GetService(handlerType);
 
-                    // для сообщения есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию
-                    if (IsMessageAllowingAutoPublish(discriminatorType) is false && IsAutoPublisherHandler(handler))
+                        // нет подходящего хендлера
+                        if (handler is null)
+                        {
+                            logger.LogWarning("Для сообщения {DiscriminatorId} - {MessageType} нет подходящего хендлера", id, discriminatorType.FullName);
+                            continue;
+                        }
+
+                        // для сообщения есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию
+                        if (IsMessageAllowingAutoPublish(discriminatorType) is false && IsAutoPublisherHandler(handler))
+                        {
+                            logger.LogWarning(
+                                "Для сообщения {DiscriminatorId} - {MessageType} есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию",
+                                id,
+                                discriminatorType.FullName);
+                            continue;
+                        }
+
+                        // текущий сервис поддерживает обработку этого сообщения
+                        result.Add(id);
+                        logger.LogInformation("Текущий сервис поддерживает обработку сообщения {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
+                    }
+                    catch (Exception e)
                     {
-                        logger.LogWarning(
-                            "Для сообщения {DiscriminatorId} - {MessageType} есть подходящий автопаблишер, но сообщение не поддерживает автоматическую публикацию", id,
-                            discriminatorType.FullName);
-                        continue;
+                        logger.LogError(e, "Не удалось зарегестрировать сообщение {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
                     }
+                }
 
-                    // текущий сервис поддерживает обработку этого сообщения
-                    result.Add(id);
-                    logger.LogInformation("Текущий сервис поддерживает обработку сообщения {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
-                }
-                catch (Exception e)
-                {
-                    logger.LogError(e, "Не удалось зарегестрировать сообщение {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
-                }
+                return result.ToArray();
             }
-
-            return result.ToArray();
         }
     }
 
