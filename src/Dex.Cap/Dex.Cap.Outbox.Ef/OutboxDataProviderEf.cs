@@ -75,7 +75,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
                 return lockedEnvelopes;
             },
             async (state, token) => await state.DbContext.Set<OutboxEnvelope>()
-                .AnyAsync(x => x.CorrelationId == state.LockId, token).ConfigureAwait(false),
+                .AnyAsync(x => x.LockId == state.LockId, token).ConfigureAwait(false),
             _transactionOptions,
             cancellationToken: cancellationToken);
     }
