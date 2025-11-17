@@ -134,8 +134,41 @@ public class MayBeTransientException : Exception, ITransientExceptionCandidate
 ```csharp
 services.AddOutbox<AppDbContext>();
 
+// простой универсальный вариант для автоматической публикации, рекомендуемый вариант
 services.AddOutboxPublisher();
+
+// альтернативный вариант с явной реализацией хендлера
+services.AddScoped<IOutboxMessageHandler<SomeOutboxMessage>, SomeOutboxMessageHandler>();
 ```
+
+### Отправка
+
+Сообщение SomeOutboxMessage отправляется в бд для дальнейшей обработки
+
+```csharp
+public class SomeService(IOutboxService outbox, IUnitOfWork dbContext)
+{
+    public async Task Example()
+    {
+        await outbox.EnqueueAsync(new SomeOutboxMessage
+        {
+            SomeData = 123
+        });
+
+        await dbContext.SaveChangesAsync();
+    }
+}
+```
+
+### IOutboxMessage
+Сообщения аутбокса должны реализовывать интерфейс IOutboxMessage:
+
+####  OutboxTypeId - обязательно, string. 
+Уникальный идентификатор типа сообщения.
+
+#### AllowAutoPublishing - необязательно, bool, по умолчанию true.
+Разрешает сообщению автоматически публиковаться с помощью ```services.AddOutboxPublisher();```
+При значении false будет требовать явной реализации отдельного хендлера ```services.AddScoped<IOutboxMessageHandler<SomeOutboxMessage>, SomeOutboxMessageHandler>();```
 
 ## IdempotentOutboxHandler
 
