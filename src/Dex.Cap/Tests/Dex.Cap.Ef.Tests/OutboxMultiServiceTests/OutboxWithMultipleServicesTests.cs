@@ -45,7 +45,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
         // Assert
         var envelope = await GetEnvelope(sp2, correlationId1);
 
-        Assert.IsNull(envelope.Error); // проверяем отсутствие ошибки DiscriminatorResolveTypeException
+        Assert.IsNull(envelope.Error); // проверяем отсутствие ошибки DiscriminatorResolveException
         Assert.AreEqual(0, processedCommandsCount);
         return;
 

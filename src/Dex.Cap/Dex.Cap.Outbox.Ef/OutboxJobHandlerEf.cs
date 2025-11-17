@@ -98,13 +98,13 @@ internal class OutboxJobHandlerEf<TDbContext>(
     }
 
     /// <exception cref="OutboxException"/>
-    /// <exception cref="DiscriminatorResolveTypeException"/>
+    /// <exception cref="DiscriminatorResolveException"/>
     private async Task ProcessJobCore(IOutboxLockedJob job, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         if (outboxTypeDiscriminatorProvider.CurrentDomainOutboxMessageTypes.TryGetValue(job.Envelope.MessageType, out var messageType) is false)
-            throw new DiscriminatorResolveTypeException($"Can't find Type for discriminator - {job.Envelope.MessageType}.");
+            throw new DiscriminatorResolveException($"Can't find Type for discriminator - {job.Envelope.MessageType}.");
 
         var msg = serializer.Deserialize(messageType, job.Envelope.Content);
         logger.LogDebug("Message to processed: {Message}", msg);
