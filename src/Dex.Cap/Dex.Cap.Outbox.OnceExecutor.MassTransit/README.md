@@ -146,7 +146,7 @@ services.AddScoped<IOutboxMessageHandler<SomeOutboxMessage>, SomeOutboxMessageHa
 Сообщение SomeOutboxMessage отправляется в бд для дальнейшей обработки
 
 ```csharp
-public class SomeService(IOutboxService outbox, IUnitOfWork dbContext)
+public class SomeService(IOutboxService outbox, AppDbContext dbContext)
 {
     public async Task Example()
     {
