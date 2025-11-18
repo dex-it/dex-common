@@ -59,7 +59,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
                     }
                     catch (Exception e)
                     {
-                        logger.LogError(e, "Не удалось зарегестрировать сообщение {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
+                        logger.LogError(e, "Не удалось зарегистрировать сообщение {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
                     }
                 }
 

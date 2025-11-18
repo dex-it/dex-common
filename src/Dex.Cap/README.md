@@ -10,22 +10,14 @@ The template ensures that commands will not be lost.
 * Verifying the success of the operation.
 * Discriminate message type, for serialization
 
-### Registration
+#### Registration
 ```csharp
-// implement discriminator
-internal class OutboxTypeDiscriminator : BaseOutboxTypeDiscriminator
-{
-    public OutboxTypeDiscriminator()
-    {
-        Add<OutboxMessage>("15CAD1F5-4C0D-4816-B5D1-E2340144C4AA");
-    }
-}
-
 // implement OutboxMessage
 public class OutboxMessage : IOutboxMessage
 {
+    public static string OutboxTypeId => "3961131e-3961-4c38-8a30-09b91cb56d60";
+
     public string Args { get; init; }
-    public Guid MessageId { get; init; } = Guid.NewGuid();
 }
 
 // implement specific OutboxMessageHandler (if not, the OutboxMessage will be auto-published)
@@ -38,49 +30,57 @@ public class OutboxMessageHandler : IOutboxMessageHandler<OutboxMessage>
         _logger = logger;
     }
 
-    public async Task ProcessMessage(OutboxMessage message, CancellationToken cancellationToken)
+    public async Task Process(OutboxMessage message, CancellationToken cancellationToken)
     {
         await Task.Delay(200, cancellationToken);
         _logger.LogInformation("Processed message at {Now}, Args: {MessageArgs}", DateTime.Now, message.Args);
     }
-
-    public Task ProcessMessage(IOutboxMessage outbox, CancellationToken cancellationToken)
-    {
-        return ProcessMessage((OutboxMessage) outbox, cancellationToken);
-    }
 }
 
 // ConfigureServices
-serviceCollection.AddOutbox<DbContext, OutboxTypeDiscriminator>();
-serviceCollection.RegisterOutboxScheduler(periodSeconds: 1, cleanupDays: 90);
-serviceCollection.AddScoped<IOutboxMessageHandler<OutboxMessage>, OutboxMessageHandler>(); // defining a specific handler
-serviceCollection.AddScoped(typeof(IOutboxMessageHandler<>), typeof(PublisherOutboxHandler<>)); // auto-publish any outbox message when a specific handler is not defined
+services.AddOutbox<DbContext>();
+services.RegisterOutboxScheduler(periodSeconds: 1, cleanupDays: 90); // register scheduler
+services.AddScoped<IOutboxMessageHandler<OutboxMessage>, OutboxMessageHandler>(); // defining a specific handler
+services.AddOutboxPublisher(); // auto-publish any outbox message when a specific handler is not defined
 
 // OnModelCreating
 modelBuilder.OutboxModelCreating();
+
 // remarks: when using optimistic concurrency in PostgreSQL - it is necessary to exclude type OutboxEnvelope
 modelBuilder.UseXminAsConcurrencyToken(ignoreTypes: typeof(OutboxEnvelope));
 ```
 
-### Basic usage
+#### Basic usage
+
 ```csharp
-// ctor
-private readonly IOutboxService<DbContext> _outboxService;
-
-// process
-var correlationId = Guid.NewGuid();
-await _outboxService.ExecuteOperationAsync(
-    correlationId,
-    state: new { Logger = logger },
-    async (token, outboxContext) =>
+public class SomeService(IOutboxService outbox, AppDbContext dbContext)
+{
+    public async Task Example()
     {
-        outboxContext.State.Logger.LogDebug("DEBUG...");
+        await dbContext.Users.AddAsync(new User { Name = name }, token);
 
-        await outboxContext.DbContext.Users.AddAsync(new User { Name = name }, token);
-        await outboxContext.EnqueueAsync(new OutboxMessage { Args = "message1" }, token);
-    },
-    cancellationToken);
+        await outbox.EnqueueAsync(new OutboxMessage { Args = "custom args" }, token);
+
+        await dbContext.SaveChangesAsync(token);
+    }
+}
 ```
+
+### IOutboxMessage
+Outbox messages must implement the IOutboxMessage interface.
+
+#### OutboxTypeId
+Required, the string type.
+
+A unique identifier of the message type.
+
+#### AllowAutoPublishing
+Optional, bool type, true by default.
+
+Allows the message to be published automatically by ```services.AddOutboxPublisher();```
+
+If set to false, it will require explicit implementation of a separate handler  ```services.AddScoped<IOutboxMessageHandler<SomeOutboxMessage>, SomeOutboxMessageHandler>();```
+
 
 # Dex.Cap.OnceExecutor
 
@@ -92,28 +92,26 @@ Takes into account the need to return the value of an already performed operatio
 
 The basic usage is based on the idempotency key.
 
-### Registration
+#### Registration
 ```csharp
 // ConfigureServices
-serviceCollection.AddOnceExecutor<DbContext>();
+services.AddOnceExecutor<DbContext>();
 
 // OnModelCreating
 modelBuilder.OnceExecutorModelCreating();
+
 // remarks: when using optimistic concurrency in PostgreSQL - it is necessary to exclude type LastTransaction
 modelBuilder.UseXminAsConcurrencyToken(ignoreTypes: typeof(LastTransaction));
 ```
 
-### Basic usage
+#### Basic usage
 ```csharp
 var serviceProvider = InitServiceCollection().BuildServiceProvider();
 var executor = serviceProvider.GetRequiredService<IOnceExecutor<DbContext>>();
 var result = await executor.ExecuteAsync(
     idempotentKey,
     (dbContext, token) => dbContext.Users.AddAsync(user, token).AsTask(),
-    (dbContext, token) => dbContext.Users.FirstOrDefaultAsync(x => x.Name == "Name", token),
-    IsolationLevel.ReadCommitted,
-    CancellationToken.None
-);
+    (dbContext, token) => dbContext.Users.FirstOrDefaultAsync(x => x.Name == "Name", token));
 ```
 
 ### Extended usage OnceExecutor based on strategies.
@@ -125,7 +123,7 @@ The strategy implements methods:
 
 It is possible to set the transaction isolation level (by default, it is set to ReadCommitted).
 
-### Strategy implementation
+#### Strategy implementation
 ```csharp
 public class Concrete1ExecutionStrategy : IOnceExecutionStrategy<Concrete1ExecutionStrategyRequest, string>
 {
@@ -156,7 +154,7 @@ public class Concrete1ExecutionStrategy : IOnceExecutionStrategy<Concrete1Execut
 }
 ```
 
-### Using the strategy
+#### Using the strategy
 ```csharp
 var serviceProvider = InitServiceCollection()
     .AddStrategyOnceExecutor<Concrete1ExecutionStrategyRequest, string, Concrete1ExecutionStrategy, TestDbContext>()
