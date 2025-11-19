@@ -9,9 +9,10 @@ namespace Dex.PdfGenerator.Providers
         private readonly string _templateDirectoryPath;
         private readonly string _templateFileName;
         private readonly object _model;
-        private readonly IStaticPathProvider _staticPathProvider;
+        private readonly IStaticPathProvider? _staticPathProvider;
 
-        public HtmlTemplateFileProvider(string templateDirectoryPath, string templateFileName, object model, IStaticPathProvider staticPathProvider = null)
+        public HtmlTemplateFileProvider(string templateDirectoryPath, string templateFileName, object model,
+            IStaticPathProvider? staticPathProvider = null)
         {
             _templateDirectoryPath = templateDirectoryPath;
             _templateFileName = templateFileName;
@@ -27,7 +28,9 @@ namespace Dex.PdfGenerator.Providers
                 .Build();
 
             var html = await engine.CompileRenderAsync(_templateFileName, _model).ConfigureAwait(false);
-            return _staticPathProvider == null ? html : html.Replace("{Provider}", _staticPathProvider.GetBaseUri(), StringComparison.InvariantCulture);
+            return _staticPathProvider == null
+                ? html
+                : html.Replace("{Provider}", _staticPathProvider.GetBaseUri(), StringComparison.InvariantCulture);
         }
     }
 }

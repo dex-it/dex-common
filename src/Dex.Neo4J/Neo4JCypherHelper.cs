@@ -53,7 +53,7 @@ namespace Dex.Neo4J
 
             if (expression is ConstantExpression constantExpression)
             {
-                return constantExpression.Value.ToString();
+                return constantExpression.Value?.ToString() ?? throw new InvalidOperationException();
             }
 
             if (expression is MemberExpression memberExpression)

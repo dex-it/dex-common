@@ -6,8 +6,8 @@ namespace Dex.PdfGenerator
 {
     public interface IPdfGenerator
     {
-        Task<string> Generate(IHtmlProvider provider, PdfGeneratorSettings settings = null);
+        Task<string> Generate(IHtmlProvider provider, PdfGeneratorSettings? settings = null);
         
-        string Generate(string uri, PdfGeneratorSettings settings = null);
+        string Generate(string uri, PdfGeneratorSettings? settings = null);
     }
 }

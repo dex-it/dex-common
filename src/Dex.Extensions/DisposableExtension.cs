@@ -7,10 +7,8 @@ namespace Dex.Extensions
     public static class DisposableExtension
     {
         [Obsolete]
-        public static void SafeDispose(this IEnumerable<IDisposable> collection, Action<IDisposable, Exception>? exceptionHandler = null)
+        public static void SafeDispose(this IEnumerable<IDisposable?> collection, Action<IDisposable, Exception>? exceptionHandler = null)
         {
-            if (collection == null) return;
-
             foreach (var disposable in collection.Where(disposable => disposable != null))
             {
                 SafeDispose(disposable, exceptionHandler);
@@ -19,7 +17,7 @@ namespace Dex.Extensions
 
         [Obsolete]
         //[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design","CA1031")]
-        public static void SafeDispose(this IDisposable disposable, Action<IDisposable, Exception>? exceptionHandler = null)
+        public static void SafeDispose(this IDisposable? disposable, Action<IDisposable, Exception>? exceptionHandler = null)
         {
             try
             {
@@ -31,7 +29,7 @@ namespace Dex.Extensions
 
                 try
                 {
-                    exceptionHandler(disposable, ex);
+                    exceptionHandler(disposable ?? throw new ArgumentNullException(nameof(disposable)), ex);
                 }
                 catch
                 {

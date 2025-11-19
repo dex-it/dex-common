@@ -15,7 +15,7 @@ namespace Dex.Extensions
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
 
-            return (T) Enum.Parse(typeof(T), value, true);
+            return (T)Enum.Parse(typeof(T), value, true);
         }
 
         public static bool TryParse<T>(string value, out T obj) where T : struct

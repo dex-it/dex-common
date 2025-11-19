@@ -50,6 +50,7 @@ namespace Dex.TeamCity
             var result = new TeamCityRevisionDto();
             var fileName = Path.GetFileName(filePath);
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (fileName != null)
             {
                 var split = fileName.Split('.');
@@ -61,13 +62,14 @@ namespace Dex.TeamCity
             return result;
         }
 
-        private static string GetRevisionFile(IEnumerable<string> files)
+        private static string? GetRevisionFile(IEnumerable<string> files)
         {
             files = files.ToArray();
             return files.Select(f =>
                 {
                     var fileName = Path.GetFileName(f);
 
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (fileName != null)
                     {
                         var s1 = fileName.Split('.')[0];
@@ -84,8 +86,8 @@ namespace Dex.TeamCity
                     return null;
                 })
                 .Where(i => i != null)
-                .OrderByDescending(i => i.number)
-                .Select(i => i.path)
+                .OrderByDescending(i => i?.number)
+                .Select(i => i?.path)
                 .FirstOrDefault();
         }
     }

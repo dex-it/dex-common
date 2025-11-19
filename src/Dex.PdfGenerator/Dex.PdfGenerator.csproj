@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>1.0</InformationalVersion>
-        <PackageVersion>1.0.31</PackageVersion>
+        <PackageVersion>1.0.32</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

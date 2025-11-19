@@ -8,10 +8,9 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Neo4J
 {
-    // ReSharper disable once InconsistentNaming
-    public abstract class BaseGraphFTIndexProvider : IGraphFTIndexProvider
+    public abstract class BaseGraphFtIndexProvider : IGraphFtIndexProvider
     {
-        public async Task RegisterFTIndexes(ITransactionalGraphClient graphClient, CancellationToken cancellationToken)
+        public async Task RegisterFtIndexes(ITransactionalGraphClient graphClient, CancellationToken cancellationToken)
         {
             if (graphClient == null) throw new ArgumentNullException(nameof(graphClient));
 
@@ -19,13 +18,15 @@ namespace Dex.Neo4J
             {
                 await CreateIndexes(graphClient, cancellationToken).ConfigureAwait(false);
             }
-            catch (NeoException e) when (e.NeoMessage.StartsWith("There already exists an index", StringComparison.OrdinalIgnoreCase))
+            catch (NeoException e) when (e.NeoMessage.StartsWith("There already exists an index",
+                                             StringComparison.OrdinalIgnoreCase))
             {
                 // nothing to do
             }
         }
 
-        protected static async Task SafeCreateIndex(ITransactionalGraphClient graphClient, Func<ICypherFluentQuery, ICypherFluentQuery> query,
+        protected static async Task SafeCreateIndex(ITransactionalGraphClient graphClient,
+            Func<ICypherFluentQuery, ICypherFluentQuery> query,
             CancellationToken cancellationToken)
         {
             if (graphClient == null) throw new ArgumentNullException(nameof(graphClient));
@@ -35,15 +36,18 @@ namespace Dex.Neo4J
             {
                 await query(graphClient.Cypher).ExecuteWithoutResultsAsync().ConfigureAwait(false);
             }
-            catch (NeoException e) when (e.NeoMessage.StartsWith("There already exists an index", StringComparison.OrdinalIgnoreCase))
+            catch (NeoException e) when (e.NeoMessage.StartsWith("There already exists an index",
+                                             StringComparison.OrdinalIgnoreCase))
             {
                 // nothing to do
             }
         }
 
-        protected abstract Task CreateIndexes(ITransactionalGraphClient graphClient, CancellationToken cancellationToken);
+        protected abstract Task CreateIndexes(ITransactionalGraphClient graphClient,
+            CancellationToken cancellationToken);
 
-        protected static async Task ExecuteBatch(ICypherFluentQuery<int> query, int batchSize, CancellationToken cancellationToken)
+        protected static async Task ExecuteBatch(ICypherFluentQuery<int> query, int batchSize,
+            CancellationToken cancellationToken)
         {
             if (query == null) throw new ArgumentNullException(nameof(query));
 

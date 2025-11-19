@@ -6,7 +6,7 @@ namespace Dex.Extensions.Test
 {
     public class ExpressionsTest
     {
-        private string _field1;
+        private const string Field1 = "field1";
         private string Prop1 { get; set; }
         private ExpressionsTest Exp2 { get; set; }
 
@@ -19,7 +19,7 @@ namespace Dex.Extensions.Test
         [Test]
         public void InvalidAccessTest()
         {
-            Assert.Catch<ArgumentException>(() => { TestExpressionFunc<ExpressionsTest>(x => x._field1); });
+            Assert.Catch<ArgumentException>(() => { TestExpressionFunc<ExpressionsTest>(x => Field1); });
             Assert.Catch<ArgumentException>(() => { TestExpressionFunc<ExpressionsTest>(x => x.ToString()); });
             Assert.Catch<ArgumentException>(() => { TestExpressionFunc<ExpressionsTest>(x => x.Exp2.Prop1); });
         }

@@ -2,11 +2,11 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
-        <PackageTags>dex; buffer</PackageTags>
+        <PackageTags>dex; neo4j</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <InformationalVersion>1.0</InformationalVersion>
-        <PackageVersion>1.1.32</PackageVersion>
+        <InformationalVersion>1.1</InformationalVersion>
+        <PackageVersion>1.1.33</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -31,8 +31,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Update="BaseGraphFTIndexProvider.cs">
-            <DependentUpon>IGraphFTIndexProvider.cs</DependentUpon>
+        <Compile Update="BaseGraphFtIndexProvider.cs">
+            <DependentUpon>IGraphFtIndexProvider.cs</DependentUpon>
         </Compile>
     </ItemGroup>
 

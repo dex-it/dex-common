@@ -1,10 +1,12 @@
-﻿namespace System.Threading.Tasks
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
+namespace Dex.Extensions
+{
     public static class TaskHelper
     {
         /// <remarks>Проглатывает последующие исключения.</remarks>
@@ -18,8 +20,7 @@
         [DebuggerStepThrough]
         public static async Task WhenAllOrAnyException(IEnumerable<Task> tasks)
         {
-            if (tasks == null)
-                throw new ArgumentNullException(nameof(tasks));
+            if (tasks == null) throw new ArgumentNullException(nameof(tasks));
 
             var list = tasks.ToList();
             while (list.Count > 0)
@@ -27,7 +28,7 @@
                 var completedTask = await Task.WhenAny(list).ConfigureAwait(false);
                 list.Remove(completedTask);
 
-                if (completedTask.Exception?.InnerException is Exception ex)
+                if (completedTask.Exception?.InnerException is { } ex)
                 {
                     foreach (var task in list)
                     {

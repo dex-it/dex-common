@@ -7,12 +7,13 @@ namespace Dex.PdfGenerator.Providers
 {
     public class HtmlTemplateStringProvider : IHtmlProvider
     {
-        private readonly string _templateString;
-        private readonly string _templateKey;
+        private readonly string? _templateString;
+        private readonly string? _templateKey;
         private readonly ExpandoObject _model;
-        private readonly IStaticPathProvider _staticPathProvider;
+        private readonly IStaticPathProvider? _staticPathProvider;
 
-        public HtmlTemplateStringProvider(string templateString, string templateKey, ExpandoObject model, IStaticPathProvider staticPathProvider = null)
+        public HtmlTemplateStringProvider(string? templateString, string? templateKey, ExpandoObject model,
+            IStaticPathProvider? staticPathProvider = null)
         {
             _templateString = templateString;
             _templateKey = templateKey;
@@ -26,8 +27,13 @@ namespace Dex.PdfGenerator.Providers
                 .UseMemoryCachingProvider()
                 .Build();
 
-            var html = await engine.CompileRenderAsync(_templateKey ?? Guid.NewGuid().ToString(), _templateString, _model).ConfigureAwait(false);
-            return _staticPathProvider == null ? html : html.Replace("{Provider}", _staticPathProvider.GetBaseUri(), StringComparison.InvariantCulture);
+            var html = await engine
+                .CompileRenderAsync(_templateKey ?? Guid.NewGuid().ToString(), _templateString, _model)
+                .ConfigureAwait(false);
+
+            return _staticPathProvider == null
+                ? html
+                : html.Replace("{Provider}", _staticPathProvider.GetBaseUri(), StringComparison.InvariantCulture);
         }
     }
 }

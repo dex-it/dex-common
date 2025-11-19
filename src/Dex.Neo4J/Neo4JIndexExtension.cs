@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Dex.Extensions;
@@ -7,9 +8,11 @@ using Neo4jClient.Transactions;
 
 namespace Dex.Neo4J
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class Neo4JIndexExtension
     {
-        public static Task CreateIndex<T, TU>(this ITransactionalGraphClient graphClient, Expression<Func<T, TU>> selector)
+        public static Task CreateIndex<T, TU>(this ITransactionalGraphClient graphClient,
+            Expression<Func<T, TU>> selector)
         {
             if (graphClient == null) throw new ArgumentNullException(nameof(graphClient));
             if (selector == null) throw new ArgumentNullException(nameof(selector));

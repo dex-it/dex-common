@@ -1,5 +1,8 @@
-﻿namespace Dex.CreditCardType.Resolver
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Dex.CreditCardType.Resolver
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public enum CardType
     {
         Uncertain,

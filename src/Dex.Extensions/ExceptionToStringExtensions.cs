@@ -7,7 +7,7 @@ namespace Dex.Extensions
     {
         public static int Deep { get; set; } = 5;
 
-        public static IEnumerable<string> ExplainToString(this Exception exception)
+        public static IEnumerable<string> ExplainToString(this Exception? exception)
         {
             if (exception == null)
             {
@@ -16,10 +16,10 @@ namespace Dex.Extensions
             else
             {
                 var ex = exception;
-                for (int i = 0; i < Deep; i++)
+                for (var i = 0; i < Deep; i++)
                 {
                     yield return ex.Message;
-                    yield return ex.StackTrace;
+                    yield return ex.StackTrace!;
                     ex = ex.InnerException;
                     if (ex == null) break;
                 }

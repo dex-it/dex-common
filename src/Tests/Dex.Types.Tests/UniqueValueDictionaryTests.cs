@@ -47,6 +47,7 @@ namespace Dex.Types.Test
                 { 1, "One" },
                 { 2, "Two" }
             };
+            if (dict == null) throw new ArgumentNullException(nameof(dict));
 
             // Assert
             Assert.Throws<ArgumentException>(() => dict[2] = "One");
@@ -83,6 +84,7 @@ namespace Dex.Types.Test
                 { 1, "One" },
                 { 2, "Two" }
             };
+            if (dict == null) throw new ArgumentNullException(nameof(dict));
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() => dict[3] = "Two");
@@ -91,11 +93,9 @@ namespace Dex.Types.Test
         [Test]
         public void Add_WhenKeyAndValueDoNotExist_ShouldAddKeyValuePair()
         {
-            // Arrange
-            var dict = new UniqueValueDictionary<int, string>();
+            // Arrange & Act
+            var dict = new UniqueValueDictionary<int, string> { { 1, "One" } };
 
-            // Act
-            dict.Add(1, "One");
             Assert.Multiple(() =>
             {
                 // Assert
@@ -109,6 +109,7 @@ namespace Dex.Types.Test
         {
             // Arrange
             var dict = new UniqueValueDictionary<int, string> { { 1, "One" } };
+            if (dict == null) throw new ArgumentNullException(nameof(dict));
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() => dict.Add(1, "AnotherOne"));
@@ -119,17 +120,24 @@ namespace Dex.Types.Test
         public void Initialize_WithDuplicate_ShouldThrowException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => new UniqueValueDictionary<int, string>
+            Assert.Throws<ArgumentException>(() =>
             {
-                { 1, "One" },
-                { 2, "One" },
+                _ = new UniqueValueDictionary<int, string>
+                {
+                    { 1, "One" },
+                    { 2, "One" },
+                };
             });
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => new UniqueValueDictionary<int, string>
+            Assert.Throws<ArgumentException>(() =>
             {
-                { 1, "One" },
-                { 1, "Two" },
+                _ = new UniqueValueDictionary<int, string>
+                {
+                    { 1, "One" },
+                    // ReSharper disable once DuplicateKeyCollectionInitialization
+                    { 1, "Two" },
+                };
             });
         }
 
