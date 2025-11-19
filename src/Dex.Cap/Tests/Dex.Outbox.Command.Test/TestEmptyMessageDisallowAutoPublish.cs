@@ -6,5 +6,5 @@ public class TestEmptyMessageDisallowAutoPublish : IOutboxMessage
 {
     public static bool AllowAutoPublishing => false;
 
-    public static string OutboxTypeId => nameof(TestEmptyMessageDisallowAutoPublish);
+    public static string OutboxTypeId => string.Empty;
 }
