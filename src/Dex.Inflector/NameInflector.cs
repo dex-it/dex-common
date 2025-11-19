@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable IdentifierTypo
 
@@ -139,14 +140,16 @@ namespace Dex.Inflector
 
         public static string Humanize(this string lowercaseAndUnderscoredWord)
         {
-            if (lowercaseAndUnderscoredWord == null) throw new ArgumentNullException(nameof(lowercaseAndUnderscoredWord));
+            if (lowercaseAndUnderscoredWord == null)
+                throw new ArgumentNullException(nameof(lowercaseAndUnderscoredWord));
 
             return Capitalize(Regex.Replace(lowercaseAndUnderscoredWord, @"_", " "));
         }
 
         public static string Pascalize(this string lowercaseAndUnderscoredWord)
         {
-            if (lowercaseAndUnderscoredWord == null) throw new ArgumentNullException(nameof(lowercaseAndUnderscoredWord));
+            if (lowercaseAndUnderscoredWord == null)
+                throw new ArgumentNullException(nameof(lowercaseAndUnderscoredWord));
 
             return Regex.Replace(lowercaseAndUnderscoredWord, "(?:^|_)(.)",
                 match => match.Groups[1].Value.ToUpper(CultureInfo.CurrentCulture));
@@ -154,7 +157,8 @@ namespace Dex.Inflector
 
         public static string Camelize(this string lowercaseAndUnderscoredWord)
         {
-            if (lowercaseAndUnderscoredWord == null) throw new ArgumentNullException(nameof(lowercaseAndUnderscoredWord));
+            if (lowercaseAndUnderscoredWord == null)
+                throw new ArgumentNullException(nameof(lowercaseAndUnderscoredWord));
 
             return Uncapitalize(Pascalize(lowercaseAndUnderscoredWord));
         }
@@ -172,7 +176,8 @@ namespace Dex.Inflector
         public static string Capitalize(this string word)
         {
             if (word == null) throw new ArgumentNullException(nameof(word));
-            return word.Substring(0, 1).ToUpper(CultureInfo.CurrentCulture) + word.Substring(1).ToLower(CultureInfo.CurrentCulture);
+            return word.Substring(0, 1).ToUpper(CultureInfo.CurrentCulture) +
+                   word.Substring(1).ToLower(CultureInfo.CurrentCulture);
         }
 
         public static string Uncapitalize(this string word)
@@ -217,7 +222,7 @@ namespace Dex.Inflector
                 }
             }
 
-            return result;
+            return result ?? throw new InvalidOperationException();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -256,7 +261,8 @@ namespace Dex.Inflector
 
             public string Apply(string word)
             {
-                return _regex.IsMatch(word) ? _regex.Replace(word, _replacement) : null;
+                return (_regex.IsMatch(word) ? _regex.Replace(word, _replacement) : null)
+                       ?? throw new InvalidOperationException();
             }
         }
     }

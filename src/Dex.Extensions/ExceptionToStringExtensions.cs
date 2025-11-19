@@ -7,7 +7,7 @@ namespace Dex.Extensions
     {
         public static int Deep { get; set; } = 5;
 
-        public static IEnumerable<string> ExplainToString(this Exception exception)
+        public static IEnumerable<string> ExplainToString(this Exception? exception)
         {
             if (exception == null)
             {

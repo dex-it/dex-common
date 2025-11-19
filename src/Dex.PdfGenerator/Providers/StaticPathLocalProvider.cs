@@ -8,7 +8,7 @@ namespace Dex.PdfGenerator.Providers
         {
             _sccPath = sccPath + "/";
         }
-        
+
         public string GetBaseUri()
         {
             return _sccPath;

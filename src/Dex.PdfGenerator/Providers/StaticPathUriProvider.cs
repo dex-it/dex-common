@@ -10,7 +10,7 @@ namespace Dex.PdfGenerator.Providers
         {
             _uri = uri;
         }
-        
+
         public string GetBaseUri()
         {
             return _uri.ToString();

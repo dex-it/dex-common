@@ -61,7 +61,7 @@ namespace Dex.TeamCity
             return result;
         }
 
-        private static string GetRevisionFile(IEnumerable<string> files)
+        private static string? GetRevisionFile(IEnumerable<string> files)
         {
             files = files.ToArray();
             return files.Select(f =>
@@ -84,8 +84,8 @@ namespace Dex.TeamCity
                     return null;
                 })
                 .Where(i => i != null)
-                .OrderByDescending(i => i.number)
-                .Select(i => i.path)
+                .OrderByDescending(i => i?.number)
+                .Select(i => i?.path)
                 .FirstOrDefault();
         }
     }

@@ -30,7 +30,7 @@ namespace Dex.Extensions
                 throw new ArgumentOutOfRangeException(nameof(propertyInfo));
             }
 
-            var instance = Expression.Parameter(propertyInfo.DeclaringType, "i");
+            var instance = Expression.Parameter(propertyInfo.DeclaringType ?? throw new InvalidOperationException(), "i");
             var property = Expression.Property(instance, propertyInfo);
             var convert = Expression.TypeAs(property, typeof(object));
             return (Func<T, object>) Expression.Lambda(convert, instance).Compile();
@@ -43,7 +43,7 @@ namespace Dex.Extensions
             var declaringType = propertyInfo.DeclaringType;
             var propertyName = propertyInfo.Name;
 
-            return GetValueGetter(declaringType, propertyName);
+            return GetValueGetter(declaringType ?? throw new InvalidOperationException(), propertyName);
         }
 
         public static Func<object, object> GetValueGetter(this Type declaringType, string propertyName)
@@ -81,7 +81,7 @@ namespace Dex.Extensions
                 throw new ArgumentOutOfRangeException(nameof(propertyInfo));
             }
 
-            var instance = Expression.Parameter(propertyInfo.DeclaringType, "i");
+            var instance = Expression.Parameter(propertyInfo.DeclaringType ?? throw new InvalidOperationException(), "i");
             var argument = Expression.Parameter(typeof(object), "a");
             var setterCall = Expression.Call(
                 instance,

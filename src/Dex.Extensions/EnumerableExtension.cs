@@ -30,15 +30,8 @@ namespace Dex.Extensions
 
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
 
             foreach (var obj in source)
             {
@@ -63,20 +56,12 @@ namespace Dex.Extensions
             this IEnumerable<T> source,
             Func<T, Task> action,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
 
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
-            List<Exception> exceptions = new List<Exception>();
+            List<Exception> exceptions = [];
 
             foreach (var obj in source)
             {
@@ -93,9 +78,7 @@ namespace Dex.Extensions
             }
 
             if (exceptions.Any())
-            {
                 throw new AggregateException(exceptions);
-            }
         }
 
         /// <summary>
@@ -115,69 +98,51 @@ namespace Dex.Extensions
             Func<T, Task> action,
             int maxDegreeOfParallelism,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
             if (maxDegreeOfParallelism < 1)
-            {
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
-            }
 
-            ConcurrentBag<Exception> exceptions = new ConcurrentBag<Exception>();
-
-            List<Task> tasks = new List<Task>();
+            ConcurrentBag<Exception> exceptions = [];
+            List<Task> tasks = [];
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
             foreach (var obj in source)
             {
-                T localObj = obj;
-
+                var localObj = obj;
                 var localSemaphore = semaphore;
 
-                await semaphore.WaitAsync().ConfigureAwait(false);
+                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
                 if (cancellationToken.IsCancellationRequested)
-                {
                     break;
-                }
 
                 var task = Task.Run(async () =>
+                {
+                    try
                     {
-                        try
-                        {
-                            await action(localObj).ConfigureAwait(false);
-                        }
-                        catch (Exception exception) when (continueOnError)
-                        {
-                            exceptions.Add(exception);
-                        }
-                        finally
-                        {
-                            localSemaphore.Release();
-                        }
+                        await action(localObj).ConfigureAwait(false);
                     }
-                );
+                    catch (Exception exception) when (continueOnError)
+                    {
+                        exceptions.Add(exception);
+                    }
+                    finally
+                    {
+                        localSemaphore.Release();
+                    }
+                }, cancellationToken);
 
                 tasks.Add(task);
             }
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
-            if (exceptions.Any())
-            {
+            if (!exceptions.IsEmpty)
                 throw new AggregateException(exceptions);
-            }
         }
 
         /// <summary>
@@ -195,20 +160,12 @@ namespace Dex.Extensions
             this IEnumerable<T> source,
             Func<T, CancellationToken, Task> action,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
 
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
-            List<Exception> exceptions = new List<Exception>();
+            List<Exception> exceptions = [];
 
             foreach (var obj in source)
             {
@@ -225,9 +182,7 @@ namespace Dex.Extensions
             }
 
             if (exceptions.Any())
-            {
                 throw new AggregateException(exceptions);
-            }
         }
 
         /// <summary>
@@ -247,37 +202,24 @@ namespace Dex.Extensions
             Func<T, CancellationToken, Task> action,
             int maxDegreeOfParallelism,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
             if (maxDegreeOfParallelism < 1)
-            {
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
-            }
 
-            List<Exception> exceptions = new List<Exception>();
-
-            List<Task> tasks = new List<Task>();
+            List<Exception> exceptions = [];
+            List<Task> tasks = [];
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
             foreach (var obj in source)
             {
-                T localObj = obj;
-
+                var localObj = obj;
                 var localSemaphore = semaphore;
 
-                await semaphore.WaitAsync().ConfigureAwait(false);
+                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -285,21 +227,20 @@ namespace Dex.Extensions
                 }
 
                 var task = Task.Run(async () =>
+                {
+                    try
                     {
-                        try
-                        {
-                            await action(localObj, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception exception) when (continueOnError)
-                        {
-                            exceptions.Add(exception);
-                        }
-                        finally
-                        {
-                            localSemaphore.Release();
-                        }
+                        await action(localObj, cancellationToken).ConfigureAwait(false);
                     }
-                );
+                    catch (Exception exception) when (continueOnError)
+                    {
+                        exceptions.Add(exception);
+                    }
+                    finally
+                    {
+                        localSemaphore.Release();
+                    }
+                }, cancellationToken);
 
                 tasks.Add(task);
             }
@@ -307,9 +248,7 @@ namespace Dex.Extensions
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
             if (exceptions.Any())
-            {
                 throw new AggregateException(exceptions);
-            }
         }
 
         #endregion
@@ -331,22 +270,14 @@ namespace Dex.Extensions
             this IAsyncEnumerable<T> source,
             Func<T, Task> action,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
 
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
+            List<Exception> exceptions = [];
 
-            List<Exception> exceptions = new List<Exception>();
-
-            await foreach (var obj in source.ConfigureAwait(false))
+            await foreach (var obj in source.ConfigureAwait(false).WithCancellation(cancellationToken))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -381,37 +312,24 @@ namespace Dex.Extensions
             Func<T, Task> action,
             int maxDegreeOfParallelism,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
             if (maxDegreeOfParallelism < 1)
-            {
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
-            }
 
-            ConcurrentBag<Exception> exceptions = new();
-            List<Task> tasks = new();
+            ConcurrentBag<Exception> exceptions = [];
+            List<Task> tasks = [];
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
-            await foreach (var obj in source.ConfigureAwait(false))
+            await foreach (var obj in source.ConfigureAwait(false).WithCancellation(cancellationToken))
             {
-                await semaphore.WaitAsync().ConfigureAwait(false);
+                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
                 if (cancellationToken.IsCancellationRequested)
-                {
                     break;
-                }
 
                 var localObj = obj;
                 var localSemaphore = semaphore;
@@ -430,7 +348,7 @@ namespace Dex.Extensions
                     {
                         localSemaphore.Release();
                     }
-                });
+                }, cancellationToken);
 
                 tasks.Add(task);
             }
@@ -456,22 +374,14 @@ namespace Dex.Extensions
             this IAsyncEnumerable<T> source,
             Func<T, CancellationToken, Task> action,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
 
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
+            List<Exception> exceptions = [];
 
-            List<Exception> exceptions = new();
-
-            await foreach (var obj in source.ConfigureAwait(false))
+            await foreach (var obj in source.ConfigureAwait(false).WithCancellation(cancellationToken))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -506,37 +416,24 @@ namespace Dex.Extensions
             Func<T, CancellationToken, Task> action,
             int maxDegreeOfParallelism,
             bool continueOnError = false,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
             if (maxDegreeOfParallelism < 1)
-            {
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
-            }
 
-            ConcurrentBag<Exception> exceptions = new();
-            List<Task> tasks = new();
+            ConcurrentBag<Exception> exceptions = [];
+            List<Task> tasks = [];
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
-            await foreach (var obj in source.ConfigureAwait(false))
+            await foreach (var obj in source.ConfigureAwait(false).WithCancellation(cancellationToken))
             {
-                await semaphore.WaitAsync().ConfigureAwait(false);
+                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
                 if (cancellationToken.IsCancellationRequested)
-                {
                     break;
-                }
 
                 var localObj = obj;
                 var localSemaphore = semaphore;
@@ -555,7 +452,7 @@ namespace Dex.Extensions
                     {
                         localSemaphore.Release();
                     }
-                });
+                }, cancellationToken);
 
                 tasks.Add(task);
             }
@@ -575,13 +472,10 @@ namespace Dex.Extensions
 
         public static void For<T>(this IEnumerable<T> source, Action<int, T> action)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (action == null) throw new ArgumentNullException(nameof(action));
 
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
-
-            T[] array = source.ToArray();
+            var array = source.ToArray();
             for (var i = 0; i < array.Length; i++)
             {
                 T obj = array[i];
@@ -601,28 +495,24 @@ namespace Dex.Extensions
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            T[] enumerable = source as T[] ?? source.ToArray();
-            int skip = RndGen.Value.Next(enumerable.Length);
+            var enumerable = source as T[] ?? source.ToArray();
+            var skip = RndGen.Value.Next(enumerable.Length);
             return enumerable.Skip(skip).First();
         }
 
         public static List<T> Append<T>(this IEnumerable<T> source, params T[] elements)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (elements == null) throw new ArgumentNullException(nameof(elements));
 
-            if (elements == null)
-                throw new ArgumentNullException(nameof(elements));
-
-            List<T> result = source.ToList();
+            var result = source.ToList();
             result.AddRange(elements);
             return result;
         }
 
         public static T[] Append<T>(this T[] source, params T[] elements)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            if (source == null) throw new ArgumentNullException(nameof(source));
 
             return ((IEnumerable<T>)source).Append(elements).ToArray();
         }
@@ -634,11 +524,8 @@ namespace Dex.Extensions
 
         public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> instance, int partitionSize)
         {
-            if (instance == null)
-                throw new ArgumentNullException(nameof(instance));
-
-            if (partitionSize <= 0)
-                throw new ArgumentOutOfRangeException(nameof(partitionSize));
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            if (partitionSize <= 0) throw new ArgumentOutOfRangeException(nameof(partitionSize));
 
             return instance
                 .Select((value, index) => new { Index = index, Value = value })
