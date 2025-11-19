@@ -8,7 +8,7 @@ public interface IOutboxTypeDiscriminatorProvider
     /// <summary>
     /// Дискриминаторы, обработку которых поддерживает текущий сервис
     /// </summary>
-    FrozenSet<string> GetSupportedDiscriminators();
+    FrozenSet<string> SupportedDiscriminators { get; }
 
     /// <summary>
     /// Все дискриминаторы, известные этому сервису
