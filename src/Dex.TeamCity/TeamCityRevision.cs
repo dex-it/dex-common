@@ -50,6 +50,7 @@ namespace Dex.TeamCity
             var result = new TeamCityRevisionDto();
             var fileName = Path.GetFileName(filePath);
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (fileName != null)
             {
                 var split = fileName.Split('.');
@@ -68,6 +69,7 @@ namespace Dex.TeamCity
                 {
                     var fileName = Path.GetFileName(f);
 
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (fileName != null)
                     {
                         var s1 = fileName.Split('.')[0];

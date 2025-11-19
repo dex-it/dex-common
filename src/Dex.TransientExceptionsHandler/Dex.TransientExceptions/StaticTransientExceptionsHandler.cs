@@ -151,7 +151,8 @@ public partial class TransientExceptionsHandler
 
     public static implicit operator Func<Exception, bool>(TransientExceptionsHandler handler)
     {
-        ArgumentNullException.ThrowIfNull(handler, nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
+
         return handler.ToFunc();
     }
 

@@ -16,10 +16,10 @@ namespace Dex.Extensions
             else
             {
                 var ex = exception;
-                for (int i = 0; i < Deep; i++)
+                for (var i = 0; i < Deep; i++)
                 {
                     yield return ex.Message;
-                    yield return ex.StackTrace;
+                    yield return ex.StackTrace!;
                     ex = ex.InnerException;
                     if (ex == null) break;
                 }

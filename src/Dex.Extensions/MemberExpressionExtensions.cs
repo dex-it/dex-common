@@ -67,7 +67,7 @@ namespace Dex.Extensions
             var argument = Expression.Parameter(typeof(object), "a");
             var setterCall = Expression.Call(
                 Expression.Convert(instance, declaringType),
-                setMethod,
+                setMethod ?? throw new InvalidOperationException(),
                 Expression.Convert(argument, propertyInfo.PropertyType));
 
             return (Action<object, object>) Expression.Lambda(setterCall, instance, argument).Compile();
@@ -85,7 +85,7 @@ namespace Dex.Extensions
             var argument = Expression.Parameter(typeof(object), "a");
             var setterCall = Expression.Call(
                 instance,
-                propertyInfo.GetSetMethod(),
+                propertyInfo.GetSetMethod() ?? throw new InvalidOperationException(),
                 Expression.Convert(argument, propertyInfo.PropertyType));
 
             return (Action<T, object>) Expression.Lambda(setterCall, instance, argument).Compile();

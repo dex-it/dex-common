@@ -17,8 +17,8 @@ namespace Dex.Buffer
         {
             _onFlush = onFlush ?? throw new ArgumentNullException(nameof(onFlush));
             _period = period;
-            _timer = new Timer(state => Process(), null, Timeout.Infinite, Timeout.Infinite);
-            _timer.Change((int) period.TotalMilliseconds, Timeout.Infinite);
+            _timer = new Timer(_ => Process(), null, Timeout.Infinite, Timeout.Infinite);
+            _timer.Change((int)period.TotalMilliseconds, Timeout.Infinite);
             _isDisposed = false;
         }
 
@@ -74,7 +74,7 @@ namespace Dex.Buffer
             }
             finally
             {
-                _timer.Change((int) _period.TotalMilliseconds, Timeout.Infinite);
+                _timer.Change((int)_period.TotalMilliseconds, Timeout.Infinite);
             }
         }
 
