@@ -5,28 +5,27 @@ using Dex.Cap.OnceExecutor.ClickHouse;
 using NUnit.Framework;
 using Octonica.ClickHouseClient;
 
-namespace Dex.Cap.ClickHouse.Test
+namespace Dex.Cap.ClickHouse.Test;
+
+public class OnceExecutorClickHouseTests
 {
-    public class OnceExecutorClickHouseTests
+    private readonly ClickHouseConnectionStringBuilder _sb = new() { Host = "127.0.0.1" };
+
+    [SetUp]
+    public void Setup()
     {
-        private readonly ClickHouseConnectionStringBuilder _sb = new() { Host = "127.0.0.1" };
+    }
 
-        [SetUp]
-        public void Setup()
-        {
-        }
+    [Test]
+    public async Task Test1()
+    {
+        await using var conn = new ClickHouseConnection(_sb);
+        await conn.OpenAsync();
 
-        [Test]
-        public async Task Test1()
-        {
-            await using var conn = new ClickHouseConnection(_sb);
-            await conn.OpenAsync();
+        IOnceExecutor<IClickHouseTransactionOptions, ClickHouseConnection> executor = new OnceExecutorClickHouse(conn);
 
-            IOnceExecutor<IClickHouseTransactionOptions, ClickHouseConnection> executor = new OnceExecutorClickHouse(conn);
-
-            var idempotentKey = Guid.NewGuid().ToString("N");
-            await executor.ExecuteAsync(idempotentKey, (connection, token) => connection.TryPingAsync(token));
-            await executor.ExecuteAsync(idempotentKey, (_, _) => throw new NotImplementedException());
-        }
+        var idempotentKey = Guid.NewGuid().ToString("N");
+        await executor.ExecuteAsync(idempotentKey, (connection, token) => connection.TryPingAsync(token));
+        await executor.ExecuteAsync(idempotentKey, (_, _) => throw new NotImplementedException());
     }
 }

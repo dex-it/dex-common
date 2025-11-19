@@ -9,7 +9,8 @@ public static class MassTransitConfigurationExtensions
     private const int DefaultRetryLimit = 5;
 
     /// <summary>
-    /// Конфигурация с настроенными Redelivery и Retry 
+    /// Конфигурация с настроенными Redelivery и Retry
+    /// <remarks> Используйте TransientExceptionsHandler для перехвата временных ошибок </remarks>
     /// </summary>
     public static IConsumerConfigurator UseRedeliveryRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
@@ -33,6 +34,7 @@ public static class MassTransitConfigurationExtensions
 
     /// <summary>
     /// Конфигурация Retry
+    /// <remarks> Используйте TransientExceptionsHandler для перехвата временных ошибок </remarks>
     /// </summary>
     public static IConsumerConfigurator UseRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,

@@ -1,15 +1,14 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Dex.Cap.OnceExecutor.Models
+namespace Dex.Cap.OnceExecutor.Models;
+
+[Table(TableName, Schema = "cap")]
+public class LastTransaction
 {
-    [Table(TableName, Schema = "cap")]
-    public class LastTransaction
-    {
-        public const string TableName = "last_transaction";
+    public const string TableName = "last_transaction";
 
-        public string IdempotentKey { get; set; } = null!;
+    public string IdempotentKey { get; set; } = null!;
 
-        public DateTime Created { get; set; } = DateTime.UtcNow;
-    }
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 }

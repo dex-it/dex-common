@@ -1,66 +1,112 @@
 <Project>
 
-  <PropertyGroup>
-    <FrameworkVersion>8.0.15</FrameworkVersion>
-    <EntityFrameworkVersion>8.0.15</EntityFrameworkVersion>
-    <ExtensionsVersion>[8.0.0,9.0.0)</ExtensionsVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <FrameworkVersion>8.0.22</FrameworkVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <!--build related-->
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-    <PackageReference Update="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" PrivateAssets="All" />
+    <ItemGroup>
+        <!--build related-->
+        <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+        <PackageReference Update="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" PrivateAssets="All"/>
 
-    <!--tests -->
-    <PackageReference Update="coverlet.collector" Version="6.0.4" />
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageReference Update="xunit" Version="2.9.3" />
-    <PackageReference Update="NUnit" Version="4.3.2" />
-    <PackageReference Update="NUnit3TestAdapter" Version="5.0.0" />
-    <PackageReference Update="NUnit.Analyzers" Version="4.7.0" />
+        <!--tests -->
+        <PackageReference Update="coverlet.collector" Version="6.0.4"/>
+        <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
+        <PackageReference Update="xunit" Version="2.9.3"/>
+        <PackageReference Update="NUnit" Version="4.4.0"/>
+        <PackageReference Update="NUnit3TestAdapter" Version="5.2.0"/>
+        <PackageReference Update="NUnit.Analyzers" Version="4.11.2"/>
+        <PackageReference Update="HttpContextMoq" Version="1.7.0"/>
+        <PackageReference Update="Moq" Version="4.20.72"/>
+        <PackageReference Update="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1"/>
+        <PackageReference Update="FluentAssertions" Version="8.8.0"/>
+        <PackageReference Update="xunit.runner.visualstudio" Version="3.1.5"/>
 
-    <!--microsoft extensions -->
-    <PackageReference Update="Microsoft.Extensions.*" Version="$(ExtensionsVersion)" />
-    <PackageReference Update="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
+        <!--microsoft extensions -->
+        <PackageReference Update="Microsoft.Extensions.Hosting" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.Extensions.Logging" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.Logging.Debug" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3"/>
+        <PackageReference Update="Microsoft.Extensions.Options" Version="8.0.2"/>
+        <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2"/>
+        <PackageReference Update="Microsoft.Extensions.Configuration.Binder" Version="8.0.2"/>
+        <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0"/>
+        <PackageReference Update="Microsoft.Extensions.Configuration.Json" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0"/>
+        <PackageReference Update="Microsoft.Extensions.Caching.Memory" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.Caching.StackExchangeRedis" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.Logging.Console" Version="8.0.1"/>
+        <PackageReference Update="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0"/>
+        <PackageReference Update="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0"/>
 
-    <PackageReference Update="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.15" />
-    <PackageReference Update="Microsoft.Extensions.Logging" Version="8.0.1" />
-    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
-    <PackageReference Update="Microsoft.Extensions.Options" Version="8.0.2" />
-    <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-    <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-    <PackageReference Update="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
-    <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
-    <PackageReference Update="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-    <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
-    <PackageReference Update="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-    <PackageReference Update="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.15" />
-    <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+        <!--system -->
+        <PackageReference Update="System.Diagnostics.DiagnosticSource" Version="8.0.1"/>
+        <PackageReference Update="System.ComponentModel.Annotations" Version="5.0.0"/>
+        <PackageReference Update="System.Threading.Channels" Version="8.0.0"/>
+        <PackageReference Update="System.Runtime.Serialization.Primitives" Version="4.3.0"/>
+        <PackageReference Update="System.Data.SqlClient" Version="4.9.0"/>
+        <PackageReference Update="System.Threading.Tasks.Extensions" Version="4.6.3"/>
+        <PackageReference Update="System.Text.Json" Version="8.0.6"/>
 
-    <PackageReference Update="System.Threading.Channels" Version="8.0.0" />
+        <!--misc -->
+        <PackageReference Update="Npgsql" Version="8.0.8"/>
+        <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11"/>
+        <PackageReference Update="Neo4jClient" Version="5.1.20"/>
+        <PackageReference Update="MassTransit*" Version="8.5.5"/>
+        <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>
+        <PackageReference Update="RazorLight" Version="2.3.1"/>
+        <PackageReference Update="OpenTelemetry*" Version="1.9.0"/> <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нежелательно -->
+        <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.3"/>
+        <PackageReference Update="MediatR" Version="12.5.0"/>
+        <PackageReference Update="Swashbuckle.AspNetCore" Version="8.1.4"/>
+        <PackageReference Update="Swashbuckle.AspNetCore.Swagger" Version="8.1.4"/>
+        <PackageReference Update="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.4"/>
+        <PackageReference Update="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4"/>
+        <PackageReference Update="StackExchange.Redis" Version="2.9.32"/>
+        <PackageReference Update="StackExchange.Redis.Extensions.AspNetCore" Version="11.0.0"/>
+        <PackageReference Update="StackExchange.Redis.Extensions.System.Text.Json" Version="11.0.0"/>
+        <PackageReference Update="StackExchange.Redis.Extensions.Core" Version="11.0.0"/>
+        <PackageReference Update="Nullable" Version="1.3.1"/>
+        <PackageReference Update="Refit" Version="8.0.0"/>
+        <PackageReference Update="Refit.HttpClientFactory" Version="8.0.0"/>
+        <PackageReference Update="JetBrains.Annotations" Version="2025.2.2"/>
 
-    <!--misc -->
-    <PackageReference Update="Npgsql" Version="8.0.7" />
-    <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
-    <PackageReference Update="Neo4jClient" Version="5.1.16" />
-    <PackageReference Update="MassTransit*" Version="8.4.1" />
-    <PackageReference Update="MassTransit.TestFramework" Version="8.4.1" />
+        <!--microsoft asp.net core -->
+        <PackageReference Update="Microsoft.OpenApi" Version="2.3.8"/>
+        <PackageReference Update="Microsoft.Net.Http.Headers" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.DataProtection*" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.RazorPages" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Http.Extensions" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.3.0"/>
 
-    <!--microsoft asp.net core -->
-    <PackageReference Update="Microsoft.AspNetCore.DataProtection*" Version="$(FrameworkVersion)"/>
+        <!--microsoft entity framework -->
+        <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.EntityFrameworkCore.Relational" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.EntityFrameworkCore.InMemory" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="$(FrameworkVersion)"/>
+        <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(FrameworkVersion)"/>
 
-    <!--microsoft entity framework -->
-    <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkVersion)" />
-    <PackageReference Update="Microsoft.EntityFrameworkCore.Relational" Version="$(EntityFrameworkVersion)" />
-    <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkVersion)" />
-    <PackageReference Update="Microsoft.EntityFrameworkCore.InMemory" Version="$(EntityFrameworkVersion)" />
-    <PackageReference Update="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EntityFrameworkVersion)" />
-    <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkVersion)" PrivateAssets="All" />
+        <!--dex libs -->
+        <PackageReference Update="Dex.Types" Version="1.0.27"/>
+        <PackageReference Update="Dex.Extensions" Version="1.0.33"/>
+        <PackageReference Update="Dex.Neo4J" Version="1.1.32"/>
+        <PackageReference Update="Dex.MassTransit.Rabbit" Version="8.0.7"/>
 
-    <!--dex libs -->
-	<PackageReference Update="Dex.Types" Version="1.0.26" />
-	<PackageReference Update="Dex.Extensions" Version="1.0.30" />
-	<PackageReference Update="Dex.Neo4J" Version="1.1.31" />
+        <!--Grpc -->
+        <PackageReference Update="Google.Protobuf" Version="3.33.0"/>
+        <PackageReference Update="Grpc.Net.ClientFactory" Version="2.71.0"/>
+        <PackageReference Update="Grpc.Net.Client" Version="2.71.0"/>
+        <PackageReference Update="Grpc.Tools" Version="2.76.0"/>
+        <PackageReference Update="Grpc.AspNetCore.Server" Version="2.71.0"/>
+        <PackageReference Update="Grpc.Core.Api" Version="2.71.0" />
 
-  </ItemGroup>
+    </ItemGroup>
 </Project>

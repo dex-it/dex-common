@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
         <PackageTags>dex;pdf generator tools</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
@@ -26,9 +26,9 @@
     <!--/Для NuGet-->
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.RazorPages" Version="2.2.5" />
-        <PackageReference Include="RazorLight" Version="2.3.1" />
-        <PackageReference Include="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.RazorPages"/>
+        <PackageReference Include="RazorLight"/>
+        <PackageReference Include="RndUsr0.DinkToPdf"/>
     </ItemGroup>
     <ItemGroup>
         <None Update="libwkhtmltox.so">

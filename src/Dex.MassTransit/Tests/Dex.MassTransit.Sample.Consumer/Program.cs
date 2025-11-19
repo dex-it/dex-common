@@ -52,9 +52,7 @@ namespace Dex.MassTransit.Sample.Consumer
                     services.AddLogging(builder =>
                     {
                         builder.AddOpenTelemetry(options => options.AddConsoleExporter());
-#pragma warning disable CS0618 // Type or member is obsolete
-                        builder.AddConsole(options => options.IncludeScopes = true);
-#pragma warning restore CS0618 // Type or member is obsolete
+                        builder.AddSimpleConsole(options => options.IncludeScopes = true);
                     });
 
                     // register services
@@ -77,7 +75,7 @@ namespace Dex.MassTransit.Sample.Consumer
                             context.RegisterReceiveEndpoint<HelloMessageDto, HelloConsumer2>(factoryConfigurator);
 
                             // создается очередь которая будет использована всеми консьмерами только в этом сервисе и только консюмерами такого типа
-                            // т.е. в другом сервисе даже для консюмера этого типа, будет создана своя очередь 
+                            // т.е. в другом сервисе даже для консюмера этого типа, будет создана своя очередь
                             context.RegisterReceiveEndpoint<HelloMessageDto, HelloConsumer2>(factoryConfigurator, createSeparateQueue: true);
                         }, refreshConnectCallback: context =>
                         {

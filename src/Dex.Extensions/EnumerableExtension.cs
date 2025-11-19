@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -517,7 +518,7 @@ namespace Dex.Extensions
             return ((IEnumerable<T>)source).Append(elements).ToArray();
         }
 
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
+        public static bool IsNullOrEmpty<T>([NotNullWhen(false)] this IEnumerable<T>? source)
         {
             return source == null || !source.Any();
         }

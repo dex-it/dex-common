@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Dex.Cap.Ef.Tests.OutboxMultiServiceTests.Discriminators;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Ef.Tests.OutboxMultiServiceTests.Handlers;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
-using Dex.Cap.Outbox;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.Models;
@@ -23,17 +22,16 @@ public class OutboxWithMultipleServicesTests : BaseTest
     public async Task OutboxMessagesAreIsolatedAcrossServicesWithSharedDatabase_Success()
     {
         // Arrange
-        var sp1 = CreateServiceProvider<TestExternalServiceDiscriminator, TestOutboxExternalServiceCommand,
-            TestCommandExternalServiceHandler>();
-        var sp2 = CreateServiceProvider<TestDiscriminator, TestOutboxCommand, TestCommandHandler>();
+        var sp1 = CreateServiceProvider<TestOutboxExternalServiceCommand, TestCommandExternalServiceHandler>();
+        var sp2 = CreateServiceProvider<TestOutboxCommand, TestCommandHandler>();
 
         var correlationId1 = Guid.NewGuid();
         var processedCommandsCount = 0;
 
         // Сохраняем в outbox команду из первого сервиса
-        var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
+        var cmd1 = new TestOutboxExternalServiceCommand {Args = "hello world"};
         await SaveCommandAsync(sp1, cmd1, correlationId1);
-        var messageIds = new List<Guid> { cmd1.TestId };
+        var messageIds = new List<Guid> {cmd1.TestId};
 
         // Act
         // Инициируем работу с outbox во втором сервисе
@@ -47,7 +45,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
         // Assert
         var envelope = await GetEnvelope(sp2, correlationId1);
 
-        Assert.IsNull(envelope.Error); // проверяем отсутствие ошибки DiscriminatorResolveTypeException
+        Assert.IsNull(envelope.Error); // проверяем отсутствие ошибки DiscriminatorResolveException
         Assert.AreEqual(0, processedCommandsCount);
         return;
 
@@ -66,19 +64,18 @@ public class OutboxWithMultipleServicesTests : BaseTest
     public async Task ProcessingOutboxCommandsFromDifferentServicesWithCommonDb_Success()
     {
         // Arrange
-        var sp1 = CreateServiceProvider<TestExternalServiceDiscriminator, TestOutboxExternalServiceCommand,
-            TestCommandExternalServiceHandler>();
-        var sp2 = CreateServiceProvider<TestDiscriminator, TestOutboxCommand, TestCommandHandler>();
+        var sp1 = CreateServiceProvider<TestOutboxExternalServiceCommand, TestCommandExternalServiceHandler>();
+        var sp2 = CreateServiceProvider<TestOutboxCommand, TestCommandHandler>();
 
         var correlationId1 = Guid.NewGuid();
         var correlationId2 = Guid.NewGuid();
 
-        var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
+        var cmd1 = new TestOutboxExternalServiceCommand {Args = "hello world"};
         await SaveCommandAsync(sp1, cmd1, correlationId1);
-        var cmd2 = new TestOutboxCommand { Args = "hello world2" };
+        var cmd2 = new TestOutboxCommand {Args = "hello world2"};
         await SaveCommandAsync(sp2, cmd2, correlationId2);
 
-        var messageIds = new List<Guid> { cmd1.TestId, cmd2.TestId };
+        var messageIds = new List<Guid> {cmd1.TestId, cmd2.TestId};
         var processedCommandsCount = 0;
 
         TestCommandExternalServiceHandler.OnProcess += OnTestCommandHandler1OnProcess!;
@@ -124,18 +121,16 @@ public class OutboxWithMultipleServicesTests : BaseTest
         }
     }
 
-    private ServiceProvider CreateServiceProvider<TDiscriminator, TCommand, THandler>(
-        Func<IServiceCollection, IServiceCollection>? configure = null)
-        where TDiscriminator : BaseOutboxTypeDiscriminator
-        where TCommand : class
-        where THandler : class, IOutboxMessageHandler<TCommand>
+    private ServiceProvider CreateServiceProvider<TCommand, THandler>(
+        Func<IServiceCollection, IServiceCollection>? configure = null) where TCommand : class, IOutboxMessage
+        where THandler : class, IOutboxMessageHandler<TCommand>, new()
     {
         var serviceCollection = new ServiceCollection();
         AddLogging(serviceCollection);
 
         serviceCollection
             .AddScoped(_ => new TestDbContext(DbName))
-            .AddOutbox<TestDbContext, TDiscriminator>()
+            .AddOutbox<TestDbContext>()
             .AddOnceExecutor<TestDbContext>()
             .AddOptions<OutboxOptions>()
             .Configure(options =>
@@ -150,8 +145,7 @@ public class OutboxWithMultipleServicesTests : BaseTest
         return serviceCollection.BuildServiceProvider();
     }
 
-    private static async Task SaveCommandAsync<TCommand>(ServiceProvider sp, TCommand command, Guid? correlationId = null)
-        where TCommand : class
+    private static async Task SaveCommandAsync<TCommand>(ServiceProvider sp, TCommand command, Guid? correlationId) where TCommand : class, IOutboxMessage
     {
         var outboxService = sp.GetRequiredService<IOutboxService>();
         await outboxService.EnqueueAsync(command, correlationId);

@@ -1,9 +1,8 @@
-﻿namespace Dex.Cap.Outbox.Models
+﻿namespace Dex.Cap.Outbox.Models;
+
+public enum OutboxMessageStatus
 {
-    public enum OutboxMessageStatus
-    {
-        New = 0,
-        Failed = 1,
-        Succeeded = 2
-    }
+    New = 0,
+    Failed = 1,
+    Succeeded = 2
 }

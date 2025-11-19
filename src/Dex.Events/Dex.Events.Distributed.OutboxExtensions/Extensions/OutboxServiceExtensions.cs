@@ -1,33 +1,24 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
-using MassTransit;
 
 #pragma warning disable CA1030
 
-namespace Dex.Events.Distributed.OutboxExtensions.Extensions
+namespace Dex.Events.Distributed.OutboxExtensions.Extensions;
+
+public static class OutboxServiceExtensions
 {
-    public static class OutboxServiceExtensions
+    public static Task<Guid> EnqueueEventAsync(
+        this IOutboxService outboxService,
+        IOutboxMessage outboxMessage,
+        Guid? correlationId = null,
+        CancellationToken cancellationToken = default)
     {
-        public static Task<Guid> EnqueueEventAsync(
-            this IOutboxService outboxService,
-            object outboxMessage,
-            Guid? correlationId = null,
-            CancellationToken cancellationToken = default)
-            => outboxService.EnqueueEventAsync<IBus>(outboxMessage, correlationId, cancellationToken);
+        ArgumentNullException.ThrowIfNull(outboxService);
 
-        public static Task<Guid> EnqueueEventAsync<TBus>(
-            this IOutboxService outboxService,
-            object outboxMessage,
-            Guid? correlationId = null,
-            CancellationToken cancellationToken = default)
-            where TBus : IBus
-        {
-            ArgumentNullException.ThrowIfNull(outboxService);
-
-            var eventMessage = new OutboxDistributedEventMessage<TBus>(outboxMessage, outboxService.Discriminator);
-            return outboxService.EnqueueAsync(eventMessage, correlationId, cancellationToken: cancellationToken);
-        }
+        var eventMessage = new OutboxDistributedEventMessage(outboxMessage);
+        return outboxService.EnqueueAsync(eventMessage, correlationId, cancellationToken: cancellationToken);
     }
 }

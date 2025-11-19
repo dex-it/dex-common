@@ -2,11 +2,10 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <LangVersion>12</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.1.1</PackageVersion>
+        <InformationalVersion>8.2</InformationalVersion>
+        <PackageVersion>8.2.3</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

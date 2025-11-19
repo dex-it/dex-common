@@ -2,11 +2,10 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Dex.Cap.Outbox.Interfaces
+namespace Dex.Cap.Outbox.Interfaces;
+
+public interface IOutboxHandler
 {
-    public interface IOutboxHandler
-    {
-        /// <exception cref="OperationCanceledException"/>
-        Task ProcessAsync(CancellationToken cancellationToken = default);
-    }
+    /// <exception cref="OperationCanceledException"/>
+    Task ProcessAsync(CancellationToken cancellationToken = default);
 }

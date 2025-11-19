@@ -8,20 +8,20 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj" />
-      <ProjectReference Include="..\Dex.MassTransit.Sample.Domain\Dex.MassTransit.Sample.Domain.csproj" />
+        <ProjectReference Include="..\..\Dex.MassTransit.Rabbit\Dex.MassTransit.Rabbit.csproj"/>
+        <ProjectReference Include="..\Dex.MassTransit.Sample.Domain\Dex.MassTransit.Sample.Domain.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-      <PackageReference Include="OpenTelemetry" Version="1.8.1" />
-      <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.8.1" />
+        <PackageReference Include="Microsoft.Extensions.Hosting"/>
+        <PackageReference Include="OpenTelemetry"/>
+        <PackageReference Include="OpenTelemetry.Exporter.Console"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="TestPasswordService.cs">
-        <DependentUpon>ITestPasswordService.cs</DependentUpon>
-      </Compile>
+        <Compile Update="TestPasswordService.cs">
+            <DependentUpon>ITestPasswordService.cs</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>
