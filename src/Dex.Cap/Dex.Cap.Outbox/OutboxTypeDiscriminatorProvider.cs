@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
@@ -14,6 +15,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
     ILogger<OutboxTypeDiscriminatorProvider> logger) : IOutboxTypeDiscriminatorProvider
 {
     private FrozenDictionary<string, Type>? _currentDomainOutboxMessageTypes;
+    private ImmutableArray<string>? _immediatelyDeletableMessages;
     private FrozenSet<string>? _supportedDiscriminators;
 
     public FrozenSet<string> SupportedDiscriminators
@@ -64,6 +66,37 @@ internal sealed class OutboxTypeDiscriminatorProvider(
                 }
 
                 return result.ToArray();
+            }
+        }
+    }
+
+    public ImmutableArray<string> ImmediatelyDeletableMessages
+    {
+        get
+        {
+            _immediatelyDeletableMessages ??= GetImmediatelyDeletableMessages();
+            return _immediatelyDeletableMessages.Value;
+
+            ImmutableArray<string> GetImmediatelyDeletableMessages()
+            {
+                var result = new List<string>(CurrentDomainOutboxMessageTypes.Count);
+
+                foreach (var (id, discriminatorType) in CurrentDomainOutboxMessageTypes)
+                {
+                    try
+                    {
+                        if (IsMessageImmediatelyDeletable(discriminatorType) is false) continue;
+
+                        logger.LogInformation("Сообщения {DiscriminatorId} - {MessageType} будут удаляться сразу после обработки", id, discriminatorType.FullName);
+                        result.Add(id);
+                    }
+                    catch (Exception e)
+                    {
+                        logger.LogError(e, "Не удалось узнать признак немедленного удаления сообщения {DiscriminatorId} - {MessageType}", id, discriminatorType.FullName);
+                    }
+                }
+
+                return [..result];
             }
         }
     }
@@ -121,6 +154,28 @@ internal sealed class OutboxTypeDiscriminatorProvider(
         return messageAllowAutoPublishValue is bool messageAllowAutoPublish
             ? messageAllowAutoPublish
             : throw new InvalidOperationException($"Не удалось получить значение свойства {messageAllowAutoPublishPropertyName}");
+    }
+
+    /// <summary>
+    /// Требует ли сообщение немедленного удаления после обработки
+    /// </summary>
+    private static bool IsMessageImmediatelyDeletable(Type message)
+    {
+        const string messageImmediatelyDeletablePropertyName = nameof(IOutboxMessage.DeleteImmediately);
+
+        var messageImmediatelyDeletableProperty = message.GetProperty(messageImmediatelyDeletablePropertyName);
+
+        // base value if not override
+        messageImmediatelyDeletableProperty ??= typeof(IOutboxMessage).GetProperty(messageImmediatelyDeletablePropertyName);
+
+        if (messageImmediatelyDeletableProperty is null)
+            throw new InvalidOperationException($"Не удалось получить свойство {messageImmediatelyDeletablePropertyName}, проверьте совместимость версий пакетов");
+
+        var immediatelyDeletableValue = messageImmediatelyDeletableProperty.GetValue(null);
+
+        return immediatelyDeletableValue is bool immediatelyDeletable
+            ? immediatelyDeletable
+            : throw new InvalidOperationException($"Не удалось получить значение свойства {messageImmediatelyDeletablePropertyName}");
     }
 
     /// <summary>
