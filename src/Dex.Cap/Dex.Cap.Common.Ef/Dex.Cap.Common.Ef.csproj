@@ -6,7 +6,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>shared EF exceptions, extentions and helpers</PackageTags>
         <InformationalVersion>8.2</InformationalVersion>
-        <PackageVersion>8.2.3</PackageVersion>
+        <PackageVersion>8.2.4</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
