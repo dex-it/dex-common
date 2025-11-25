@@ -32,12 +32,12 @@ public class EnqueueOutboxTests : BaseTest
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
         var messageIds = new List<Guid>();
-        var command = new TestOutboxCommand { Args = "hello world" };
+        var command = new TestOutboxCommand {Args = "hello world"};
         messageIds.Add(command.TestId);
         logger.LogInformation("Command1 {MessageId}", command.TestId);
         await outboxService.EnqueueAsync(command);
 
-        var command2 = new TestOutboxCommand { Args = "hello world2" };
+        var command2 = new TestOutboxCommand {Args = "hello world2"};
         messageIds.Add(command2.TestId);
         logger.LogInformation("Command2 {MessageId}", command2.TestId);
 
@@ -75,10 +75,7 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () =>
-        {
-            await outboxService.EnqueueAsync(new TestEmptyMessage());
-        });
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () => { await outboxService.EnqueueAsync(new TestEmptyMessage()); });
     }
 
     [Test]
@@ -90,10 +87,35 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () =>
-        {
-            await outboxService.EnqueueAsync(new TestEmptyMessageDisallowAutoPublish());
-        });
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () => { await outboxService.EnqueueAsync(new TestEmptyMessageDisallowAutoPublish()); });
+    }
+
+    [Test]
+    public void IsMessageImmediatelyDeletableTest()
+    {
+        var sp = InitServiceCollection().BuildServiceProvider();
+
+        var discriminatorProvider = sp.GetRequiredService<IOutboxTypeDiscriminatorProvider>();
+
+        Assert.IsTrue(discriminatorProvider.CurrentDomainOutboxMessageTypes.ContainsKey(TestImmediatelyDeletableMessage.OutboxTypeId));
+        Assert.IsTrue(discriminatorProvider.ImmediatelyDeletableMessages.Contains(TestImmediatelyDeletableMessage.OutboxTypeId));
+
+        Assert.IsTrue(discriminatorProvider.CurrentDomainOutboxMessageTypes.ContainsKey(TestOutboxMessage.OutboxTypeId));
+        Assert.IsFalse(discriminatorProvider.ImmediatelyDeletableMessages.Contains(TestOutboxMessage.OutboxTypeId));
+    }
+
+    [Test]
+    public void OutboxCleanupTest()
+    {
+        var sp = InitServiceCollection().BuildServiceProvider();
+
+        var discriminatorProvider = sp.GetRequiredService<IOutboxTypeDiscriminatorProvider>();
+        var outboxCleanupDataProvider = sp.GetRequiredService<IOutboxCleanupDataProvider>();
+
+        Assert.IsTrue(discriminatorProvider.CurrentDomainOutboxMessageTypes.ContainsKey(TestOutboxMessage.OutboxTypeId));
+        Assert.IsTrue(discriminatorProvider.ImmediatelyDeletableMessages.Contains(TestImmediatelyDeletableMessage.OutboxTypeId));
+
+        NUnit.Framework.Assert.DoesNotThrow(() => { outboxCleanupDataProvider.Cleanup(TimeSpan.FromDays(1)); });
     }
 
     [Test]
@@ -106,7 +128,7 @@ public class EnqueueOutboxTests : BaseTest
         TestErrorCommandHandler.Reset();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
-        await outboxService.EnqueueAsync(new TestErrorOutboxCommand { MaxCount = 2 });
+        await outboxService.EnqueueAsync(new TestErrorOutboxCommand {MaxCount = 2});
         await SaveChanges(sp);
 
         var count = 0;
@@ -140,8 +162,8 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
         var id = Guid.NewGuid();
-        await outboxService.EnqueueAsync(new TestUserCreatorCommand { Id = id });
-        await outboxService.EnqueueAsync(new TestUserCreatorCommand { Id = id });
+        await outboxService.EnqueueAsync(new TestUserCreatorCommand {Id = id});
+        await outboxService.EnqueueAsync(new TestUserCreatorCommand {Id = id});
         await SaveChanges(sp);
 
         // act
@@ -172,8 +194,8 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        await outboxService.EnqueueAsync(new TestUserCreatorCommand { Id = Guid.NewGuid() });
-        await outboxService.EnqueueAsync(new TestUserCreatorCommand { Id = Guid.NewGuid() });
+        await outboxService.EnqueueAsync(new TestUserCreatorCommand {Id = Guid.NewGuid()});
+        await outboxService.EnqueueAsync(new TestUserCreatorCommand {Id = Guid.NewGuid()});
         await SaveChanges(sp);
 
         // act
@@ -197,8 +219,8 @@ public class EnqueueOutboxTests : BaseTest
         TestErrorCommandHandler.Reset();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
-        await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello" });
-        await outboxService.EnqueueAsync(new TestErrorOutboxCommand { MaxCount = 1 });
+        await outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello"});
+        await outboxService.EnqueueAsync(new TestErrorOutboxCommand {MaxCount = 1});
         await SaveChanges(sp);
 
         var count = 0;
@@ -227,7 +249,7 @@ public class EnqueueOutboxTests : BaseTest
             .BuildServiceProvider();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
-        await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
+        await outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello world"});
         await SaveChanges(sp);
 
         var count = 0;
@@ -260,7 +282,7 @@ public class EnqueueOutboxTests : BaseTest
         TestErrorCommandHandler.Reset();
 
         var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
-        await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello" },
+        await outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello"},
             startAtUtc: DateTime.UtcNow.AddMilliseconds(intervalMilliseconds));
         await SaveChanges(serviceProvider);
 
@@ -292,7 +314,7 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
+        var command = new TestDelayOutboxCommand {Args = "delay test", DelayMsec = 6_000};
 
         NUnit.Framework.Assert.CatchAsync<ArgumentOutOfRangeException>(async () =>
         {
@@ -313,7 +335,7 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
+        var command = new TestDelayOutboxCommand {Args = "delay test", DelayMsec = 6_000};
         // реальное время на выполнение будет 10-5=5сек, 5сек - отведено на завершение операции и нивелирование конкуренции
         var id = await outboxService.EnqueueAsync(command, lockTimeout: 10.Seconds());
         await SaveChanges(sp);
@@ -340,11 +362,11 @@ public class EnqueueOutboxTests : BaseTest
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
         var id1 = await outboxService.EnqueueAsync(
-            new TestDelayOutboxCommand { Args = "delay test-1", DelayMsec = 2_000 }, lockTimeout: 10.Seconds());
+            new TestDelayOutboxCommand {Args = "delay test-1", DelayMsec = 2_000}, lockTimeout: 10.Seconds());
         var id2 = await outboxService.EnqueueAsync(
-            new TestDelayOutboxCommand { Args = "delay test-2", DelayMsec = 2_000 }, lockTimeout: 10.Seconds());
+            new TestDelayOutboxCommand {Args = "delay test-2", DelayMsec = 2_000}, lockTimeout: 10.Seconds());
         var id3 = await outboxService.EnqueueAsync(
-            new TestDelayOutboxCommand { Args = "delay test-3", DelayMsec = 5_000 }, lockTimeout: 10.Seconds());
+            new TestDelayOutboxCommand {Args = "delay test-3", DelayMsec = 5_000}, lockTimeout: 10.Seconds());
         await SaveChanges(sp);
 
         // run

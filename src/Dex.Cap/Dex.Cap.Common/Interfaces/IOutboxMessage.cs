@@ -16,4 +16,9 @@ public interface IOutboxMessage
     /// <code>services.AddOutboxPublisher();</code>
     /// </summary>
     static virtual bool AllowAutoPublishing => true;
+
+    /// <summary>
+    /// Удалить из бд, сразу после завершенеия обрабоки
+    /// </summary>
+    static virtual bool DeleteImmediately => false;
 }

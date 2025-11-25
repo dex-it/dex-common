@@ -8,5 +8,5 @@ internal interface IOutboxCleanupDataProvider
 {
     /// <returns>Число удалённых записей.</returns>
     /// <exception cref="OperationCanceledException"/>
-    Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken);
+    Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken = default);
 }
