@@ -12,7 +12,7 @@ public interface IOutboxTypeDiscriminatorProvider
     FrozenSet<string> SupportedDiscriminators { get; }
 
     /// <summary>
-    /// Дискриминаторы, у которых сообщения должны удаляться сразу после выполнения работы
+    /// Дискриминаторы, у которых сообщения должны удаляться сразу после выполнения работы.
     /// Рекомендуется для очень крупных и очень часто генерируемых сообщений
     /// </summary>
     ImmutableArray<string> ImmediatelyDeletableMessages { get; }

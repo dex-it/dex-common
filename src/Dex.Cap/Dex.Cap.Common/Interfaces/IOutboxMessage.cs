@@ -18,7 +18,7 @@ public interface IOutboxMessage
     static virtual bool AllowAutoPublishing => true;
 
     /// <summary>
-    /// Удалить из бд, сразу после завершенеия обрабоки
+    /// Удалить из бд, сразу после завершенеия обработки
     /// </summary>
     static virtual bool DeleteImmediately => false;
 }
