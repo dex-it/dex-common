@@ -5,7 +5,7 @@ using Dex.Cap.Outbox.Interfaces;
 
 namespace Dex.Cap.Outbox;
 
-internal abstract class BaseCleanupProvider : IOutboxCleanupDataProvider
+public abstract class BaseCleanupProvider : IOutboxCleanupDataProvider
 {
     public virtual Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
     {
