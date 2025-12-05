@@ -19,8 +19,7 @@ public static class MicrosoftDependencyInjectionExtensions
 
         return serviceProvider
             .AddScoped(typeof(IOnceExecutor<IEfTransactionOptions, TDbContext>), typeof(OnceExecutorEf<TDbContext>))
-            .AddScoped(typeof(IOnceExecutor<IEfTransactionOptions>), typeof(OnceExecutorEf<TDbContext>))
-            .AddScoped<IOnceExecutorCleanupDataProvider, OnceExecutorCleanupDataProviderEf<TDbContext>>();
+            .AddScoped(typeof(IOnceExecutor<IEfTransactionOptions>), typeof(OnceExecutorEf<TDbContext>));
     }
 
     public static IServiceCollection AddStrategyOnceExecutor<TArg, TResult, TExecutionStrategy, TDbContext>(this IServiceCollection serviceProvider)
@@ -33,5 +32,20 @@ public static class MicrosoftDependencyInjectionExtensions
             .AddScoped(typeof(IOnceExecutionStrategy<TArg, IEfTransactionOptions, TResult>), typeof(TExecutionStrategy))
             .AddScoped(typeof(IStrategyOnceExecutor<TArg, TResult>),
                 typeof(StrategyOnceExecutorEf<TArg, TResult, IOnceExecutionStrategy<TArg, IEfTransactionOptions, TResult>, TDbContext>));
+    }
+    
+    public static IServiceCollection AddDefaultOnceExecutorCleanupDataProvider<TDbContext>(this IServiceCollection services)
+        where TDbContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        
+        return services.AddOnceExecutorCleanupDataProvider<OnceExecutorCleanupDataProviderEf<TDbContext>>();
+    }
+
+    public static IServiceCollection AddOnceExecutorCleanupDataProvider<TCleanUpDataProvider>(this IServiceCollection services) where TCleanUpDataProvider : class, IOnceExecutorCleanupDataProvider
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        
+        return services.AddScoped<IOnceExecutorCleanupDataProvider, TCleanUpDataProvider>();
     }
 }

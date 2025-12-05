@@ -64,9 +64,11 @@ public class Startup(IConfiguration configuration)
 
         services.AddOutbox<TestDbContext>();
         services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
+        services.AddDefaultCleanUpDataProvider<TestDbContext>();
         services.RegisterOutboxScheduler(periodSeconds: 1);
 
         services.AddOnceExecutor<TestDbContext>();
+        services.AddDefaultOnceExecutorCleanupDataProvider<TestDbContext>();
         services.RegisterOnceExecutorScheduler(periodSeconds: 1);
     }
 
