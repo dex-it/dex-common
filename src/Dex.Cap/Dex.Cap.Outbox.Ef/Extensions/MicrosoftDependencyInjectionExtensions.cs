@@ -23,7 +23,6 @@ public static class MicrosoftDependencyInjectionExtensions
             .AddScoped<IOutboxJobHandler, OutboxJobHandlerEf<TDbContext>>()
             .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()
             .AddScoped<IOutboxDataProvider, OutboxDataProviderEf<TDbContext>>()
-            .AddScoped<IOutboxCleanupDataProvider, OutboxCleanupDataProviderEf<TDbContext>>()
             .AddScoped<IOutboxMessageHandlerFactory, OutboxMessageHandlerFactory>();
 
         serviceProvider.AddScoped<IOutboxRetryStrategy>(provider =>
@@ -35,5 +34,20 @@ public static class MicrosoftDependencyInjectionExtensions
         });
 
         return serviceProvider;
+    }
+
+    public static IServiceCollection AddDefaultCleanUpDataProvider<TDbContext>(this IServiceCollection services)
+        where TDbContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        
+        return services.AddCleanUpDataProvider<OutboxCleanupDataProviderEf<TDbContext>>();
+    }
+
+    public static IServiceCollection AddCleanUpDataProvider<TCleanUpDataProvider>(this IServiceCollection services) where TCleanUpDataProvider : class, IOutboxCleanupDataProvider
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        
+        return services.AddScoped<IOutboxCleanupDataProvider, TCleanUpDataProvider>();
     }
 }

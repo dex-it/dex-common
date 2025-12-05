@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.OnceExecutor.Interfaces;
 
-internal interface IOnceExecutorCleanupDataProvider
+public interface IOnceExecutorCleanupDataProvider
 {
     /// <returns>Число удалённых записей.</returns>
     /// <exception cref="OperationCanceledException"/>

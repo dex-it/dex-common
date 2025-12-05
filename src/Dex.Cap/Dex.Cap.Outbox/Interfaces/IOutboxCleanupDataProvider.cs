@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.Outbox.Interfaces;
 
-internal interface IOutboxCleanupDataProvider
+public interface IOutboxCleanupDataProvider
 {
     /// <returns>Число удалённых записей.</returns>
     /// <exception cref="OperationCanceledException"/>
