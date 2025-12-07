@@ -22,7 +22,8 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     IOptions<OutboxOptions> outboxOptions,
     ILogger<OutboxDataProviderEf<TDbContext>> logger,
     IOutboxRetryStrategy retryStrategy,
-    IOutboxTypeDiscriminatorProvider discriminatorProvider) : BaseOutboxDataProvider(retryStrategy) where TDbContext : DbContext
+    IOutboxTypeDiscriminatorProvider discriminatorProvider) : BaseOutboxDataProvider(retryStrategy)
+    where TDbContext : DbContext
 {
     private EfTransactionOptions? _transactionOptions;
 

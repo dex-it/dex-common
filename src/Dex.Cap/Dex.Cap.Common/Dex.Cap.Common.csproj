@@ -7,7 +7,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>shared interfaces, extentions and helpers</PackageTags>
         <InformationalVersion>8.2</InformationalVersion>
-        <PackageVersion>8.2.4</PackageVersion>
+        <PackageVersion>8.2.5</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

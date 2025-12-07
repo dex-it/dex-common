@@ -1,5 +1,9 @@
 using System;
 using Dex.Cap.Common.Ef;
+using Dex.Cap.OnceExecutor.AspNetScheduler;
+using Dex.Cap.OnceExecutor.AspNetScheduler.BackgroundServices;
+using Dex.Cap.OnceExecutor.AspNetScheduler.Interfaces;
+using Dex.Cap.OnceExecutor.AspNetScheduler.Options;
 using Dex.Cap.OnceExecutor.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,10 +12,6 @@ namespace Dex.Cap.OnceExecutor.Ef.Extensions;
 
 public static class MicrosoftDependencyInjectionExtensions
 {
-    /// <summary>
-    /// Adding OnceExecutorEf
-    /// Also, RegisterOnceExecutorScheduler is recommended for better performance
-    /// </summary>
     public static IServiceCollection AddOnceExecutor<TDbContext>(this IServiceCollection serviceProvider)
         where TDbContext : DbContext
     {
@@ -33,19 +33,42 @@ public static class MicrosoftDependencyInjectionExtensions
             .AddScoped(typeof(IStrategyOnceExecutor<TArg, TResult>),
                 typeof(StrategyOnceExecutorEf<TArg, TResult, IOnceExecutionStrategy<TArg, IEfTransactionOptions, TResult>, TDbContext>));
     }
-    
-    public static IServiceCollection AddDefaultOnceExecutorCleanupDataProvider<TDbContext>(this IServiceCollection services)
+
+    /// <summary>
+    /// To clean obsolete db-records, to improve performance
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public static IServiceCollection AddDefaultOnceExecutorScheduler<TDbContext>(this IServiceCollection services, int periodSeconds = 30, int cleanupDays = 30)
         where TDbContext : DbContext
     {
-        ArgumentNullException.ThrowIfNull(services);
-        
-        return services.AddOnceExecutorCleanupDataProvider<OnceExecutorCleanupDataProviderEf<TDbContext>>();
+        return AddOnceExecutorScheduler<OnceExecutorCleanupDataProviderEf<TDbContext>>(services, periodSeconds, cleanupDays);
     }
 
-    public static IServiceCollection AddOnceExecutorCleanupDataProvider<TCleanUpDataProvider>(this IServiceCollection services) where TCleanUpDataProvider : class, IOnceExecutorCleanupDataProvider
+    /// <summary>
+    /// To clean obsolete db-records, to improve performance
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public static IServiceCollection AddOnceExecutorScheduler<TCleanUpDataProvider>(this IServiceCollection services, int periodSeconds = 30, int cleanupDays = 30)
+        where TCleanUpDataProvider : class, IOnceExecutorCleanupDataProvider
     {
         ArgumentNullException.ThrowIfNull(services);
-        
-        return services.AddScoped<IOnceExecutorCleanupDataProvider, TCleanUpDataProvider>();
+
+        if (periodSeconds <= 0)
+            throw new ArgumentOutOfRangeException(nameof(periodSeconds), periodSeconds, "Should be a positive number");
+
+        if (cleanupDays <= 0)
+            throw new ArgumentOutOfRangeException(nameof(cleanupDays), cleanupDays, "Should be a positive number");
+
+        services
+            .AddSingleton(new OnceExecutorHandlerOptions
+            {
+                CleanupOlderThan = TimeSpan.FromDays(cleanupDays),
+                CleanupInterval = TimeSpan.FromHours(1)
+            })
+            .AddScoped<IOnceExecutorCleanupDataProvider, TCleanUpDataProvider>()
+            .AddScoped<IOnceExecutorCleanerHandler, OnceExecutorCleanerHandler>()
+            .AddHostedService<OnceExecutorCleanerBackgroundService>();
+
+        return services;
     }
 }

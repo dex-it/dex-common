@@ -5,9 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Dex.Cap.OnceExecutor.AspNetScheduler;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
-using Dex.Cap.Outbox.AspNetScheduler;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Interfaces;
 using Microsoft.AspNetCore.Builder;
@@ -29,7 +27,7 @@ public class Startup(IConfiguration configuration)
 {
     private IConfiguration Configuration { get; } = configuration;
 
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web) {Converters = {new JsonStringEnumConverter()}};
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     public void ConfigureServices(IServiceCollection services)
     {
@@ -60,16 +58,17 @@ public class Startup(IConfiguration configuration)
             }).WithMetrics(builder => builder.AddConsoleExporter());
 
 
-        services.AddDbContext<TestDbContext>(builder => { builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")); });
+        services
+            .AddDbContext<TestDbContext>(builder => { builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")); });
 
-        services.AddOutbox<TestDbContext>();
-        services.AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>();
-        services.AddDefaultCleanUpDataProvider<TestDbContext>();
-        services.RegisterOutboxScheduler(periodSeconds: 1);
+        services
+            .AddOutbox<TestDbContext>()
+            .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+            .AddDefaultOutboxScheduler<TestDbContext>(periodSeconds: 1);
 
-        services.AddOnceExecutor<TestDbContext>();
-        services.AddDefaultOnceExecutorCleanupDataProvider<TestDbContext>();
-        services.RegisterOnceExecutorScheduler(periodSeconds: 1);
+        services
+            .AddOnceExecutor<TestDbContext>()
+            .AddDefaultOnceExecutorScheduler<TestDbContext>(periodSeconds: 1);
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime)
@@ -109,7 +108,7 @@ public class Startup(IConfiguration configuration)
                                 var client = scope2.ServiceProvider
                                     .GetRequiredService<IOutboxService>();
                                 var db2 = scope2.ServiceProvider.GetRequiredService<TestDbContext>();
-                                await client.EnqueueAsync(new TestOutboxCommand {Args = "hello world"});
+                                await client.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
                                 await SaveChangesWithRetryAsync(db2);
                             }
 

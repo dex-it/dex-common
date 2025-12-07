@@ -12,7 +12,8 @@ namespace Dex.Cap.Outbox.Ef;
 internal sealed class OutboxCleanupDataProviderEf<TDbContext>(
     TDbContext dbContext,
     ILogger<OutboxCleanupDataProviderEf<TDbContext>> logger,
-    IOutboxTypeDiscriminatorProvider discriminatorProvider) : IOutboxCleanupDataProvider where TDbContext : DbContext
+    IOutboxTypeDiscriminatorProvider discriminatorProvider) : IOutboxCleanupDataProvider
+    where TDbContext : DbContext
 {
     public async Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
     {
