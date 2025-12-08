@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <InformationalVersion>8.2</InformationalVersion>
-        <PackageVersion>8.2.4</PackageVersion>
+        <PackageVersion>8.2.5</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -30,6 +30,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj"/>
+        <ProjectReference Include="..\Dex.Cap.OnceExecutor.AspNetScheduler\Dex.Cap.OnceExecutor.AspNetScheduler.csproj" />
         <ProjectReference Include="..\Dex.Cap.OnceExecutor\Dex.Cap.OnceExecutor.csproj"/>
     </ItemGroup>
 

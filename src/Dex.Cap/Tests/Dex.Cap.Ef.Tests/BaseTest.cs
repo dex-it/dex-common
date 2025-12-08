@@ -39,6 +39,7 @@ public abstract class BaseTest
         serviceCollection
             .AddScoped(_ => new TestDbContext(DbName))
             .AddOutbox<TestDbContext>((_, configurator) => { strategyConfigure?.Invoke(configurator); })
+            .AddDefaultOutboxScheduler<TestDbContext>(periodSeconds: 1)
             .AddOnceExecutor<TestDbContext>()
             .AddOptions<OutboxOptions>()
             .Configure(options =>
