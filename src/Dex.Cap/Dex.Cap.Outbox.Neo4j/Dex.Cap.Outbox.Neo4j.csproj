@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <PackageTags>outbox business-transaction consistency NEO4J implementation</PackageTags>
         <InformationalVersion>8.2</InformationalVersion>
         <PackageVersion>8.2.5</PackageVersion>

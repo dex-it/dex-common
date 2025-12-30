@@ -1,8 +1,9 @@
 using System.Linq;
 using Dex.Pagination.Conditions;
-using Dex.TestDomain;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
+using Microsoft.EntityFrameworkCore;
+using DbContext = Dex.TestDomain.DbContext;
 
 namespace Dex.Pagination.Test
 {
@@ -14,10 +15,10 @@ namespace Dex.Pagination.Test
             using var dbContext = DbContext.GetDbContextWithEmptyConnectionString();
 
             var queryActual = dbContext.Employees.OrderBy(x => x.Company.CreatedUtc);
-            var sqlActual = queryActual.ToSql();
+            var sqlActual = queryActual.ToQueryString();
 
             var expectedQuery = dbContext.Employees.OrderByParams(new OrderCondition("Company.CreatedUtc"));
-            var expectedSql = expectedQuery.ToSql();
+            var expectedSql = expectedQuery.ToQueryString();
 
             ClassicAssert.AreEqual(expectedSql, sqlActual);
         }
@@ -57,6 +58,7 @@ namespace Dex.Pagination.Test
         private record SortTestData
         {
             public string Name { get; init; }
+
             public int Number { get; init; }
         }
     }

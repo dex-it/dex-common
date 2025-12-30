@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>dex;specifications;entityframework</PackageTags>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <InformationalVersion>8.0</InformationalVersion>
         <PackageVersion>8.0.4</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>

@@ -15,7 +15,7 @@ namespace Dex.TestDomain
 
         public static DbContext GetDbContextWithEmptyConnectionString()
         {
-            var contextOptions = new DbContextOptionsBuilder().UseNpgsql("empty").Options;
+            var contextOptions = new DbContextOptionsBuilder().UseNpgsql("Host=fake;Database=fake;Username=fake;Password=fake").Options;
 
             var dbContext = new DbContext(contextOptions);
             return dbContext;
