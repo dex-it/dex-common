@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
         <InformationalVersion>1.0</InformationalVersion>
-        <PackageVersion>1.1.31</PackageVersion>
+        <PackageVersion>1.1.32</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

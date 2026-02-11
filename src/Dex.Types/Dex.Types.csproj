@@ -5,7 +5,7 @@
         <PackageTags>dex; advanced types; ranges</PackageTags>
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-        <PackageVersion>1.0.27</PackageVersion>
+        <PackageVersion>1.0.28</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
