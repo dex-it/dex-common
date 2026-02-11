@@ -1,7 +1,7 @@
 <Project>
 
     <PropertyGroup>
-        <FrameworkVersion>8.0.22</FrameworkVersion>
+        <FrameworkVersion>8.0.24</FrameworkVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,11 +14,11 @@
         <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
         <PackageReference Update="xunit" Version="2.9.3"/>
         <PackageReference Update="NUnit" Version="4.4.0"/>
-        <PackageReference Update="NUnit3TestAdapter" Version="6.0.0"/>
+        <PackageReference Update="NUnit3TestAdapter" Version="6.1.0"/>
         <PackageReference Update="NUnit.Analyzers" Version="4.11.2"/>
         <PackageReference Update="HttpContextMoq" Version="1.7.0"/>
         <PackageReference Update="Moq" Version="4.20.72"/>
-        <PackageReference Update="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1"/>
+        <PackageReference Update="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0"/>
         <PackageReference Update="FluentAssertions" Version="8.8.0"/>
         <PackageReference Update="xunit.runner.visualstudio" Version="3.1.5"/>
 
@@ -55,17 +55,17 @@
         <PackageReference Update="Npgsql" Version="8.0.8"/>
         <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11"/>
         <PackageReference Update="Neo4jClient" Version="5.1.20"/>
-        <PackageReference Update="MassTransit*" Version="8.5.7"/>
+        <PackageReference Update="MassTransit*" Version="8.5.8"/>
         <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>
         <PackageReference Update="RazorLight" Version="2.3.1"/>
-        <PackageReference Update="OpenTelemetry*" Version="1.9.0"/> <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нежелательно -->
-        <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.3"/>
-        <PackageReference Update="MediatR" Version="12.5.0"/>
+        <PackageReference Update="OpenTelemetry*" Version="1.9.0"/>             <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нежелательно -->
+        <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.8"/>
+        <PackageReference Update="MediatR" Version="12.5.0"/>                   <!-- дальше, коммерческая лицензия -->
         <PackageReference Update="Swashbuckle.AspNetCore" Version="8.1.4"/>
         <PackageReference Update="Swashbuckle.AspNetCore.Swagger" Version="8.1.4"/>
         <PackageReference Update="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.4"/>
         <PackageReference Update="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4"/>
-        <PackageReference Update="StackExchange.Redis" Version="2.9.32"/>
+        <PackageReference Update="StackExchange.Redis" Version="2.10.14"/>
         <PackageReference Update="StackExchange.Redis.Extensions.AspNetCore" Version="11.0.0"/>
         <PackageReference Update="StackExchange.Redis.Extensions.System.Text.Json" Version="11.0.0"/>
         <PackageReference Update="StackExchange.Redis.Extensions.Core" Version="11.0.0"/>
@@ -75,16 +75,16 @@
         <PackageReference Update="JetBrains.Annotations" Version="2025.2.4"/>
 
         <!--microsoft asp.net core -->
-        <PackageReference Update="Microsoft.OpenApi" Version="2.3.8"/>
+        <PackageReference Update="Microsoft.OpenApi" Version="3.3.1"/>
         <PackageReference Update="Microsoft.Net.Http.Headers" Version="$(FrameworkVersion)"/>
         <PackageReference Update="Microsoft.AspNetCore.Mvc" Version="2.3.0"/>
         <PackageReference Update="Microsoft.AspNetCore.DataProtection*" Version="$(FrameworkVersion)"/>
         <PackageReference Update="Microsoft.AspNetCore.Mvc.RazorPages" Version="2.3.0"/>
-        <PackageReference Update="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0"/>
-        <PackageReference Update="Microsoft.AspNetCore.Http.Extensions" Version="2.3.0"/>
-        <PackageReference Update="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.3.0"/>
-        <PackageReference Update="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0"/>
-        <PackageReference Update="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.3.0"/>
+        <PackageReference Update="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9"/>
+        <PackageReference Update="Microsoft.AspNetCore.Http.Extensions" Version="2.3.9"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.3.9"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.Core" Version="2.3.9"/>
+        <PackageReference Update="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.3.9"/>
 
         <!--microsoft entity framework -->
         <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(FrameworkVersion)"/>
@@ -95,18 +95,18 @@
         <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(FrameworkVersion)"/>
 
         <!--dex libs -->
-        <PackageReference Update="Dex.Types" Version="1.0.27"/>
-        <PackageReference Update="Dex.Extensions" Version="1.0.34"/>
-        <PackageReference Update="Dex.Neo4J" Version="1.1.33"/>
-        <PackageReference Update="Dex.MassTransit.Rabbit" Version="8.0.7"/>
+        <PackageReference Update="Dex.Types" Version="*"/>                            <!-- net standart 1.x.x -->
+        <PackageReference Update="Dex.Extensions" Version="*"/>                       <!-- net standart 1.x.x -->
+        <PackageReference Update="Dex.Neo4J" Version="*"/>                            <!-- net standart 1.x.x -->
+        <PackageReference Update="Dex.MassTransit.Rabbit" Version="[8.0.0,9.0.0)"/>   <!-- net 8        8.x.x -->
 
         <!--Grpc -->
-        <PackageReference Update="Google.Protobuf" Version="3.33.0"/>
-        <PackageReference Update="Grpc.Net.ClientFactory" Version="2.71.0"/>
-        <PackageReference Update="Grpc.Net.Client" Version="2.71.0"/>
-        <PackageReference Update="Grpc.Tools" Version="2.76.0"/>
-        <PackageReference Update="Grpc.AspNetCore.Server" Version="2.71.0"/>
-        <PackageReference Update="Grpc.Core.Api" Version="2.71.0" />
+        <PackageReference Update="Google.Protobuf" Version="3.33.5"/>
+        <PackageReference Update="Grpc.Net.ClientFactory" Version="2.76.0"/>
+        <PackageReference Update="Grpc.Net.Client" Version="2.76.0"/>
+        <PackageReference Update="Grpc.Tools" Version="2.78.0"/>
+        <PackageReference Update="Grpc.AspNetCore.Server" Version="2.76.0"/>
+        <PackageReference Update="Grpc.Core.Api" Version="2.76.0"/>
 
     </ItemGroup>
 </Project>
