@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <PackageTags>outbox business-transaction consistency</PackageTags>
         <InformationalVersion>8.2</InformationalVersion>
-        <PackageVersion>8.2.5</PackageVersion>
+        <PackageVersion>8.2.6</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
