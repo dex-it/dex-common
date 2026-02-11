@@ -95,10 +95,10 @@
         <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(FrameworkVersion)"/>
 
         <!--dex libs -->
-        <PackageReference Update="Dex.Types" Version="*"/>                            <!-- net standart 1.x.x -->
-        <PackageReference Update="Dex.Extensions" Version="*"/>                       <!-- net standart 1.x.x -->
-        <PackageReference Update="Dex.Neo4J" Version="*"/>                            <!-- net standart 1.x.x -->
-        <PackageReference Update="Dex.MassTransit.Rabbit" Version="[8.0.0,9.0.0)"/>   <!-- net 8        8.x.x -->
+        <PackageReference Update="Dex.Types" Version="*"/>                        <!-- net standart 1.x.x -->
+        <PackageReference Update="Dex.Extensions" Version="*"/>                   <!-- net standart 1.x.x -->
+        <PackageReference Update="Dex.Neo4J" Version="*"/>                        <!-- net standart 1.x.x -->
+        <PackageReference Update="Dex.MassTransit.Rabbit" Version="8.*"/>         <!-- net 8        8.x.x -->
 
         <!--Grpc -->
         <PackageReference Update="Google.Protobuf" Version="3.33.5"/>
