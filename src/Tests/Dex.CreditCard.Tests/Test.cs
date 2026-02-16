@@ -35,11 +35,11 @@ namespace Dex.CreditCard.Tests
             {"36148900647913", CardType.DinersClub},
         };
 
-        private string _invalidCard = "2201382000000010";
-        private string _invalidCardLen = "1234";
-        private string _invalidCardFormat = "abcd12345abcd";
-        private string _invalidCardFormatSpace = "3614 8900 647 913";
-        private string _invalidCardFormatDash = "3614-8900-647-913";
+        private const string InvalidCard = "2201382000000010";
+        private const string InvalidCardLen = "1234";
+        private const string InvalidCardFormat = "abcd12345abcd";
+        private const string InvalidCardFormatSpace = "3614 8900 647 913";
+        private const string InvalidCardFormatDash = "3614-8900-647-913";
 
         [SetUp]
         public void Setup()
@@ -70,55 +70,55 @@ namespace Dex.CreditCard.Tests
         [Test]
         public void LyhnCardTypeInvalidTest1()
         {
-            ClassicAssert.False(LuhnAlgorithm.HasValidCheckDigit(_invalidCard));
+            ClassicAssert.False(LuhnAlgorithm.HasValidCheckDigit(InvalidCard));
         }
 
         [Test]
         public void LyhnCardTypeFormatCheckLen()
         {
-            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardLen));
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(InvalidCardLen));
         }
 
         [Test]
         public void LyhnCardTypeFormatCheckInvalid()
         {
-            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardFormat));
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(InvalidCardFormat));
         }
 
         [Test]
         public void LyhnCardTypeFormatCheckInvalidSpace()
         {
-            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardFormatSpace));
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(InvalidCardFormatSpace));
         }
 
         [Test]
         public void LyhnCardTypeFormatCheckInvalidDash()
         {
-            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(_invalidCardFormatDash));
+            Assert.Throws(typeof(ArgumentException), () => LuhnAlgorithm.HasValidCheckDigit(InvalidCardFormatDash));
         }
 
         [Test]
         public void ResolveCardTypeFormatCheckLen()
         {
-            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardLen));
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(InvalidCardLen));
         }
 
         [Test]
         public void ResolveCardTypeFormatCheckInvalid()
         {
-            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardFormat));
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(InvalidCardFormat));
         }
 
         [Test]
         public void ResolveCardTypeFormatCheckInvalidSpace()
         {
-            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardFormatSpace));
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(InvalidCardFormatSpace));
         }
 
         [Test]
         public void ResolveCardTypeFormatCheckInvalidDash()
         {
-            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(_invalidCardFormatDash));
+            Assert.Throws(typeof(ArgumentException), () => CreditCardTypeDetector.FindType(InvalidCardFormatDash));
         }
 
         [Test]
@@ -132,6 +132,6 @@ namespace Dex.CreditCard.Tests
             {
                 ClassicAssert.False(LuhnAlgorithm.HasValidCheckDigit(arg));
             });
-        }     
+        }
     }
 }

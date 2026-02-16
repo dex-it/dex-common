@@ -4,17 +4,18 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-// ReSharper disable UnusedType.Global
-// ReSharper disable MemberCanBePrivate.Global
-
 namespace Dex.CreditCardType.Resolver
 {
-    public static class LuhnAlgorithm
+    public static
+#if NET8_OR_GREATER
+        partial
+#endif
+        class LuhnAlgorithm
     {
         private static readonly int[] Results = {0, 2, 4, 6, 8, 1, 3, 5, 7, 9};
 
         /// <summary>
-        /// For a list of digits, compute the ending checkdigit 
+        /// For a list of digits, compute the ending checkdigit
         /// </summary>
         /// <param name="digits">The list of digits for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -60,7 +61,7 @@ namespace Dex.CreditCardType.Resolver
         }
 
         /// <summary>
-        /// For a string of digits, compute the ending checkdigit 
+        /// For a string of digits, compute the ending checkdigit
         /// </summary>
         /// <param name="digits">The string of digits for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -93,13 +94,13 @@ namespace Dex.CreditCardType.Resolver
 
         public static void CheckCorrectStringPan(string digits)
         {
+#if NET8_OR_GREATER
+            if (!CorrectStringPanRegex().IsMatch(digits))
+                throw new ArgumentException("must be 13-19 digits only", nameof(digits)) {Data = {{"PAN", digits}}};
+#else
             if (!Regex.IsMatch(digits, "^\\d{13,19}$"))
-            {
-                throw new ArgumentException("must be 13-19 digits only", nameof(digits))
-                {
-                    Data = {{"PAN", digits}}
-                };
-            }
+                throw new ArgumentException("must be 13-19 digits only", nameof(digits)) {Data = {{"PAN", digits}}};
+#endif
         }
 
         /// <summary>
@@ -113,7 +114,7 @@ namespace Dex.CreditCardType.Resolver
         }
 
         /// <summary>
-        /// For an integer, compute the ending checkdigit 
+        /// For an integer, compute the ending checkdigit
         /// </summary>
         /// <param name="digits">The integer for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -153,7 +154,7 @@ namespace Dex.CreditCardType.Resolver
         }
 
         /// <summary>
-        /// For an integer, compute the ending checkdigit 
+        /// For an integer, compute the ending checkdigit
         /// </summary>
         /// <param name="digits">The integer for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -181,5 +182,10 @@ namespace Dex.CreditCardType.Resolver
         {
             return HasValidCheckDigit(ToDigitList(digits));
         }
+
+#if NET8_OR_GREATER
+        [GeneratedRegex("^\\d{13,19}$")]
+        private static partial Regex CorrectStringPanRegex();
+#endif
     }
 }

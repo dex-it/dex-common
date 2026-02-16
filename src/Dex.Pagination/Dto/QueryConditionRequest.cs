@@ -7,50 +7,49 @@ using Dex.Pagination.Conditions;
 
 // ReSharper disable UnusedType.Global
 
-namespace Dex.Pagination.Dto
+namespace Dex.Pagination.Dto;
+
+public record QueryConditionRequest
 {
-    public record QueryConditionRequest
+    public string EncodedFilterUriEscaped { get; init; } = string.Empty;
+
+    public IQueryCondition DecodeFilter()
     {
-        public string EncodedFilterUriEscaped { get; init; } = string.Empty;
+        if (string.IsNullOrWhiteSpace(EncodedFilterUriEscaped))
+            return new QueryCondition();
 
-        public IQueryCondition DecodeFilter()
+        try
         {
-            if (string.IsNullOrWhiteSpace(EncodedFilterUriEscaped))
-                return new QueryCondition();
-
-            try
+            var data = Encoding.UTF8.GetString(Convert.FromBase64String(Uri.UnescapeDataString(EncodedFilterUriEscaped)));
+            return JsonSerializer.Deserialize<QueryCondition>(data, new JsonSerializerOptions
             {
-                var data = Encoding.UTF8.GetString(Convert.FromBase64String(Uri.UnescapeDataString(EncodedFilterUriEscaped)));
-                return JsonSerializer.Deserialize<QueryCondition>(data, new JsonSerializerOptions
+                Converters =
                 {
-                    Converters =
-                    {
-                        new JsonStringEnumConverter(),
-                        new SortConditionConverter()
-                    }
-                }) ?? new QueryCondition();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidDataException(ex.Message);
-            }
+                    new JsonStringEnumConverter(),
+                    new SortConditionConverter()
+                }
+            }) ?? new QueryCondition();
         }
-
-        #region deserializer
-
-        private class SortConditionConverter : JsonConverter<IOrderCondition>
+        catch (Exception ex)
         {
-            public override IOrderCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            {
-                return JsonSerializer.Deserialize<OrderCondition>(ref reader, options) ?? throw new InvalidOperationException();
-            }
+            throw new InvalidDataException(ex.Message);
+        }
+    }
 
-            public override void Write(Utf8JsonWriter writer, IOrderCondition value, JsonSerializerOptions options)
-            {
-                JsonSerializer.Serialize(writer, value, options);
-            }
+    #region deserializer
+
+    private class SortConditionConverter : JsonConverter<IOrderCondition>
+    {
+        public override IOrderCondition Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<OrderCondition>(ref reader, options) ?? throw new InvalidOperationException();
         }
 
-        #endregion
+        public override void Write(Utf8JsonWriter writer, IOrderCondition value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value, options);
+        }
     }
+
+    #endregion
 }

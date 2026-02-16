@@ -1,8 +1,7 @@
-﻿namespace Dex.Pagination.Conditions
+﻿namespace Dex.Pagination.Conditions;
+
+public interface IOrderCondition
 {
-    public interface IOrderCondition
-    {
-        string FieldName { get; }
-        bool IsDesc { get; }
-    }
+    string FieldName { get; }
+    bool IsDesc { get; }
 }

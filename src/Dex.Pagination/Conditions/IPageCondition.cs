@@ -1,8 +1,7 @@
-﻿namespace Dex.Pagination.Conditions
+﻿namespace Dex.Pagination.Conditions;
+
+public interface IPageCondition
 {
-    public interface IPageCondition
-    {
-        int Page { get; }
-        int PageSize { get; }
-    }
+    int Page { get; }
+    int PageSize { get; }
 }

@@ -1,21 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Dex.Pagination.Conditions;
 
-
 namespace Dex.Pagination;
 
-public static class QueryablePaginationExtensions
+public static class EnumerablePaginationExtensions
 {
     /// <summary>
-    /// Paging filter for IQueryable
+    /// Paging filter for IEnumerable
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="source">source query</param>
     /// <param name="page">page number</param>
     /// <param name="pageSize">page size</param>
     /// <returns></returns>
-    public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, int page, int pageSize)
+    public static IEnumerable<T> FilterPage<T>(this IEnumerable<T> source, int page, int pageSize)
     {
         ArgumentNullException.ThrowIfNull(source);
 
@@ -27,14 +27,14 @@ public static class QueryablePaginationExtensions
     }
 
     /// <summary>
-    /// Paging filter for IQueryable
+    /// Paging filter for IEnumerable
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="source">source query</param>
     /// <param name="pageCondition">this interface with page number and page size</param>
     /// <param name="maxPageSize">limit PageSize parameter</param>
     /// <returns></returns>
-    public static IQueryable<T> FilterPage<T>(this IQueryable<T> source, IPageCondition pageCondition, int? maxPageSize = null)
+    public static IEnumerable<T> FilterPage<T>(this IEnumerable<T> source, IPageCondition pageCondition, int? maxPageSize = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(pageCondition);

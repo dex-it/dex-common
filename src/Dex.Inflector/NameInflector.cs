@@ -4,9 +4,6 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable IdentifierTypo
-
 namespace Dex.Inflector
 {
     public static class NameInflector
