@@ -3,7 +3,6 @@
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <LangVersion>default</LangVersion>
         <InformationalVersion>8.0</InformationalVersion>
         <PackageVersion>8.0.4</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
