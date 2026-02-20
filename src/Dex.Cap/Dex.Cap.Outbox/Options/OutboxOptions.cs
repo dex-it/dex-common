@@ -8,7 +8,7 @@ public class OutboxOptions
     /// Count of retries, to process outbox messages (transient errors).
     /// Default: 3
     /// </summary>
-    public int Retries { get; set; } = 32;
+    public int Retries { get; set; } = 3;
 
     /// <summary>
     /// Count of messages, fetched and locked by the OutboxHandler from database, by the one cycle
