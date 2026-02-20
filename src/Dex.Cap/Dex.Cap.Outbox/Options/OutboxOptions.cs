@@ -8,14 +8,14 @@ public class OutboxOptions
     /// Count of retries, to process outbox messages (transient errors).
     /// Default: 3
     /// </summary>
-    public int Retries { get; set; } = 3;
+    public int Retries { get; set; } = 32;
 
     /// <summary>
     /// Count of messages, fetched and locked by the OutboxHandler from database, by the one cycle
     /// Please note that the time to process ALL selected messages will begin from the moment they are selected.
     /// Default: 1
     /// </summary>
-    public int MessagesToProcess { get; set; } = 1;
+    public int MessagesToProcess { get; set; } = 100;
 
     /// <summary>
     /// Degree of parallel executions. Recommendation ConcurrencyLimit must be less or equal MessagesToProcess.
