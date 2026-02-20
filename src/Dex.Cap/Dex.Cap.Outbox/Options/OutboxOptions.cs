@@ -15,7 +15,7 @@ public class OutboxOptions
     /// Please note that the time to process ALL selected messages will begin from the moment they are selected.
     /// Default: 1
     /// </summary>
-    public int MessagesToProcess { get; set; } = 1;
+    public int MessagesToProcess { get; set; } = 100;
 
     /// <summary>
     /// Degree of parallel executions. Recommendation ConcurrencyLimit must be less or equal MessagesToProcess.

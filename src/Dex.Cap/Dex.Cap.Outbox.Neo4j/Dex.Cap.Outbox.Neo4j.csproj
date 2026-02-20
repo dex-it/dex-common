@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <PackageTags>outbox business-transaction consistency NEO4J implementation</PackageTags>
         <InformationalVersion>8.2</InformationalVersion>
-        <PackageVersion>8.2.6</PackageVersion>
+        <PackageVersion>8.2.7</PackageVersion>
         <VersionSuffix>alpha</VersionSuffix>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
