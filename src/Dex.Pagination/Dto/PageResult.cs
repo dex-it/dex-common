@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-// ReSharper disable MemberCanBePrivate.Global
 
-namespace Dex.Pagination.Dto
+namespace Dex.Pagination.Dto;
+
+public record PageResult<T>
 {
-    public record PageResult<T>
-    {
-        public IEnumerable<T> Items { get; set; } = ArraySegment<T>.Empty;
+    public IEnumerable<T> Items { get; set; } = [];
 
-        public int? Count { get; set; }
-    }
+    public int? Count { get; set; }
 }

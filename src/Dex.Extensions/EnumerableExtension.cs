@@ -10,7 +10,7 @@ namespace Dex.Extensions
 {
     public static class EnumerableExtension
     {
-        private static readonly Lazy<Random> RndGen = new(() => new Random(DateTime.UtcNow.Millisecond));
+        private static readonly Lazy<Random> RndGen = new Lazy<Random>(() => new Random(DateTime.UtcNow.Millisecond));
 
         public static string JoinToString(this IEnumerable<string> collection, string separator)
         {
@@ -62,7 +62,7 @@ namespace Dex.Extensions
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            List<Exception> exceptions = [];
+            var exceptions = new List<Exception>();
 
             foreach (var obj in source)
             {
@@ -106,8 +106,8 @@ namespace Dex.Extensions
             if (maxDegreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
 
-            ConcurrentBag<Exception> exceptions = [];
-            List<Task> tasks = [];
+            var exceptions = new ConcurrentBag<Exception>();
+            var tasks = new List<Task>();
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
@@ -166,7 +166,7 @@ namespace Dex.Extensions
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            List<Exception> exceptions = [];
+            var exceptions = new List<Exception>();
 
             foreach (var obj in source)
             {
@@ -210,8 +210,8 @@ namespace Dex.Extensions
             if (maxDegreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
 
-            List<Exception> exceptions = [];
-            List<Task> tasks = [];
+            var exceptions = new List<Exception>();
+            var tasks = new List<Task>();
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
@@ -276,7 +276,7 @@ namespace Dex.Extensions
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            List<Exception> exceptions = [];
+            var exceptions = new List<Exception>();
 
             await foreach (var obj in source.ConfigureAwait(false).WithCancellation(cancellationToken))
             {
@@ -320,8 +320,8 @@ namespace Dex.Extensions
             if (maxDegreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
 
-            ConcurrentBag<Exception> exceptions = [];
-            List<Task> tasks = [];
+            var exceptions = new ConcurrentBag<Exception>();
+            var tasks = new List<Task>();
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
@@ -380,7 +380,7 @@ namespace Dex.Extensions
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            List<Exception> exceptions = [];
+            var exceptions = new List<Exception>();
 
             await foreach (var obj in source.ConfigureAwait(false).WithCancellation(cancellationToken))
             {
@@ -424,8 +424,8 @@ namespace Dex.Extensions
             if (maxDegreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
 
-            ConcurrentBag<Exception> exceptions = [];
-            List<Task> tasks = [];
+            var exceptions = new ConcurrentBag<Exception>();
+            var tasks = new List<Task>();
 
             using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
@@ -479,7 +479,7 @@ namespace Dex.Extensions
             var array = source.ToArray();
             for (var i = 0; i < array.Length; i++)
             {
-                T obj = array[i];
+                var obj = array[i];
                 action(i, obj);
             }
         }
@@ -529,7 +529,7 @@ namespace Dex.Extensions
             if (partitionSize <= 0) throw new ArgumentOutOfRangeException(nameof(partitionSize));
 
             return instance
-                .Select((value, index) => new { Index = index, Value = value })
+                .Select((value, index) => new {Index = index, Value = value})
                 .GroupBy(item => item.Index / partitionSize)
                 .Select(item => item.Select(x => x.Value));
         }

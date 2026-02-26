@@ -15,7 +15,7 @@ namespace Dex.Extensions
 
             var type = typeof(TSource);
 
-            if (propertyLambda.Body is not MemberExpression member)
+            if ((propertyLambda.Body is MemberExpression member) is false)
                 throw new ArgumentException($"Expression '{propertyLambda}' refers to a method, not a property.");
 
             var propInfo = member.Member as PropertyInfo;

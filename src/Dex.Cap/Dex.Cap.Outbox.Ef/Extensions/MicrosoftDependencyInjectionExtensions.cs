@@ -24,6 +24,7 @@ public static class MicrosoftDependencyInjectionExtensions
             .AddSingleton<IOutboxTypeDiscriminatorProvider, OutboxTypeDiscriminatorProvider>()
             .AddSingleton<IOutboxStatistic>(provider => provider.GetRequiredService<IOutboxMetricCollector>())
             .AddScoped<IOutboxService, OutboxService>()
+            .AddScoped<IOutboxEnvelopFactory, OutboxEnvelopFactory>()
             .AddScoped<IOutboxHandler, MainLoopOutboxHandler<TDbContext>>()
             .AddScoped<IOutboxJobHandler, OutboxJobHandlerEf<TDbContext>>()
             .AddScoped<IOutboxSerializer, DefaultOutboxSerializer>()

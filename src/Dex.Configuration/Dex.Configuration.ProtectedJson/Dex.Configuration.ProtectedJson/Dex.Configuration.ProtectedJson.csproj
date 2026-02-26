@@ -6,7 +6,7 @@
 
     <PropertyGroup>
         <InformationalVersion>8.0</InformationalVersion>
-        <PackageVersion>8.0.2</PackageVersion>
+        <PackageVersion>8.0.3</PackageVersion>
     </PropertyGroup>
 
     <!--Для NuGet-->
