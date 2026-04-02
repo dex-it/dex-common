@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests.OutboxTests;
+namespace Dex.Cap.Ef.Tests.TransactionTests;
 
 public class ExecuteInTransactionTests : BaseTest
 {
