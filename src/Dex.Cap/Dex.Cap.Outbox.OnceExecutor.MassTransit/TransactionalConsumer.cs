@@ -19,7 +19,7 @@ public abstract class TransactionalConsumer<TMessage, TDbContext>(TDbContext dbC
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     protected abstract Task ProcessInTransaction(ConsumeContext<TMessage> context);
 
@@ -48,7 +48,7 @@ public abstract class TransactionalConsumer<TDbContext>(TDbContext dbContext)
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     protected Task ProcessInTransaction<TMessage>(
         ConsumeContext<TMessage> context,

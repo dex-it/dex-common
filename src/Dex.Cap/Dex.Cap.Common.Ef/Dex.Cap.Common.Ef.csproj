@@ -39,6 +39,9 @@
       <Compile Update="EfTransactionOptions.cs">
         <DependentUpon>IEfTransactionOptions.cs</DependentUpon>
       </Compile>
+      <Compile Update="EfTransactionScopeOptions.cs">
+        <DependentUpon>IEfTransactionScopeOptions.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

@@ -16,7 +16,7 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext>(TDbContex
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     protected abstract Task ProcessInTransaction(TMessage message, CancellationToken cancellationToken);
 

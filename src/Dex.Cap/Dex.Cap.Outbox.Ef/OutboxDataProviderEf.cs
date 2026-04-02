@@ -51,7 +51,6 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     {
         _transactionOptions ??= new EfTransactionOptions
         {
-            TransactionScopeOption = TransactionScopeOption.RequiresNew,
             IsolationLevel = IsolationLevel.ReadCommitted,
             TimeoutInSeconds = (uint)Options.GetFreeMessagesTimeout.TotalSeconds
         };

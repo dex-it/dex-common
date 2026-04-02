@@ -23,12 +23,12 @@ public static class DbContextExecuteInTransactionScopeExtensions
         TState state,
         Func<TState, CancellationToken, Task<TResult>> operation,
         Func<TState, CancellationToken, Task<bool>> verifySucceeded,
-        IEfTransactionOptions? options = null,
+        IEfTransactionScopeOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dbContext);
 
-        options ??= EfTransactionOptions.Default;
+        options ??= EfTransactionScopeOptions.Default;
 
         return dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
             new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
@@ -83,7 +83,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
         this DbContext dbContext,
         Func<CancellationToken, Task<TResult>> operation,
         Func<CancellationToken, Task<bool>> verifySucceeded,
-        IEfTransactionOptions? options = null,
+        IEfTransactionScopeOptions? options = null,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync<object, TResult>(
             null!,
@@ -102,7 +102,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
         TState state,
         Func<TState, CancellationToken, Task> operation,
         Func<TState, CancellationToken, Task<bool>> verifySucceeded,
-        IEfTransactionOptions? options = null,
+        IEfTransactionScopeOptions? options = null,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync(
             state,
@@ -124,7 +124,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
         this DbContext dbContext,
         Func<CancellationToken, Task> operation,
         Func<CancellationToken, Task<bool>> verifySucceeded,
-        IEfTransactionOptions? options = null,
+        IEfTransactionScopeOptions? options = null,
         CancellationToken cancellationToken = default)
         => dbContext.ExecuteInTransactionScopeAsync<object>(
             null!,

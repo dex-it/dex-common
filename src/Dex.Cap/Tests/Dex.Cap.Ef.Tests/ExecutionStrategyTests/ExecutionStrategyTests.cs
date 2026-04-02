@@ -202,7 +202,7 @@ public class ExecutionStrategyTests : BaseTest
                     await context.ExecuteInTransactionScopeAsync
                     (context, async (c, t) => { await c.Users.AnyAsync(u => u.Name == "user", t); },
                         (_, _) => Task.FromResult(false),
-                        EfTransactionOptions.DefaultSuppress,
+                        EfTransactionScopeOptions.DefaultSuppress,
                         cancellationToken: ct);
                 },
                 (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
