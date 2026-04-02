@@ -12,79 +12,75 @@ namespace Dex.Cap.Ef.Tests.TransactionTests;
 public class CqrsTransactionTests : BaseTest
 {
     [Test]
-    public async Task Cqrs_TransactionOnMaster_ReadFromReplica_Success()
+    public async Task Cqrs_MasterWrite_ReplicaRead_Isolation_Test()
     {
+        // Этот тест проверяет СРАЗУ ТРИ вещи:
+        // 1. Изоляцию: Реплика не видит данные мастера до коммита.
+        // 2. Отсутствие эскалации: Работа со вторым контекстом (репликой) внутри транзакции не вызывает ошибок DTC.
+        // 3. Доступность: Реплика видит данные сразу после коммита мастера.
+
         var sp = InitServiceCollection().BuildServiceProvider();
         var masterContext = sp.GetRequiredService<TestDbContext>();
         await using var replicaContext = new TestDbContext(DbName);
 
         var userId = Guid.NewGuid();
-        var userName = "CQRS_Test_User";
+        var userName = "CQRS_User";
 
-        await masterContext.ExecuteInTransactionAsync(
-            async ct =>
-            {
-                masterContext.Users.Add(new TestUser { Id = userId, Name = userName, Years = 25 });
-                await masterContext.SaveChangesAsync(ct);
+        // Используем явную транзакцию на мастере
+        await masterContext.ExecuteInTransactionAsync(async ct =>
+        {
+            // Пишем в мастер
+            masterContext.Users.Add(new TestUser { Id = userId, Name = userName, Years = 25 });
+            await masterContext.SaveChangesAsync(ct);
 
-                var replicaUsers = await replicaContext.Users.Where(x => x.Id == userId).ToArrayAsync(ct);
-                NUnit.Framework.Assert.That(replicaUsers.Length, Is.EqualTo(0));
+            // Читаем из реплики ВНУТРИ транзакции мастера. 
+            // Это "тот самый" момент, где TransactionScope мог упасть.
+            var replicaUsersBeforeCommit = await replicaContext.Users.Where(x => x.Id == userId).ToArrayAsync(ct);
 
-                return true;
-            },
-            _ => Task.FromResult(false));
+            // Проверка изоляции: реплика не должна видеть изменения до коммита
+            NUnit.Framework.Assert.That(replicaUsersBeforeCommit, Is.Empty, "Replica must not see uncommitted master data.");
 
-        var finalReplicaUsers = await replicaContext.Users.Where(x => x.Id == userId).ToArrayAsync();
-        NUnit.Framework.Assert.That(finalReplicaUsers.Length, Is.EqualTo(1));
-        NUnit.Framework.Assert.That(finalReplicaUsers[0].Name, Is.EqualTo(userName));
+            return true;
+        }, _ => Task.FromResult(true));
+
+        // Проверка после коммита
+        var replicaUsersAfterCommit = await replicaContext.Users.Where(x => x.Id == userId).ToArrayAsync();
+        NUnit.Framework.Assert.That(replicaUsersAfterCommit, Is.Not.Empty, "Replica must see committed data.");
+        NUnit.Framework.Assert.That(replicaUsersAfterCommit[0].Name, Is.EqualTo(userName));
     }
 
     [Test]
-    public async Task Cqrs_TransactionOnMaster_ReadFromReplica_NoEscalation_Success()
+    public async Task Transaction_Reentrancy_NestedCalls_JoinExistingTransaction_Test()
     {
+        // Проверяем, что вложенные вызовы ExecuteInTransactionAsync работают в одной транзакции (реентрабельность).
+        // Это важно, если один сервис вызывает другой, и оба хотят работать в транзакции.
+
         var sp = InitServiceCollection().BuildServiceProvider();
-        var masterContext = sp.GetRequiredService<TestDbContext>();
-        await using var replicaContext = new TestDbContext(DbName);
+        var context = sp.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
 
-        await masterContext.ExecuteInTransactionAsync(
-            async ct =>
+        await context.ExecuteInTransactionAsync(async ct =>
+        {
+            context.Users.Add(new TestUser { Id = id1, Name = "Outer", Years = 10 });
+            await context.SaveChangesAsync(ct);
+
+            // Вложенный вызов должен увидеть, что транзакция уже есть, и просто выполнить код в ней.
+            await context.ExecuteInTransactionAsync(async ctInner =>
             {
-                masterContext.Users.Add(new TestUser { Id = userId, Name = "NoEscalation", Years = 30 });
-                await masterContext.SaveChangesAsync(ct);
-
-                _ = await replicaContext.Users.Take(1).ToArrayAsync(ct);
+                context.Users.Add(new TestUser { Id = id2, Name = "Inner", Years = 20 });
+                await context.SaveChangesAsync(ctInner);
                 return true;
-            },
-            _ => Task.FromResult(false));
+            }, _ => Task.FromResult(true), cancellationToken: ct);
 
-        NUnit.Framework.Assert.Pass();
-    }
+            // Проверяем, что внутри внешней транзакции видны оба изменения
+            NUnit.Framework.Assert.That(await context.Users.CountAsync(x => x.Id == id1 || x.Id == id2, ct), Is.EqualTo(2));
 
-    [Test]
-    public async Task MultipleDbContexts_SharedTransaction_ViaUseTransaction_Success()
-    {
-        var sp = InitServiceCollection().BuildServiceProvider();
-        var masterContext = sp.GetRequiredService<TestDbContext>();
-        await using var secondContext = new TestDbContext(DbName);
+            return true;
+        }, _ => Task.FromResult(true));
 
-        var userId = Guid.NewGuid();
-
-        await masterContext.ExecuteInTransactionAsync(
-            async ct =>
-            {
-                masterContext.Users.Add(new TestUser { Id = userId, Name = "Explicit", Years = 18 });
-                await masterContext.SaveChangesAsync(ct);
-
-                var anyInReplica = await secondContext.Users.AnyAsync(x => x.Id == userId, ct);
-                NUnit.Framework.Assert.That(anyInReplica, Is.False);
-
-                return true;
-            },
-            _ => Task.FromResult(false));
-
-        var result = await masterContext.Users.AnyAsync(x => x.Id == userId);
-        NUnit.Framework.Assert.That(result, Is.True);
+        // Проверяем итоговое состояние в базе
+        NUnit.Framework.Assert.That(await context.Users.CountAsync(x => x.Id == id1 || x.Id == id2), Is.EqualTo(2));
     }
 }
