@@ -32,7 +32,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (dbContext, outboxService),
             async (state, token) =>
             {
@@ -76,7 +76,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (dbContext, outboxService),
             async (state, token) =>
             {
@@ -148,7 +148,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (dbContext, outboxService),
             async (state, token) =>
             {
@@ -182,7 +182,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             new { Name = name, Age = 25, DbContext = dbContext, OutboxService = outboxService },
             async (state, token) =>
             {
@@ -224,7 +224,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (logger, outboxService, dbContext),
             async (state, token) =>
             {
@@ -262,7 +262,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (dbContext, outboxService),
             async (state, token) =>
             {

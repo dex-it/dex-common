@@ -34,7 +34,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
             new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
             async (context, st, ct) =>
             {
-                if (dbContext.ChangeTracker.HasChanges())
+                if (context.ChangeTracker.HasChanges())
                     throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
 
                 try
@@ -46,11 +46,11 @@ public static class DbContextExecuteInTransactionScopeExtensions
 
                     st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
-                    if (dbContext.ChangeTracker.HasChanges())
+                    if (context.ChangeTracker.HasChanges())
                     {
                         // In most cases, SaveChangesAsync should be called inside the operation delegate.
                         // However, we perform a final check to ensure all changes are flushed before commit.
-                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
                     }
 
                     transactionScope.Complete();

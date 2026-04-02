@@ -15,6 +15,7 @@ public static class DbContextExecuteInTransactionExtensions
     /// Executes the specified operation within a transaction using the DbContext's execution strategy.
     /// This method uses IDbContextTransaction (explicit transaction) instead of TransactionScope.
     /// Recommended for CQRS (Read/Write) and multi-database scenarios to avoid "Ambient transaction detected" errors.
+    /// Supports nested calls (reentrancy) by participating in the existing transaction if one is already active.
     /// </summary>
     public static Task<TResult> ExecuteInTransactionAsync<TState, TResult>(
         this DbContext dbContext,
@@ -25,10 +26,11 @@ public static class DbContextExecuteInTransactionExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dbContext);
-
         options ??= EfTransactionOptions.Default;
 
-        return dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+
+        return executionStrategy.ExecuteAsync(
             new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
             async (context, st, ct) =>
             {
@@ -36,23 +38,39 @@ public static class DbContextExecuteInTransactionExtensions
                     throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
 
                 // Set command timeout if specified
-                var oldTimeout = dbContext.Database.GetCommandTimeout();
+                var oldTimeout = context.Database.GetCommandTimeout();
                 if (options.TimeoutInSeconds > 0)
-                    dbContext.Database.SetCommandTimeout((int)options.TimeoutInSeconds);
+                    context.Database.SetCommandTimeout((int)options.TimeoutInSeconds);
+
+                var isNested = context.Database.CurrentTransaction != null;
 
                 try
                 {
+                    if (isNested)
+                    {
+                        // Participate in existing transaction
+                        st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
+
+                        if (dbContext.ChangeTracker.HasChanges())
+                        {
+                            // Ensure changes are flushed before returning from nested call
+                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                        }
+
+                        return st.Result;
+                    }
+
                     var dataIsolationLevel = MapIsolationLevel(options.IsolationLevel);
 
-                    await using var transaction = await dbContext.Database.BeginTransactionAsync(dataIsolationLevel, ct).ConfigureAwait(false);
+                    await using var transaction = await context.Database.BeginTransactionAsync(dataIsolationLevel, ct).ConfigureAwait(false);
 
                     st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
-                    if (dbContext.ChangeTracker.HasChanges())
+                    if (context.ChangeTracker.HasChanges())
                     {
                         // In most cases, SaveChangesAsync should be called inside the operation delegate.
                         // However, we perform a final check to ensure all changes are flushed before commit.
-                        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
                     }
 
                     await transaction.CommitAsync(ct).ConfigureAwait(false);
@@ -64,7 +82,7 @@ public static class DbContextExecuteInTransactionExtensions
                 {
                     // If the strategy decides to retry, we may want to clear the change tracker to avoid conflicts
                     if (options.ClearChangeTrackerOnRetry)
-                        dbContext.ChangeTracker.Clear();
+                        context.ChangeTracker.Clear();
 
                     throw;
                 }
@@ -72,7 +90,7 @@ public static class DbContextExecuteInTransactionExtensions
                 {
                     // Restore original timeout
                     if (options.TimeoutInSeconds > 0)
-                        dbContext.Database.SetCommandTimeout(oldTimeout);
+                        context.Database.SetCommandTimeout(oldTimeout);
                 }
             },
             async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),

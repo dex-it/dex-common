@@ -87,4 +87,35 @@ public class ExecuteInTransactionTests : BaseTest
         Assert.AreEqual(1, count);
         Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
     }
+
+    [Test]
+    public async Task NestedExecuteInTransactionTest()
+    {
+        var sp = InitServiceCollection()
+            .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
+            .BuildServiceProvider();
+
+        var dbContext = sp.GetRequiredService<TestDbContext>();
+
+        var name1 = "user1_" + Guid.NewGuid();
+        var name2 = "user2_" + Guid.NewGuid();
+
+        // act
+        await dbContext.ExecuteInTransactionAsync(async token =>
+        {
+            await dbContext.Users.AddAsync(new TestUser { Name = name1 }, token);
+            await dbContext.SaveChangesAsync(token);
+
+            // Nested call
+            await dbContext.ExecuteInTransactionAsync(async ct =>
+            {
+                await dbContext.Users.AddAsync(new TestUser { Name = name2 }, ct);
+                await dbContext.SaveChangesAsync(ct);
+            }, _ => Task.FromResult(false), cancellationToken: token);
+        }, _ => Task.FromResult(false));
+
+        // check
+        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name1));
+        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name2));
+    }
 }
