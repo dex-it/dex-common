@@ -50,27 +50,37 @@ public class DistributedEventTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestOnUserAddedHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOnUserAddedHandler2.OnProcess += (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess1 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess2 = (_, _) => Interlocked.Increment(ref count);
+        TestOnUserAddedHandler.OnProcess += onProcess1;
+        TestOnUserAddedHandler2.OnProcess += onProcess2;
 
-        var harness = serviceProvider.GetRequiredService<IBusControl>();
-        await harness.StartAsync();
+        try
+        {
+            var harness = serviceProvider.GetRequiredService<IBusControl>();
+            await harness.StartAsync();
 
-        var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-        await dbContext.Users.AddAsync(user, CancellationToken.None);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-        await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
-        await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+            await dbContext.Users.AddAsync(user, CancellationToken.None);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
+            await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
-        NUnit.Framework.Assert.That(count, Is.EqualTo(2 * 2));
-        await harness.StopAsync();
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
+            NUnit.Framework.Assert.That(count, Is.EqualTo(2 * 2));
+            await harness.StopAsync();
+        }
+        finally
+        {
+            TestOnUserAddedHandler.OnProcess -= onProcess1;
+            TestOnUserAddedHandler2.OnProcess -= onProcess2;
+        }
     }
 
     [Test]
@@ -112,26 +122,36 @@ public class DistributedEventTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestOnUserAddedHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOnUserAddedHandlerRaiseException.OnProcess += (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess1 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess2 = (_, _) => Interlocked.Increment(ref count);
+        TestOnUserAddedHandler.OnProcess += onProcess1;
+        TestOnUserAddedHandlerRaiseException.OnProcess += onProcess2;
 
-        var harness = serviceProvider.GetRequiredService<IBusControl>();
-        await harness.StartAsync();
+        try
+        {
+            var harness = serviceProvider.GetRequiredService<IBusControl>();
+            await harness.StartAsync();
 
-        var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-        await dbContext.Users.AddAsync(user, CancellationToken.None);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-        await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+            await dbContext.Users.AddAsync(user, CancellationToken.None);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = user.Id }, CancellationToken.None);
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
-        NUnit.Framework.Assert.That(count, Is.EqualTo(1));
-        await harness.StopAsync();
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == user.Id));
+            NUnit.Framework.Assert.That(count, Is.EqualTo(1));
+            await harness.StopAsync();
+        }
+        finally
+        {
+            TestOnUserAddedHandler.OnProcess -= onProcess1;
+            TestOnUserAddedHandlerRaiseException.OnProcess -= onProcess2;
+        }
     }
 
     [Test]
@@ -150,26 +170,36 @@ public class DistributedEventTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestOnUserAddedHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOnUserAddedHandler2.OnProcess += (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess1 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess2 = (_, _) => Interlocked.Increment(ref count);
+        TestOnUserAddedHandler.OnProcess += onProcess1;
+        TestOnUserAddedHandler2.OnProcess += onProcess2;
 
-        var harness = serviceProvider.GetRequiredService<IBusControl>();
-        await harness.StartAsync();
+        try
+        {
+            var harness = serviceProvider.GetRequiredService<IBusControl>();
+            await harness.StartAsync();
 
-        var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var eventRaiser = serviceProvider.GetRequiredService<IDistributedEventRaiser<IBus>>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-        await dbContext.Users.AddAsync(user, CancellationToken.None);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-        await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = userId }, CancellationToken.None);
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+            await dbContext.Users.AddAsync(user, CancellationToken.None);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await eventRaiser.RaiseAsync(new OnUserAdded { CustomerId = userId }, CancellationToken.None);
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        Assert.AreEqual(2, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
-        await harness.StopAsync();
+            Assert.AreEqual(2, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+            await harness.StopAsync();
+        }
+        finally
+        {
+            TestOnUserAddedHandler.OnProcess -= onProcess1;
+            TestOnUserAddedHandler2.OnProcess -= onProcess2;
+        }
     }
 
     [Test]
@@ -190,40 +220,52 @@ public class DistributedEventTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOnUserAddedHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOnUserAddedHandler2.OnProcess += (_, _) => Interlocked.Increment(ref count);
+        EventHandler<TestOutboxCommand> onProcess1 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess2 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess3 = (_, _) => Interlocked.Increment(ref count);
+        TestCommandHandler.OnProcess += onProcess1;
+        TestOnUserAddedHandler.OnProcess += onProcess2;
+        TestOnUserAddedHandler2.OnProcess += onProcess3;
 
-        var harness = serviceProvider.GetRequiredService<IBusControl>();
-        await harness.StartAsync();
+        try
+        {
+            var harness = serviceProvider.GetRequiredService<IBusControl>();
+            await harness.StartAsync();
 
-        var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-        await dbContext.ExecuteInTransactionScopeAsync(
-            new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
-            async (state, token) =>
-            {
-                var entity = state.Entity;
-                await state.DbContext.Users.AddAsync(entity, token);
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+            await dbContext.ExecuteInTransactionScopeAsync(
+                new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
+                async (state, token) =>
+                {
+                    var entity = state.Entity;
+                    await state.DbContext.Users.AddAsync(entity, token);
 
-                await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cancellationToken: token);
-                await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
-                    cancellationToken: token);
-                await state.DbContext.SaveChangesAsync(token);
-            }, (_, _) => Task.FromResult(false));
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
+                        cancellationToken: token);
+                    await state.DbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
-        var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        Assert.AreEqual(3, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
-        await harness.StopAsync();
+            Assert.AreEqual(3, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+            await harness.StopAsync();
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess1;
+            TestOnUserAddedHandler.OnProcess -= onProcess2;
+            TestOnUserAddedHandler2.OnProcess -= onProcess3;
+        }
     }
 
     [Test]
@@ -241,39 +283,49 @@ public class DistributedEventTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOnUserAddedHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
+        EventHandler<TestOutboxCommand> onProcess1 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OnUserAdded> onProcess2 = (_, _) => Interlocked.Increment(ref count);
+        TestCommandHandler.OnProcess += onProcess1;
+        TestOnUserAddedHandler.OnProcess += onProcess2;
 
-        var harness = serviceProvider.GetRequiredService<IBusControl>();
-        await harness.StartAsync();
+        try
+        {
+            var harness = serviceProvider.GetRequiredService<IBusControl>();
+            await harness.StartAsync();
 
-        var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-        await dbContext.ExecuteInTransactionScopeAsync(
-            new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
-            async (state, token) =>
-            {
-                var entity = state.Entity;
-                await state.DbContext.Users.AddAsync(entity, token);
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+            await dbContext.ExecuteInTransactionScopeAsync(
+                new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
+                async (state, token) =>
+                {
+                    var entity = state.Entity;
+                    await state.DbContext.Users.AddAsync(entity, token);
 
-                await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cancellationToken: token);
-                await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
-                    cancellationToken: token);
-                await state.DbContext.SaveChangesAsync(token);
-            }, (_, _) => Task.FromResult(false));
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
+                        cancellationToken: token);
+                    await state.DbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
-        var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        Assert.AreEqual(2, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
-        await harness.StopAsync();
+            Assert.AreEqual(2, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+            await harness.StopAsync();
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess1;
+            TestOnUserAddedHandler.OnProcess -= onProcess2;
+        }
     }
 
     [Test]
@@ -285,33 +337,45 @@ public class DistributedEventTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOutboxDistributedEventHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
+        EventHandler<TestOutboxCommand> onProcess1 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OutboxDistributedEventMessage> onProcess2 = (_, _) => Interlocked.Increment(ref count);
+        TestCommandHandler.OnProcess += onProcess1;
+        TestOutboxDistributedEventHandler.OnProcess += onProcess2;
 
-        var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+        try
+        {
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-        await dbContext.ExecuteInTransactionScopeAsync(
-            new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
-            async (state, token) =>
-            {
-                var entity = state.Entity;
-                await state.DbContext.Users.AddAsync(entity, token);
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+            await dbContext.ExecuteInTransactionScopeAsync(
+                new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
+                async (state, token) =>
+                {
+                    var entity = state.Entity;
+                    await state.DbContext.Users.AddAsync(entity, token);
 
-                await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
-                await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id }, cancellationToken: token);
-                await state.DbContext.SaveChangesAsync(token);
-            }, (_, _) => Task.FromResult(false));
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.OutboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = entity.Id },
+                        cancellationToken: token);
+                    await state.DbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
-        var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        Assert.AreEqual(2, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+            Assert.AreEqual(2, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess1;
+            TestOutboxDistributedEventHandler.OnProcess -= onProcess2;
+        }
     }
 
     [Test]
@@ -324,26 +388,36 @@ public class DistributedEventTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
-        TestOutboxDistributedEventHandler.OnProcess += (_, _) => Interlocked.Increment(ref count);
+        EventHandler<TestOutboxCommand> onProcess1 = (_, _) => Interlocked.Increment(ref count);
+        EventHandler<OutboxDistributedEventMessage> onProcess2 = (_, _) => Interlocked.Increment(ref count);
+        TestCommandHandler.OnProcess += onProcess1;
+        TestOutboxDistributedEventHandler.OnProcess += onProcess2;
 
-        var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
-        var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
+        try
+        {
+            var outboxService = serviceProvider.GetRequiredService<IOutboxService>();
+            var dbContext = serviceProvider.GetRequiredService<TestDbContext>();
 
-        var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
 
-        dbContext.Set<User>().Add(user);
-        await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
-        await outboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = user.Id });
-        await dbContext.SaveChangesAsync();
+            dbContext.Set<User>().Add(user);
+            await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" });
+            await outboxService.EnqueueEventAsync(new OnUserAdded { CustomerId = user.Id });
+            await dbContext.SaveChangesAsync();
 
-        var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        Assert.AreEqual(2, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+            Assert.AreEqual(2, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Id == userId));
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess1;
+            TestOutboxDistributedEventHandler.OnProcess -= onProcess2;
+        }
     }
 }

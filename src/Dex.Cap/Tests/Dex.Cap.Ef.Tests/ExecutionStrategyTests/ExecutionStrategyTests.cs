@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
+#pragma warning disable CS0618 // Type or member is obsolete
+
 namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests;
 
 public class ExecutionStrategyTests : BaseTest

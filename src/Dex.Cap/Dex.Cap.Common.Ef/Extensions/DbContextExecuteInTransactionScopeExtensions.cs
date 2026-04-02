@@ -17,6 +17,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
     /// Warning: Can lead to "Ambient transaction detected" errors or unwanted promotion to distributed transactions (DTC) 
     /// when used with multiple database connections or in CQRS (Read/Write) scenarios.
     /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead. This method uses System.Transactions.TransactionScope which is not recommended for async/CQRS and may lead to connection leaks.")]
     // ReSharper disable once CognitiveComplexity
     public static Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
         this DbContext dbContext,
@@ -79,6 +80,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
     /// Executes the specified operation within a TransactionScope.
     /// Uses an ambient transaction (System.Transactions.TransactionScope).
     /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead.")]
     public static Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
         this DbContext dbContext,
         Func<CancellationToken, Task<TResult>> operation,
@@ -97,6 +99,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
     /// Executes the specified action within a TransactionScope.
     /// Uses an ambient transaction (System.Transactions.TransactionScope).
     /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead.")]
     public static Task ExecuteInTransactionScopeAsync<TState>(
         this DbContext dbContext,
         TState state,
@@ -120,6 +123,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
     /// Executes the specified action within a TransactionScope.
     /// Uses an ambient transaction (System.Transactions.TransactionScope).
     /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead.")]
     public static Task ExecuteInTransactionScopeAsync(
         this DbContext dbContext,
         Func<CancellationToken, Task> operation,
