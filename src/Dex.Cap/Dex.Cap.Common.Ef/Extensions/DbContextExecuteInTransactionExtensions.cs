@@ -14,9 +14,14 @@ public static class DbContextExecuteInTransactionExtensions
     /// <summary>
     /// Executes the specified operation within a transaction using the DbContext's execution strategy.
     /// This method uses IDbContextTransaction (explicit transaction) instead of TransactionScope.
-    /// Recommended for CQRS (Read/Write) and multi-database scenarios to avoid "Ambient transaction detected" errors.
-    /// Supports nested calls (reentrancy) by participating in the existing transaction if one is already active.
+    /// Recommended for CQRS (Read/Write) and multi-database scenarios to avoid "Ambient transaction detected" errors and DTC escalation.
+    /// Supports nested calls (reentrancy) by participating in the existing transaction using Savepoints for nested atomicity.
     /// </summary>
+    /// <remarks>
+    /// For nested calls, a Savepoint is created to allow partial rollback of only the nested operation.
+    /// If an existing transaction is present, its isolation level is checked against the requested level. 
+    /// If the requested level is stricter than the current one, an <see cref="InvalidOperationException"/> is thrown.
+    /// </remarks>
     // ReSharper disable once CognitiveComplexity
     public static Task<TResult> ExecuteInTransactionAsync<TState, TResult>(
         this DbContext dbContext,
