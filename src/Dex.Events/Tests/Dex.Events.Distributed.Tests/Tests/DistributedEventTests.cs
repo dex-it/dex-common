@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef.Extensions;
@@ -237,7 +237,7 @@ public class DistributedEventTests : BaseTest
 
             var userId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-            await dbContext.ExecuteInTransactionScopeAsync(
+            await dbContext.ExecuteInTransactionAsync(
                 new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
                 async (state, token) =>
                 {
@@ -298,7 +298,7 @@ public class DistributedEventTests : BaseTest
 
             var userId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-            await dbContext.ExecuteInTransactionScopeAsync(
+            await dbContext.ExecuteInTransactionAsync(
                 new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
                 async (state, token) =>
                 {
@@ -349,7 +349,7 @@ public class DistributedEventTests : BaseTest
 
             var userId = Guid.NewGuid();
             var user = new User { Id = userId, Name = "juk_" + userId, Years = 25 };
-            await dbContext.ExecuteInTransactionScopeAsync(
+            await dbContext.ExecuteInTransactionAsync(
                 new { Entity = user, DbContext = dbContext, OutboxService = outboxService },
                 async (state, token) =>
                 {
@@ -384,7 +384,6 @@ public class DistributedEventTests : BaseTest
         await using var serviceProvider = InitServiceCollection()
             .AddScoped<IOutboxMessageHandler<TestOutboxCommand>, TestCommandHandler>()
             .AddScoped<IOutboxMessageHandler<OutboxDistributedEventMessage>, TestOutboxDistributedEventHandler>()
-
             .BuildServiceProvider();
 
         var count = 0;
