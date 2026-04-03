@@ -17,6 +17,7 @@ public static class DbContextExecuteInTransactionExtensions
     /// Recommended for CQRS (Read/Write) and multi-database scenarios to avoid "Ambient transaction detected" errors.
     /// Supports nested calls (reentrancy) by participating in the existing transaction if one is already active.
     /// </summary>
+    // ReSharper disable once CognitiveComplexity
     public static Task<TResult> ExecuteInTransactionAsync<TState, TResult>(
         this DbContext dbContext,
         TState state,
@@ -64,10 +65,12 @@ public static class DbContextExecuteInTransactionExtensions
 
                         try
                         {
+                            // Participate in existing transaction
                             st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
                             if (context.ChangeTracker.HasChanges())
                             {
+                                // Ensure changes are flushed before returning from nested call
                                 await context.SaveChangesAsync(ct).ConfigureAwait(false);
                             }
 
@@ -89,6 +92,8 @@ public static class DbContextExecuteInTransactionExtensions
 
                     if (context.ChangeTracker.HasChanges())
                     {
+                        // In most cases, SaveChangesAsync should be called inside the operation delegate.
+                        // However, we perform a final check to ensure all changes are flushed before commit.
                         await context.SaveChangesAsync(ct).ConfigureAwait(false);
                     }
 
