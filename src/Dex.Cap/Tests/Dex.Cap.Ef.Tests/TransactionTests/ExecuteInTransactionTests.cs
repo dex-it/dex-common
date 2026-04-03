@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
@@ -224,5 +225,108 @@ public class ExecuteInTransactionTests : BaseTest
                 return Task.FromException(exception);
             }
         }, _ => Task.FromResult(false), new EfTransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted });
+    }
+
+    [Test]
+    public async Task ExecuteInTransactionAsync_Should_Rollback_To_Savepoint_On_Nested_Failure()
+    {
+        var sp = InitServiceCollection().BuildServiceProvider();
+        var context = sp.GetRequiredService<TestDbContext>();
+
+        var outerId = Guid.NewGuid();
+        var innerId = Guid.NewGuid();
+
+        await context.ExecuteInTransactionAsync(async ct =>
+        {
+            // Outer operation: add user
+            context.Users.Add(new TestUser { Id = outerId, Name = "OuterUser", Years = 40 });
+            await context.SaveChangesAsync(ct);
+
+            // Nested operation that FAILS
+            try
+            {
+                await context.ExecuteInTransactionAsync(async ctInner =>
+                {
+                    context.Users.Add(new TestUser { Id = innerId, Name = "InnerUser (SHOULD BE ROLLED BACK)", Years = 10 });
+                    await context.SaveChangesAsync(ctInner);
+
+                    throw new Exception("Nested failure!");
+                }, _ => Task.FromResult(true), cancellationToken: ct);
+            }
+            catch (Exception ex) when (ex.Message == "Nested failure!")
+            {
+                // We caught the nested exception. 
+                // Because of Savepoints, only 'innerId' user should be rolled back on the DB side.
+                // IMPORTANT: EF Core doesn't automatically clear entities from ChangeTracker on Savepoint rollback.
+                // But since we threw an exception, the next SaveChangesAsync in the outer block 
+                // would fail if we didn't remove the failed entity from ChangeTracker.
+                var entry = context.ChangeTracker.Entries<TestUser>().FirstOrDefault(x => x.Entity.Id == innerId);
+                if (entry != null)
+                {
+                    entry.State = EntityState.Detached;
+                }
+            }
+
+            // Verify: outer user is still present, inner is NOT.
+            NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == outerId, ct), Is.True);
+            NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == innerId, ct), Is.False);
+
+            return true;
+        }, _ => Task.FromResult(true));
+
+        // Final check after commit
+        NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == outerId), Is.True);
+        NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == innerId), Is.False);
+    }
+
+    [Test]
+    public async Task ExecuteInTransactionAsync_Should_Use_VerifySucceeded_To_Avoid_Duplicates_On_Retry()
+    {
+        var sp = InitServiceCollection().BuildServiceProvider();
+        var context = sp.GetRequiredService<TestDbContext>();
+
+        var userId = Guid.NewGuid();
+        var attemptCount = 0;
+
+        // Задача: проверить, что если verifySucceeded находит данные в БД (имитация "успешного коммита с потерей ACK"),
+        // то стратегия НЕ делает повторную попытку.
+        _ = await context.ExecuteInTransactionAsync(
+            state: new { UserId = userId },
+            operation: async (st, ct) =>
+            {
+                attemptCount++;
+
+                context.Users.Add(new TestUser { Id = st.UserId, Name = "VerifyUser", Years = 25 });
+                await context.SaveChangesAsync(ct);
+
+                // Имитируем "Lost ACK": 
+                // 1. Мы реально комитим транзакцию вручную (БД теперь знает о пользователе).
+                await context.Database.CurrentTransaction!.CommitAsync(ct);
+
+                // 2. Бросаем транзиентное исключение, как будто сеть упала СРАЗУ ПОСЛЕ коммита.
+                throw new Npgsql.NpgsqlException("Fake network failure after commit",
+                    new Npgsql.PostgresException("Error", "Severity", "Invariant", "57P01"));
+#pragma warning disable CS0162 // Unreachable code detected
+                return true;
+#pragma warning restore CS0162
+            },
+            verifySucceeded: async (st, ct) =>
+            {
+                // Проверяем БД через новый Scope (честный запрос к базе).
+                using var scope = sp.CreateScope();
+                var checkContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+                return await checkContext.Users.AnyAsync(x => x.Id == st.UserId, ct);
+            }
+        );
+
+        NUnit.Framework.Assert.Multiple(() =>
+        {
+            // Операция должна была быть вызвана только ОДИН раз.
+            NUnit.Framework.Assert.That(attemptCount, Is.EqualTo(1), "Operation should NOT be retried if verifySucceeded returned true");
+        });
+
+        // Финальная проверка: пользователь действительно в базе.
+        var userExists = await context.Users.AnyAsync(x => x.Id == userId);
+        NUnit.Framework.Assert.That(userExists, Is.True);
     }
 }

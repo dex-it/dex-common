@@ -48,7 +48,9 @@ public static class DbContextExecuteInTransactionExtensions
                 {
                     if (isNested)
                     {
-                        var currentLevel = context.Database.CurrentTransaction!.GetDbTransaction().IsolationLevel;
+                        var savepointName = isNested ? $"sp_{Guid.NewGuid():N}" : null;
+                        var currentTransaction = context.Database.CurrentTransaction!;
+                        var currentLevel = currentTransaction.GetDbTransaction().IsolationLevel;
                         var requestedLevel = MapIsolationLevel(options.IsolationLevel);
 
                         if (requestedLevel != IsolationLevel.Unspecified && currentLevel != IsolationLevel.Unspecified && currentLevel < requestedLevel)
@@ -57,16 +59,26 @@ public static class DbContextExecuteInTransactionExtensions
                                 $"Can't participate in existing transaction with isolation level '{currentLevel}'. Requested level '{requestedLevel}' is stricter.");
                         }
 
-                        // Participate in existing transaction
-                        st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
+                        // Create savepoint for nested atomicity
+                        await currentTransaction.CreateSavepointAsync(savepointName!, ct).ConfigureAwait(false);
 
-                        if (dbContext.ChangeTracker.HasChanges())
+                        try
                         {
-                            // Ensure changes are flushed before returning from nested call
-                            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                        }
+                            st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 
-                        return st.Result;
+                            if (context.ChangeTracker.HasChanges())
+                            {
+                                await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                            }
+
+                            return st.Result;
+                        }
+                        catch
+                        {
+                            // Rollback only this nested part
+                            await currentTransaction.RollbackToSavepointAsync(savepointName!, ct).ConfigureAwait(false);
+                            throw;
+                        }
                     }
 
                     var dataIsolationLevel = MapIsolationLevel(options.IsolationLevel);
@@ -77,8 +89,6 @@ public static class DbContextExecuteInTransactionExtensions
 
                     if (context.ChangeTracker.HasChanges())
                     {
-                        // In most cases, SaveChangesAsync should be called inside the operation delegate.
-                        // However, we perform a final check to ensure all changes are flushed before commit.
                         await context.SaveChangesAsync(ct).ConfigureAwait(false);
                     }
 
