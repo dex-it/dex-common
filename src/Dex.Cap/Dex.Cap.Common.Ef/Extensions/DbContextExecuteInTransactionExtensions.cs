@@ -48,6 +48,15 @@ public static class DbContextExecuteInTransactionExtensions
                 {
                     if (isNested)
                     {
+                        var currentLevel = context.Database.CurrentTransaction!.GetDbTransaction().IsolationLevel;
+                        var requestedLevel = MapIsolationLevel(options.IsolationLevel);
+
+                        if (requestedLevel != IsolationLevel.Unspecified && currentLevel != IsolationLevel.Unspecified && currentLevel < requestedLevel)
+                        {
+                            throw new InvalidOperationException(
+                                $"Can't participate in existing transaction with isolation level '{currentLevel}'. Requested level '{requestedLevel}' is stricter.");
+                        }
+
                         // Participate in existing transaction
                         st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
 

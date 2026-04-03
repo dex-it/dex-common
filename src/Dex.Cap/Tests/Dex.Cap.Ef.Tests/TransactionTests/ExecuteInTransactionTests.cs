@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox.Interfaces;
@@ -186,5 +187,42 @@ public class ExecuteInTransactionTests : BaseTest
         {
             TestDbContext.IsRetryStrategy = false; // restore default
         }
+    }
+
+    [Test]
+    public async Task ExecuteInTransactionAsync_Should_Throw_When_Nested_IsolationLevel_Is_Stricter()
+    {
+        var sp = InitServiceCollection().BuildServiceProvider();
+        var dbContext = sp.GetRequiredService<TestDbContext>();
+
+        // Start outer transaction with ReadCommitted
+        await dbContext.ExecuteInTransactionAsync(ct =>
+        {
+            try
+            {
+                // Try to start inner transaction with Serializable (stricter than ReadCommitted)
+                var options = new EfTransactionOptions
+                {
+                    IsolationLevel = System.Transactions.IsolationLevel.Serializable
+                };
+
+                var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                {
+                    await dbContext.ExecuteInTransactionAsync(
+                        _ => Task.CompletedTask,
+                        _ => Task.FromResult(true),
+                        options,
+                        ct);
+                });
+
+                NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Can't participate in existing transaction with isolation level 'ReadCommitted'"));
+                NUnit.Framework.Assert.That(ex.Message, Does.Contain("Requested level 'Serializable' is stricter"));
+                return Task.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return Task.FromException(exception);
+            }
+        }, _ => Task.FromResult(false), new EfTransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted });
     }
 }
