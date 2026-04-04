@@ -310,3 +310,8 @@ tools.yaml
 
 # Claude Code
 run-claude/
+.claude/
+
+# TLDR
+.tldr/
+.tldrignore
