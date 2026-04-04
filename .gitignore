@@ -307,3 +307,6 @@ gemini.md
 *.skill
 temp-skills/
 tools.yaml
+
+# Claude Code
+run-claude/

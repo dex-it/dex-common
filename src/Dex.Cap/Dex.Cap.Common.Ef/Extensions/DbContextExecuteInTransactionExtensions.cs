@@ -54,7 +54,7 @@ public static class DbContextExecuteInTransactionExtensions
                 {
                     if (isNested)
                     {
-                        var savepointName = isNested ? $"sp_{Guid.NewGuid():N}" : null;
+                        var savepointName = $"sp_{Guid.NewGuid():N}";
                         var currentTransaction = context.Database.CurrentTransaction!;
                         var currentLevel = currentTransaction.GetDbTransaction().IsolationLevel;
                         var requestedLevel = MapIsolationLevel(options.IsolationLevel);
@@ -66,7 +66,7 @@ public static class DbContextExecuteInTransactionExtensions
                         }
 
                         // Create savepoint for nested atomicity
-                        await currentTransaction.CreateSavepointAsync(savepointName!, ct).ConfigureAwait(false);
+                        await currentTransaction.CreateSavepointAsync(savepointName, ct).ConfigureAwait(false);
 
                         try
                         {
@@ -84,7 +84,7 @@ public static class DbContextExecuteInTransactionExtensions
                         catch
                         {
                             // Rollback only this nested part
-                            await currentTransaction.RollbackToSavepointAsync(savepointName!, ct).ConfigureAwait(false);
+                            await currentTransaction.RollbackToSavepointAsync(savepointName, ct).ConfigureAwait(false);
                             throw;
                         }
                     }
