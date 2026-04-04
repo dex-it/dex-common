@@ -81,10 +81,19 @@ public static class DbContextExecuteInTransactionExtensions
 
                             return st.Result;
                         }
-                        catch
+                        catch (Exception ex)
                         {
                             // Rollback only this nested part
-                            await currentTransaction.RollbackToSavepointAsync(savepointName, ct).ConfigureAwait(false);
+                            try
+                            {
+                                await currentTransaction.RollbackToSavepointAsync(savepointName, ct).ConfigureAwait(false);
+                            }
+                            catch (Exception rollbackEx)
+                            {
+                                throw new AggregateException(
+                                    "Nested operation failed and savepoint rollback also failed", ex, rollbackEx);
+                            }
+
                             throw;
                         }
                     }
