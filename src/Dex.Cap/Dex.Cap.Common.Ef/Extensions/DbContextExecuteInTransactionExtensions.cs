@@ -34,6 +34,11 @@ public static class DbContextExecuteInTransactionExtensions
     /// to prevent silent atomicity loss.
     /// </para>
     /// <para>
+    /// <b>Retry Strategy:</b> The outer <see cref="IExecutionStrategy"/> only manages the primary <see cref="DbContext"/>. 
+    /// If other contexts are used within the operation delegate, ensure their transient failures are handled 
+    /// appropriately (e.g., by bubbling up to the outer strategy) to avoid conflicting or redundant retry logic.
+    /// </para>
+    /// <para>
     /// <b>Note:</b> <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> is automatically called before committing 
     /// or returning from a nested call if changes are detected in the <see cref="ChangeTracker"/>. 
     /// Failed entities are NOT automatically detached from the tracker after a savepoint rollback; 
@@ -74,7 +79,8 @@ public static class DbContextExecuteInTransactionExtensions
                     throw new InvalidOperationException(
                         "Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance. " +
                         "Atomicity across multiple DbContext instances is not supported with IDbContextTransaction. " +
-                        "Use the same DbContext instance or switch to TransactionScope if cross-context atomicity is required.");
+                        "Use the same DbContext instance for the nested call. " +
+                        "If you only need retry logic for the second context without a transaction, use 'context.Database.CreateExecutionStrategy().ExecuteAsync()' directly.");
                 }
 
                 try
