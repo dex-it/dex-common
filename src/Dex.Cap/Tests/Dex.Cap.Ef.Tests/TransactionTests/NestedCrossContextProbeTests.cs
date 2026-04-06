@@ -16,49 +16,43 @@ namespace Dex.Cap.Ef.Tests.TransactionTests;
 public class NestedCrossContextProbeTests : BaseTest
 {
     [Test]
-    public async Task Nested_DifferentInstance_OuterRollback_InnerMustAlsoRollback()
+    public async Task Nested_DifferentInstance_MustThrowException()
     {
         // Сценарий:
         //   Outer ExecuteInTransactionAsync на контексте A.
         //   Внутри — новый scope, резолвим контекст B (новый инстанс того же типа).
-        //   Inner ExecuteInTransactionAsync на B пишет данные и возвращается без ошибки.
-        //   Outer затем бросает исключение → outer откатывается.
+        //   Inner ExecuteInTransactionAsync на B.
         //
-        // Ожидание по контракту TransactionScope: inner тоже должен быть откачен (атомарность).
-        // Гипотеза после миграции на IDbContextTransaction: inner закоммитится отдельно,
-        // потому что B.CurrentTransaction == null и ExecuteInTransactionAsync откроет свою транзакцию.
+        // Ожидание: ExecuteInTransactionAsync должен выбросить InvalidOperationException,
+        // так как он обнаружит через AsyncLocal, что уже есть активная транзакция в другом контексте.
         var sp = InitServiceCollection().BuildServiceProvider();
         var outerCtx = sp.GetRequiredService<TestDbContext>();
 
         var outerId = Guid.NewGuid();
         var innerId = Guid.NewGuid();
 
-        try
+        await outerCtx.ExecuteInTransactionAsync(async ct =>
         {
-            await outerCtx.ExecuteInTransactionAsync(async ct =>
+            outerCtx.Users.Add(new TestUser { Id = outerId, Name = "Outer_" + outerId, Years = 30 });
+            await outerCtx.SaveChangesAsync(ct);
+
+            using var innerScope = sp.CreateScope();
+            var innerCtx = innerScope.ServiceProvider.GetRequiredService<TestDbContext>();
+
+            TestContext.WriteLine($"Same instance? {ReferenceEquals(outerCtx, innerCtx)}");
+            TestContext.WriteLine($"Inner CurrentTransaction is null? {innerCtx.Database.CurrentTransaction is null}");
+
+            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                outerCtx.Users.Add(new TestUser { Id = outerId, Name = "Outer_" + outerId, Years = 30 });
-                await outerCtx.SaveChangesAsync(ct);
-
-                using var innerScope = sp.CreateScope();
-                var innerCtx = innerScope.ServiceProvider.GetRequiredService<TestDbContext>();
-
-                TestContext.WriteLine($"Same instance? {ReferenceEquals(outerCtx, innerCtx)}");
-                TestContext.WriteLine($"Inner CurrentTransaction is null? {innerCtx.Database.CurrentTransaction is null}");
-
                 await innerCtx.ExecuteInTransactionAsync(async ctInner =>
                 {
                     innerCtx.Users.Add(new TestUser { Id = innerId, Name = "Inner_" + innerId, Years = 20 });
                     await innerCtx.SaveChangesAsync(ctInner);
                 }, _ => Task.FromResult(false), cancellationToken: ct);
+            });
 
-                throw new InvalidOperationException("Force rollback of outer");
-            }, _ => Task.FromResult(false));
-        }
-        catch (InvalidOperationException ex) when (ex.Message == "Force rollback of outer")
-        {
-            // ожидаемо
-        }
+            NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance"));
+        }, _ => Task.FromResult(false));
 
         // Читаем из свежего контекста, чтобы не увидеть кэш.
         await using var verify = new TestDbContext(DbName);
@@ -69,8 +63,8 @@ public class NestedCrossContextProbeTests : BaseTest
 
         NUnit.Framework.Assert.Multiple(() =>
         {
-            NUnit.Framework.Assert.That(outerExists, Is.False, "Outer должен быть откачен");
-            NUnit.Framework.Assert.That(innerExists, Is.False, "Inner тоже должен был откатиться (атомарность)");
+            NUnit.Framework.Assert.That(outerExists, Is.True, "Outer должен быть успешно закомичен");
+            NUnit.Framework.Assert.That(innerExists, Is.False, "Inner не должен был создаться");
         });
     }
 

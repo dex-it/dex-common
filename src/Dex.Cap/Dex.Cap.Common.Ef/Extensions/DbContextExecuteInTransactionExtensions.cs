@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 
@@ -18,9 +19,26 @@ public static class DbContextExecuteInTransactionExtensions
     /// Supports nested calls (reentrancy) by participating in the existing transaction using Savepoints for nested atomicity.
     /// </summary>
     /// <remarks>
-    /// For nested calls, a Savepoint is created to allow partial rollback of only the nested operation.
+    /// <para>
+    /// For nested calls within the same <see cref="DbContext"/> instance, a Savepoint is created to allow partial rollback 
+    /// of only the nested operation. Note that a failed nested operation (savepoint rollback) does NOT automatically 
+    /// roll back the outer transaction, allowing the caller to catch the exception and continue.
+    /// </para>
+    /// <para>
     /// If an existing transaction is present, its isolation level is checked against the requested level. 
     /// If the requested level is stricter than the current one, an <see cref="InvalidOperationException"/> is thrown.
+    /// </para>
+    /// <para>
+    /// <b>Critical:</b> This method does NOT support atomicity across different <see cref="DbContext"/> instances. 
+    /// If a nested call uses a different context instance, an <see cref="InvalidOperationException"/> is thrown 
+    /// to prevent silent atomicity loss.
+    /// </para>
+    /// <para>
+    /// <b>Note:</b> <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> is automatically called before committing 
+    /// or returning from a nested call if changes are detected in the <see cref="ChangeTracker"/>. 
+    /// Failed entities are NOT automatically detached from the tracker after a savepoint rollback; 
+    /// manual detaching may be required to prevent subsequent SaveChanges failures.
+    /// </para>
     /// </remarks>
     // ReSharper disable once CognitiveComplexity
     public static Task<TResult> ExecuteInTransactionAsync<TState, TResult>(
@@ -50,6 +68,15 @@ public static class DbContextExecuteInTransactionExtensions
 
                 var isNested = context.Database.CurrentTransaction != null;
 
+                // Check for multi-context atomicity loss
+                if (!isNested && CurrentLogicalTransaction.Value != null)
+                {
+                    throw new InvalidOperationException(
+                        "Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance. " +
+                        "Atomicity across multiple DbContext instances is not supported with IDbContextTransaction. " +
+                        "Use the same DbContext instance or switch to TransactionScope if cross-context atomicity is required.");
+                }
+
                 try
                 {
                     if (isNested)
@@ -59,7 +86,8 @@ public static class DbContextExecuteInTransactionExtensions
                         var currentLevel = currentTransaction.GetDbTransaction().IsolationLevel;
                         var requestedLevel = MapIsolationLevel(options.IsolationLevel);
 
-                        if (requestedLevel != IsolationLevel.Unspecified && currentLevel != IsolationLevel.Unspecified && currentLevel < requestedLevel)
+                        if (requestedLevel != IsolationLevel.Unspecified && currentLevel != IsolationLevel.Unspecified &&
+                            GetIsolationLevelPriority(currentLevel) < GetIsolationLevelPriority(requestedLevel))
                         {
                             throw new InvalidOperationException(
                                 $"Can't participate in existing transaction with isolation level '{currentLevel}'. Requested level '{requestedLevel}' is stricter.");
@@ -101,19 +129,27 @@ public static class DbContextExecuteInTransactionExtensions
                     var dataIsolationLevel = MapIsolationLevel(options.IsolationLevel);
 
                     await using var transaction = await context.Database.BeginTransactionAsync(dataIsolationLevel, ct).ConfigureAwait(false);
+                    CurrentLogicalTransaction.Value = transaction;
 
-                    st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
-
-                    if (context.ChangeTracker.HasChanges())
+                    try
                     {
-                        // In most cases, SaveChangesAsync should be called inside the operation delegate.
-                        // However, we perform a final check to ensure all changes are flushed before commit.
-                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                        st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
+
+                        if (context.ChangeTracker.HasChanges())
+                        {
+                            // In most cases, SaveChangesAsync should be called inside the operation delegate.
+                            // However, we perform a final check to ensure all changes are flushed before commit.
+                            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                        }
+
+                        await transaction.CommitAsync(ct).ConfigureAwait(false);
+
+                        return st.Result;
                     }
-
-                    await transaction.CommitAsync(ct).ConfigureAwait(false);
-
-                    return st.Result;
+                    finally
+                    {
+                        CurrentLogicalTransaction.Value = null;
+                    }
                 }
                 catch (Exception ex)
                     when (ExecutionStrategy.CallOnWrappedException(ex, exHandle => (exHandle as NpgsqlException)?.IsTransient == true || exHandle is TimeoutException))
@@ -134,6 +170,23 @@ public static class DbContextExecuteInTransactionExtensions
             async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
             cancellationToken
         );
+    }
+
+    private static readonly AsyncLocal<IDbContextTransaction?> CurrentLogicalTransaction = new();
+
+    private static int GetIsolationLevelPriority(IsolationLevel level)
+    {
+        return level switch
+        {
+            IsolationLevel.Unspecified => 0,
+            IsolationLevel.Chaos => 0,
+            IsolationLevel.ReadUncommitted => 1,
+            IsolationLevel.ReadCommitted => 2,
+            IsolationLevel.RepeatableRead => 3,
+            IsolationLevel.Snapshot => 4,
+            IsolationLevel.Serializable => 5,
+            _ => 2 // Default to ReadCommitted priority
+        };
     }
 
     /// <summary>

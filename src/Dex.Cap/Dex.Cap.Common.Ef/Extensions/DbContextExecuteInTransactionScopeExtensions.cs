@@ -17,7 +17,7 @@ public static class DbContextExecuteInTransactionScopeExtensions
     /// Warning: Can lead to "Ambient transaction detected" errors or unwanted promotion to distributed transactions (DTC) 
     /// when used with multiple database connections or in CQRS (Read/Write) scenarios.
     /// </summary>
-    [Obsolete("Use ExecuteInTransactionAsync instead. This method uses System.Transactions.TransactionScope which is not recommended for async/CQRS and may lead to connection leaks.")]
+    [Obsolete("Use ExecuteInTransactionAsync instead. This method uses System.Transactions.TransactionScope which is not recommended for async/CQRS and may lead to connection leaks. Note: ExecuteInTransactionAsync does not support atomicity across different DbContext instances without TransactionScope.")]
     // ReSharper disable once CognitiveComplexity
     public static Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
         this DbContext dbContext,
