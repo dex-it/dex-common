@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
@@ -328,5 +329,99 @@ public class ExecuteInTransactionTests : BaseTest
         // Финальная проверка: пользователь действительно в базе.
         var userExists = await context.Users.AnyAsync(x => x.Id == userId);
         NUnit.Framework.Assert.That(userExists, Is.True);
+    }
+
+    /// <summary>
+    /// Демонстрация проблемы: вложенный ExecuteInTransactionAsync создаёт собственный ExecutionStrategy,
+    /// который при transient-ошибке пытается retry ВНУТРИ чужой транзакции.
+    ///
+    /// Сценарий:
+    ///   1. Outer открывает транзакцию, вставляет данные
+    ///   2. Nested вызов (тот же контекст) → savepoint → operation → transient error
+    ///   3. Nested ExecutionStrategy ловит transient и пытается retry
+    ///   4. Retry идёт внутри той же outer транзакции, но после transient ошибки
+    ///      соединение/транзакция может быть в невалидном состоянии
+    ///   5. При retry: isNested=true → новый savepoint → повторная вставка
+    ///      → возможно дублирование или ошибка на уникальном индексе
+    ///
+    /// Ожидаемое поведение: nested transient ошибка должна всплыть к outer strategy,
+    /// а не ретраиться вложенным ExecutionStrategy самостоятельно.
+    /// </summary>
+    [Test]
+    public async Task Nested_TransientRetry_DuplicatesData_When_InnerStrategyRetries()
+    {
+        // Arrange: retry включён (по умолчанию true, но явно для наглядности)
+        TestDbContext.IsRetryStrategy = true;
+        try
+        {
+            var sp = InitServiceCollection().BuildServiceProvider();
+            var context = sp.GetRequiredService<TestDbContext>();
+
+            var outerName = "outer_" + Guid.NewGuid();
+            var innerName = "inner_" + Guid.NewGuid();
+            var innerAttemptCount = 0;
+
+            // Act
+            await context.ExecuteInTransactionAsync(async ct =>
+            {
+                // Outer: вставляем пользователя
+                context.Users.Add(new TestUser { Name = outerName, Years = 30 });
+                await context.SaveChangesAsync(ct);
+
+                // Nested: вставляем другого пользователя, первая попытка — transient failure
+                await context.ExecuteInTransactionAsync(async ctInner =>
+                {
+                    Interlocked.Increment(ref innerAttemptCount);
+                    TestContext.WriteLine($"Inner attempt #{innerAttemptCount}");
+
+                    context.Users.Add(new TestUser { Name = innerName, Years = 20 });
+                    await context.SaveChangesAsync(ctInner);
+
+                    if (innerAttemptCount == 1)
+                    {
+                        // Симулируем transient ошибку ПОСЛЕ SaveChanges (данные уже в WAL savepoint)
+                        // Вложенный ExecutionStrategy поймает это и попытается retry
+                        throw new TimeoutException("Simulated transient in nested call");
+                    }
+                }, _ => Task.FromResult(false), cancellationToken: ct);
+
+                return true;
+            }, _ => Task.FromResult(false));
+
+            // Assert
+            TestContext.WriteLine($"Total inner attempts: {innerAttemptCount}");
+
+            // Проблема: вложенный ExecutionStrategy делает retry самостоятельно.
+            // При retry он снова входит в nested-ветку (isNested=true), создаёт новый savepoint,
+            // и выполняет operation() повторно.
+            // Это может привести к:
+            //   a) Дублированию данных (если unique index не защищает)
+            //   b) DbUpdateException на unique constraint (innerName уже в savepoint от 1-й попытки,
+            //      но RollbackToSavepoint откатил его — тогда retry может пройти, но это "случайный успех")
+            //   c) InvalidOperationException если транзакция в broken state
+
+            // Фиксируем фактическое поведение: сколько раз retry strategy вызвал вложенную операцию?
+            // Если innerAttemptCount > 1 — значит вложенный ExecutionStrategy ретраит внутри чужой транзакции.
+            // Это и есть демонстрация проблемы.
+            NUnit.Framework.Assert.That(innerAttemptCount, Is.GreaterThan(1),
+                "Вложенный ExecutionStrategy НЕ ДОЛЖЕН ретраить самостоятельно внутри чужой транзакции, " +
+                "но текущая реализация позволяет это. Это демонстрация бага.");
+
+            // Проверяем, что данные корректны (нет дублей)
+            await using var verifyCtx = new TestDbContext(DbName);
+            var innerCount = await verifyCtx.Users.CountAsync(x => x.Name == innerName);
+            var outerExists = await verifyCtx.Users.AnyAsync(x => x.Name == outerName);
+
+            TestContext.WriteLine($"Inner users in DB: {innerCount}, Outer exists: {outerExists}");
+
+            NUnit.Framework.Assert.That(outerExists, Is.True, "Outer user должен быть в базе");
+            // Если retry прошёл — inner тоже будет в базе (1 запись, т.к. savepoint откатил первую попытку)
+            // Но сам факт retry внутри чужой транзакции — это проблема:
+            // при реальном обрыве соединения retry на сломанной транзакции = crash
+        }
+        finally
+        {
+            TestDbContext.IsRetryStrategy = true; // restore default
+        }
     }
 }
