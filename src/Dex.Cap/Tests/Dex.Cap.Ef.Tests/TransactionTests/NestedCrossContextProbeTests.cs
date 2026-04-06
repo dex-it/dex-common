@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef.Extensions;
 using Dex.Cap.Ef.Tests.Model;
@@ -68,29 +67,37 @@ public class NestedCrossContextProbeTests : BaseTest
 
         TestContext.WriteLine($"Outer in DB: {outerExists}, Inner in DB: {innerExists}");
 
-        Assert.Multiple(() =>
+        NUnit.Framework.Assert.Multiple(() =>
         {
-            Assert.That(outerExists, Is.False, "Outer должен быть откачен");
-            Assert.That(innerExists, Is.False, "Inner тоже должен был откатиться (атомарность)");
+            NUnit.Framework.Assert.That(outerExists, Is.False, "Outer должен быть откачен");
+            NUnit.Framework.Assert.That(innerExists, Is.False, "Inner тоже должен был откатиться (атомарность)");
         });
     }
 
     [Test]
-    public async Task Nested_DifferentInstance_Scoped_ResolvesToSameInstance_WithinRootSp()
+    public Task Nested_DifferentInstance_Scoped_ResolvesToSameInstance_WithinRootSp()
     {
-        // Вспомогательный тест, чтобы зафиксировать поведение DI:
-        // при BuildServiceProvider() без явного CreateScope() Scoped-сервис резолвится из root-scope
-        // и между двумя вызовами GetRequiredService вернётся ОДИН И ТОТ ЖЕ инстанс.
-        // Это объясняет, почему существующие nested-тесты проходят.
-        var sp = InitServiceCollection().BuildServiceProvider();
-        var a = sp.GetRequiredService<TestDbContext>();
-        var b = sp.GetRequiredService<TestDbContext>();
+        try
+        {
+            // Вспомогательный тест, чтобы зафиксировать поведение DI:
+            // при BuildServiceProvider() без явного CreateScope() Scoped-сервис резолвится из root-scope
+            // и между двумя вызовами GetRequiredService вернётся ОДИН И ТОТ ЖЕ инстанс.
+            // Это объясняет, почему существующие nested-тесты проходят.
+            var sp = InitServiceCollection().BuildServiceProvider();
+            var a = sp.GetRequiredService<TestDbContext>();
+            var b = sp.GetRequiredService<TestDbContext>();
 
-        Assert.That(ReferenceEquals(a, b), Is.True, "Ожидается, что в root-scope Scoped сервис — singleton de facto");
+            NUnit.Framework.Assert.That(ReferenceEquals(a, b), Is.True, "Ожидается, что в root-scope Scoped сервис — singleton de facto");
 
-        // А при явном новом scope — уже разные инстансы.
-        using var scope = sp.CreateScope();
-        var c = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-        Assert.That(ReferenceEquals(a, c), Is.False, "В новом scope должен быть новый инстанс");
+            // А при явном новом scope — уже разные инстансы.
+            using var scope = sp.CreateScope();
+            var c = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+            NUnit.Framework.Assert.That(ReferenceEquals(a, c), Is.False, "В новом scope должен быть новый инстанс");
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 }
