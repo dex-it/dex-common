@@ -196,12 +196,12 @@ public class ExecuteInTransactionTests : BaseTest
         var sp = InitServiceCollection().BuildServiceProvider();
         var dbContext = sp.GetRequiredService<TestDbContext>();
 
-        // Start outer transaction with ReadCommitted
+        // Запускаем внешнюю транзакцию с ReadCommitted
         await dbContext.ExecuteInTransactionAsync(ct =>
         {
             try
             {
-                // Try to start inner transaction with Serializable (stricter than ReadCommitted)
+                // Пытаемся запустить внутреннюю транзакцию с Serializable (строже, чем ReadCommitted)
                 var options = new EfTransactionOptions
                 {
                     IsolationLevel = System.Transactions.IsolationLevel.Serializable
@@ -238,11 +238,11 @@ public class ExecuteInTransactionTests : BaseTest
 
         await context.ExecuteInTransactionAsync(async ct =>
         {
-            // Outer operation: add user
+            // Внешняя операция: добавляем пользователя
             context.Users.Add(new TestUser { Id = outerId, Name = "OuterUser", Years = 40 });
             await context.SaveChangesAsync(ct);
 
-            // Nested operation that FAILS
+            // Вложенная операция, которая завершается ОШИБКОЙ
             try
             {
                 await context.ExecuteInTransactionAsync(async ctInner =>
@@ -255,11 +255,11 @@ public class ExecuteInTransactionTests : BaseTest
             }
             catch (Exception ex) when (ex.Message == "Nested failure!")
             {
-                // We caught the nested exception. 
-                // Because of Savepoints, only 'innerId' user should be rolled back on the DB side.
-                // IMPORTANT: EF Core doesn't automatically clear entities from ChangeTracker on Savepoint rollback.
-                // But since we threw an exception, the next SaveChangesAsync in the outer block 
-                // would fail if we didn't remove the failed entity from ChangeTracker.
+                // Поймали вложенное исключение. 
+                // Благодаря Savepoints, только пользователь с 'innerId' должен быть откачен на стороне БД.
+                // ВАЖНО: EF Core не очищает сущности из ChangeTracker автоматически при откате Savepoint.
+                // Но так как мы выбросили исключение, следующий SaveChangesAsync во внешнем блоке 
+                // упал бы, если бы мы не удалили неудавшуюся сущность из ChangeTracker.
                 var entry = context.ChangeTracker.Entries<TestUser>().FirstOrDefault(x => x.Entity.Id == innerId);
                 if (entry != null)
                 {
@@ -267,14 +267,14 @@ public class ExecuteInTransactionTests : BaseTest
                 }
             }
 
-            // Verify: outer user is still present, inner is NOT.
+            // Проверка: внешний пользователь всё ещё на месте, внутренний — НЕТ.
             NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == outerId, ct), Is.True);
             NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == innerId, ct), Is.False);
 
             return true;
         }, _ => Task.FromResult(true));
 
-        // Final check after commit
+        // Финальная проверка после коммита
         NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == outerId), Is.True);
         NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == innerId), Is.False);
     }

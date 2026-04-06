@@ -14,13 +14,13 @@ public class CqrsTransactionTests : BaseTest
     [Test]
     public async Task Cqrs_CrossContext_Isolation_And_NoDtc_Promotion_Test()
     {
-        // This test verifies two key aspects of our explicit transaction implementation:
-        // 1. Isolation: One DbContext instance (replica) does NOT see uncommitted changes from another 
-        //    DbContext instance (master) even when running within the same logical block.
-        // 2. No DTC Promotion: Working with multiple DbContext instances (and different connections) 
-        //    does NOT trigger "Ambient transaction detected" errors or unwanted DTC escalation,
-        //    because we use IDbContextTransaction instead of TransactionScope.
-        // 3. Data Availability: The replica instance sees the master's data immediately after the master's commit.
+        // Этот тест проверяет два ключевых аспекта нашей реализации явных транзакций:
+        // 1. Изоляция: Один инстанс DbContext (реплика) НЕ видит незафиксированные изменения из другого 
+        //    инстанса DbContext (мастер), даже если они работают в рамках одного логического блока.
+        // 2. Отсутствие эскалации DTC: Работа с несколькими инстансами DbContext (и разными соединениями) 
+        //    НЕ вызывает ошибок "Ambient transaction detected" или нежелательной эскалации до DTC,
+        //    так как мы используем IDbContextTransaction вместо TransactionScope.
+        // 3. Доступность данных: Реплика видит данные мастера сразу после коммита мастера.
 
         var sp = InitServiceCollection().BuildServiceProvider();
         var masterContext = sp.GetRequiredService<TestDbContext>();
@@ -55,9 +55,9 @@ public class CqrsTransactionTests : BaseTest
     [Test]
     public async Task Cqrs_MasterWrite_ReplicaRead_DirectQuery_IsSupported_Test()
     {
-        // This test explicitly confirms that direct queries to a second DbContext (e.g. read replica) 
-        // are perfectly fine within a Master's ExecuteInTransactionAsync block, 
-        // as they don't trigger the multi-context protection logic.
+        // Этот тест явно подтверждает, что прямые запросы ко второму DbContext (например, read-реплике) 
+        // отлично работают внутри блока ExecuteInTransactionAsync мастера, 
+        // так как они не триггерят логику защиты от многоконтекстных транзакций.
 
         var sp = InitServiceCollection().BuildServiceProvider();
         var masterContext = sp.GetRequiredService<TestDbContext>();
@@ -68,7 +68,7 @@ public class CqrsTransactionTests : BaseTest
             masterContext.Users.Add(new TestUser { Name = "MasterEntry" });
             await masterContext.SaveChangesAsync(ct);
 
-            // Direct query to replica is ALLOWED and works.
+            // Прямой запрос к реплике РАЗРЕШЕН и работает.
             var replicaData = await replicaContext.Users.AnyAsync(ct);
             NUnit.Framework.Assert.That(replicaData, Is.Not.Null);
 
@@ -79,8 +79,9 @@ public class CqrsTransactionTests : BaseTest
     [Test]
     public async Task Cqrs_MasterWrite_ReplicaRead_ExecuteInTransaction_On_Replica_IsForbidden_Test()
     {
-        // This test proves that while direct reads from a replica are allowed (see Cqrs_CrossContext_Isolation_And_NoDtc_Promotion_Test),
-        // wrapping the replica call in a nested ExecuteInTransactionAsync is FORBIDDEN to prevent silent atomicity loss.
+        // Этот тест доказывает, что в то время как прямые чтения из реплики разрешены (см. тест выше),
+        // обертывание работы с репликой во вложенный ExecuteInTransactionAsync ЗАПРЕЩЕНО 
+        // для предотвращения скрытой потери атомарности.
 
         var sp = InitServiceCollection().BuildServiceProvider();
         var masterContext = sp.GetRequiredService<TestDbContext>();
@@ -91,7 +92,7 @@ public class CqrsTransactionTests : BaseTest
             masterContext.Users.Add(new TestUser { Name = "MasterUser" });
             await masterContext.SaveChangesAsync(ct);
 
-            // Attempting to wrap replica work in ExecuteInTransactionAsync MUST throw.
+            // Попытка обернуть работу с репликой в ExecuteInTransactionAsync ДОЛЖНА выбросить исключение.
             var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
                 await replicaContext.ExecuteInTransactionAsync(async ctReplica => { _ = await replicaContext.Users.AnyAsync(ctReplica); }, _ => Task.FromResult(true),
