@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests.TransactionTests;
+namespace Dex.Cap.Ef.Tests.RetryStrategiesTests;
 
 public class RetryStrategiesTests : BaseTest
 {
