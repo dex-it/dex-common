@@ -226,58 +226,6 @@ public class ExecuteInTransactionTests : BaseTest
     }
 
     [Test]
-    public async Task ExecuteInTransactionAsync_Should_Rollback_To_Savepoint_On_Nested_Failure()
-    {
-        var sp = InitServiceCollection().BuildServiceProvider();
-        var context = sp.GetRequiredService<TestDbContext>();
-
-        var outerId = Guid.NewGuid();
-        var innerId = Guid.NewGuid();
-
-        await context.ExecuteInTransactionAsync(async ct =>
-        {
-            // Внешняя операция: добавляем пользователя
-            context.Users.Add(new TestUser { Id = outerId, Name = "OuterUser", Years = 40 });
-            await context.SaveChangesAsync(ct);
-
-            // Вложенная операция, которая завершается ОШИБКОЙ
-            try
-            {
-                await context.ExecuteInTransactionAsync(async ctInner =>
-                {
-                    context.Users.Add(new TestUser { Id = innerId, Name = "InnerUser (SHOULD BE ROLLED BACK)", Years = 10 });
-                    await context.SaveChangesAsync(ctInner);
-
-                    throw new Exception("Nested failure!");
-                }, _ => Task.FromResult(false), cancellationToken: ct);
-            }
-            catch (Exception ex) when (ex.Message == "Nested failure!")
-            {
-                // Поймали вложенное исключение. 
-                // Благодаря Savepoints, только пользователь с 'innerId' должен быть откачен на стороне БД.
-                // ВАЖНО: EF Core не очищает сущности из ChangeTracker автоматически при откате Savepoint.
-                // Но так как мы выбросили исключение, следующий SaveChangesAsync во внешнем блоке 
-                // упал бы, если бы мы не удалили неудавшуюся сущность из ChangeTracker.
-                var entry = context.ChangeTracker.Entries<TestUser>().FirstOrDefault(x => x.Entity.Id == innerId);
-                if (entry != null)
-                {
-                    entry.State = EntityState.Detached;
-                }
-            }
-
-            // Проверка: внешний пользователь всё ещё на месте, внутренний — НЕТ.
-            NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == outerId, ct), Is.True);
-            NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == innerId, ct), Is.False);
-
-            return true;
-        }, _ => Task.FromResult(false));
-
-        // Финальная проверка после коммита
-        NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == outerId), Is.True);
-        NUnit.Framework.Assert.That(await context.Users.AnyAsync(x => x.Id == innerId), Is.False);
-    }
-
-    [Test]
     public async Task ExecuteInTransactionAsync_Should_Use_VerifySucceeded_To_Avoid_Duplicates_On_Retry()
     {
         TestDbContext.IsRetryStrategy = true;
@@ -666,5 +614,189 @@ public class ExecuteInTransactionTests : BaseTest
 
         // Проверяем итоговое состояние в базе
         NUnit.Framework.Assert.That(await context.Users.CountAsync(x => x.Id == id1 || x.Id == id2), Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task Nested_Failure_Should_Kill_Entire_Transaction_And_Retry_From_Root()
+    {
+        // Сценарий:
+        // 1. Корень вставляет User1.
+        // 2. Вложенный вызов вставляет User2, но потом кидает Transient Exception.
+        // 3. Ожидаем: Весь блок перезапускается. User1 НЕ должен появиться в базе дважды (так как был откат).
+        // 4. На второй попытке всё проходит успешно.
+
+        TestDbContext.IsRetryStrategy = true;
+        try
+        {
+            var sp = InitServiceCollection().BuildServiceProvider();
+            var context = sp.GetRequiredService<TestDbContext>();
+
+            var rootAttempt = 0;
+            var nestedAttempt = 0;
+            var userId1 = Guid.NewGuid();
+            var userId2 = Guid.NewGuid();
+
+            await context.ExecuteInTransactionAsync(
+                async ct =>
+                {
+                    rootAttempt++;
+                    TestContext.WriteLine($"Root attempt #{rootAttempt}");
+
+                    // Вставляем первого пользователя
+                    context.Users.Add(new TestUser { Id = userId1, Name = "RootUser", Years = 10 });
+                    await context.SaveChangesAsync(ct);
+
+                    await context.ExecuteInTransactionAsync(async ctInner =>
+                    {
+                        nestedAttempt++;
+                        TestContext.WriteLine($"Nested attempt #{nestedAttempt}");
+
+                        context.Users.Add(new TestUser { Id = userId2, Name = "NestedUser", Years = 20 });
+                        await context.SaveChangesAsync(ctInner);
+
+                        if (nestedAttempt == 1)
+                        {
+                            TestContext.WriteLine("Simulating nested failure...");
+                            throw new TimeoutException("Simulated nested failure");
+                        }
+                    }, _ => Task.FromResult(false), cancellationToken: ct);
+
+                    return true;
+                },
+                _ => Task.FromResult(false),
+                options: new EfTransactionOptions { ClearChangeTrackerOnRetry = true });
+
+            Assert.AreEqual(2, rootAttempt);
+            Assert.AreEqual(2, nestedAttempt);
+
+            // Проверяем что в базе ровно по одному пользователю (откат сработал)
+            await using var verifyCtx = new TestDbContext(DbName);
+            Assert.IsTrue(await verifyCtx.Users.AnyAsync(x => x.Id == userId1));
+            Assert.IsTrue(await verifyCtx.Users.AnyAsync(x => x.Id == userId2));
+            Assert.AreEqual(2, await verifyCtx.Users.CountAsync(x => x.Id == userId1 || x.Id == userId2));
+        }
+        finally
+        {
+            TestDbContext.IsRetryStrategy = false;
+        }
+    }
+
+    [Test]
+    public async Task Nested_DeepStack_Should_AllJoin_And_Rollback_On_Failure()
+    {
+        var sp = InitServiceCollection().BuildServiceProvider();
+        var context = sp.GetRequiredService<TestDbContext>();
+        var userId = Guid.NewGuid();
+
+        try
+        {
+            await context.ExecuteInTransactionAsync(async ct1 =>
+            {
+                await context.Users.AddAsync(new TestUser { Id = userId, Name = "Level1" }, ct1);
+
+                await context.ExecuteInTransactionAsync(async ct2 =>
+                {
+                    // No changes here, just nesting
+                    await context.ExecuteInTransactionAsync(_ =>
+                    {
+                        try
+                        {
+                            // Failure at the deepest level
+                            throw new InvalidOperationException("Deep failure");
+                        }
+                        catch (Exception exception)
+                        {
+                            return Task.FromException(exception);
+                        }
+                    }, _ => Task.FromResult(false), cancellationToken: ct2);
+                    return true;
+                }, _ => Task.FromResult(false), cancellationToken: ct1);
+                return true;
+            }, _ => Task.FromResult(false));
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "Deep failure")
+        {
+            // Expected
+        }
+
+        // Verify: Level1 user should NOT be in DB
+        await using var verifyCtx = new TestDbContext(DbName);
+        Assert.IsFalse(await verifyCtx.Users.AnyAsync(x => x.Id == userId));
+    }
+
+    [Test]
+    public async Task Nested_ManualSaveChangesAsync_DoesNotCommit_PhysicalTransaction()
+    {
+        var sp = InitServiceCollection().BuildServiceProvider();
+        var context = sp.GetRequiredService<TestDbContext>();
+        var userId = Guid.NewGuid();
+
+        try
+        {
+            await context.ExecuteInTransactionAsync(async ct =>
+            {
+                // Nested call with manual SaveChanges
+                await context.ExecuteInTransactionAsync(async ctInner =>
+                {
+                    await context.Users.AddAsync(new TestUser { Id = userId, Name = "NestedUser" }, ctInner);
+                    await context.SaveChangesAsync(ctInner); // This flushes to DB but shouldn't COMMIT
+                }, _ => Task.FromResult(false), cancellationToken: ct);
+
+                // Root failure after nested "save"
+                throw new Exception("Root failure");
+            }, _ => Task.FromResult(false));
+        }
+        catch (Exception ex) when (ex.Message == "Root failure")
+        {
+            // Expected
+        }
+
+        // Verify: NestedUser should NOT be in DB because root transaction rolled back
+        await using var verifyCtx = new TestDbContext(DbName);
+        Assert.IsFalse(await verifyCtx.Users.AnyAsync(x => x.Id == userId));
+    }
+
+    [Test]
+    public async Task Retry_Should_Provide_Fresh_ChangeTracker_When_Cleared()
+    {
+        TestDbContext.IsRetryStrategy = true;
+        try
+        {
+            var sp = InitServiceCollection().BuildServiceProvider();
+            var context = sp.GetRequiredService<TestDbContext>();
+
+            var attempt = 0;
+            var userId = Guid.NewGuid();
+
+            await context.ExecuteInTransactionAsync(async ct =>
+            {
+                attempt++;
+
+                if (attempt > 1)
+                {
+                    // On second attempt, ChangeTracker should be empty if ClearChangeTrackerOnRetry is true
+                    Assert.IsFalse(context.ChangeTracker.Entries<TestUser>().Any(), "ChangeTracker must be cleared on retry");
+                }
+
+                // Track an entity
+                context.Users.Add(new TestUser { Id = userId, Name = "RetryUser" });
+
+                if (attempt == 1)
+                {
+                    // Verify entity is tracked
+                    Assert.IsTrue(context.ChangeTracker.Entries<TestUser>().Any(e => e.Entity.Id == userId));
+                    throw new TimeoutException("Simulated retry");
+                }
+
+                // Re-add and succeed (already added above)
+                await context.SaveChangesAsync(ct);
+            }, _ => Task.FromResult(false), new EfTransactionOptions { ClearChangeTrackerOnRetry = true });
+
+            Assert.AreEqual(2, attempt);
+        }
+        finally
+        {
+            TestDbContext.IsRetryStrategy = false;
+        }
     }
 }

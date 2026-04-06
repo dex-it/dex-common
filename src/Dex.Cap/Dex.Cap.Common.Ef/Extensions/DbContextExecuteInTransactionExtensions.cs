@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef.Exceptions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 
@@ -16,13 +15,13 @@ public static class DbContextExecuteInTransactionExtensions
     /// Executes the specified operation within a transaction using the DbContext's execution strategy.
     /// This method uses IDbContextTransaction (explicit transaction) instead of TransactionScope.
     /// Recommended for CQRS (Read/Write) and multi-database scenarios to avoid "Ambient transaction detected" errors and DTC escalation.
-    /// Supports nested calls (reentrancy) by participating in the existing transaction using Savepoints for nested atomicity.
+    /// Supports nested calls (reentrancy) by participating in the existing transaction.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// For nested calls within the same <see cref="DbContext"/> instance, a Savepoint is created to allow partial rollback 
-    /// of only the nested operation. Note that a failed nested operation (savepoint rollback) does NOT automatically 
-    /// roll back the outer transaction, allowing the caller to catch the exception and continue.
+    /// For nested calls within the same <see cref="DbContext"/> instance, the operation participates in the existing transaction.
+    /// This implementation follows the "All-or-Nothing" principle: any exception in a nested call will likely 
+    /// poison the transaction (especially in PostgreSQL) and require a full rollback and retry of the root operation.
     /// </para>
     /// <para>
     /// If an existing transaction is present, its isolation level is checked against the requested level. 
@@ -35,31 +34,19 @@ public static class DbContextExecuteInTransactionExtensions
     /// </para>
     /// <para>
     /// <b>Retry Strategy:</b> The outer <see cref="IExecutionStrategy"/> only manages the primary <see cref="DbContext"/>. 
-    /// If other contexts are used within the operation delegate, ensure their transient failures are handled 
-    /// appropriately (e.g., by bubbling up to the outer strategy) to avoid conflicting or redundant retry logic.
-    /// </para>
-    /// <para>
-    /// <b>Warning:</b> <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> is automatically called before committing 
-    /// or returning from a nested call if changes are detected in the <see cref="ChangeTracker"/>. 
-    /// However, failed entities are NOT automatically detached from the tracker after a savepoint rollback. 
-    /// You MUST manually detach them or clear the tracker if you intend to continue the outer transaction, 
-    /// otherwise subsequent <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> calls will fail.
+    /// If a failure occurs, the strategy will retry the ENTIRE root block from the beginning. 
     /// </para>
     /// </remarks>
     /// <example>
     /// <code>
     /// await context.ExecuteInTransactionAsync(async ct => {
-    ///     try {
-    ///         await context.ExecuteInTransactionAsync(async ctInner => {
-    ///             context.Users.Add(new User { Name = "Bad" });
-    ///             await context.SaveChangesAsync(ctInner);
-    ///             throw new Exception("Nested fail");
-    ///         }, ct);
-    ///     } catch (Exception) {
-    ///         // IMPORTANT: Manual detach required!
-    ///         var entry = context.ChangeTracker.Entries().FirstOrDefault(x => x.State == EntityState.Added);
-    ///         if (entry != null) entry.State = EntityState.Detached;
-    ///     }
+    ///     await context.Users.AddAsync(new User { Name = "User1" }, ct);
+    ///     
+    ///     // Nested call joins the same transaction
+    ///     await context.ExecuteInTransactionAsync(async ctInner => {
+    ///         await context.Orders.AddAsync(new Order { Total = 100 }, ctInner);
+    ///     }, ct);
+    ///     
     ///     return true;
     /// });
     /// </code>
@@ -95,6 +82,7 @@ public static class DbContextExecuteInTransactionExtensions
         );
     }
 
+    // ReSharper disable once CognitiveComplexity
     private static async Task<TResult> ExecuteInTransactionInternalAsync<TState, TResult>(
         DbContext context,
         TState state,
@@ -103,7 +91,9 @@ public static class DbContextExecuteInTransactionExtensions
         bool isNested,
         CancellationToken ct)
     {
-        if (context.ChangeTracker.HasChanges())
+        // Check for unsaved changes ONLY at the root level before starting a new transaction.
+        // Nested calls are expected to have changes from the outer scope.
+        if (!isNested && context.ChangeTracker.HasChanges())
             throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
 
         // Set command timeout if specified
@@ -125,7 +115,6 @@ public static class DbContextExecuteInTransactionExtensions
         {
             if (isNested)
             {
-                var savepointName = $"sp_{Guid.NewGuid():N}";
                 var currentTransaction = context.Database.CurrentTransaction!;
                 var currentLevel = currentTransaction.GetDbTransaction().IsolationLevel;
                 var requestedLevel = MapIsolationLevel(options.IsolationLevel);
@@ -137,37 +126,16 @@ public static class DbContextExecuteInTransactionExtensions
                         $"Can't participate in existing transaction with isolation level '{currentLevel}'. Requested level '{requestedLevel}' is stricter.");
                 }
 
-                // Create savepoint for nested atomicity
-                await currentTransaction.CreateSavepointAsync(savepointName, ct).ConfigureAwait(false);
+                // Participate in existing transaction
+                var result = await operation(state, ct).ConfigureAwait(false);
 
-                try
+                if (context.ChangeTracker.HasChanges())
                 {
-                    // Participate in existing transaction
-                    var result = await operation(state, ct).ConfigureAwait(false);
-
-                    if (context.ChangeTracker.HasChanges())
-                    {
-                        // Ensure changes are flushed before returning from nested call
-                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
-                    }
-
-                    return result;
+                    // Ensure changes are flushed before returning from nested call
+                    await context.SaveChangesAsync(ct).ConfigureAwait(false);
                 }
-                catch (Exception ex)
-                {
-                    // Rollback only this nested part
-                    try
-                    {
-                        await currentTransaction.RollbackToSavepointAsync(savepointName, ct).ConfigureAwait(false);
-                    }
-                    catch (Exception rollbackEx)
-                    {
-                        throw new AggregateException(
-                            "Nested operation failed and savepoint rollback also failed", ex, rollbackEx);
-                    }
 
-                    throw;
-                }
+                return result;
             }
 
             var dataIsolationLevel = MapIsolationLevel(options.IsolationLevel);
@@ -199,7 +167,7 @@ public static class DbContextExecuteInTransactionExtensions
             when (!isNested && ExecutionStrategy.CallOnWrappedException(ex,
                       exHandle => (exHandle as NpgsqlException)?.IsTransient == true || exHandle is TimeoutException))
         {
-            // If the strategy decides to retry, we may want to clear the change tracker to avoid conflicts
+            // If any error occurs in the root block, we clear the tracker to ensure a clean state for the next retry attempt.
             if (options.ClearChangeTrackerOnRetry)
                 context.ChangeTracker.Clear();
 
