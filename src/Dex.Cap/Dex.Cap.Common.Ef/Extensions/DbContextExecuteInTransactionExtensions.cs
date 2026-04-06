@@ -39,13 +39,31 @@ public static class DbContextExecuteInTransactionExtensions
     /// appropriately (e.g., by bubbling up to the outer strategy) to avoid conflicting or redundant retry logic.
     /// </para>
     /// <para>
-    /// <b>Note:</b> <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> is automatically called before committing 
+    /// <b>Warning:</b> <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> is automatically called before committing 
     /// or returning from a nested call if changes are detected in the <see cref="ChangeTracker"/>. 
-    /// Failed entities are NOT automatically detached from the tracker after a savepoint rollback; 
-    /// manual detaching may be required to prevent subsequent SaveChanges failures.
+    /// However, failed entities are NOT automatically detached from the tracker after a savepoint rollback. 
+    /// You MUST manually detach them or clear the tracker if you intend to continue the outer transaction, 
+    /// otherwise subsequent <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> calls will fail.
     /// </para>
     /// </remarks>
-    // ReSharper disable once CognitiveComplexity
+    /// <example>
+    /// <code>
+    /// await context.ExecuteInTransactionAsync(async ct => {
+    ///     try {
+    ///         await context.ExecuteInTransactionAsync(async ctInner => {
+    ///             context.Users.Add(new User { Name = "Bad" });
+    ///             await context.SaveChangesAsync(ctInner);
+    ///             throw new Exception("Nested fail");
+    ///         }, ct);
+    ///     } catch (Exception) {
+    ///         // IMPORTANT: Manual detach required!
+    ///         var entry = context.ChangeTracker.Entries().FirstOrDefault(x => x.State == EntityState.Added);
+    ///         if (entry != null) entry.State = EntityState.Detached;
+    ///     }
+    ///     return true;
+    /// });
+    /// </code>
+    /// </example>
     public static Task<TResult> ExecuteInTransactionAsync<TState, TResult>(
         this DbContext dbContext,
         TState state,
@@ -55,127 +73,144 @@ public static class DbContextExecuteInTransactionExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dbContext);
+        ArgumentNullException.ThrowIfNull(operation);
+
         options ??= EfTransactionOptions.Default;
+
+        // Check if we are already inside a transaction on THIS context instance.
+        // If so, we must NOT use a new ExecutionStrategy, because nested retry logic 
+        // inside an existing transaction is dangerous and can lead to data duplication.
+        if (dbContext.Database.CurrentTransaction != null)
+        {
+            return ExecuteInTransactionInternalAsync(dbContext, state, operation, options, isNested: true, cancellationToken);
+        }
 
         var executionStrategy = dbContext.Database.CreateExecutionStrategy();
 
         return executionStrategy.ExecuteAsync(
             new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
-            async (context, st, ct) =>
-            {
-                if (context.ChangeTracker.HasChanges())
-                    throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
-
-                // Set command timeout if specified
-                var oldTimeout = context.Database.GetCommandTimeout();
-                if (options.TimeoutInSeconds > 0)
-                    context.Database.SetCommandTimeout((int)options.TimeoutInSeconds);
-
-                var isNested = context.Database.CurrentTransaction != null;
-
-                // Check for multi-context atomicity loss
-                if (!isNested && CurrentLogicalTransaction.Value != null)
-                {
-                    throw new InvalidOperationException(
-                        "Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance. " +
-                        "Atomicity across multiple DbContext instances is not supported with IDbContextTransaction. " +
-                        "Use the same DbContext instance for the nested call. " +
-                        "If you only need retry logic for the second context without a transaction, use 'context.Database.CreateExecutionStrategy().ExecuteAsync()' directly.");
-                }
-
-                try
-                {
-                    if (isNested)
-                    {
-                        var savepointName = $"sp_{Guid.NewGuid():N}";
-                        var currentTransaction = context.Database.CurrentTransaction!;
-                        var currentLevel = currentTransaction.GetDbTransaction().IsolationLevel;
-                        var requestedLevel = MapIsolationLevel(options.IsolationLevel);
-
-                        if (requestedLevel != IsolationLevel.Unspecified && currentLevel != IsolationLevel.Unspecified &&
-                            GetIsolationLevelPriority(currentLevel) < GetIsolationLevelPriority(requestedLevel))
-                        {
-                            throw new InvalidOperationException(
-                                $"Can't participate in existing transaction with isolation level '{currentLevel}'. Requested level '{requestedLevel}' is stricter.");
-                        }
-
-                        // Create savepoint for nested atomicity
-                        await currentTransaction.CreateSavepointAsync(savepointName, ct).ConfigureAwait(false);
-
-                        try
-                        {
-                            // Participate in existing transaction
-                            st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
-
-                            if (context.ChangeTracker.HasChanges())
-                            {
-                                // Ensure changes are flushed before returning from nested call
-                                await context.SaveChangesAsync(ct).ConfigureAwait(false);
-                            }
-
-                            return st.Result;
-                        }
-                        catch (Exception ex)
-                        {
-                            // Rollback only this nested part
-                            try
-                            {
-                                await currentTransaction.RollbackToSavepointAsync(savepointName, ct).ConfigureAwait(false);
-                            }
-                            catch (Exception rollbackEx)
-                            {
-                                throw new AggregateException(
-                                    "Nested operation failed and savepoint rollback also failed", ex, rollbackEx);
-                            }
-
-                            throw;
-                        }
-                    }
-
-                    var dataIsolationLevel = MapIsolationLevel(options.IsolationLevel);
-
-                    await using var transaction = await context.Database.BeginTransactionAsync(dataIsolationLevel, ct).ConfigureAwait(false);
-                    CurrentLogicalTransaction.Value = transaction;
-
-                    try
-                    {
-                        st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
-
-                        if (context.ChangeTracker.HasChanges())
-                        {
-                            // In most cases, SaveChangesAsync should be called inside the operation delegate.
-                            // However, we perform a final check to ensure all changes are flushed before commit.
-                            await context.SaveChangesAsync(ct).ConfigureAwait(false);
-                        }
-
-                        await transaction.CommitAsync(ct).ConfigureAwait(false);
-
-                        return st.Result;
-                    }
-                    finally
-                    {
-                        CurrentLogicalTransaction.Value = null;
-                    }
-                }
-                catch (Exception ex)
-                    when (ExecutionStrategy.CallOnWrappedException(ex, exHandle => (exHandle as NpgsqlException)?.IsTransient == true || exHandle is TimeoutException))
-                {
-                    // If the strategy decides to retry, we may want to clear the change tracker to avoid conflicts
-                    if (options.ClearChangeTrackerOnRetry)
-                        context.ChangeTracker.Clear();
-
-                    throw;
-                }
-                finally
-                {
-                    // Restore original timeout
-                    if (options.TimeoutInSeconds > 0)
-                        context.Database.SetCommandTimeout(oldTimeout);
-                }
-            },
+            (context, st, ct) => ExecuteInTransactionInternalAsync(context, st.State, st.Operation, options, isNested: false, ct),
             async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
             cancellationToken
         );
+    }
+
+    private static async Task<TResult> ExecuteInTransactionInternalAsync<TState, TResult>(
+        DbContext context,
+        TState state,
+        Func<TState, CancellationToken, Task<TResult>> operation,
+        IEfTransactionOptions options,
+        bool isNested,
+        CancellationToken ct)
+    {
+        if (context.ChangeTracker.HasChanges())
+            throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
+
+        // Set command timeout if specified
+        var oldTimeout = context.Database.GetCommandTimeout();
+        if (options.TimeoutInSeconds > 0)
+            context.Database.SetCommandTimeout((int)options.TimeoutInSeconds);
+
+        // Check for multi-context atomicity loss
+        if (!isNested && CurrentLogicalTransaction.Value != null)
+        {
+            throw new InvalidOperationException(
+                "Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance. " +
+                "Atomicity across multiple DbContext instances is not supported with IDbContextTransaction. " +
+                "Use the same DbContext instance for the nested call. " +
+                "If you only need retry logic for the second context without a transaction, use 'context.Database.CreateExecutionStrategy().ExecuteAsync()' directly.");
+        }
+
+        try
+        {
+            if (isNested)
+            {
+                var savepointName = $"sp_{Guid.NewGuid():N}";
+                var currentTransaction = context.Database.CurrentTransaction!;
+                var currentLevel = currentTransaction.GetDbTransaction().IsolationLevel;
+                var requestedLevel = MapIsolationLevel(options.IsolationLevel);
+
+                if (requestedLevel != IsolationLevel.Unspecified && currentLevel != IsolationLevel.Unspecified &&
+                    GetIsolationLevelPriority(currentLevel) < GetIsolationLevelPriority(requestedLevel))
+                {
+                    throw new InvalidOperationException(
+                        $"Can't participate in existing transaction with isolation level '{currentLevel}'. Requested level '{requestedLevel}' is stricter.");
+                }
+
+                // Create savepoint for nested atomicity
+                await currentTransaction.CreateSavepointAsync(savepointName, ct).ConfigureAwait(false);
+
+                try
+                {
+                    // Participate in existing transaction
+                    var result = await operation(state, ct).ConfigureAwait(false);
+
+                    if (context.ChangeTracker.HasChanges())
+                    {
+                        // Ensure changes are flushed before returning from nested call
+                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    // Rollback only this nested part
+                    try
+                    {
+                        await currentTransaction.RollbackToSavepointAsync(savepointName, ct).ConfigureAwait(false);
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        throw new AggregateException(
+                            "Nested operation failed and savepoint rollback also failed", ex, rollbackEx);
+                    }
+
+                    throw;
+                }
+            }
+
+            var dataIsolationLevel = MapIsolationLevel(options.IsolationLevel);
+
+            await using var transaction = await context.Database.BeginTransactionAsync(dataIsolationLevel, ct).ConfigureAwait(false);
+            CurrentLogicalTransaction.Value = transaction;
+
+            try
+            {
+                var result = await operation(state, ct).ConfigureAwait(false);
+
+                if (context.ChangeTracker.HasChanges())
+                {
+                    // In most cases, SaveChangesAsync should be called inside the operation delegate.
+                    // However, we perform a final check to ensure all changes are flushed before commit.
+                    await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                }
+
+                await transaction.CommitAsync(ct).ConfigureAwait(false);
+
+                return result;
+            }
+            finally
+            {
+                CurrentLogicalTransaction.Value = null;
+            }
+        }
+        catch (Exception ex)
+            when (!isNested && ExecutionStrategy.CallOnWrappedException(ex,
+                      exHandle => (exHandle as NpgsqlException)?.IsTransient == true || exHandle is TimeoutException))
+        {
+            // If the strategy decides to retry, we may want to clear the change tracker to avoid conflicts
+            if (options.ClearChangeTrackerOnRetry)
+                context.ChangeTracker.Clear();
+
+            throw;
+        }
+        finally
+        {
+            // Restore original timeout
+            if (options.TimeoutInSeconds > 0)
+                context.Database.SetCommandTimeout(oldTimeout);
+        }
     }
 
     private static readonly AsyncLocal<IDbContextTransaction?> CurrentLogicalTransaction = new();

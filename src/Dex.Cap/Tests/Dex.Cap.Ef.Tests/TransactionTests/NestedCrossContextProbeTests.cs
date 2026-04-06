@@ -69,29 +69,82 @@ public class NestedCrossContextProbeTests : BaseTest
     }
 
     [Test]
-    public Task Nested_DifferentInstance_Scoped_ResolvesToSameInstance_WithinRootSp()
+    public async Task Nested_DifferentInstance_Scoped_ResolvesToSameInstance_WithinRootSp_Test()
     {
+        // Вспомогательный тест, чтобы зафиксировать поведение DI:
+        // при BuildServiceProvider() без явного CreateScope() Scoped-сервис резолвится из root-scope
+        // и между двумя вызовами GetRequiredService вернётся ОДИН И ТОТ ЖЕ инстанс.
+        // Это объясняет, почему существующие nested-тесты проходят.
+        var sp = InitServiceCollection().BuildServiceProvider();
+        var a = sp.GetRequiredService<TestDbContext>();
+        var b = sp.GetRequiredService<TestDbContext>();
+
+        NUnit.Framework.Assert.That(ReferenceEquals(a, b), Is.True, "Ожидается, что в root-scope Scoped сервис — singleton de facto");
+
+        // А при явном новом scope — уже разные инстансы.
+        using var scope = sp.CreateScope();
+        var c = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+        NUnit.Framework.Assert.That(ReferenceEquals(a, c), Is.False, "В новом scope должен быть новый инстанс");
+
+        // Теперь проверим, что вложенный вызов через тот же инстанс РАБОТАЕТ
+        await a.ExecuteInTransactionAsync(async ct =>
+        {
+            await b.ExecuteInTransactionAsync(async _ => { await Task.CompletedTask; }, _ => Task.FromResult(true), cancellationToken: ct);
+            return true;
+        }, _ => Task.FromResult(true));
+    }
+
+    [Test]
+    public async Task Nested_TransientRetry_NoDuplicates_When_InnerStrategyIsBypassed_Test()
+    {
+        // Тест для проверки БЛОКЕРА: транзиентная ошибка во вложенном вызове НЕ должна 
+        // приводить к повторным попыткам внутри вложенного вызова. 
+        // Все повторы должны идти через корневую стратегию.
+
+        var outerAttemptCount = 0;
+        var innerAttemptCount = 0;
+        var isInnerFailed = false;
+
+        // ВАЖНО: Включаем стратегию ретраев ДО создания контекста
+        TestDbContext.IsRetryStrategy = true;
         try
         {
-            // Вспомогательный тест, чтобы зафиксировать поведение DI:
-            // при BuildServiceProvider() без явного CreateScope() Scoped-сервис резолвится из root-scope
-            // и между двумя вызовами GetRequiredService вернётся ОДИН И ТОТ ЖЕ инстанс.
-            // Это объясняет, почему существующие nested-тесты проходят.
             var sp = InitServiceCollection().BuildServiceProvider();
-            var a = sp.GetRequiredService<TestDbContext>();
-            var b = sp.GetRequiredService<TestDbContext>();
+            var context = sp.GetRequiredService<TestDbContext>();
 
-            NUnit.Framework.Assert.That(ReferenceEquals(a, b), Is.True, "Ожидается, что в root-scope Scoped сервис — singleton de facto");
+            await context.ExecuteInTransactionAsync(async ct =>
+            {
+                outerAttemptCount++;
+                context.Users.Add(new TestUser { Name = "Outer_" + outerAttemptCount });
+                await context.SaveChangesAsync(ct);
 
-            // А при явном новом scope — уже разные инстансы.
-            using var scope = sp.CreateScope();
-            var c = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-            NUnit.Framework.Assert.That(ReferenceEquals(a, c), Is.False, "В новом scope должен быть новый инстанс");
-            return Task.CompletedTask;
+                await context.ExecuteInTransactionAsync(async ctInner =>
+                {
+                    innerAttemptCount++;
+
+                    if (!isInnerFailed)
+                    {
+                        isInnerFailed = true;
+                        // Симулируем транзиентную ошибку во вложенном вызове
+                        throw new TimeoutException("Nested transient error");
+                    }
+
+                    context.Users.Add(new TestUser { Name = "Inner_" + innerAttemptCount });
+                    await context.SaveChangesAsync(ctInner);
+                }, _ => Task.FromResult(false), cancellationToken: ct);
+
+                return true;
+            }, _ => Task.FromResult(false));
+
+            // Проверяем:
+            // 1. Корневая стратегия сделала 2 попытки (одна упала, вторая прошла).
+            NUnit.Framework.Assert.That(outerAttemptCount, Is.EqualTo(2), "Outer strategy must retry the whole block");
+            // 2. Вложенная стратегия НЕ должна была делать ретрай сама. 
+            NUnit.Framework.Assert.That(innerAttemptCount, Is.EqualTo(2), "Inner strategy must NOT retry independently");
         }
-        catch (Exception exception)
+        finally
         {
-            return Task.FromException(exception);
+            TestDbContext.IsRetryStrategy = false;
         }
     }
 }

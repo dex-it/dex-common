@@ -44,7 +44,7 @@ public class CqrsTransactionTests : BaseTest
             NUnit.Framework.Assert.That(replicaUsersBeforeCommit, Is.Empty, "Replica must not see uncommitted master data.");
 
             return true;
-        }, _ => Task.FromResult(true));
+        }, _ => Task.FromResult(false));
 
         // Проверка после коммита
         var replicaUsersAfterCommit = await replicaContext.Users.Where(x => x.Id == userId).ToArrayAsync();
@@ -73,7 +73,7 @@ public class CqrsTransactionTests : BaseTest
             NUnit.Framework.Assert.That(replicaData, Is.Not.Null);
 
             return true;
-        }, _ => Task.FromResult(true));
+        }, _ => Task.FromResult(false));
     }
 
     [Test]
@@ -95,7 +95,7 @@ public class CqrsTransactionTests : BaseTest
             // Попытка обернуть работу с репликой в ExecuteInTransactionAsync ДОЛЖНА выбросить исключение.
             var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                await replicaContext.ExecuteInTransactionAsync(async ctReplica => { _ = await replicaContext.Users.AnyAsync(ctReplica); }, _ => Task.FromResult(true),
+                await replicaContext.ExecuteInTransactionAsync(async ctReplica => { _ = await replicaContext.Users.AnyAsync(ctReplica); }, _ => Task.FromResult(false),
                     cancellationToken: ct);
             });
 
@@ -103,7 +103,7 @@ public class CqrsTransactionTests : BaseTest
             NUnit.Framework.Assert.That(ex.Message, Does.Contain("If you only need retry logic for the second context without a transaction"));
 
             return true;
-        }, _ => Task.FromResult(true));
+        }, _ => Task.FromResult(false));
     }
 
     [Test]
@@ -129,13 +129,13 @@ public class CqrsTransactionTests : BaseTest
                 context.Users.Add(new TestUser { Id = id2, Name = "Inner", Years = 20 });
                 await context.SaveChangesAsync(ctInner);
                 return true;
-            }, _ => Task.FromResult(true), cancellationToken: ct);
+            }, _ => Task.FromResult(false), cancellationToken: ct);
 
             // Проверяем, что внутри внешней транзакции видны оба изменения
             NUnit.Framework.Assert.That(await context.Users.CountAsync(x => x.Id == id1 || x.Id == id2, ct), Is.EqualTo(2));
 
             return true;
-        }, _ => Task.FromResult(true));
+        }, _ => Task.FromResult(false));
 
         // Проверяем итоговое состояние в базе
         NUnit.Framework.Assert.That(await context.Users.CountAsync(x => x.Id == id1 || x.Id == id2), Is.EqualTo(2));
