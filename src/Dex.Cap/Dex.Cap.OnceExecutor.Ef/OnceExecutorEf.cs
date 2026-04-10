@@ -11,16 +11,12 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Dex.Cap.OnceExecutor.Ef;
 
-internal sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<IEfTransactionOptions, TDbContext>
+internal sealed class OnceExecutorEf<TDbContext>(TDbContext context) : BaseOnceExecutor<IEfTransactionOptions, TDbContext>
     where TDbContext : DbContext
 {
-    protected override TDbContext Context { get; }
-    private LastTransaction? LastTransaction { get; set; }
+    protected override TDbContext Context { get; } = context;
 
-    public OnceExecutorEf(TDbContext context)
-    {
-        Context = context ?? throw new ArgumentNullException(nameof(context));
-    }
+    private LastTransaction? LastTransaction { get; set; }
 
     protected override Task<TResult?> ExecuteInTransactionAsync<TResult>(
         Func<CancellationToken, Task<TResult?>> operation,
@@ -29,7 +25,7 @@ internal sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<IEfTransacti
         CancellationToken cancellationToken)
         where TResult : default
     {
-        return Context.ExecuteInTransactionScopeAsync(operation, verifySucceeded, options, cancellationToken);
+        return Context.ExecuteInTransactionAsync(operation, verifySucceeded, options, cancellationToken);
     }
 
     protected override Task<bool> IsAlreadyExecutedAsync(string idempotentKey,
@@ -70,9 +66,8 @@ internal sealed class OnceExecutorEf<TDbContext> : BaseOnceExecutor<IEfTransacti
 
     protected override Task OnModificationCompletedAsync(CancellationToken cancellationToken)
     {
-        if (Context.ChangeTracker.HasChanges())
-            throw new UnsavedChangesDetectedException(Context, "Can't complete action, unsaved changes detected");
-
-        return Task.CompletedTask;
+        return Context.ChangeTracker.HasChanges()
+            ? throw new UnsavedChangesDetectedException(Context, "Can't complete action, unsaved changes detected")
+            : Task.CompletedTask;
     }
 }

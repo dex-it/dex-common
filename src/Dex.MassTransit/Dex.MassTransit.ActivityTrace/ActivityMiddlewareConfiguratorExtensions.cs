@@ -4,7 +4,7 @@ using MassTransit;
 namespace Dex.MassTransit.ActivityTrace
 {
     /// <summary>
-    /// Add midleware to enable Activity tracing propagation for all consumers.
+    /// Add middleware to enable Activity tracing propagation for all consumers.
     /// </summary>
     public static class ActivityMiddlewareConfiguratorExtensions
     {
@@ -15,7 +15,7 @@ namespace Dex.MassTransit.ActivityTrace
         /// <exception cref="ArgumentNullException"></exception>
         public static void LinkActivityTracingContext(this IBusFactoryConfigurator value)
         {
-            if (value == null) throw new ArgumentNullException(nameof(value));
+            ArgumentNullException.ThrowIfNull(value);
 
             var activityTracingPipeSpecification = new ActivityTracingPipeSpecification();
             value.AddPipeSpecification(activityTracingPipeSpecification);

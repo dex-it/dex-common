@@ -10,12 +10,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests.ExecutionStrategyTests;
+#pragma warning disable CS0618 // Type or member is obsolete
+
+namespace Dex.Cap.Ef.Tests.TransactionScopeTests;
 
 public class ExecutionStrategyTests : BaseTest
 {
     [Test]
-    public async Task ExecuteInTransactionScopeWithInnerOnceExecutorInTransactionScope_DoesNotThrowException()
+    public async Task ExecuteInTransactionWithInnerOnceExecutorInTransaction_DoesNotThrowException()
     {
         var sp = InitServiceCollection()
             .BuildServiceProvider();
@@ -26,7 +28,7 @@ public class ExecutionStrategyTests : BaseTest
         var stepId = Guid.NewGuid().ToString("N");
         var user = new TestUser { Name = "Test", Years = 18 };
 
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (dbContext, executor),
             async (state, ct) =>
             {
@@ -86,32 +88,6 @@ public class ExecutionStrategyTests : BaseTest
         // check
         Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
         Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == anotherName));
-    }
-
-    [Test]
-    public void ExecuteInTransactionWithInnerOnceExecutorInTransactionScope_ThrowException()
-    {
-        var sp = InitServiceCollection()
-            .BuildServiceProvider();
-
-        var dbContext = sp.GetRequiredService<TestDbContext>();
-        var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
-
-        var stepId = Guid.NewGuid().ToString("N");
-        var user = new TestUser { Name = "Test", Years = 18 };
-
-        // Root ambient transaction was completed before the nested transaction. The more nested transactions should be completed first.
-        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>(async () =>
-        {
-            await dbContext.Database.CreateExecutionStrategy().ExecuteInTransactionAsync(
-                (dbContext, executor),
-                async (state, ct) =>
-                {
-                    await state.executor.ExecuteAsync(stepId,
-                        (context, token) => context.Users.AddAsync(user, token).AsTask(), cancellationToken: ct);
-                },
-                (state, ct) => state.dbContext.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
-        });
     }
 
     [Test]
@@ -228,7 +204,7 @@ public class ExecutionStrategyTests : BaseTest
                     await context.ExecuteInTransactionScopeAsync
                     (context, async (c, t) => { await c.Users.AnyAsync(u => u.Name == "user", t); },
                         (_, _) => Task.FromResult(false),
-                        EfTransactionOptions.DefaultSuppress,
+                        EfTransactionScopeOptions.DefaultSuppress,
                         cancellationToken: ct);
                 },
                 (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));

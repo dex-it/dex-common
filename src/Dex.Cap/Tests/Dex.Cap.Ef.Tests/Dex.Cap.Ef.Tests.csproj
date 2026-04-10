@@ -22,6 +22,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
         <PackageReference Include="NUnit"/>
+        <PackageReference Include="NUnit3TestAdapter"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     </ItemGroup>
 

@@ -1,0 +1,142 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Dex.Cap.Common.Ef.Exceptions;
+using Dex.Cap.Common.Ef.Helpers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
+
+namespace Dex.Cap.Common.Ef.Extensions;
+
+public static class DbContextExecuteInTransactionScopeExtensions
+{
+    /// <summary>
+    /// Executes the specified operation within a TransactionScope using the DbContext's execution strategy.
+    /// This method uses an ambient transaction (System.Transactions.TransactionScope).
+    /// Warning: Can lead to "Ambient transaction detected" errors or unwanted promotion to distributed transactions (DTC) 
+    /// when used with multiple database connections or in CQRS (Read/Write) scenarios.
+    /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead. This method uses System.Transactions.TransactionScope which is not recommended for async/CQRS and may lead to connection leaks. Note: ExecuteInTransactionAsync does not support atomicity across different DbContext instances without TransactionScope.")]
+    // ReSharper disable once CognitiveComplexity
+    public static Task<TResult> ExecuteInTransactionScopeAsync<TState, TResult>(
+        this DbContext dbContext,
+        TState state,
+        Func<TState, CancellationToken, Task<TResult>> operation,
+        Func<TState, CancellationToken, Task<bool>> verifySucceeded,
+        IEfTransactionScopeOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dbContext);
+
+        options ??= EfTransactionScopeOptions.Default;
+
+        return dbContext.Database.CreateExecutionStrategy().ExecuteAsync(
+            new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
+            async (context, st, ct) =>
+            {
+                if (context.ChangeTracker.HasChanges())
+                    throw new UnsavedChangesDetectedException(context, "Can't execute action, unsaved changes detected");
+
+                try
+                {
+                    var timeout = TimeSpan.FromSeconds(options.TimeoutInSeconds);
+
+                    using var transactionScope = TransactionScopeHelper
+                        .CreateTransactionScope(options.TransactionScopeOption, options.IsolationLevel, timeout);
+
+                    st.Result = await st.Operation(st.State, ct).ConfigureAwait(false);
+
+                    if (context.ChangeTracker.HasChanges())
+                    {
+                        // In most cases, SaveChangesAsync should be called inside the operation delegate.
+                        // However, we perform a final check to ensure all changes are flushed before commit.
+                        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+
+                    transactionScope.Complete();
+
+                    return st.Result;
+                }
+                catch (Exception ex)
+                    when (ExecutionStrategy.CallOnWrappedException(ex, exHandle => (exHandle as NpgsqlException)?.IsTransient == true || exHandle is TimeoutException))
+                {
+                    // Важно: очищать ChangeTracker только при явном указании
+                    // т.к. в случае ретрая стратегии можем потерять информацию о прочитанных данных, вызывающего кода
+                    if (options.ClearChangeTrackerOnRetry)
+                        context.ChangeTracker.Clear();
+
+                    throw;
+                }
+            },
+            async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
+            cancellationToken
+        );
+    }
+
+    #region Overloads
+
+    /// <summary>
+    /// Executes the specified operation within a TransactionScope.
+    /// Uses an ambient transaction (System.Transactions.TransactionScope).
+    /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead.")]
+    public static Task<TResult> ExecuteInTransactionScopeAsync<TResult>(
+        this DbContext dbContext,
+        Func<CancellationToken, Task<TResult>> operation,
+        Func<CancellationToken, Task<bool>> verifySucceeded,
+        IEfTransactionScopeOptions? options = null,
+        CancellationToken cancellationToken = default)
+        => dbContext.ExecuteInTransactionScopeAsync<object, TResult>(
+            null!,
+            async (_, token) => await operation(token).ConfigureAwait(false),
+            async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
+            options,
+            cancellationToken
+        );
+
+    /// <summary>
+    /// Executes the specified action within a TransactionScope.
+    /// Uses an ambient transaction (System.Transactions.TransactionScope).
+    /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead.")]
+    public static Task ExecuteInTransactionScopeAsync<TState>(
+        this DbContext dbContext,
+        TState state,
+        Func<TState, CancellationToken, Task> operation,
+        Func<TState, CancellationToken, Task<bool>> verifySucceeded,
+        IEfTransactionScopeOptions? options = null,
+        CancellationToken cancellationToken = default)
+        => dbContext.ExecuteInTransactionScopeAsync(
+            state,
+            async (st, ct) =>
+            {
+                await operation(st, ct).ConfigureAwait(false);
+                return true;
+            },
+            verifySucceeded,
+            options,
+            cancellationToken
+        );
+
+    /// <summary>
+    /// Executes the specified action within a TransactionScope.
+    /// Uses an ambient transaction (System.Transactions.TransactionScope).
+    /// </summary>
+    [Obsolete("Use ExecuteInTransactionAsync instead.")]
+    public static Task ExecuteInTransactionScopeAsync(
+        this DbContext dbContext,
+        Func<CancellationToken, Task> operation,
+        Func<CancellationToken, Task<bool>> verifySucceeded,
+        IEfTransactionScopeOptions? options = null,
+        CancellationToken cancellationToken = default)
+        => dbContext.ExecuteInTransactionScopeAsync<object>(
+            null!,
+            async (_, token) => await operation(token).ConfigureAwait(false),
+            async (_, token) => await verifySucceeded(token).ConfigureAwait(false),
+            options,
+            cancellationToken
+        );
+
+    #endregion
+}

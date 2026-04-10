@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.OutboxTests.RetryStrategies;
 using Dex.Cap.Outbox.Extensions;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests.OutboxTests;
+namespace Dex.Cap.Ef.Tests.RetryStrategiesTests;
 
 public class RetryStrategiesTests : BaseTest
 {
@@ -35,23 +36,31 @@ public class RetryStrategiesTests : BaseTest
         await SaveChanges(serviceProvider);
 
         var count = 0;
-        TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
-        var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
-
-        var repeat = 5;
-        while (repeat-- > 0)
+        EventHandler onProcess = (_, _) => { count++; };
+        TestErrorCommandHandler.OnProcess += onProcess;
+        try
         {
-            await handler.ProcessAsync(CancellationToken.None);
-            await Task.Delay(100);
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.ProcessAsync(CancellationToken.None);
+                await Task.Delay(100);
+            }
+
+            // check
+
+            using var scope = serviceProvider.CreateScope();
+            var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>()
+                .FirstAsync(x => x.CorrelationId == outboxService.CorrelationId);
+            Assert.AreEqual(expectedStatus, envelope.Status);
+            Assert.AreEqual(expectedCount, count);
         }
-
-        // check
-
-        using var scope = serviceProvider.CreateScope();
-        var envelope = await GetDb(scope.ServiceProvider).Set<OutboxEnvelope>()
-            .FirstAsync(x => x.CorrelationId == outboxService.CorrelationId);
-        Assert.AreEqual(expectedStatus, envelope.Status);
-        Assert.AreEqual(expectedCount, count);
+        finally
+        {
+            TestErrorCommandHandler.OnProcess -= onProcess;
+        }
     }
 
     private static void ConfigureStrategy(int interval, string retryStrategyName,

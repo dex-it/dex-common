@@ -30,16 +30,16 @@ namespace Dex.MassTransit.SQS
         public static void RegisterBus(this IBusRegistrationConfigurator collectionConfigurator,
             Action<IBusRegistrationContext, IAmazonSqsBusFactoryConfigurator> registerConsumers, AmazonMqOptions? amazonMqOptions = null)
         {
-            if (collectionConfigurator == null) throw new ArgumentNullException(nameof(collectionConfigurator));
-            if (registerConsumers == null) throw new ArgumentNullException(nameof(registerConsumers));
+            ArgumentNullException.ThrowIfNull(collectionConfigurator);
+            ArgumentNullException.ThrowIfNull(registerConsumers);
 
             collectionConfigurator.UsingAmazonSqs((busRegistrationContext, mqBusFactoryConfigurator) =>
             {
                 amazonMqOptions ??= busRegistrationContext.GetRequiredService<IOptions<AmazonMqOptions>>().Value;
-                mqBusFactoryConfigurator.Host(amazonMqOptions.Region, configurator =>
+                mqBusFactoryConfigurator.Host(amazonMqOptions.Region!, configurator =>
                 {
-                    configurator.AccessKey(amazonMqOptions.AccessKey);
-                    configurator.SecretKey(amazonMqOptions.SecretKey);
+                    configurator.AccessKey(amazonMqOptions.AccessKey!);
+                    configurator.SecretKey(amazonMqOptions.SecretKey!);
                 });
 
                 // enable activity tracer for all consumers
@@ -54,7 +54,7 @@ namespace Dex.MassTransit.SQS
         /// <summary>
         /// Register receive EndPoint and bind with type <typeparamref name="T"/>.
         /// </summary>
-        /// <param name="busRegistrationContext">Bus registration contex.</param>
+        /// <param name="busRegistrationContext">Bus registration context.</param>
         /// <param name="busFactoryConfigurator">Configuration factory.</param>
         /// <param name="endpointConsumerConfigurator">Configure consumer delegate.</param>
         /// <param name="amazonMqOptions">Force connection params</param>
@@ -70,21 +70,21 @@ namespace Dex.MassTransit.SQS
             where T : class, IConsumer<TMessage>
             where TMessage : class, IConsumer
         {
-            if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
-            if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
+            ArgumentNullException.ThrowIfNull(busRegistrationContext);
+            ArgumentNullException.ThrowIfNull(busFactoryConfigurator);
 
             RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator,
-                endpointConsumerConfigurator, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue, serviceName);
+                endpointConsumerConfigurator, [typeof(T)], amazonMqOptions, createSeparateQueue, serviceName);
         }
 
         /// <summary>
-        /// Configure recieve endpoint for Fifo queues.
+        /// Configure receive endpoint for Fifo queues.
         /// </summary>
         /// <param name="busRegistrationContext">Bus registration context</param>
         /// <param name="busFactoryConfigurator">Bus configuration context</param>
         /// <param name="endpointConsumer">Endpoint configuration context</param>
         /// <param name="amazonMqOptions">Force connection params</param>
-        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allow to process same type messages with different consumers. It is publish-consumer pattern.</param>
+        /// <param name="createSeparateQueue">Create separate Queue for consumer. It is allowing to process same type messages with different consumers. It is publish-consumer pattern.</param>
         /// <param name="serviceName">Unique service name prefix. If null will be entry point assembly name.</param>
         /// <exception cref="ArgumentNullException"/>
         /// <exception cref="ConfigurationException"/>
@@ -95,8 +95,8 @@ namespace Dex.MassTransit.SQS
             where T : class, IConsumer<TMessage>
             where TMessage : class
         {
-            if (busRegistrationContext == null) throw new ArgumentNullException(nameof(busRegistrationContext));
-            if (busFactoryConfigurator == null) throw new ArgumentNullException(nameof(busFactoryConfigurator));
+            ArgumentNullException.ThrowIfNull(busRegistrationContext);
+            ArgumentNullException.ThrowIfNull(busFactoryConfigurator);
 
             RegisterConsumersEndpoint<TMessage>(busRegistrationContext, busFactoryConfigurator, configurator =>
             {
@@ -104,7 +104,7 @@ namespace Dex.MassTransit.SQS
                 configurator.QueueAttributes.Add(QueueAttributeName.FifoQueue, true);
 
                 endpointConsumer?.Invoke(configurator);
-            }, new[] { typeof(T) }, amazonMqOptions, createSeparateQueue, serviceName);
+            }, [typeof(T)], amazonMqOptions, createSeparateQueue, serviceName);
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace Dex.MassTransit.SQS
         public static UriBuilder RegisterSendEndPoint<TMessage>(this IServiceProvider provider, AmazonMqOptions? amazonMqOptions = null)
             where TMessage : class
         {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
+            ArgumentNullException.ThrowIfNull(provider);
 
             var endPoint = CreateQueueNameFromType<TMessage>(provider, amazonMqOptions);
             if (!EndpointConvention.TryGetDestinationAddress<TMessage>(out _))
@@ -135,21 +135,21 @@ namespace Dex.MassTransit.SQS
         /// <exception cref="ArgumentNullException"/>
         public static void ConfigureSendEndpointAsFifoForTypes(this ISendPipelineConfigurator sendPipeline, IEnumerable<Type> types)
         {
-            if (sendPipeline == null) throw new ArgumentNullException(nameof(sendPipeline));
-            if (types == null) throw new ArgumentNullException(nameof(types));
+            ArgumentNullException.ThrowIfNull(sendPipeline);
+            ArgumentNullException.ThrowIfNull(types);
 
             sendPipeline.ConfigureSend(configurator =>
                 configurator.UseSendExecute(context =>
                 {
                     if (context.GetType().GenericTypeArguments.NullSafeAny(types.Contains))
                     {
-                        // для упорядочевания внутри группы, aws упорядочевает только внутри группы
+                        // для упорядочивания внутри группы, aws упорядочивает только внутри группы
                         context.SetGroupId("68FE43E8-B5F1-4FB4-83DF-7A6B35F19C53");
 
                         // ключ уникальности
                         if (context.CorrelationId != null)
                         {
-                            context.SetDeduplicationId(context.CorrelationId.ToString());
+                            context.SetDeduplicationId(context.CorrelationId.ToString()!);
                         }
                     }
                 }));

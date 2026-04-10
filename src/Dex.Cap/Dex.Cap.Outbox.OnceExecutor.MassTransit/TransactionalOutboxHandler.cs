@@ -16,13 +16,13 @@ public abstract class TransactionalOutboxHandler<TMessage, TDbContext>(TDbContex
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     protected abstract Task ProcessInTransaction(TMessage message, CancellationToken cancellationToken);
 
     public Task Process(TMessage message, CancellationToken cancellationToken)
     {
-        return context.ExecuteInTransactionScopeAsync(
+        return context.ExecuteInTransactionAsync(
             message,
             async (state, token) => await ProcessInTransaction(state, token).ConfigureAwait(false),
             async (state, token) => await VerifySucceeded(state, token).ConfigureAwait(false),

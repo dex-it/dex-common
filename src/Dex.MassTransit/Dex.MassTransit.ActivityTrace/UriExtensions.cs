@@ -6,11 +6,11 @@ namespace Dex.MassTransit.ActivityTrace
     {
         public static string GetExchangeName(this Uri value)
         {
-            if (value == null) throw new ArgumentNullException(nameof(value));
-            
+            ArgumentNullException.ThrowIfNull(value);
+
             var exchange = value.LocalPath;
             var messageType = exchange[(exchange.LastIndexOf('/') + 1)..];
-            return messageType ?? string.Empty;
+            return messageType;
         }
     }
 }

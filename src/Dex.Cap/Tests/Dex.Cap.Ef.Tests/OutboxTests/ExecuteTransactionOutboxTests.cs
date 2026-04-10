@@ -32,7 +32,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (dbContext, outboxService),
             async (state, token) =>
             {
@@ -76,7 +76,7 @@ public class ExecuteTransactionOutboxTests : BaseTest
 
         // act
         var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
+        await dbContext.ExecuteInTransactionAsync(
             (dbContext, outboxService),
             async (state, token) =>
             {
@@ -141,30 +141,38 @@ public class ExecuteTransactionOutboxTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => { count++; };
+        EventHandler<TestOutboxCommand> onProcess = (_, _) => { count++; };
+        TestCommandHandler.OnProcess += onProcess;
 
-        var outboxService = sp.GetRequiredService<IOutboxService>();
-        var dbContext = sp.GetRequiredService<TestDbContext>();
+        try
+        {
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+            var dbContext = sp.GetRequiredService<TestDbContext>();
 
-        // act
-        var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
-            (dbContext, outboxService),
-            async (state, token) =>
-            {
-                await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
-                await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cancellationToken: token);
-                await state.dbContext.SaveChangesAsync(token);
-            },
-            (_, _) => Task.FromResult(false));
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            await dbContext.ExecuteInTransactionAsync(
+                (dbContext, outboxService),
+                async (state, token) =>
+                {
+                    await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.dbContext.SaveChangesAsync(token);
+                },
+                (_, _) => Task.FromResult(false));
 
-        var handler = sp.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
 
-        // check
-        Assert.AreEqual(1, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+            // check
+            Assert.AreEqual(1, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess;
+        }
     }
 
     [Test]
@@ -175,35 +183,43 @@ public class ExecuteTransactionOutboxTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => { count++; };
+        EventHandler<TestOutboxCommand> onProcess = (_, _) => { count++; };
+        TestCommandHandler.OnProcess += onProcess;
 
-        var outboxService = sp.GetRequiredService<IOutboxService>();
-        var dbContext = sp.GetRequiredService<TestDbContext>();
+        try
+        {
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+            var dbContext = sp.GetRequiredService<TestDbContext>();
 
-        // act
-        var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
-            new { Name = name, Age = 25, DbContext = dbContext, OutboxService = outboxService },
-            async (state, token) =>
-            {
-                var entity = new TestUser
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            await dbContext.ExecuteInTransactionAsync(
+                new { Name = name, Age = 25, DbContext = dbContext, OutboxService = outboxService },
+                async (state, token) =>
                 {
-                    Name = state.Name,
-                    Years = state.Age
-                };
+                    var entity = new TestUser
+                    {
+                        Name = state.Name,
+                        Years = state.Age
+                    };
 
-                await state.DbContext.Users.AddAsync(entity, token);
-                await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cancellationToken: token);
-                await state.DbContext.SaveChangesAsync(token);
-            }, (_, _) => Task.FromResult(false));
+                    await state.DbContext.Users.AddAsync(entity, token);
+                    await state.OutboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.DbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
-        var handler = sp.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
 
-        // check
-        Assert.AreEqual(1, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+            // check
+            Assert.AreEqual(1, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess;
+        }
     }
 
     [Test]
@@ -215,35 +231,46 @@ public class ExecuteTransactionOutboxTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => { count++; };
-        TestCommand2Handler.OnProcess += (_, _) => { count++; };
+        EventHandler<TestOutboxCommand> onProcess1 = (_, _) => { count++; };
+        EventHandler<TestOutboxCommand2> onProcess2 = (_, _) => { count++; };
 
-        var outboxService = sp.GetRequiredService<IOutboxService>();
-        var dbContext = sp.GetRequiredService<TestDbContext>();
-        var logger = sp.GetService<ILogger<EnqueueOutboxTests>>();
+        TestCommandHandler.OnProcess += onProcess1;
+        TestCommand2Handler.OnProcess += onProcess2;
 
-        // act
-        var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
-            (logger, outboxService, dbContext),
-            async (state, token) =>
-            {
-                state.logger?.LogDebug("DEBUG...");
+        try
+        {
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var logger = sp.GetService<ILogger<EnqueueOutboxTests>>();
 
-                await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
-                await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cancellationToken: token);
-                await state.outboxService.EnqueueAsync(new TestOutboxCommand2 { Args = "Command2" },
-                    cancellationToken: token);
-                await state.dbContext.SaveChangesAsync(token);
-            }, (_, _) => Task.FromResult(false));
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            await dbContext.ExecuteInTransactionAsync(
+                (logger, outboxService, dbContext),
+                async (state, token) =>
+                {
+                    state.logger?.LogDebug("DEBUG...");
 
-        var handler = sp.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+                    await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand2 { Args = "Command2" },
+                        cancellationToken: token);
+                    await state.dbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
-        // check
-        Assert.AreEqual(2, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            Assert.AreEqual(2, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess1;
+            TestCommand2Handler.OnProcess -= onProcess2;
+        }
     }
 
     [Test]
@@ -254,37 +281,45 @@ public class ExecuteTransactionOutboxTests : BaseTest
             .BuildServiceProvider();
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => { count++; };
+        EventHandler<TestOutboxCommand> onProcess = (_, _) => { count++; };
+        TestCommandHandler.OnProcess += onProcess;
 
-        var outboxService = sp.GetRequiredService<IOutboxService>();
-        var dbContext = sp.GetRequiredService<TestDbContext>();
-        var failureCount = 2;
+        try
+        {
+            var outboxService = sp.GetRequiredService<IOutboxService>();
+            var dbContext = sp.GetRequiredService<TestDbContext>();
+            var failureCount = 2;
 
-        // act
-        var name = "mmx_" + Guid.NewGuid();
-        await dbContext.ExecuteInTransactionScopeAsync(
-            (dbContext, outboxService),
-            async (state, token) =>
-            {
-                await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
-
-                if (failureCount-- > 0)
+            // act
+            var name = "mmx_" + Guid.NewGuid();
+            await dbContext.ExecuteInTransactionAsync(
+                (dbContext, outboxService),
+                async (state, token) =>
                 {
-                    TestContext.WriteLine("throw failure...");
-                    throw new TimeoutException();
-                }
+                    await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
 
-                await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
-                    cancellationToken: token);
-                await state.dbContext.SaveChangesAsync(token);
-            }, (_, _) => Task.FromResult(false));
+                    if (failureCount-- > 0)
+                    {
+                        TestContext.WriteLine("throw failure...");
+                        throw new TimeoutException();
+                    }
 
-        var handler = sp.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                        cancellationToken: token);
+                    await state.dbContext.SaveChangesAsync(token);
+                }, (_, _) => Task.FromResult(false));
 
-        // check
-        Assert.AreEqual(1, count);
-        Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+
+            // check
+            Assert.AreEqual(1, count);
+            Assert.IsTrue(await dbContext.Users.AnyAsync(x => x.Name == name));
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess;
+        }
     }
 
     [Test]
@@ -298,41 +333,49 @@ public class ExecuteTransactionOutboxTests : BaseTest
         var threads = new ConcurrentBag<string>();
         using var ce = new CountdownEvent(3);
 
-        TestDelayCommandHandler.OnProcess += (_, c) =>
+        EventHandler<TestDelayOutboxCommand> onProcess = (_, c) =>
         {
             threads.Add(c.Args);
             // ReSharper disable once AccessToDisposedClosure
             ce.Signal();
         };
+        TestDelayCommandHandler.OnProcess += onProcess;
 
-        var num = 0;
-
-        var outboxService = services.GetRequiredService<IOutboxService>();
-        await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
-        await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
-        await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
-        await SaveChanges(services);
-
-        var sw = Stopwatch.StartNew();
-        ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
-        ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
-        ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
-
-        // wait for countdown
-        ce.Wait();
-        sw.Stop();
-
-        Assert.AreEqual(num, threads.Distinct().Count());
-        Assert.LessOrEqual((int)sw.Elapsed.TotalSeconds, 1);
-        return;
-
-        async void RunOutboxHandler()
+        try
         {
-            using var scope = services.CreateScope();
-            var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
-            await handler.ProcessAsync();
-        }
+            var num = 0;
 
-        string GetId() => (num++).ToString("D");
+            var outboxService = services.GetRequiredService<IOutboxService>();
+            await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
+            await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
+            await outboxService.EnqueueAsync(new TestDelayOutboxCommand { Args = GetId(), DelayMsec = 800 });
+            await SaveChanges(services);
+
+            var sw = Stopwatch.StartNew();
+            ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
+            ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
+            ThreadPool.QueueUserWorkItem(_ => RunOutboxHandler());
+
+            // wait for countdown
+            ce.Wait();
+            sw.Stop();
+
+            Assert.AreEqual(num, threads.Distinct().Count());
+            Assert.LessOrEqual((int)sw.Elapsed.TotalSeconds, 1);
+            return;
+
+            async void RunOutboxHandler()
+            {
+                using var scope = services.CreateScope();
+                var handler = scope.ServiceProvider.GetRequiredService<IOutboxHandler>();
+                await handler.ProcessAsync();
+            }
+
+            string GetId() => (num++).ToString("D");
+        }
+        finally
+        {
+            TestDelayCommandHandler.OnProcess -= onProcess;
+        }
     }
 }
