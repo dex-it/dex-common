@@ -6,7 +6,7 @@ namespace Dex.MassTransit.Rabbit;
 
 public static class MassTransitConfigurationExtensions
 {
-    private const int DefaultRetryLimit = 5;
+    private const int DefaultRetryLimit = 3;
 
     /// <summary>
     /// Конфигурация с настроенными Redelivery и Retry
@@ -18,7 +18,7 @@ public static class MassTransitConfigurationExtensions
         int? retryLimit = null)
         where TConsumer : class
     {
-        if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+        ArgumentNullException.ThrowIfNull(configurator);
 
         // важна последовательность usage (вначале UseDelayedRedelivery, затем UseMessageRetry)
         configurator.UseDelayedRedelivery(redeliveryConfigurator =>
@@ -42,7 +42,7 @@ public static class MassTransitConfigurationExtensions
         int? retryLimit = null)
         where TConsumer : class
     {
-        if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+        ArgumentNullException.ThrowIfNull(configurator);
 
         configurator.UseMessageRetry(retryConfigurator =>
         {
@@ -64,7 +64,7 @@ public static class MassTransitConfigurationExtensions
         int concurrencyLimit = 1,
         int prefetchCount = 1)
     {
-        if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+        ArgumentNullException.ThrowIfNull(configurator);
         if (concurrencyLimit >= 100) throw new ArgumentOutOfRangeException(nameof(concurrencyLimit));
 
         configurator.UseConcurrencyLimit(concurrencyLimit);

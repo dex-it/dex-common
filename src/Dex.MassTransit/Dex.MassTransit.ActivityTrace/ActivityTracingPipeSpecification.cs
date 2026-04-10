@@ -8,7 +8,7 @@ namespace Dex.MassTransit.ActivityTrace
 {
     internal class ActivityTracingPipeSpecification :
         IPipeSpecification<ConsumeContext>,
-        IPipeSpecification<SendContext>, 
+        IPipeSpecification<SendContext>,
         IPipeSpecification<PublishContext>
     {
         public void Apply(IPipeBuilder<ConsumeContext> builder)
