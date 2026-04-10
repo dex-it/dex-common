@@ -11,7 +11,7 @@ namespace Dex.Events.Distributed.Tests.Tests;
 
 public abstract class BaseTest
 {
-    protected string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
+    private string DbName { get; } = "db_test_" + Guid.NewGuid().ToString("N");
 
     [OneTimeSetUp]
     public async Task Setup()

@@ -5,11 +5,9 @@ namespace Dex.Cap.Common.Ef;
 
 public interface IEfTransactionOptions : ITransactionOptions
 {
-    public TransactionScopeOption TransactionScopeOption { get; init; }
+    IsolationLevel IsolationLevel { get; }
 
-    public IsolationLevel IsolationLevel { get; init; }
+    uint TimeoutInSeconds { get; }
 
-    public uint TimeoutInSeconds { get; init; }
-
-    public bool ClearChangeTrackerOnRetry { get; init; }
+    bool ClearChangeTrackerOnRetry { get; }
 }

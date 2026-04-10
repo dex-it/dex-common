@@ -199,7 +199,7 @@ public class BaseOnceExecutorTests : BaseTest
             await executor.ExecuteAsync(stepId,
                 (context, token) =>
                 {
-                    return context.ExecuteInTransactionScopeAsync(
+                    return context.ExecuteInTransactionAsync(
                         context, async (state, t) =>
                         {
                             await state.Users.AddAsync(user, t);

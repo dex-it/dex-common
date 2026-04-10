@@ -14,7 +14,7 @@ public abstract class IdempotentOutboxHandler<TMessage, TDbContext>(IOnceExecuto
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     protected abstract Task IdempotentProcess(TMessage message, CancellationToken cancellationToken);
 

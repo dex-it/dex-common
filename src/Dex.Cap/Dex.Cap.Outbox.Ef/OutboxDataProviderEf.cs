@@ -51,14 +51,13 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     {
         _transactionOptions ??= new EfTransactionOptions
         {
-            TransactionScopeOption = TransactionScopeOption.RequiresNew,
             IsolationLevel = IsolationLevel.ReadCommitted,
             TimeoutInSeconds = (uint)Options.GetFreeMessagesTimeout.TotalSeconds
         };
 
         var lockId = Guid.NewGuid(); // Ключ идемпотентности.
-        return dbContext.ExecuteInTransactionScopeAsync(
-            new {LockId = lockId, DbContext = dbContext},
+        return dbContext.ExecuteInTransactionAsync(
+            new { LockId = lockId, DbContext = dbContext },
             async (state, token) =>
             {
                 var sql = GenerateFetchPlatformSpecificSql(state.LockId);
@@ -98,7 +97,7 @@ internal sealed class OutboxDataProviderEf<TDbContext>(
     /// <exception cref="RetryLimitExceededException"/>
     protected override Task CompleteJobAsync(IOutboxLockedJob lockedJob, CancellationToken cancellationToken)
     {
-        return dbContext.ExecuteInTransactionScopeAsync(
+        return dbContext.ExecuteInTransactionAsync(
             (_dbContext: dbContext, lockedJob, _logger: logger),
             static async (state, ct) =>
             {

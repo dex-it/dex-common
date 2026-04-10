@@ -129,7 +129,8 @@ internal sealed class OutboxTypeDiscriminatorProvider(
                         return new KeyValuePair<string, Type>(discriminator, type);
                     })
                     .Where(x => string.IsNullOrWhiteSpace(x.Key) is false)
-                    .ToDictionary();
+                    .GroupBy(x => x.Key)
+                    .ToDictionary(g => g.Key, g => g.First().Value);
             }
         }
     }
