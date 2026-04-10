@@ -8,6 +8,8 @@ public static class MassTransitConfigurationExtensions
 {
     private const int DefaultRetryLimit = 3;
 
+    private static readonly TimeSpan[] DefaultRedeliveryIntervals = [5.Minutes(), 15.Minutes(), 30.Minutes(), 1.Hours(), 3.Hours(), 6.Hours()];
+
     /// <summary>
     /// Конфигурация с настроенными Redelivery и Retry
     /// <remarks> Используйте TransientExceptionsHandler для перехвата временных ошибок </remarks>
@@ -15,7 +17,8 @@ public static class MassTransitConfigurationExtensions
     public static IConsumerConfigurator UseRedeliveryRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
         Func<Exception, bool> checkTransientException,
-        int? retryLimit = null)
+        int? retryLimit = null,
+        TimeSpan[]? redeliveryIntervals = null)
         where TConsumer : class
     {
         ArgumentNullException.ThrowIfNull(configurator);
@@ -23,7 +26,7 @@ public static class MassTransitConfigurationExtensions
         // важна последовательность usage (вначале UseDelayedRedelivery, затем UseMessageRetry)
         configurator.UseDelayedRedelivery(redeliveryConfigurator =>
         {
-            redeliveryConfigurator.Intervals(5.Minutes(), 15.Minutes(), 30.Minutes(), 1.Hours(), 3.Hours(), 6.Hours());
+            redeliveryConfigurator.Intervals(redeliveryIntervals ?? DefaultRedeliveryIntervals);
             redeliveryConfigurator.Handle(checkTransientException);
         });
 
@@ -48,7 +51,7 @@ public static class MassTransitConfigurationExtensions
         {
             retryLimit ??= DefaultRetryLimit;
 
-            retryConfigurator.Incremental(retryLimit.Value, 1.Seconds(), 1.Seconds());
+            retryConfigurator.Exponential(retryLimit.Value, 1.Seconds(), 5.Seconds(), 1.Seconds());
             retryConfigurator.Handle(checkTransientException);
         });
 
@@ -65,7 +68,7 @@ public static class MassTransitConfigurationExtensions
         int prefetchCount = 1)
     {
         ArgumentNullException.ThrowIfNull(configurator);
-        if (concurrencyLimit >= 100) throw new ArgumentOutOfRangeException(nameof(concurrencyLimit));
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(concurrencyLimit, 100);
 
         configurator.UseConcurrencyLimit(concurrencyLimit);
         configurator.ConfigureTransport(transportConfigurator => transportConfigurator.PrefetchCount = prefetchCount);
