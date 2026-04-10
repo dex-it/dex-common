@@ -300,9 +300,10 @@ crashlytics-build.properties
 
 *.local.json
 
-# Gemini CLI
+# Secrets
 .env
-gemini.md
+
+# Gemini CLI
 .gemini/
 *.skill
 temp-skills/

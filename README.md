@@ -4,6 +4,8 @@
 
 Каждый модуль — самостоятельный пакет со своим `.sln`, `.csproj` и версией. Публикуется на внутренний NuGet при мерже в `main` (см. `.github/workflows/publish.yml`).
 
+Полный каталог всех пакетов с описаниями: [`docs/modules-reference.md`](docs/modules-reference.md).
+
 ## Состав
 
 ### Транзакционная надёжность — `Dex.Cap`
@@ -34,7 +36,10 @@
 - **`Dex.TransientExceptions`** — конфигурируемый определитель transient-ошибок для Polly/MassTransit retry ([README](src/Dex.TransientExceptionsHandler/Dex.TransientExceptions/README.md))
 
 ### Базовые утилиты (netstandard2.1 + net8.0)
-`Dex.Types`, `Dex.Extensions`, `Dex.Entity`, `Dex.Buffer`, `Dex.Pagination`, `Dex.Inflector`, `Dex.Neo4J`
+`Dex.Types`, `Dex.Extensions`, `Dex.Entity`, `Dex.Buffer`, `Dex.Inflector`, `Dex.Neo4J`
+
+### Утилиты (net8.0)
+`Dex.Pagination`
 
 ### Специализированное
 `Dex.CreditCardType.Resolver`, `Dex.PdfGenerator`, `Dex.TeamCity`
