@@ -10,6 +10,8 @@ public static class MassTransitConfigurationExtensions
 
     private static readonly TimeSpan[] DefaultRedeliveryIntervals = [5.Minutes(), 15.Minutes(), 30.Minutes(), 1.Hours(), 3.Hours(), 6.Hours()];
 
+    private static readonly RetryExponentialIntervals DefaultRetryIntervals = new(1.Seconds(), 5.Seconds(), 1.Seconds());
+
     /// <summary>
     /// Конфигурация с настроенными Redelivery и Retry
     /// <remarks> Используйте TransientExceptionsHandler для перехвата временных ошибок </remarks>
@@ -18,6 +20,7 @@ public static class MassTransitConfigurationExtensions
         this IConsumerConfigurator<TConsumer> configurator,
         Func<Exception, bool> checkTransientException,
         int? retryLimit = null,
+        RetryExponentialIntervals? retryIntervals = null,
         TimeSpan[]? redeliveryIntervals = null)
         where TConsumer : class
     {
@@ -30,7 +33,7 @@ public static class MassTransitConfigurationExtensions
             redeliveryConfigurator.Handle(checkTransientException);
         });
 
-        configurator.UseRetryConfiguration(checkTransientException, retryLimit);
+        configurator.UseRetryConfiguration(checkTransientException, retryLimit, retryIntervals);
 
         return configurator;
     }
@@ -42,7 +45,8 @@ public static class MassTransitConfigurationExtensions
     public static IConsumerConfigurator UseRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
         Func<Exception, bool> checkTransientException,
-        int? retryLimit = null)
+        int? retryLimit = null,
+        RetryExponentialIntervals? retryIntervals = null)
         where TConsumer : class
     {
         ArgumentNullException.ThrowIfNull(configurator);
@@ -50,8 +54,9 @@ public static class MassTransitConfigurationExtensions
         configurator.UseMessageRetry(retryConfigurator =>
         {
             retryLimit ??= DefaultRetryLimit;
+            var intervals = retryIntervals ?? DefaultRetryIntervals;
 
-            retryConfigurator.Exponential(retryLimit.Value, 1.Seconds(), 5.Seconds(), 1.Seconds());
+            retryConfigurator.Exponential(retryLimit.Value, intervals.MinInterval, intervals.MaxInterval, intervals.Delta);
             retryConfigurator.Handle(checkTransientException);
         });
 
@@ -76,3 +81,5 @@ public static class MassTransitConfigurationExtensions
         return configurator;
     }
 }
+
+public readonly record struct RetryExponentialIntervals(TimeSpan MinInterval, TimeSpan MaxInterval, TimeSpan Delta);
