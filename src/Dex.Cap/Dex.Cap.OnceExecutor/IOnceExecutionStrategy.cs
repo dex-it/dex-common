@@ -7,10 +7,10 @@ namespace Dex.Cap.OnceExecutor;
 /// <summary>
 /// Once execution strategy contract
 /// </summary>
-public interface IOnceExecutionStrategy<in TArg, TOptions, TResult>
+public interface IOnceExecutionStrategy<in TArg, out TOptions, TResult>
     where TOptions : ITransactionOptions
 {
-    public TOptions? Options { get; set; }
+    public TOptions? Options { get; }
 
     /// <summary>
     /// Checks that the execution has already been completed
