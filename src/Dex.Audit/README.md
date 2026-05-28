@@ -1,105 +1,125 @@
 # Dex.Audit
 
-### Provides functionality for auditing your system.
+End-to-end auditing for distributed .NET systems: collect domain events on clients, enrich them, ship them to a central server over MassTransit / gRPC, and persist them. Settings (which event types to record, minimum severity, etc.) are managed on the server and broadcast back to the clients.
 
-# Dex.Audit.Client
+## Packages
 
-### Provides functionality to audit events, enrich them, and send them to the listing server.
+| Layer | Package | Purpose |
+|---|---|---|
+| **Client** | `Dex.Audit.Client.Abstractions` | Contracts for the client side (`IAuditWriter`, `IAuditEventConfigurator`, `AuditEventBaseInfo`, message DTOs). |
+| **Client** | `Dex.Audit.Client` | `AuditWriter`, `BaseAuditEventConfigurator`, `BaseSubsystemAuditWorker`, MassTransit send endpoint helper. |
+| **Server** | `Dex.Audit.Server.Abstractions` | Server-side contracts (`IAuditEventsRepository`, `IAuditSettingsRepository`, `IAuditSettingsCacheRepository`, `IAuditServerSettingsService`). |
+| **Server** | `Dex.Audit.Server` | `AuditEventConsumer`, `RefreshCacheWorker`, MassTransit receive endpoint helper. |
+| **Domain** | `Dex.Audit.Domain` | Audit entities (`AuditEvent`, `AuditSettings`, severity enum). |
+| **Infra** | `Dex.Audit.Implementations.Common` | Shared in-memory cache repository (`SimpleAuditSettingsCacheRepository`). |
+| **Infra** | `Dex.Audit.Client.Implementations` | `AddSimpleAuditClient` (in-memory cache + MassTransit settings broadcast). |
+| **Infra** | `Dex.Audit.Client.Implementations.Grpc` | `AddGrpcAuditClient` (settings fetched from the server over gRPC). |
+| **Infra** | `Dex.Audit.Server.Implementations` | `AddSimpleAuditServer<TDbContext>` (EF Core repositories + MassTransit settings broadcast). |
+| **Infra** | `Dex.Audit.Server.Implementations.Grpc` | `AddGrpcAuditServer` (settings exposed to clients over gRPC). |
+| **Infra** | `Dex.Audit.EF.Interceptors.Abstractions` | `IAuditEntity` marker interface for auditable entities. |
+| **Infra** | `Dex.Audit.EF.Interceptors` | EF Core interceptors (`SaveChanges` + transaction) that audit any `IAuditEntity` change automatically. |
+| **Infra** | `Dex.Audit.Logger` | `ILogger`-based capture — every log call is forwarded to the audit pipeline. |
+| **Infra** | `Dex.Audit.MediatR` | MediatR pipeline behavior that audits `AuditRequest<TResponse>` commands. |
 
-### Implementation
+Samples live in `Tests/Dex.Audit.Sample.Client` and `Tests/Dex.Audit.Sample.Server`.
 
-In code
+---
+
+# Client
+
+## `Dex.Audit.Client`
+
+Two registration shapes — the full one lets you swap the event configurator:
+
 ```csharp
 services
     .AddAuditClient<
-    BaseAuditEventConfigurator, // or can be used your inherited and overriden realization of BaseAuditEventConfigurator class  
-    YourAuditSettingsCacheRepository, // must be inherited and implemented from interface IAuditSettingsCacheRepository
-    YourClientAuditSettingsService> //  must be inherited and implemented from interface IAuditSettingsService
+        BaseAuditEventConfigurator,         // or your own : IAuditEventConfigurator
+        YourSettingsCacheRepository,        //               : IAuditSettingsCacheRepository
+        YourClientAuditSettingsService>     //               : IAuditSettingsService
     (builder.Configuration);
 
-services
-    .AddMassTransit(x =>
-    {
-        ...            
-        x.RegisterBus((context, configurator) =>
-        {
-            ...
-            context.AddAuditClientSendEndpoint();
-            ...
-        });
-    });
+// Or, if BaseAuditEventConfigurator is fine:
+services.AddAuditClient<YourSettingsCacheRepository, YourClientAuditSettingsService>(builder.Configuration);
+```
 
-// Optional
+Wire the MassTransit send endpoint inside `RegisterBus`:
+
+```csharp
+services.AddMassTransit(x =>
+{
+    x.RegisterBus((context, _) =>
+    {
+        context.AddAuditClientSendEndpoint();
+    });
+});
+```
+
+Optional — auto-audit `Subsystem startup`/`Subsystem shutdown` events:
+
+```csharp
 services.AddHostedService<BaseSubsystemAuditWorker>();
 ```
 
-In appsettings
-```jsim
+`appsettings.json`:
+
+```json
 {
   "AuditEventOptions": {
-    "MinSeverityLevel": "Low", // Low, Medium, High, Critical
+    "MinSeverityLevel": "Low",   // Low | Medium | High | Critical
     "SystemName": "YourSystemName"
   }
 }
 ```
 
-### Basic usage
+### Writing audit events
 
 ```csharp
-class YourClass
+public class OrderService(IAuditWriter auditWriter)
 {
-    private IAuditWriter _auditWriter;
-
-    async Task YourMethdod(
-        string eventType,
-        string? eventObject,
-        string? message,
-        bool success,
-        CancellationToken, cancellationToken)
-    {
-        await auditWriter
-            .WriteAsync(
+    public Task RecordPaymentAsync(string orderId, bool success, CancellationToken ct)
+        => auditWriter.WriteAsync(
             new AuditEventBaseInfo(
-            eventType,
-            eventObject,
-            message,
-            success),
-            cancellationToken);
-    }
+                eventType:   "PaymentProcessed",
+                eventObject: orderId,
+                message:     "Payment confirmed by gateway",
+                isSuccess:   success),
+            ct);
 }
-``` 
+```
 
-# Dex.Audit.Server
+---
 
-### Provides an auditing server functionality, which means receiving and storing events from clients, sending updated settings to clients and storing event settings.
+# Server
 
-### Implementation
+## `Dex.Audit.Server`
 
-In code
 ```csharp
 services
     .AddAuditServer<
-    YourAuditEventsRepository, // must be inherited and implemented from interface IAuditEventsRepository (Preferably persistente store)
-    YourAuditSettingsRepository, // must be inherited and implemented from interface IAuditSettingsRepository (Preferably persistente store)
-    YourAuditSettingsCacheRepository, // must be inherited and implemented from interface IAuditSettingsCacheRepository (Preferably cache store)
-    YourAuditServerSettingsService> // must be inherited and implemented from interface IAuditServerSettingsService
+        YourAuditEventsRepository,          //               : IAuditEventsRepository      (persistent store)
+        YourAuditSettingsRepository,        //               : IAuditSettingsRepository    (persistent store)
+        YourAuditSettingsCacheRepository,   //               : IAuditSettingsCacheRepository (cache)
+        YourAuditServerSettingsService>     //               : IAuditServerSettingsService (manages settings + broadcast)
     (builder.Configuration);
 
 services.AddMassTransit(busRegistrationConfigurator =>
-        {
-            busRegistrationConfigurator.AddAuditServerConsumer();
-
-            busRegistrationConfigurator.RegisterBus((context, configurator) =>
-            {
-                configurator.AddAuditServerReceiveEndpoint(context, true);
-            });
-        });
+{
+    busRegistrationConfigurator.AddAuditServerConsumer();
+    busRegistrationConfigurator.RegisterBus((context, configurator) =>
+    {
+        configurator.AddAuditServerReceiveEndpoint(context, enableRetry: true);
+    });
+});
 
 services.AddHostedService<RefreshCacheWorker>();
 ```
 
-In appsettings
-```jsim
+`AddAuditServerReceiveEndpoint` accepts the batch / prefetch knobs (defaults: `prefetchCount: 600`, `messageLimit: 500`, `timeLimitSeconds: 1`, `concurrencyLimit: 1`, `retryCount: 2`, `retryIntervalSeconds: 1`).
+
+`appsettings.json`:
+
+```json
 {
   "AuditCacheOptions": {
     "RefreshInterval": "00:00:10"
@@ -107,219 +127,170 @@ In appsettings
 }
 ```
 
-### Basic usage
-`AuditEventConsumer` will do the work of consuming `AuditEventMessage` from clients. It uses IAuditEventsRepository and IAuditSettingsCacheRepository.
+`AuditEventConsumer` consumes `AuditEventMessage` and writes through `IAuditEventsRepository`. `IAuditServerSettingsService` owns the settings lifecycle and is responsible for broadcasting updates back to clients.
 
-`IAuditServerSettingsService` must have logic to manage settings in your system and sending updated settings to clients.
+### Important — registering an audited event type
 
-# IMPORTANT for Audit Client and Server
+Every event type that should actually be recorded must be added on the server via `IAuditServerSettingsService.AddOrUpdateSettingsAsync` (or any equivalent path), and must be visible to clients via `IAuditSettingsService.GetOrGetAndUpdateSettingsAsync`. Events whose type isn't registered are filtered out by the client.
 
-Any event, that must be audited, should be added to AuditSettings with `IAuditServerSettingsService.AddOrUpdateSettingsAsync` (or another way) on server and must be available timely from `IAuditSettingsService.GetOrGetAndUpdateSettingsAsync` on client.
+---
 
-# Dex.Audit.EF.NpgSql
+# Ready-made implementations
 
-### Provides ef npgsql configuration for audit entities.
+### `Dex.Audit.Client.Implementations` — MassTransit + in-memory cache
 
-# Dex.Audit.EF.Interceptors.Abstractions
-
-### Provides interface IAuditEntity  for Dex.Audit.EF.Interceptors library.
-
-In code
-```csharp
-public class YourAuditableEntity : IAuditEntity
-```
-
-# Dex.Audit.EF.Interceptors
-
-### Provides ready-made functionality for auditing operations on DbContext entities.
-
-### Implementation
-
-In code
-```csharp
-services
-    .AddAuditInterceptors<
-    InterceptionAndSendingEntriesService // or can be used your inherited and overriden realization of InterceptionAndSendingEntriesService class
-    >();
-
-services.AddDbContext<YourDbContext>((serviceProvider, options) =>
-        {
-            ...
-            options.AddInterceptors(
-                serviceProvider.GetRequiredService<IAuditSaveChangesInterceptor>(),
-                serviceProvider.GetRequiredService<IAuditDbTransactionInterceptor>());
-        });
-```
-
-### Basic usage
-Any operation with IAuditEntity in YourDbContext on SaveChanges and/in Transaction will be audited.
-
-
-# Dex.Audit.Logger
-
-### Provides ready-made functionality for auditing logs.
-
-### Implementation
-
-In code
-```csharp
-services.AddLogging(loggingBuilder => loggingBuilder.AddAuditLogger());
-```
-
-In appsettings
-```jsim
-{
-  "AuditLoggerOptions": {
-    "ReadEventsInterval": "00:00:10"
-  }
-}
-```
-
-### Basic usage
-```csharp
-logger.LogAudit(LogLevel, LogEventName, LogMessage, LogMessageParams);
-logger.LogAuditInfo(LogEventName, LogMessage, LogMessageParams);
-```
-
-
-# Dex.Audit.MediatR
-
-### Provides ready-made functionality for auditing commands and responses in MediatR Pipeline.
-
-### Implementation
-
-In code
-```csharp
-services.AddMediatR(configuration =>
-        {
-            ...
-            configuration.AddPipelineAuditBehavior();
-        });
-
-public class YourAuditableCommand : AuditRequest<YourAuditableResponse>
-
-public class YourAuditableResponse : IAuditResponse;
-```
-
-### Basic usage
-Any command, which inherits AuditRequest and response, which inherits IAuditResponse will be audited.
-
-
-# Audit implementations libraries
-
-### These libraries provide a ready-made implementation of the client and the server interfaces.
-
-# Dex.Audit.Client.Implementations
-
-### Implementation
-
-In code
 ```csharp
 services.AddSimpleAuditClient(builder.Configuration);
-
+// or
 services.AddSimpleAuditClient<YourAuditEventConfigurator>(builder.Configuration);
-
+// or
 services.AddSimpleAuditClient<YourAuditEventConfigurator, YourClientAuditSettingsService>(builder.Configuration);
 
 services.AddMassTransit(x =>
-        {
-            ...
-            x.AddSimpleAuditClientConsumer();
-            ...
-
-            x.RegisterBus((context, configurator) =>
-            {
-                ...
-                context.AddSimpleAuditClientReceiveEndpoint(configurator);
-                ...
-            });
-        });
+{
+    x.AddSimpleAuditClientConsumer();
+    x.RegisterBus((context, configurator) =>
+    {
+        context.AddSimpleAuditClientReceiveEndpoint(configurator);
+    });
+});
 ```
 
-Other configuration and usage similar to Dex.Audit.Client.
-**Implementations:** IAuditSettingsCacheRepository (Microsoft.Extensions.Caching.Memory), 
-IAuditSettingsService (Dex.Masstransit.RabbitMq).
+Provides: `SimpleAuditSettingsCacheRepository` (`Microsoft.Extensions.Caching.Memory`), `SimpleClientAuditSettingsService` (over `Dex.MassTransit.Rabbit`).
 
-# Dex.Audit.Client.Implementations.Grpc
+### `Dex.Audit.Client.Implementations.Grpc`
 
-### Implementation
-
-In code
 ```csharp
 services.AddGrpcAuditClient<
-    BaseAuditEventConfigurator,  // or can be used your inherited and overriden realization of BaseAuditEventConfigurator class
-    YourAuditSettingsCacheRepository>(  // must be inherited and implemented from interface IAuditSettingsCacheRepository
-        builder.Configuration,
-        () => // Configuration of HttpMessageHandler must be provided or will be used default
+    BaseAuditEventConfigurator,
+    YourSettingsCacheRepository>(
+    builder.Configuration,
+    configureClient: () =>  // optional HttpMessageHandler factory
+    {
+        var handler = new HttpClientHandler
         {
-            var handler = new HttpClientHandler();
-            handler.ServerCertificateCustomValidationCallback =
-            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            return handler;
-        });
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        return handler;
+    });
 ```
 
-In appsettings
-```jsim
-{
-  "AuditGrpcOptions": {
-    "ServerAddress": "http://localhost:7240"
-  }
-}
+```json
+{ "AuditGrpcOptions": { "ServerAddress": "http://localhost:7240" } }
 ```
 
-Other configuration and usage similar to Dex.Audit.Client.
-**Implementations:** IAuditSettingsService (GRPC).
+Replaces the MassTransit settings transport with `GrpcAuditSettingsService` + `GrpcAuditBackgroundWorker`. Audit *events* are still shipped via MassTransit.
 
-# Dex.Audit.Server.Implementations
+### `Dex.Audit.Server.Implementations`
 
-### Implementation
-
-In code
 ```csharp
 services.AddSimpleAuditServer<YourDbContext>(builder.Configuration);
-
+// or override the settings service:
 services.AddSimpleAuditServer<YourDbContext, YourAuditServerSettingsService>(builder.Configuration);
 
-class YourContext : DbContext
+public class YourDbContext : DbContext
 {
-    ...
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        ...
         modelBuilder.AddAuditEntities();
     }
 }
 ```
 
-Other configuration and usage similar to Dex.Audit.Server.
+Provides EF Core repositories (`SimpleAuditEventsRepository<TDbContext>`, `SimpleAuditSettingsRepository<TDbContext>`), `SimpleAuditSettingsCacheRepository`, and `SimpleAuditServerSettingsService` (broadcasts via `Dex.MassTransit.Rabbit`).
 
-**Implementations:**
-IAuditEventsRepository (EF.Core), IAuditSettingsRepository (EF.Core),
-IAuditSettingsCacheRepository (Microsoft.Extensions.Caching.Memory),
-IAuditServerSettingsService (Dex.Masstransit.RabbitMq).
+### `Dex.Audit.Server.Implementations.Grpc`
 
-# Dex.Audit.Server.Implementations.Grpc
-
-### Implementation
-
-In code
 ```csharp
 services
     .AddGrpcAuditServer<
-    YourAuditEventsRepository, // must be inherited and implemented from interface IAuditEventsRepository (Preferably persistente store)
-    YourAuditSettingsRepository, // must be inherited and implemented from interface IAuditSettingsRepository (Preferably persistente store)
-    YourAuditSettingsCacheRepository, // must be inherited and implemented from interface IAuditSettingsCacheRepository (Preferably cache store)
-    >(builder.Configuration);
+        YourAuditEventsRepository,
+        YourAuditSettingsRepository,
+        YourAuditSettingsCacheRepository>(builder.Configuration);
 ```
 
-Other configuration and usage similar to Dex.Audit.Server.
-**Implementations:** IAuditServerSettingsService (GRPC).
+Registers a gRPC server endpoint and `AuditSettingsServiceWithGrpcNotifier` to push settings to subscribed clients.
 
-# Samples
+---
 
-### Samples of Audit Client and Audit Server lays in Tests folder.
+# Auxiliary modules
 
-Dex.Audit.Sample.Client
-Dex.Audit.Sample.Server
+## `Dex.Audit.EF.Interceptors`
+
+Auto-audits every change to entities implementing `IAuditEntity`:
+
+```csharp
+public class Order : IAuditEntity { … }
+
+services.AddAuditInterceptors<InterceptionAndSendingEntriesService>();
+// or your own : IInterceptionAndSendingEntriesService
+
+services.AddDbContext<YourDbContext>((sp, opt) =>
+{
+    opt.UseNpgsql(connectionString);
+    opt.AddInterceptors(
+        sp.GetRequiredService<IAuditSaveChangesInterceptor>(),
+        sp.GetRequiredService<IAuditDbTransactionInterceptor>());
+});
+```
+
+Any `SaveChangesAsync` or explicit transaction commit involving an `IAuditEntity` produces an audit event.
+
+## `Dex.Audit.Logger`
+
+Capture log calls as audit events:
+
+```csharp
+services.AddLogging(b => b.AddAuditLogger());
+```
+
+```json
+{ "AuditLoggerOptions": { "ReadEventsInterval": "00:00:10" } }
+```
+
+Level-specific helpers (`LogAuditInformation`, `LogAuditWarning`, `LogAuditError`, `LogAuditCritical`, `LogAuditDebug`, `LogAuditTrace`) and a generic one:
+
+```csharp
+logger.LogAuditInformation(eventType: "UserLogin", message: "User {Id} signed in", userId);
+logger.LogAudit(LogLevel.Warning, eventType: "RateLimit", message: "throttled {Endpoint}", endpoint);
+```
+
+A hosted `AuditLoggerReader` drains the in-memory queue and forwards entries to `IAuditWriter` on the configured interval.
+
+## `Dex.Audit.MediatR`
+
+Audits MediatR commands automatically:
+
+```csharp
+services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.AddPipelineAuditBehavior();
+});
+
+public class CreateOrderCommand : AuditRequest<CreateOrderResponse>
+{
+    public override string EventType   => "OrderCreated";
+    public override string EventObject => OrderId;
+    public override string Message     => "Order accepted by the API";
+    public string OrderId { get; init; } = "";
+}
+
+public class CreateOrderResponse : IAuditResponse { public bool IsSuccess { get; init; } }
+```
+
+The `AuditBehavior<,>` pipeline behavior emits an audit event for each request, marking success based on `IAuditResponse.IsSuccess`.
+
+---
+
+# Breaking changes
+
+| Version / PR | Change |
+|---|---|
+| [#182](https://github.com/dex-it/dex-common/pull/182) (`adb38d0`) | Internal namespaces tidied — update `using`s if you were importing internal types. NuGet metadata refreshed. |
+| [#169](https://github.com/dex-it/dex-common/pull/169) (`99a1cc3`) | `Dex.Audit.*` now references `Dex.MassTransit.Rabbit` directly — the Rabbit extension `RegisterBus`/`RegisterSendEndPoint` API is required for `AddAuditClientSendEndpoint`/`AddAuditServerReceiveEndpoint`. |
+| [#164](https://github.com/dex-it/dex-common/pull/164) (`8e5e448`) | Packaging settings reworked — version pinning across `Dex.Audit.*` packages is now expected. Bump all of them together. |
+| [#151](https://github.com/dex-it/dex-common/pull/151) (`01bee77`) | Initial merge of `Dex.Audit` into `main` — the previous separate-repo layout is gone. |
+
+> Note: the previously-mentioned `Dex.Audit.EF.NpgSql` package no longer exists in this repository. Configure your own PostgreSQL provider on the `DbContext` used with `AddSimpleAuditServer<TDbContext>`.
