@@ -27,7 +27,7 @@ public class TransactionScopeTests : BaseTest
         var sp = InitServiceCollection()
             .BuildServiceProvider();
 
-        NUnit.Framework.Assert.Catch<InvalidOperationException>(() =>
+        NUnit.Framework.Assert.Catch<InvalidOperationException>((Action)(() =>
         {
             var id = Guid.NewGuid();
             using (var aScope = TransactionScopeHelper
@@ -54,7 +54,7 @@ public class TransactionScopeTests : BaseTest
                 // ReSharper disable once DisposeOnUsingVariable
                 aScope.Dispose(); // abort
             }
-        });
+        }));
     }
 
     [Test]
@@ -149,7 +149,7 @@ public class TransactionScopeTests : BaseTest
 
         var id = Guid.NewGuid();
         var id2 = Guid.NewGuid();
-        NUnit.Framework.Assert.Catch<TransactionAbortedException>(() =>
+        NUnit.Framework.Assert.Catch<TransactionAbortedException>((Action)(() =>
         {
             using (var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew,
                        IsolationLevel.ReadCommitted))
@@ -193,7 +193,7 @@ public class TransactionScopeTests : BaseTest
 
                 ambient.Complete();
             }
-        });
+        }));
 
         // из-за отката внутренней транзакции, внешняя транзакция откатилась данные не сохранены!
 

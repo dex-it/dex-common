@@ -50,7 +50,7 @@ public class BaseOnceExecutorTests : BaseTest
 
         var dbContext = sp.GetRequiredService<TestDbContext>();
 
-        NUnit.Framework.Assert.CatchAsync<DbUpdateException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<DbUpdateException>((Func<Task>)(async () =>
         {
             var user = new TestUser { Name = "DoubleInsertTest", Years = 18 };
 
@@ -59,7 +59,7 @@ public class BaseOnceExecutorTests : BaseTest
 
             await dbContext.Users.AddAsync(user);
             await dbContext.SaveChangesAsync();
-        });
+        }));
     }
 
     [Test]
@@ -107,7 +107,7 @@ public class BaseOnceExecutorTests : BaseTest
 
         TestUser? result = null;
 
-        NUnit.Framework.Assert.CatchAsync<RetryLimitExceededException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<RetryLimitExceededException>((Func<Task>)(async () =>
         {
             result = await executor.ExecuteAsync(stepId, async (context, ct) =>
                 {
@@ -121,7 +121,7 @@ public class BaseOnceExecutorTests : BaseTest
                 },
                 (context, ct) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", ct)
             );
-        });
+        }));
 
         Assert.IsNull(result);
     }

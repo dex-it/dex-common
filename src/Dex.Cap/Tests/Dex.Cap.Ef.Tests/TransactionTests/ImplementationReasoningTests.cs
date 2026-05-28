@@ -91,7 +91,7 @@ public class ImplementationReasoningTests : BaseTest
             var attempt = 0;
 
             // Ожидаем, что стратегия выбросит InvalidOperationException
-            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
             {
                 await strategy.ExecuteAsync(async () =>
                 {
@@ -111,7 +111,7 @@ public class ImplementationReasoningTests : BaseTest
                     await context.SaveChangesAsync();
                     await transaction.CommitAsync();
                 });
-            });
+            }));
 
             NUnit.Framework.Assert.That(attempt, Is.EqualTo(2), "Должно было быть сделано 2 попытки (1-я упала по таймауту, 2-я по трекеру)");
             NUnit.Framework.Assert.That(ex!.Message, Does.Contain("already being tracked"),

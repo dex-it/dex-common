@@ -14,12 +14,12 @@ namespace Dex.Types.Test
 
             // Act
             dict[1] = "One";
-            Assert.Multiple(() =>
+            Assert.Multiple((Action)(() =>
             {
                 // Assert
                 Assert.That(dict[1], Is.EqualTo("One"));
                 Assert.That(dict.TryGetKey("One", out var key) ? key : -1, Is.EqualTo(1));
-            });
+            }));
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace Dex.Types.Test
             if (dict == null) throw new ArgumentNullException(nameof(dict));
 
             // Assert
-            Assert.Throws<ArgumentException>(() => dict[2] = "One");
+            Assert.Throws<ArgumentException>((Action)(() => dict[2] = "One"));
         }
 
         [Test]
@@ -67,12 +67,12 @@ namespace Dex.Types.Test
             dict[1] = "R";
 
             // Assert
-            Assert.Multiple(() =>
+            Assert.Multiple((Action)(() =>
             {
                 Assert.That(dict.ContainsValue("One"), Is.False);
                 Assert.That(dict.ContainsValue("Two"), Is.True);
                 Assert.That(dict.ContainsValue("R"), Is.True);
-            });
+            }));
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace Dex.Types.Test
             if (dict == null) throw new ArgumentNullException(nameof(dict));
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => dict[3] = "Two");
+            Assert.Throws<ArgumentException>((Action)(() => dict[3] = "Two"));
         }
 
         [Test]
@@ -96,12 +96,12 @@ namespace Dex.Types.Test
             // Arrange & Act
             var dict = new UniqueValueDictionary<int, string> { { 1, "One" } };
 
-            Assert.Multiple(() =>
+            Assert.Multiple((Action)(() =>
             {
                 // Assert
                 Assert.That(dict[1], Is.EqualTo("One"));
                 Assert.That(dict.TryGetKey("One", out var key) ? key : -1, Is.EqualTo(1));
-            });
+            }));
         }
 
         [Test]
@@ -112,25 +112,25 @@ namespace Dex.Types.Test
             if (dict == null) throw new ArgumentNullException(nameof(dict));
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => dict.Add(1, "AnotherOne"));
-            Assert.Throws<ArgumentException>(() => dict.Add(2, "One"));
+            Assert.Throws<ArgumentException>((Action)(() => dict.Add(1, "AnotherOne")));
+            Assert.Throws<ArgumentException>((Action)(() => dict.Add(2, "One")));
         }
 
         [Test]
         public void Initialize_WithDuplicate_ShouldThrowException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() =>
+            Assert.Throws<ArgumentException>((Action)(() =>
             {
                 _ = new UniqueValueDictionary<int, string>
                 {
                     { 1, "One" },
                     { 2, "One" },
                 };
-            });
+            }));
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() =>
+            Assert.Throws<ArgumentException>((Action)(() =>
             {
                 _ = new UniqueValueDictionary<int, string>
                 {
@@ -138,7 +138,7 @@ namespace Dex.Types.Test
                     // ReSharper disable once DuplicateKeyCollectionInitialization
                     { 1, "Two" },
                 };
-            });
+            }));
         }
 
         [Test]
@@ -153,13 +153,13 @@ namespace Dex.Types.Test
 
             // Act
             var result = dict.Remove(1);
-            Assert.Multiple(() =>
+            Assert.Multiple((Action)(() =>
             {
                 // Assert
                 Assert.That(result, Is.True);
                 Assert.That(dict.ContainsKey(1), Is.False);
                 Assert.That(dict.ContainsValue("One"), Is.False);
-            });
+            }));
         }
 
         [Test]

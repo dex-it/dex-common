@@ -101,7 +101,7 @@ public class ExecutionStrategyTests : BaseTest
         var user = new TestUser { Name = "Test", Years = 18 };
 
         // Root ambient transaction was completed before the nested transaction. The more nested transactions should be completed first.
-        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>((Func<Task>)(async () =>
         {
             await dbContext.Database.CreateExecutionStrategy().ExecuteInTransactionAsync(
                 dbContext,
@@ -117,7 +117,7 @@ public class ExecutionStrategyTests : BaseTest
                         cancellationToken: ct);
                 },
                 (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
-        });
+        }));
     }
 
     [Test]
@@ -131,7 +131,7 @@ public class ExecutionStrategyTests : BaseTest
         var user = new TestUser { Name = "Test", Years = 18 };
 
         // The connection is already in a transaction and cannot participate in another transaction.
-        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>((Func<Task>)(async () =>
         {
             await dbContext.Database.CreateExecutionStrategy().ExecuteInTransactionAsync(
                 dbContext,
@@ -147,7 +147,7 @@ public class ExecutionStrategyTests : BaseTest
                             ct);
                 },
                 (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
-        });
+        }));
     }
 
     [Test]
@@ -161,7 +161,7 @@ public class ExecutionStrategyTests : BaseTest
         var user = new TestUser { Name = "Test", Years = 18 };
 
         // An ambient transaction has been detected. The ambient transaction needs to be completed before beginning a transaction on this connection.
-        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>((Func<Task>)(async () =>
         {
             await dbContext.ExecuteInTransactionScopeAsync(
                 dbContext,
@@ -177,7 +177,7 @@ public class ExecutionStrategyTests : BaseTest
                             ct);
                 },
                 (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
-        });
+        }));
     }
 
     [Test]
@@ -191,7 +191,7 @@ public class ExecutionStrategyTests : BaseTest
         var user = new TestUser { Name = "Test", Years = 18 };
 
         //This connection was used with an ambient transaction. The original ambient transaction needs to be completed before this connection can be used outside of it.
-        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<InvalidOperationException>((Func<Task>)(async () =>
         {
             await dbContext.ExecuteInTransactionScopeAsync(
                 dbContext,
@@ -208,6 +208,6 @@ public class ExecutionStrategyTests : BaseTest
                         cancellationToken: ct);
                 },
                 (context, ct) => context.Users.AnyAsync(x => x.Name == "Test", cancellationToken: ct));
-        });
+        }));
     }
 }

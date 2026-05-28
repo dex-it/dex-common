@@ -205,14 +205,14 @@ public class ExecuteInTransactionTests : BaseTest
                     IsolationLevel = System.Transactions.IsolationLevel.Serializable
                 };
 
-                var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
                 {
                     await dbContext.ExecuteInTransactionAsync(
                         _ => Task.CompletedTask,
                         _ => Task.FromResult(false),
                         options,
                         ct);
-                });
+                }));
 
                 NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Can't participate in existing transaction with isolation level 'ReadCommitted'"));
                 NUnit.Framework.Assert.That(ex.Message, Does.Contain("Requested level 'Serializable' is stricter"));
@@ -268,11 +268,11 @@ public class ExecuteInTransactionTests : BaseTest
                 }
             );
 
-            NUnit.Framework.Assert.Multiple(() =>
+            NUnit.Framework.Assert.Multiple((Action)(() =>
             {
                 // Операция должна была быть вызвана только ОДИН раз.
                 NUnit.Framework.Assert.That(attemptCount, Is.EqualTo(1), "Operation should NOT be retried if verifySucceeded returned true");
-            });
+            }));
 
             // Финальная проверка: пользователь действительно в базе.
             var userExists = await context.Users.AnyAsync(x => x.Id == userId);
@@ -380,14 +380,14 @@ public class ExecuteInTransactionTests : BaseTest
             TestContext.WriteLine($"Same instance? {ReferenceEquals(outerCtx, innerCtx)}");
             TestContext.WriteLine($"Inner CurrentTransaction is null? {innerCtx.Database.CurrentTransaction is null}");
 
-            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
             {
                 await innerCtx.ExecuteInTransactionAsync(async ctInner =>
                 {
                     innerCtx.Users.Add(new TestUser { Id = innerId, Name = "Inner_" + innerId, Years = 20 });
                     await innerCtx.SaveChangesAsync(ctInner);
                 }, _ => Task.FromResult(false), cancellationToken: ct);
-            });
+            }));
 
             NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance"));
         }, _ => Task.FromResult(false));
@@ -399,11 +399,11 @@ public class ExecuteInTransactionTests : BaseTest
 
         TestContext.WriteLine($"Outer in DB: {outerExists}, Inner in DB: {innerExists}");
 
-        NUnit.Framework.Assert.Multiple(() =>
+        NUnit.Framework.Assert.Multiple((Action)(() =>
         {
             NUnit.Framework.Assert.That(outerExists, Is.True, "Outer должен быть успешно закомичен");
             NUnit.Framework.Assert.That(innerExists, Is.False, "Inner не должен был создаться");
-        });
+        }));
     }
 
     [Test]
@@ -568,11 +568,11 @@ public class ExecuteInTransactionTests : BaseTest
             await masterContext.SaveChangesAsync(ct);
 
             // Попытка обернуть работу с репликой в ExecuteInTransactionAsync ДОЛЖНА выбросить исключение.
-            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
             {
                 await replicaContext.ExecuteInTransactionAsync(async ctReplica => { _ = await replicaContext.Users.AnyAsync(ctReplica); }, _ => Task.FromResult(false),
                     cancellationToken: ct);
-            });
+            }));
 
             NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance"));
             NUnit.Framework.Assert.That(ex.Message, Does.Contain("If you only need retry logic for the second context without a transaction"));

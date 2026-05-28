@@ -80,7 +80,7 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () => { await outboxService.EnqueueAsync(new TestEmptyMessage()); });
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>((Func<Task>)(async () => { await outboxService.EnqueueAsync(new TestEmptyMessage()); }));
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () => { await outboxService.EnqueueAsync(new TestEmptyMessageDisallowAutoPublish()); });
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>((Func<Task>)(async () => { await outboxService.EnqueueAsync(new TestEmptyMessageDisallowAutoPublish()); }));
     }
 
     [Test]
@@ -120,7 +120,7 @@ public class EnqueueOutboxTests : BaseTest
         Assert.IsTrue(discriminatorProvider.CurrentDomainOutboxMessageTypes.ContainsKey(TestOutboxMessage.OutboxTypeId));
         Assert.IsTrue(discriminatorProvider.ImmediatelyDeletableMessages.Contains(TestImmediatelyDeletableMessage.OutboxTypeId));
 
-        NUnit.Framework.Assert.DoesNotThrow(() => { outboxCleanupDataProvider.Cleanup(TimeSpan.FromDays(1)); });
+        NUnit.Framework.Assert.DoesNotThrow((Action)(() => { outboxCleanupDataProvider.Cleanup(TimeSpan.FromDays(1)); }));
     }
 
     [Test]
@@ -355,11 +355,11 @@ public class EnqueueOutboxTests : BaseTest
 
         var command = new TestDelayOutboxCommand { Args = "delay test", DelayMsec = 6_000 };
 
-        NUnit.Framework.Assert.CatchAsync<ArgumentOutOfRangeException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<ArgumentOutOfRangeException>((Func<Task>)(async () =>
         {
             // LockTimeout must be greater 10sec
             await outboxService.EnqueueAsync(command, lockTimeout: 9.Seconds());
-        });
+        }));
 
         return Task.CompletedTask;
     }
