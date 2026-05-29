@@ -1,7 +1,7 @@
 <Project>
 
     <PropertyGroup>
-        <FrameworkVersion>8.0.25</FrameworkVersion>
+        <FrameworkVersion>8.0.27</FrameworkVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,15 +11,15 @@
 
         <!--tests -->
         <PackageReference Update="coverlet.collector" Version="8.0.1"/>
-        <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.4.0"/>
+        <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.6.0"/>
         <PackageReference Update="xunit" Version="2.9.3"/>
-        <PackageReference Update="NUnit" Version="4.5.1"/>
+        <PackageReference Update="NUnit" Version="4.6.1"/>
         <PackageReference Update="NUnit3TestAdapter" Version="6.2.0"/>
-        <PackageReference Update="NUnit.Analyzers" Version="4.12.0"/>
+        <PackageReference Update="NUnit.Analyzers" Version="4.13.0"/>
         <PackageReference Update="HttpContextMoq" Version="1.7.0"/>
         <PackageReference Update="Moq" Version="4.20.72"/>
         <PackageReference Update="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0"/>
-        <PackageReference Update="FluentAssertions" Version="8.9.0"/>
+        <PackageReference Update="FluentAssertions" Version="8.10.0"/>
         <PackageReference Update="xunit.runner.visualstudio" Version="3.1.5"/>
 
         <!--microsoft extensions -->
@@ -62,11 +62,11 @@
         <PackageReference Update="OpenTelemetry*" Version="1.9.0"/>             <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нежелательно -->
         <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.8"/>
         <PackageReference Update="MediatR" Version="12.5.0"/>                   <!-- дальше, коммерческая лицензия -->
-        <PackageReference Update="Swashbuckle.AspNetCore" Version="8.1.4"/>           <!-- 8.1.5/6/7 не публиковались, после 8.1.4 идёт 9.0.0 (major) -->
+        <PackageReference Update="Swashbuckle.AspNetCore" Version="8.1.4"/>
         <PackageReference Update="Swashbuckle.AspNetCore.Swagger" Version="8.1.4"/>
         <PackageReference Update="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.4"/>
         <PackageReference Update="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4"/>
-        <PackageReference Update="StackExchange.Redis" Version="2.12.14"/>
+        <PackageReference Update="StackExchange.Redis" Version="2.12.17"/>
         <PackageReference Update="StackExchange.Redis.Extensions.AspNetCore" Version="11.0.0"/>
         <PackageReference Update="StackExchange.Redis.Extensions.System.Text.Json" Version="11.0.0"/>
         <PackageReference Update="StackExchange.Redis.Extensions.Core" Version="11.0.0"/>
