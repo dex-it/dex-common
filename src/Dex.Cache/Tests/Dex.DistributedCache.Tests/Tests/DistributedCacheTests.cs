@@ -41,8 +41,8 @@ namespace Dex.DistributedCache.Tests.Tests
             var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
-            var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
-            var paramsList = new List<string> { "paramTest" };
+            var variableKeys = cacheActionFilterService.GetVariableKeys([]);
+            var paramsList = new List<string> {"paramTest"};
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             var actionExecutingContext = CreateDefaultActionExecutingContext();
@@ -60,15 +60,15 @@ namespace Dex.DistributedCache.Tests.Tests
             var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
-            var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
-            var paramsList = new List<string> { "paramTest" };
+            var variableKeys = cacheActionFilterService.GetVariableKeys([]);
+            var paramsList = new List<string> {"paramTest"};
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             var cacheMetaInfo = new CacheMetaInfo("eTag", "application/json", true);
             await cacheService.SetMetaInfoAsync(cacheKey, cacheMetaInfo.GetBytes(), ExpirationInSeconds, CancellationToken.None);
 
             var actionExecutingContext = CreateDefaultActionExecutingContext();
-            actionExecutingContext.HttpContext.Request.Headers.Append(HeaderNames.IfNoneMatch, new[] { cacheMetaInfo.ETag });
+            actionExecutingContext.HttpContext.Request.Headers.Append(HeaderNames.IfNoneMatch, new[] {cacheMetaInfo.ETag});
 
             var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
 
@@ -85,8 +85,8 @@ namespace Dex.DistributedCache.Tests.Tests
             var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
-            var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
-            var paramsList = new List<string> { "paramTest" };
+            var variableKeys = cacheActionFilterService.GetVariableKeys([]);
+            var paramsList = new List<string> {"paramTest"};
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             var cacheMetaInfo = new CacheMetaInfo("eTag", "application/json", true);
@@ -97,7 +97,7 @@ namespace Dex.DistributedCache.Tests.Tests
             await cacheService.SetValueDataAsync(cacheKey, cacheValueByte, ExpirationInSeconds, CancellationToken.None);
 
             var actionExecutingContext = CreateDefaultActionExecutingContext();
-            actionExecutingContext.HttpContext.Request.Headers.Append(HeaderNames.IfNoneMatch, new[] { "eTagOld" });
+            actionExecutingContext.HttpContext.Request.Headers.Append(HeaderNames.IfNoneMatch, new[] {"eTagOld"});
 
             var checkExistingCacheValue = await cacheActionFilterService.CheckExistingCacheValue(cacheKey, actionExecutingContext);
 
@@ -117,8 +117,8 @@ namespace Dex.DistributedCache.Tests.Tests
             var cacheActionFilterService = serviceScope.ServiceProvider.GetRequiredService<ICacheActionFilterService>();
             var cacheService = serviceScope.ServiceProvider.GetRequiredService<ICacheManagementService>();
 
-            var variableKeys = cacheActionFilterService.GetVariableKeys(Array.Empty<Type>());
-            var paramsList = new List<string> { "paramTest" };
+            var variableKeys = cacheActionFilterService.GetVariableKeys([]);
+            var paramsList = new List<string> {"paramTest"};
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             var actionExecutedContext = CreateDefaultActionExecutedContext();
@@ -151,7 +151,7 @@ namespace Dex.DistributedCache.Tests.Tests
 
             Type[] cacheVariableKeys = [typeof(ICacheUserVariableKeyResolver), typeof(ICacheLocaleVariableKeyResolver)];
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
-            var paramsList = new List<string> { "paramTest" };
+            var paramsList = new List<string> {"paramTest"};
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             var actionExecutedContext = CreateDefaultActionExecutedContext();
@@ -184,12 +184,12 @@ namespace Dex.DistributedCache.Tests.Tests
 
             Type[] cacheVariableKeys = [typeof(ICacheUserVariableKeyResolver)];
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
-            var paramsList = new List<string> { "paramTest" };
+            var paramsList = new List<string> {"paramTest"};
             var cacheKey = cacheService.GenerateCacheKey(variableKeys, paramsList);
 
             var actionExecutedContext = CreateDefaultActionExecutedContext();
 
-            var cacheValue = new CardInfo[] { new() { Id = Guid.NewGuid() }, new() { Id = Guid.NewGuid() } };
+            var cacheValue = new CardInfo[] {new() {Id = Guid.NewGuid()}, new() {Id = Guid.NewGuid()}};
             await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(cacheValue)));
             actionExecutedContext.HttpContext.Response.Body = buffer;
             actionExecutedContext.Result = new OkObjectResult(cacheValue);
@@ -217,12 +217,12 @@ namespace Dex.DistributedCache.Tests.Tests
 
             Type[] cacheVariableKeys = [typeof(ICacheUserVariableKeyResolver)];
             var variableKeys = cacheActionFilterService.GetVariableKeys(cacheVariableKeys);
-            var paramsList = new List<string> { "paramTest", "парамТест" };
+            var paramsList = new List<string> {"paramTest", "парамТест"};
             var cacheKey = ((ICacheManagementService)cacheService).GenerateCacheKey(variableKeys, paramsList);
 
             var actionExecutedContext = CreateDefaultActionExecutedContext();
 
-            var cacheValue = new CardInfo[] { new() { Id = Guid.NewGuid() }, new() { Id = Guid.NewGuid() } };
+            var cacheValue = new CardInfo[] {new() {Id = Guid.NewGuid()}, new() {Id = Guid.NewGuid()}};
             await using var buffer = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(cacheValue)));
             actionExecutedContext.HttpContext.Response.Body = buffer;
             actionExecutedContext.Result = new OkObjectResult(cacheValue);

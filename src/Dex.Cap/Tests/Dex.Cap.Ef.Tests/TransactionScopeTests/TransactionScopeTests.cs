@@ -30,30 +30,23 @@ public class TransactionScopeTests : BaseTest
         NUnit.Framework.Assert.Catch<InvalidOperationException>((Action)(() =>
         {
             var id = Guid.NewGuid();
-            using (var aScope = TransactionScopeHelper
-                       .CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted))
-            {
-                var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
-                db.Database.CreateExecutionStrategy()
-                    .Execute(0,
-                        (_, _) =>
-                        {
-                            using (var inner2 = TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.Required,
-                                           IsolationLevel.ReadCommitted))
-                            {
-                                db.Users.Add(new TestUser { Id = id, Name = "max" });
-                                db.SaveChanges();
-                                inner2.Complete();
+            using var aScope = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew, IsolationLevel.ReadCommitted);
+            var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
+            db.Database.CreateExecutionStrategy()
+                .Execute(0,
+                    (_, _) =>
+                    {
+                        using var inner2 = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.Required, IsolationLevel.ReadCommitted);
+                        db.Users.Add(new TestUser {Id = id, Name = "max"});
+                        db.SaveChanges();
+                        inner2.Complete();
 
-                                return 0;
-                            }
-                        },
-                        (_, _) => new ExecutionResult<int>(true, 0));
+                        return 0;
+                    },
+                    (_, _) => new ExecutionResult<int>(true, 0));
 
-                // ReSharper disable once DisposeOnUsingVariable
-                aScope.Dispose(); // abort
-            }
+            // ReSharper disable once DisposeOnUsingVariable
+            aScope.Dispose(); // abort
         }));
     }
 
@@ -74,16 +67,14 @@ public class TransactionScopeTests : BaseTest
                 .Execute(0,
                     (_, _) =>
                     {
-                        using (var inner2 = TransactionScopeHelper
-                                   .CreateTransactionScope(TransactionScopeOption.Required,
-                                       IsolationLevel.ReadCommitted))
-                        {
-                            db.Users.Add(new TestUser { Id = id, Name = "max" });
-                            db.SaveChanges();
-                            inner2.Complete();
+                        using var inner2 = TransactionScopeHelper
+                            .CreateTransactionScope(TransactionScopeOption.Required,
+                                IsolationLevel.ReadCommitted);
+                        db.Users.Add(new TestUser {Id = id, Name = "max"});
+                        db.SaveChanges();
+                        inner2.Complete();
 
-                            return 0;
-                        }
+                        return 0;
                     },
                     (_, _) => new ExecutionResult<int>(true, 0));
 
@@ -114,16 +105,14 @@ public class TransactionScopeTests : BaseTest
                     .Execute(0,
                         (_, _) =>
                         {
-                            using (var inner2 = TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.Required,
-                                           IsolationLevel.ReadCommitted))
-                            {
-                                db.Users.Add(new TestUser { Id = id, Name = "max" });
-                                db.SaveChanges();
-                                inner2.Complete();
+                            using var inner2 = TransactionScopeHelper
+                                .CreateTransactionScope(TransactionScopeOption.Required,
+                                    IsolationLevel.ReadCommitted);
+                            db.Users.Add(new TestUser {Id = id, Name = "max"});
+                            db.SaveChanges();
+                            inner2.Complete();
 
-                                return 0;
-                            }
+                            return 0;
                         },
                         (_, _) => new ExecutionResult<int>(true, 0));
 
@@ -151,48 +140,44 @@ public class TransactionScopeTests : BaseTest
         var id2 = Guid.NewGuid();
         NUnit.Framework.Assert.Catch<TransactionAbortedException>((Action)(() =>
         {
-            using (var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew,
-                       IsolationLevel.ReadCommitted))
-            {
-                var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
-                db.Database.CreateExecutionStrategy()
-                    .Execute(0,
-                        (_, _) =>
+            using var ambient = TransactionScopeHelper.CreateTransactionScope(TransactionScopeOption.RequiresNew,
+                IsolationLevel.ReadCommitted);
+            var db = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
+            db.Database.CreateExecutionStrategy()
+                .Execute(0,
+                    (_, _) =>
+                    {
+                        using var inner2 = TransactionScopeHelper
+                            .CreateTransactionScope(TransactionScopeOption.Required,
+                                IsolationLevel.ReadCommitted);
+                        db.Users.Add(new TestUser {Id = id, Name = "max"});
+                        db.SaveChanges();
+
+                        inner2.Complete();
+
+                        return 0;
+                    },
+                    (_, _) => new ExecutionResult<int>(true, 0));
+
+            db.Database.CreateExecutionStrategy()
+                .Execute(0,
+                    (_, _) =>
+                    {
+                        using (TransactionScopeHelper
+                                   .CreateTransactionScope(TransactionScopeOption.Required,
+                                       IsolationLevel.ReadCommitted))
                         {
-                            using (var inner2 = TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.Required,
-                                           IsolationLevel.ReadCommitted))
-                            {
-                                db.Users.Add(new TestUser { Id = id, Name = "max" });
-                                db.SaveChanges();
+                            db.Users.Add(new TestUser {Id = id2, Name = "max2"});
+                            db.SaveChanges();
 
-                                inner2.Complete();
-                            }
+                            //inner3.Complete();
+                        }
 
-                            return 0;
-                        },
-                        (_, _) => new ExecutionResult<int>(true, 0));
+                        return 0;
+                    },
+                    (_, _) => new ExecutionResult<int>(true, 0));
 
-                db.Database.CreateExecutionStrategy()
-                    .Execute(0,
-                        (_, _) =>
-                        {
-                            using (TransactionScopeHelper
-                                       .CreateTransactionScope(TransactionScopeOption.Required,
-                                           IsolationLevel.ReadCommitted))
-                            {
-                                db.Users.Add(new TestUser { Id = id2, Name = "max2" });
-                                db.SaveChanges();
-
-                                //inner3.Complete();
-                            }
-
-                            return 0;
-                        },
-                        (_, _) => new ExecutionResult<int>(true, 0));
-
-                ambient.Complete();
-            }
+            ambient.Complete();
         }));
 
         // из-за отката внутренней транзакции, внешняя транзакция откатилась данные не сохранены!
@@ -224,15 +209,13 @@ public class TransactionScopeTests : BaseTest
                 .Execute(0,
                     (_, _) =>
                     {
-                        using (var inner2 = TransactionScopeHelper
-                                   .CreateTransactionScope(TransactionScopeOption.Required,
-                                       IsolationLevel.ReadCommitted))
-                        {
-                            db.Users.Add(new TestUser { Id = id, Name = "max" });
-                            db.SaveChanges();
+                        using var inner2 = TransactionScopeHelper
+                            .CreateTransactionScope(TransactionScopeOption.Required,
+                                IsolationLevel.ReadCommitted);
+                        db.Users.Add(new TestUser {Id = id, Name = "max"});
+                        db.SaveChanges();
 
-                            inner2.Complete();
-                        }
+                        inner2.Complete();
 
                         return 0;
                     },
@@ -246,7 +229,7 @@ public class TransactionScopeTests : BaseTest
                                    .CreateTransactionScope(TransactionScopeOption.Required,
                                        IsolationLevel.ReadCommitted))
                         {
-                            db.Users.Add(new TestUser { Id = id2, Name = "max2" });
+                            db.Users.Add(new TestUser {Id = id2, Name = "max2"});
                             db.SaveChanges();
 
                             //inner3.Complete();
@@ -279,7 +262,7 @@ public class TransactionScopeTests : BaseTest
 
         var id = Guid.NewGuid();
         using (var aScope = new CommittableTransaction(new TransactionOptions
-                   { IsolationLevel = IsolationLevel.ReadCommitted }))
+                   {IsolationLevel = IsolationLevel.ReadCommitted}))
         {
             Transaction.Current = aScope;
 
@@ -288,15 +271,13 @@ public class TransactionScopeTests : BaseTest
                 .Execute(0,
                     (_, _) =>
                     {
-                        using (var inner2 = TransactionScopeHelper
-                                   .CreateTransactionScope(TransactionScopeOption.RequiresNew,
-                                       IsolationLevel.ReadCommitted))
-                        {
-                            db.Users.Add(new TestUser { Id = id, Name = "max" });
-                            db.SaveChanges();
+                        using var inner2 = TransactionScopeHelper
+                            .CreateTransactionScope(TransactionScopeOption.RequiresNew,
+                                IsolationLevel.ReadCommitted);
+                        db.Users.Add(new TestUser {Id = id, Name = "max"});
+                        db.SaveChanges();
 
-                            inner2.Complete();
-                        }
+                        inner2.Complete();
 
                         return 0;
                     },
@@ -324,7 +305,7 @@ public class TransactionScopeTests : BaseTest
             {
                 await db1.Database.BeginTransactionAsync();
 
-                db1.Users.Add(new TestUser { Name = "mmx1" });
+                db1.Users.Add(new TestUser {Name = "mmx1"});
                 await db1.SaveChangesAsync();
 
                 await db1.Database.CommitTransactionAsync();
@@ -335,7 +316,7 @@ public class TransactionScopeTests : BaseTest
             {
                 await db2.Database.BeginTransactionAsync();
 
-                db2.Users.Add(new TestUser { Name = "mmx2" });
+                db2.Users.Add(new TestUser {Name = "mmx2"});
                 await db2.SaveChangesAsync();
 
                 await db2.Database.CommitTransactionAsync();

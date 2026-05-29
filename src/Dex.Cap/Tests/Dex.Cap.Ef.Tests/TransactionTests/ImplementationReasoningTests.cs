@@ -13,7 +13,7 @@ public class ImplementationReasoningTests : BaseTest
     [Test]
     public async Task Savepoint_Rollback_Causes_Silent_Reinsertion_Danger()
     {
-        // Тест демонстрирует, что RollbackToSavepoint откатывает данные в БД, 
+        // Тест демонстрирует, что RollbackToSavepoint откатывает данные в БД,
         // но оставляет их в ChangeTracker, что ведет к тихой повторной вставке.
 
         // Включаем стратегию ретраев
@@ -28,7 +28,7 @@ public class ImplementationReasoningTests : BaseTest
         {
             await using var transaction = await context.Database.BeginTransactionAsync();
 
-            var entity1 = new TestUser { Id = Guid.NewGuid(), Name = "Initial User", Years = 25 };
+            var entity1 = new TestUser {Id = Guid.NewGuid(), Name = "Initial User", Years = 25};
             context.Users.Add(entity1);
             await context.SaveChangesAsync();
 
@@ -39,7 +39,7 @@ public class ImplementationReasoningTests : BaseTest
             try
             {
                 // 2. Добавляем данные, которые захотим откатить
-                context.Users.Add(new TestUser { Id = entity2Id, Name = "Should Be Rolled Back", Years = 30 });
+                context.Users.Add(new TestUser {Id = entity2Id, Name = "Should Be Rolled Back", Years = 30});
 
                 // 3. Имитируем ошибку
                 throw new Exception("Simulated business error");
@@ -59,7 +59,7 @@ public class ImplementationReasoningTests : BaseTest
             NUnit.Framework.Assert.That(isTracked, Is.True, "ОПАСНОСТЬ! В ChangeTracker сущность осталась в состоянии Added");
 
             // 5. ТИХАЯ ОШИБКА: Сохраняем что-то другое
-            context.Users.Add(new TestUser { Id = Guid.NewGuid(), Name = "Third User", Years = 35 });
+            context.Users.Add(new TestUser {Id = Guid.NewGuid(), Name = "Third User", Years = 35});
 
             // Этот вызов заново вставит entity2, хотя мы думали, что откатили её!
             await context.SaveChangesAsync();
@@ -77,7 +77,7 @@ public class ImplementationReasoningTests : BaseTest
     {
         try
         {
-            // Тест демонстрирует, что если стратегия ретрая не чистит трекер, 
+            // Тест демонстрирует, что если стратегия ретрая не чистит трекер,
             // вторая попытка упадет сразу же при попытке добавить тот же объект.
 
             // Включаем стратегию ретраев
@@ -99,7 +99,7 @@ public class ImplementationReasoningTests : BaseTest
                     await using var transaction = await context.Database.BeginTransactionAsync();
 
                     // На обеих попытках пробуем добавить пользователя с одним и тем же ID
-                    context.Users.Add(new TestUser { Id = userId, Name = $"RetryUser_At_{attempt}", Years = 20 });
+                    context.Users.Add(new TestUser {Id = userId, Name = $"RetryUser_At_{attempt}", Years = 20});
 
                     if (attempt == 1)
                     {

@@ -28,7 +28,7 @@ namespace Dex.Types.Test
             // Arrange
             var dict = new UniqueValueDictionary<int, string>
             {
-                { 1, "One" }
+                {1, "One"}
             };
 
             // Act
@@ -44,8 +44,8 @@ namespace Dex.Types.Test
             // Arrange
             var dict = new UniqueValueDictionary<int, string>
             {
-                { 1, "One" },
-                { 2, "Two" }
+                {1, "One"},
+                {2, "Two"}
             };
             if (dict == null) throw new ArgumentNullException(nameof(dict));
 
@@ -59,8 +59,8 @@ namespace Dex.Types.Test
             // Arrange
             var dict = new UniqueValueDictionary<int, string>
             {
-                { 1, "One" },
-                { 2, "Two" }
+                {1, "One"},
+                {2, "Two"}
             };
 
             // act
@@ -81,8 +81,8 @@ namespace Dex.Types.Test
             // Arrange
             var dict = new UniqueValueDictionary<int, string>
             {
-                { 1, "One" },
-                { 2, "Two" }
+                {1, "One"},
+                {2, "Two"}
             };
             if (dict == null) throw new ArgumentNullException(nameof(dict));
 
@@ -94,7 +94,7 @@ namespace Dex.Types.Test
         public void Add_WhenKeyAndValueDoNotExist_ShouldAddKeyValuePair()
         {
             // Arrange & Act
-            var dict = new UniqueValueDictionary<int, string> { { 1, "One" } };
+            var dict = new UniqueValueDictionary<int, string> {{1, "One"}};
 
             Assert.Multiple((Action)(() =>
             {
@@ -108,7 +108,7 @@ namespace Dex.Types.Test
         public void Add_WhenKeyOrValueAlreadyExist_ShouldThrowException()
         {
             // Arrange
-            var dict = new UniqueValueDictionary<int, string> { { 1, "One" } };
+            var dict = new UniqueValueDictionary<int, string> {{1, "One"}};
             if (dict == null) throw new ArgumentNullException(nameof(dict));
 
             // Act & Assert
@@ -124,8 +124,8 @@ namespace Dex.Types.Test
             {
                 _ = new UniqueValueDictionary<int, string>
                 {
-                    { 1, "One" },
-                    { 2, "One" },
+                    {1, "One"},
+                    {2, "One"},
                 };
             }));
 
@@ -134,9 +134,9 @@ namespace Dex.Types.Test
             {
                 _ = new UniqueValueDictionary<int, string>
                 {
-                    { 1, "One" },
+                    {1, "One"},
                     // ReSharper disable once DuplicateKeyCollectionInitialization
-                    { 1, "Two" },
+                    {1, "Two"},
                 };
             }));
         }
@@ -147,8 +147,8 @@ namespace Dex.Types.Test
             // Arrange
             var dict = new UniqueValueDictionary<int, string>
             {
-                { 1, "One" },
-                { 2, "Two" }
+                {1, "One"},
+                {2, "Two"}
             };
 
             // Act
@@ -168,7 +168,7 @@ namespace Dex.Types.Test
             // Arrange
             var dict = new UniqueValueDictionary<int, string>
             {
-                { 1, "One" }
+                {1, "One"}
             };
 
             // Act

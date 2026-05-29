@@ -61,7 +61,7 @@ namespace Dex.CreditCard.Tests
             foreach (var card in _validCards)
             {
                 var hasValidCheckDigit = LuhnAlgorithm.HasValidCheckDigit(card.Key);
-                if(!hasValidCheckDigit)
+                if (!hasValidCheckDigit)
                     TestContext.WriteLine(card.Key);
                 ClassicAssert.True(hasValidCheckDigit);
             }
@@ -128,10 +128,7 @@ namespace Dex.CreditCard.Tests
         [TestCase("51251261 246523634263214123411")]
         public void LyhnInvalidStringTest2(string arg)
         {
-            Assert.Catch<ArgumentException>((Action)(() =>
-            {
-                ClassicAssert.False(LuhnAlgorithm.HasValidCheckDigit(arg));
-            }));
+            Assert.Catch<ArgumentException>((Action)(() => { ClassicAssert.False(LuhnAlgorithm.HasValidCheckDigit(arg)); }));
         }
     }
 }

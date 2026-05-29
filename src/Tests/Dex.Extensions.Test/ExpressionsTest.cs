@@ -7,7 +7,9 @@ namespace Dex.Extensions.Test
     public class ExpressionsTest
     {
         private const string Field1 = "field1";
+
         private string Prop1 { get; set; }
+
         private ExpressionsTest Exp2 { get; set; }
 
         [Test]
