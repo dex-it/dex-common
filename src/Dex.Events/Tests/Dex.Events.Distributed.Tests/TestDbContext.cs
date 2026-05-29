@@ -1,4 +1,3 @@
-using System;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Events.Distributed.Tests.Models;
 using Microsoft.EntityFrameworkCore;
@@ -6,23 +5,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Events.Distributed.Tests;
 
-public class TestDbContext : DbContext
+public class TestDbContext(string dbName) : DbContext
 {
     private static readonly ILoggerFactory LogFactory = LoggerFactory.Create(builder => { builder.AddDebug(); });
-    private readonly string _dbName;
 
     public DbSet<User> Users { get; internal set; }
-
-    public TestDbContext(string dbName)
-    {
-        _dbName = dbName ?? throw new ArgumentNullException(nameof(dbName));
-    }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
 
-        optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={_dbName};User Id=postgres;Password=my-pass~003;",
+        optionsBuilder.UseNpgsql($"Server=127.0.0.1;Port=5432;Database={dbName};User Id=postgres;Password=my-pass~003;",
             builder => { builder.EnableRetryOnFailure(); });
 
         optionsBuilder.UseLoggerFactory(LogFactory).EnableSensitiveDataLogging();

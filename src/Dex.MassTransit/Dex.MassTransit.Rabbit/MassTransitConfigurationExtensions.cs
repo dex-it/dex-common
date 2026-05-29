@@ -6,7 +6,11 @@ namespace Dex.MassTransit.Rabbit;
 
 public static class MassTransitConfigurationExtensions
 {
-    private const int DefaultRetryLimit = 5;
+    private const int DefaultRetryLimit = 3;
+
+    private static readonly TimeSpan[] DefaultRedeliveryIntervals = [5.Minutes(), 15.Minutes(), 30.Minutes(), 1.Hours(), 3.Hours(), 6.Hours()];
+
+    private static readonly RetryExponentialIntervals DefaultRetryIntervals = new(1.Seconds(), 5.Seconds(), 1.Seconds());
 
     /// <summary>
     /// Конфигурация с настроенными Redelivery и Retry
@@ -15,19 +19,21 @@ public static class MassTransitConfigurationExtensions
     public static IConsumerConfigurator UseRedeliveryRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
         Func<Exception, bool> checkTransientException,
-        int? retryLimit = null)
+        int? retryLimit = null,
+        RetryExponentialIntervals? retryIntervals = null,
+        TimeSpan[]? redeliveryIntervals = null)
         where TConsumer : class
     {
-        if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+        ArgumentNullException.ThrowIfNull(configurator);
 
         // важна последовательность usage (вначале UseDelayedRedelivery, затем UseMessageRetry)
         configurator.UseDelayedRedelivery(redeliveryConfigurator =>
         {
-            redeliveryConfigurator.Intervals(5.Minutes(), 15.Minutes(), 30.Minutes(), 1.Hours(), 3.Hours(), 6.Hours());
+            redeliveryConfigurator.Intervals(redeliveryIntervals ?? DefaultRedeliveryIntervals);
             redeliveryConfigurator.Handle(checkTransientException);
         });
 
-        configurator.UseRetryConfiguration(checkTransientException, retryLimit);
+        configurator.UseRetryConfiguration(checkTransientException, retryLimit, retryIntervals);
 
         return configurator;
     }
@@ -39,16 +45,18 @@ public static class MassTransitConfigurationExtensions
     public static IConsumerConfigurator UseRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
         Func<Exception, bool> checkTransientException,
-        int? retryLimit = null)
+        int? retryLimit = null,
+        RetryExponentialIntervals? retryIntervals = null)
         where TConsumer : class
     {
-        if (configurator == null) throw new ArgumentNullException(nameof(configurator));
+        ArgumentNullException.ThrowIfNull(configurator);
 
         configurator.UseMessageRetry(retryConfigurator =>
         {
             retryLimit ??= DefaultRetryLimit;
+            var intervals = retryIntervals ?? DefaultRetryIntervals;
 
-            retryConfigurator.Incremental(retryLimit.Value, 1.Seconds(), 1.Seconds());
+            retryConfigurator.Exponential(retryLimit.Value, intervals.MinInterval, intervals.MaxInterval, intervals.Delta);
             retryConfigurator.Handle(checkTransientException);
         });
 
@@ -64,8 +72,8 @@ public static class MassTransitConfigurationExtensions
         int concurrencyLimit = 1,
         int prefetchCount = 1)
     {
-        if (configurator == null) throw new ArgumentNullException(nameof(configurator));
-        if (concurrencyLimit >= 100) throw new ArgumentOutOfRangeException(nameof(concurrencyLimit));
+        ArgumentNullException.ThrowIfNull(configurator);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(concurrencyLimit, 100);
 
         configurator.UseConcurrencyLimit(concurrencyLimit);
         configurator.ConfigureTransport(transportConfigurator => transportConfigurator.PrefetchCount = prefetchCount);
@@ -73,3 +81,5 @@ public static class MassTransitConfigurationExtensions
         return configurator;
     }
 }
+
+public readonly record struct RetryExponentialIntervals(TimeSpan MinInterval, TimeSpan MaxInterval, TimeSpan Delta);

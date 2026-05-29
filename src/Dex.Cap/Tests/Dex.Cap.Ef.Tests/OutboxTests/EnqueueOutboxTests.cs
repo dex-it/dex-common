@@ -47,11 +47,16 @@ public class EnqueueOutboxTests : BaseTest
         var count = 0;
 
         TestCommandHandler.OnProcess += OnTestCommandHandlerOnOnProcess!;
+        try
+        {
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync(CancellationToken.None);
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= OnTestCommandHandlerOnOnProcess!;
+        }
 
-        var handler = sp.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync(CancellationToken.None);
-
-        TestCommandHandler.OnProcess -= OnTestCommandHandlerOnOnProcess!;
         Assert.AreEqual(2, count);
 
         void OnTestCommandHandlerOnOnProcess(object _, TestOutboxCommand m)
@@ -75,7 +80,8 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () => { await outboxService.EnqueueAsync(new TestEmptyMessage()); });
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(
+            (Func<Task>)(async () => { await outboxService.EnqueueAsync(new TestEmptyMessage()); }));
     }
 
     [Test]
@@ -87,7 +93,10 @@ public class EnqueueOutboxTests : BaseTest
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(async () => { await outboxService.EnqueueAsync(new TestEmptyMessageDisallowAutoPublish()); });
+        NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>((Func<Task>)(async () =>
+        {
+            await outboxService.EnqueueAsync(new TestEmptyMessageDisallowAutoPublish());
+        }));
     }
 
     [Test]
@@ -115,7 +124,7 @@ public class EnqueueOutboxTests : BaseTest
         Assert.IsTrue(discriminatorProvider.CurrentDomainOutboxMessageTypes.ContainsKey(TestOutboxMessage.OutboxTypeId));
         Assert.IsTrue(discriminatorProvider.ImmediatelyDeletableMessages.Contains(TestImmediatelyDeletableMessage.OutboxTypeId));
 
-        NUnit.Framework.Assert.DoesNotThrow(() => { outboxCleanupDataProvider.Cleanup(TimeSpan.FromDays(1)); });
+        NUnit.Framework.Assert.DoesNotThrow((Action)(() => { outboxCleanupDataProvider.Cleanup(TimeSpan.FromDays(1)); }));
     }
 
     [Test]
@@ -132,14 +141,22 @@ public class EnqueueOutboxTests : BaseTest
         await SaveChanges(sp);
 
         var count = 0;
-        TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
-        var handler = sp.GetRequiredService<IOutboxHandler>();
-
-        var repeat = 5;
-        while (repeat-- > 0)
+        EventHandler onProcess = (_, _) => { count++; };
+        TestErrorCommandHandler.OnProcess += onProcess;
+        try
         {
-            await handler.ProcessAsync(CancellationToken.None);
-            await Task.Delay(100);
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.ProcessAsync(CancellationToken.None);
+                await Task.Delay(100);
+            }
+        }
+        finally
+        {
+            TestErrorCommandHandler.OnProcess -= onProcess;
         }
 
         var dbContext = sp.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
@@ -224,15 +241,26 @@ public class EnqueueOutboxTests : BaseTest
         await SaveChanges(sp);
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => { count++; };
-        TestErrorCommandHandler.OnProcess += (_, _) => { count++; };
-        var handler = sp.GetRequiredService<IOutboxHandler>();
+        EventHandler<TestOutboxCommand> onProcess = (_, _) => { count++; };
+        EventHandler onErrorProcess = (_, _) => { count++; };
 
-        var repeat = 5;
-        while (repeat-- > 0)
+        TestCommandHandler.OnProcess += onProcess;
+        TestErrorCommandHandler.OnProcess += onErrorProcess;
+        try
         {
-            await handler.ProcessAsync(CancellationToken.None);
-            await Task.Delay(100);
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.ProcessAsync(CancellationToken.None);
+                await Task.Delay(100);
+            }
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess;
+            TestErrorCommandHandler.OnProcess -= onErrorProcess;
         }
 
         Assert.AreEqual(2, count);
@@ -253,10 +281,17 @@ public class EnqueueOutboxTests : BaseTest
         await SaveChanges(sp);
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => { count++; };
-
-        var handler = sp.GetRequiredService<IOutboxHandler>();
-        await handler.ProcessAsync();
+        EventHandler<TestOutboxCommand> onProcess = (_, _) => { count++; };
+        TestCommandHandler.OnProcess += onProcess;
+        try
+        {
+            var handler = sp.GetRequiredService<IOutboxHandler>();
+            await handler.ProcessAsync();
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess;
+        }
 
         Assert.AreEqual(1, count);
 
@@ -287,14 +322,22 @@ public class EnqueueOutboxTests : BaseTest
         await SaveChanges(serviceProvider);
 
         var count = 0;
-        TestCommandHandler.OnProcess += (_, _) => { count++; };
-        var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
-
-        var repeat = 5;
-        while (repeat-- > 0)
+        EventHandler<TestOutboxCommand> onProcess = (_, _) => { count++; };
+        TestCommandHandler.OnProcess += onProcess;
+        try
         {
-            await handler.ProcessAsync(CancellationToken.None);
-            await Task.Delay(100);
+            var handler = serviceProvider.GetRequiredService<IOutboxHandler>();
+
+            var repeat = 5;
+            while (repeat-- > 0)
+            {
+                await handler.ProcessAsync(CancellationToken.None);
+                await Task.Delay(100);
+            }
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= onProcess;
         }
 
         var dbContext = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<TestDbContext>();
@@ -316,11 +359,11 @@ public class EnqueueOutboxTests : BaseTest
 
         var command = new TestDelayOutboxCommand {Args = "delay test", DelayMsec = 6_000};
 
-        NUnit.Framework.Assert.CatchAsync<ArgumentOutOfRangeException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<ArgumentOutOfRangeException>((Func<Task>)(async () =>
         {
             // LockTimeout must be greater 10sec
             await outboxService.EnqueueAsync(command, lockTimeout: 9.Seconds());
-        });
+        }));
 
         return Task.CompletedTask;
     }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using Dex.Cap.Common.Interfaces;
 using Dex.Cap.Outbox.Interfaces;
@@ -15,7 +14,7 @@ internal sealed class OutboxTypeDiscriminatorProvider(
     ILogger<OutboxTypeDiscriminatorProvider> logger) : IOutboxTypeDiscriminatorProvider
 {
     private FrozenDictionary<string, Type>? _currentDomainOutboxMessageTypes;
-    private ImmutableArray<string>? _immediatelyDeletableMessages;
+    private FrozenSet<string>? _immediatelyDeletableMessages;
     private FrozenSet<string>? _supportedDiscriminators;
 
     public FrozenSet<string> SupportedDiscriminators
@@ -70,14 +69,14 @@ internal sealed class OutboxTypeDiscriminatorProvider(
         }
     }
 
-    public ImmutableArray<string> ImmediatelyDeletableMessages
+    public FrozenSet<string> ImmediatelyDeletableMessages
     {
         get
         {
-            _immediatelyDeletableMessages ??= GetImmediatelyDeletableMessages();
-            return _immediatelyDeletableMessages.Value;
+            _immediatelyDeletableMessages ??= GetImmediatelyDeletableMessages().ToFrozenSet();
+            return _immediatelyDeletableMessages;
 
-            ImmutableArray<string> GetImmediatelyDeletableMessages()
+            string[] GetImmediatelyDeletableMessages()
             {
                 var result = new List<string>(CurrentDomainOutboxMessageTypes.Count);
 
@@ -129,7 +128,8 @@ internal sealed class OutboxTypeDiscriminatorProvider(
                         return new KeyValuePair<string, Type>(discriminator, type);
                     })
                     .Where(x => string.IsNullOrWhiteSpace(x.Key) is false)
-                    .ToDictionary();
+                    .GroupBy(x => x.Key)
+                    .ToDictionary(g => g.Key, g => g.First().Value);
             }
         }
     }

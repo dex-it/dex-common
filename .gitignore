@@ -299,3 +299,20 @@ crashlytics-build.properties
 *.snupkg
 
 *.local.json
+
+# Secrets
+.env
+
+# Gemini CLI
+.gemini/
+*.skill
+temp-skills/
+tools.yaml
+
+# Claude Code
+run-claude/
+.claude/
+
+# TLDR
+.tldr/
+.tldrignore

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Events.Distributed.Tests.Events;
@@ -10,7 +10,7 @@ namespace Dex.Events.Distributed.Tests.Handlers;
 
 public class TestOnUserAddedHandler : IDistributedEventHandler<OnUserAdded>
 {
-    public static event EventHandler OnProcess;
+    public static event EventHandler<OnUserAdded> OnProcess;
 
     public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
     {
@@ -18,7 +18,7 @@ public class TestOnUserAddedHandler : IDistributedEventHandler<OnUserAdded>
 
         Console.WriteLine($"{nameof(TestOnUserAddedHandler)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
 
-        OnProcess?.Invoke(null, EventArgs.Empty);
+        OnProcess?.Invoke(null, argument);
         return Task.CompletedTask;
     }
 
@@ -30,7 +30,7 @@ public class TestOnUserAddedHandler : IDistributedEventHandler<OnUserAdded>
 
 public class TestOnUserAddedHandler2 : IDistributedEventHandler<OnUserAdded>
 {
-    public static event EventHandler OnProcess;
+    public static event EventHandler<OnUserAdded> OnProcess;
 
     public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
     {
@@ -38,7 +38,7 @@ public class TestOnUserAddedHandler2 : IDistributedEventHandler<OnUserAdded>
 
         Console.WriteLine($"{nameof(TestOnUserAddedHandler2)} - Processed command at {DateTime.Now}, Args: {argument.CustomerId}");
 
-        OnProcess?.Invoke(null, EventArgs.Empty);
+        OnProcess?.Invoke(null, argument);
         return Task.CompletedTask;
     }
 
@@ -50,7 +50,7 @@ public class TestOnUserAddedHandler2 : IDistributedEventHandler<OnUserAdded>
 
 public class TestOnUserAddedHandlerRaiseException : IDistributedEventHandler<OnUserAdded>
 {
-    public static event EventHandler OnProcess;
+    public static event EventHandler<OnUserAdded> OnProcess;
 
     public Task ProcessAsync(OnUserAdded argument, CancellationToken cancellationToken)
     {
@@ -60,7 +60,7 @@ public class TestOnUserAddedHandlerRaiseException : IDistributedEventHandler<OnU
         throw new Exception("test Exception");
 
         // ReSharper disable once HeuristicUnreachableCode
-        OnProcess?.Invoke(null, EventArgs.Empty);
+        OnProcess?.Invoke(null, argument);
         return Task.CompletedTask;
     }
 

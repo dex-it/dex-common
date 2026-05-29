@@ -72,7 +72,7 @@ namespace Dex.SecurityTokenProviderTests
 
             await Task.Delay(TimeSpan.FromSeconds(2));
             //Assert
-            await Assert.ThrowsAsync<TokenExpiredException>(async () => { await tokenProvider.GetTokenDataAsync<TestUserToken>(token); });
+            await Assert.ThrowsAsync<TokenExpiredException>((Func<Task>)(async () => { await tokenProvider.GetTokenDataAsync<TestUserToken>(token); }));
         }
 
 
@@ -114,7 +114,7 @@ namespace Dex.SecurityTokenProviderTests
             await tokenProvider.MarkTokenAsUsed(tokenData.Id);
 
             //Assert
-            await Assert.ThrowsAsync<TokenAlreadyActivatedException>(async () => { await tokenProvider.GetTokenDataFromUrlAsync<TestUserToken>(token); });
+            await Assert.ThrowsAsync<TokenAlreadyActivatedException>((Func<Task>)(async () => { await tokenProvider.GetTokenDataFromUrlAsync<TestUserToken>(token); }));
         }
 
 

@@ -47,7 +47,7 @@ namespace Dex.DistributedCache.Services
                     if (dependencyValueKeys == null)
                     {
                         _logger.LogWarning("Unable to deserialize: {Data}", Encoding.UTF8.GetString(cacheByte));
-                        dependencyValueKeys = new List<string>();
+                        dependencyValueKeys = [];
                     }
                 }
 
@@ -78,7 +78,7 @@ namespace Dex.DistributedCache.Services
                     if (dependencyValueKeys == null)
                     {
                         _logger.LogWarning("Unable to deserialize: {Data}", Encoding.UTF8.GetString(cacheByte));
-                        dependencyValueKeys = new List<string>();
+                        dependencyValueKeys = [];
                     }
                 }
 

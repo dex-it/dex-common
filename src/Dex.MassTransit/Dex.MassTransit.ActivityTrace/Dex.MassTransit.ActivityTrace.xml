@@ -6,15 +6,15 @@
     <members>
         <member name="T:Dex.MassTransit.ActivityTrace.ActivityMiddlewareConfiguratorExtensions">
             <summary>
-            Add midleware to enable Activity tracing propagation for all consumers.
+                Add middleware to enable Activity tracing propagation for all consumers.
             </summary>
         </member>
         <member name="M:Dex.MassTransit.ActivityTrace.ActivityMiddlewareConfiguratorExtensions.LinkActivityTracingContext(MassTransit.IBusFactoryConfigurator)">
             <summary>
-            Add ActivityTracing specification for IPipeSpecification[ConsumeContext].
+                Add ActivityTracing specification for IPipeSpecification[ConsumeContext].
             </summary>
-            <param name="value"></param>
-            <exception cref="T:System.ArgumentNullException"></exception>
+            <param name="value"/>
+            <exception cref="T:System.ArgumentNullException"/>
         </member>
     </members>
 </doc>

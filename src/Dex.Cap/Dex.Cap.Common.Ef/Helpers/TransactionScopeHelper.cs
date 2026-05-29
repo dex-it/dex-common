@@ -7,14 +7,12 @@ public static class TransactionScopeHelper
 {
     private const uint DefaultTimeoutInSeconds = 60;
 
-    public static TransactionScope CreateTransactionScope(TransactionScopeOption option,
-        IsolationLevel isolationLevel)
+    public static TransactionScope CreateTransactionScope(TransactionScopeOption option, IsolationLevel isolationLevel)
     {
         return CreateTransactionScope(option, isolationLevel, TimeSpan.FromSeconds(DefaultTimeoutInSeconds));
     }
 
-    public static TransactionScope CreateTransactionScope(TransactionScopeOption option,
-        IsolationLevel isolationLevel, TimeSpan timeout)
+    public static TransactionScope CreateTransactionScope(TransactionScopeOption option, IsolationLevel isolationLevel, TimeSpan timeout)
     {
         var transactionOptions = new TransactionOptions
         {

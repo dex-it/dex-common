@@ -20,7 +20,7 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     /// <inheritdoc/>
     protected IdempotentConsumer(
@@ -73,7 +73,7 @@ public abstract class IdempotentConsumer<TDbContext>
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     /// <summary>
     /// Идемпотентное выполнение операции

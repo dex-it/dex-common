@@ -29,18 +29,22 @@ public class OutboxWithMultipleServicesTests : BaseTest
         var processedCommandsCount = 0;
 
         // Сохраняем в outbox команду из первого сервиса
-        var cmd1 = new TestOutboxExternalServiceCommand {Args = "hello world"};
+        var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
         await SaveCommandAsync(sp1, cmd1, correlationId1);
-        var messageIds = new List<Guid> {cmd1.TestId};
+        var messageIds = new List<Guid> { cmd1.TestId };
 
         // Act
         // Инициируем работу с outbox во втором сервисе
         TestCommandHandler.OnProcess += OnTestCommandHandler2OnProcess!;
-
-        var handler2 = sp2.GetRequiredService<IOutboxHandler>();
-        await handler2.ProcessAsync(CancellationToken.None);
-
-        TestCommandHandler.OnProcess -= OnTestCommandHandler2OnProcess!;
+        try
+        {
+            var handler2 = sp2.GetRequiredService<IOutboxHandler>();
+            await handler2.ProcessAsync(CancellationToken.None);
+        }
+        finally
+        {
+            TestCommandHandler.OnProcess -= OnTestCommandHandler2OnProcess!;
+        }
 
         // Assert
         var envelope = await GetEnvelope(sp2, correlationId1);
@@ -70,26 +74,30 @@ public class OutboxWithMultipleServicesTests : BaseTest
         var correlationId1 = Guid.NewGuid();
         var correlationId2 = Guid.NewGuid();
 
-        var cmd1 = new TestOutboxExternalServiceCommand {Args = "hello world"};
+        var cmd1 = new TestOutboxExternalServiceCommand { Args = "hello world" };
         await SaveCommandAsync(sp1, cmd1, correlationId1);
-        var cmd2 = new TestOutboxCommand {Args = "hello world2"};
+        var cmd2 = new TestOutboxCommand { Args = "hello world2" };
         await SaveCommandAsync(sp2, cmd2, correlationId2);
 
-        var messageIds = new List<Guid> {cmd1.TestId, cmd2.TestId};
+        var messageIds = new List<Guid> { cmd1.TestId, cmd2.TestId };
         var processedCommandsCount = 0;
 
         TestCommandExternalServiceHandler.OnProcess += OnTestCommandHandler1OnProcess!;
         TestCommandHandler.OnProcess += OnTestCommandHandler2OnProcess!;
-
-        // Act
-        // Обработка сообщений из обоих сервисов
-        var handler1 = sp1.GetRequiredService<IOutboxHandler>();
-        var handler2 = sp2.GetRequiredService<IOutboxHandler>();
-        await handler1.ProcessAsync(CancellationToken.None);
-        await handler2.ProcessAsync(CancellationToken.None);
-
-        TestCommandExternalServiceHandler.OnProcess -= OnTestCommandHandler1OnProcess!;
-        TestCommandHandler.OnProcess -= OnTestCommandHandler2OnProcess!;
+        try
+        {
+            // Act
+            // Обработка сообщений из обоих сервисов
+            var handler1 = sp1.GetRequiredService<IOutboxHandler>();
+            var handler2 = sp2.GetRequiredService<IOutboxHandler>();
+            await handler1.ProcessAsync(CancellationToken.None);
+            await handler2.ProcessAsync(CancellationToken.None);
+        }
+        finally
+        {
+            TestCommandExternalServiceHandler.OnProcess -= OnTestCommandHandler1OnProcess!;
+            TestCommandHandler.OnProcess -= OnTestCommandHandler2OnProcess!;
+        }
 
         var envelope1 = await GetEnvelope(sp2, correlationId1);
         var envelope2 = await GetEnvelope(sp1, correlationId2);

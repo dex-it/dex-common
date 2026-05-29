@@ -12,28 +12,20 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// </summary>
 /// <typeparam name="TMessage"></typeparam>
 /// <typeparam name="TDbContext"></typeparam>
-public abstract class TransactionalConsumer<TMessage, TDbContext> : BaseConsumer<TMessage>
+public abstract class TransactionalConsumer<TMessage, TDbContext>(TDbContext dbContext, ILogger logger) : BaseConsumer<TMessage>(logger)
     where TMessage : class
     where TDbContext : DbContext
 {
-    private readonly TDbContext _dbContext;
-
-    protected TransactionalConsumer(TDbContext context, ILogger logger)
-        : base(logger)
-    {
-        _dbContext = context;
-    }
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     protected abstract Task ProcessInTransaction(ConsumeContext<TMessage> context);
 
     protected sealed override Task Process(ConsumeContext<TMessage> context)
     {
-        return _dbContext.ExecuteInTransactionScopeAsync(
+        return dbContext.ExecuteInTransactionAsync(
             context,
             async (state, _) => await ProcessInTransaction(state).ConfigureAwait(false),
             async (state, _) => await VerifySucceeded(state).ConfigureAwait(false),
@@ -50,28 +42,21 @@ public abstract class TransactionalConsumer<TMessage, TDbContext> : BaseConsumer
 /// <summary>
 /// Выполнение операции в транзакции
 /// </summary>
-public abstract class TransactionalConsumer<TDbContext>
+public abstract class TransactionalConsumer<TDbContext>(TDbContext dbContext)
     where TDbContext : DbContext
 {
-    private readonly TDbContext _dbContext;
-
-    protected TransactionalConsumer(TDbContext context)
-    {
-        _dbContext = context;
-    }
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
-    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.DefaultRequiresNew;
+    protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
     protected Task ProcessInTransaction<TMessage>(
         ConsumeContext<TMessage> context,
         Func<TDbContext, CancellationToken, Task> operation)
         where TMessage : class
     {
-        return _dbContext.ExecuteInTransactionScopeAsync(
-            (ConsumeContext: context, DbContext: _dbContext),
+        return dbContext.ExecuteInTransactionAsync(
+            (ConsumeContext: context, DbContext: dbContext),
             async (state, token) => await operation.Invoke(state.DbContext, token),
             async (state, _) => await VerifySucceeded(state.ConsumeContext).ConfigureAwait(false),
             TransactionOptions,
