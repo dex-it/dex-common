@@ -35,8 +35,8 @@ public class ExecuteInTransactionTests : BaseTest
                 (dbContext, outboxService),
                 async (state, token) =>
                 {
-                    await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
-                    await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
+                    await state.dbContext.Users.AddAsync(new TestUser {Name = name}, token);
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello world"}, cancellationToken: token);
                     await state.dbContext.SaveChangesAsync(token);
                 },
                 (_, _) => Task.FromResult(false));
@@ -78,7 +78,7 @@ public class ExecuteInTransactionTests : BaseTest
                 (dbContext, outboxService),
                 async (state, token) =>
                 {
-                    await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    await state.dbContext.Users.AddAsync(new TestUser {Name = name}, token);
 
                     if (failureCount-- > 0)
                     {
@@ -86,7 +86,7 @@ public class ExecuteInTransactionTests : BaseTest
                         throw new TimeoutException();
                     }
 
-                    await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello world"},
                         cancellationToken: token);
                     await state.dbContext.SaveChangesAsync(token);
                 }, (_, _) => Task.FromResult(false));
@@ -120,13 +120,13 @@ public class ExecuteInTransactionTests : BaseTest
         // act
         await dbContext.ExecuteInTransactionAsync(async token =>
         {
-            await dbContext.Users.AddAsync(new TestUser { Name = name1 }, token);
+            await dbContext.Users.AddAsync(new TestUser {Name = name1}, token);
             await dbContext.SaveChangesAsync(token);
 
             // Nested call
             await dbContext.ExecuteInTransactionAsync(async ct =>
             {
-                await dbContext.Users.AddAsync(new TestUser { Name = name2 }, ct);
+                await dbContext.Users.AddAsync(new TestUser {Name = name2}, ct);
                 await dbContext.SaveChangesAsync(ct);
             }, _ => Task.FromResult(false), cancellationToken: token);
         }, _ => Task.FromResult(false));
@@ -160,7 +160,7 @@ public class ExecuteInTransactionTests : BaseTest
             await dbContext.ExecuteInTransactionAsync(
                 async token =>
                 {
-                    await dbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    await dbContext.Users.AddAsync(new TestUser {Name = name}, token);
 
                     if (failureCount-- > 0)
                     {
@@ -169,7 +169,7 @@ public class ExecuteInTransactionTests : BaseTest
                         throw new TimeoutException("Simulated transient error");
                     }
 
-                    await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
+                    await outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello world"}, cancellationToken: token);
                     await dbContext.SaveChangesAsync(token);
                 },
                 _ => Task.FromResult(false));
@@ -205,14 +205,14 @@ public class ExecuteInTransactionTests : BaseTest
                     IsolationLevel = System.Transactions.IsolationLevel.Serializable
                 };
 
-                var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
                 {
                     await dbContext.ExecuteInTransactionAsync(
                         _ => Task.CompletedTask,
                         _ => Task.FromResult(false),
                         options,
                         ct);
-                });
+                }));
 
                 NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Can't participate in existing transaction with isolation level 'ReadCommitted'"));
                 NUnit.Framework.Assert.That(ex.Message, Does.Contain("Requested level 'Serializable' is stricter"));
@@ -222,7 +222,7 @@ public class ExecuteInTransactionTests : BaseTest
             {
                 return Task.FromException(exception);
             }
-        }, _ => Task.FromResult(false), new EfTransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted });
+        }, _ => Task.FromResult(false), new EfTransactionOptions {IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted});
     }
 
     [Test]
@@ -240,15 +240,15 @@ public class ExecuteInTransactionTests : BaseTest
             // Задача: проверить, что если verifySucceeded находит данные в БД (имитация "успешного коммита с потерей ACK"),
             // то стратегия НЕ делает повторную попытку.
             _ = await context.ExecuteInTransactionAsync(
-                state: new { UserId = userId },
+                state: new {UserId = userId},
                 operation: async (st, ct) =>
                 {
                     attemptCount++;
 
-                    context.Users.Add(new TestUser { Id = st.UserId, Name = "VerifyUser", Years = 25 });
+                    context.Users.Add(new TestUser {Id = st.UserId, Name = "VerifyUser", Years = 25});
                     await context.SaveChangesAsync(ct);
 
-                    // Имитируем "Lost ACK": 
+                    // Имитируем "Lost ACK":
                     // 1. Мы реально комитим транзакцию вручную (БД теперь знает о пользователе).
                     await context.Database.CurrentTransaction!.CommitAsync(ct);
 
@@ -268,11 +268,11 @@ public class ExecuteInTransactionTests : BaseTest
                 }
             );
 
-            NUnit.Framework.Assert.Multiple(() =>
+            NUnit.Framework.Assert.Multiple((Action)(() =>
             {
                 // Операция должна была быть вызвана только ОДИН раз.
                 NUnit.Framework.Assert.That(attemptCount, Is.EqualTo(1), "Operation should NOT be retried if verifySucceeded returned true");
-            });
+            }));
 
             // Финальная проверка: пользователь действительно в базе.
             var userExists = await context.Users.AnyAsync(x => x.Id == userId);
@@ -307,7 +307,7 @@ public class ExecuteInTransactionTests : BaseTest
                 outerAttemptCount++;
 
                 // Outer: вставляем пользователя
-                context.Users.Add(new TestUser { Name = outerName, Years = 30 });
+                context.Users.Add(new TestUser {Name = outerName, Years = 30});
                 await context.SaveChangesAsync(ct);
 
                 // Nested: вставляем другого пользователя, первая попытка — transient failure
@@ -316,13 +316,13 @@ public class ExecuteInTransactionTests : BaseTest
                     innerAttemptCount++;
                     TestContext.WriteLine($"Inner attempt #{innerAttemptCount}");
 
-                    context.Users.Add(new TestUser { Name = innerName, Years = 20 });
+                    context.Users.Add(new TestUser {Name = innerName, Years = 20});
                     await context.SaveChangesAsync(ctInner);
 
                     if (innerAttemptCount == 1)
                     {
                         // Симулируем transient ошибку.
-                        // Если баг исправлен, эта ошибка ВЫЙДЕТ из вложенного метода 
+                        // Если баг исправлен, эта ошибка ВЫЙДЕТ из вложенного метода
                         // и заставит ПЕРЕЗАПУСТИТЬ весь внешний блок.
                         throw new TimeoutException("Simulated transient in nested call");
                     }
@@ -338,7 +338,7 @@ public class ExecuteInTransactionTests : BaseTest
             // 1. Корневая стратегия сделала 2 попытки (одна упала в середине, вторая прошла целиком).
             NUnit.Framework.Assert.That(outerAttemptCount, Is.EqualTo(2), "Root strategy must retry the entire block");
 
-            // 2. Вложенный блок вызывался ровно столько же раз, сколько внешний. 
+            // 2. Вложенный блок вызывался ровно столько же раз, сколько внешний.
             // Это доказывает, что вложенная стратегия БЫЛА ПРОИГНОРИРОВАНА.
             NUnit.Framework.Assert.That(innerAttemptCount, Is.EqualTo(2), "Nested strategy must NOT retry independently");
 
@@ -371,7 +371,7 @@ public class ExecuteInTransactionTests : BaseTest
 
         await outerCtx.ExecuteInTransactionAsync(async ct =>
         {
-            outerCtx.Users.Add(new TestUser { Id = outerId, Name = "Outer_" + outerId, Years = 30 });
+            outerCtx.Users.Add(new TestUser {Id = outerId, Name = "Outer_" + outerId, Years = 30});
             await outerCtx.SaveChangesAsync(ct);
 
             using var innerScope = sp.CreateScope();
@@ -380,14 +380,14 @@ public class ExecuteInTransactionTests : BaseTest
             TestContext.WriteLine($"Same instance? {ReferenceEquals(outerCtx, innerCtx)}");
             TestContext.WriteLine($"Inner CurrentTransaction is null? {innerCtx.Database.CurrentTransaction is null}");
 
-            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
             {
                 await innerCtx.ExecuteInTransactionAsync(async ctInner =>
                 {
-                    innerCtx.Users.Add(new TestUser { Id = innerId, Name = "Inner_" + innerId, Years = 20 });
+                    innerCtx.Users.Add(new TestUser {Id = innerId, Name = "Inner_" + innerId, Years = 20});
                     await innerCtx.SaveChangesAsync(ctInner);
                 }, _ => Task.FromResult(false), cancellationToken: ct);
-            });
+            }));
 
             NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance"));
         }, _ => Task.FromResult(false));
@@ -399,11 +399,11 @@ public class ExecuteInTransactionTests : BaseTest
 
         TestContext.WriteLine($"Outer in DB: {outerExists}, Inner in DB: {innerExists}");
 
-        NUnit.Framework.Assert.Multiple(() =>
+        NUnit.Framework.Assert.Multiple((Action)(() =>
         {
             NUnit.Framework.Assert.That(outerExists, Is.True, "Outer должен быть успешно закомичен");
             NUnit.Framework.Assert.That(innerExists, Is.False, "Inner не должен был создаться");
-        });
+        }));
     }
 
     [Test]
@@ -435,8 +435,8 @@ public class ExecuteInTransactionTests : BaseTest
     [Test]
     public async Task Nested_TransientRetry_NoDuplicates_When_InnerStrategyIsBypassed_Test()
     {
-        // Тест для проверки БЛОКЕРА: транзиентная ошибка во вложенном вызове НЕ должна 
-        // приводить к повторным попыткам внутри вложенного вызова. 
+        // Тест для проверки БЛОКЕРА: транзиентная ошибка во вложенном вызове НЕ должна
+        // приводить к повторным попыткам внутри вложенного вызова.
         // Все повторы должны идти через корневую стратегию.
 
         var outerAttemptCount = 0;
@@ -453,7 +453,7 @@ public class ExecuteInTransactionTests : BaseTest
             await context.ExecuteInTransactionAsync(async ct =>
             {
                 outerAttemptCount++;
-                context.Users.Add(new TestUser { Name = "Outer_" + outerAttemptCount });
+                context.Users.Add(new TestUser {Name = "Outer_" + outerAttemptCount});
                 await context.SaveChangesAsync(ct);
 
                 await context.ExecuteInTransactionAsync(async ctInner =>
@@ -467,7 +467,7 @@ public class ExecuteInTransactionTests : BaseTest
                         throw new TimeoutException("Nested transient error");
                     }
 
-                    context.Users.Add(new TestUser { Name = "Inner_" + innerAttemptCount });
+                    context.Users.Add(new TestUser {Name = "Inner_" + innerAttemptCount});
                     await context.SaveChangesAsync(ctInner);
                 }, _ => Task.FromResult(false), cancellationToken: ct);
 
@@ -477,7 +477,7 @@ public class ExecuteInTransactionTests : BaseTest
             // Проверяем:
             // 1. Корневая стратегия сделала 2 попытки (одна упала, вторая прошла).
             NUnit.Framework.Assert.That(outerAttemptCount, Is.EqualTo(2), "Outer strategy must retry the whole block");
-            // 2. Вложенная стратегия НЕ должна была делать ретрай сама. 
+            // 2. Вложенная стратегия НЕ должна была делать ретрай сама.
             NUnit.Framework.Assert.That(innerAttemptCount, Is.EqualTo(2), "Inner strategy must NOT retry independently");
         }
         finally
@@ -490,9 +490,9 @@ public class ExecuteInTransactionTests : BaseTest
     public async Task Cqrs_CrossContext_Isolation_And_NoDtc_Promotion_Test()
     {
         // Этот тест проверяет два ключевых аспекта нашей реализации явных транзакций:
-        // 1. Изоляция: Один инстанс DbContext (реплика) НЕ видит незафиксированные изменения из другого 
+        // 1. Изоляция: Один инстанс DbContext (реплика) НЕ видит незафиксированные изменения из другого
         //    инстанса DbContext (мастер), даже если они работают в рамках одного логического блока.
-        // 2. Отсутствие эскалации DTC: Работа с несколькими инстансами DbContext (и разными соединениями) 
+        // 2. Отсутствие эскалации DTC: Работа с несколькими инстансами DbContext (и разными соединениями)
         //    НЕ вызывает ошибок "Ambient transaction detected" или нежелательной эскалации до DTC,
         //    так как мы используем IDbContextTransaction вместо TransactionScope.
         // 3. Доступность данных: Реплика видит данные мастера сразу после коммита мастера.
@@ -508,10 +508,10 @@ public class ExecuteInTransactionTests : BaseTest
         await masterContext.ExecuteInTransactionAsync(async ct =>
         {
             // Пишем в мастер
-            masterContext.Users.Add(new TestUser { Id = userId, Name = userName, Years = 25 });
+            masterContext.Users.Add(new TestUser {Id = userId, Name = userName, Years = 25});
             await masterContext.SaveChangesAsync(ct);
 
-            // Читаем из реплики ВНУТРИ транзакции мастера. 
+            // Читаем из реплики ВНУТРИ транзакции мастера.
             // Это "тот самый" момент, где TransactionScope мог упасть.
             var replicaUsersBeforeCommit = await replicaContext.Users.Where(x => x.Id == userId).ToArrayAsync(ct);
 
@@ -530,8 +530,8 @@ public class ExecuteInTransactionTests : BaseTest
     [Test]
     public async Task Cqrs_MasterWrite_ReplicaRead_DirectQuery_IsSupported_Test()
     {
-        // Этот тест явно подтверждает, что прямые запросы ко второму DbContext (например, read-реплике) 
-        // отлично работают внутри блока ExecuteInTransactionAsync мастера, 
+        // Этот тест явно подтверждает, что прямые запросы ко второму DbContext (например, read-реплике)
+        // отлично работают внутри блока ExecuteInTransactionAsync мастера,
         // так как они не триггерят логику защиты от многоконтекстных транзакций.
 
         var sp = InitServiceCollection().BuildServiceProvider();
@@ -540,7 +540,7 @@ public class ExecuteInTransactionTests : BaseTest
 
         await masterContext.ExecuteInTransactionAsync(async ct =>
         {
-            masterContext.Users.Add(new TestUser { Name = "MasterEntry" });
+            masterContext.Users.Add(new TestUser {Name = "MasterEntry"});
             await masterContext.SaveChangesAsync(ct);
 
             // Прямой запрос к реплике РАЗРЕШЕН и работает.
@@ -555,7 +555,7 @@ public class ExecuteInTransactionTests : BaseTest
     public async Task Cqrs_MasterWrite_ReplicaRead_ExecuteInTransaction_On_Replica_IsForbidden_Test()
     {
         // Этот тест доказывает, что в то время как прямые чтения из реплики разрешены (см. тест выше),
-        // обертывание работы с репликой во вложенный ExecuteInTransactionAsync ЗАПРЕЩЕНО 
+        // обертывание работы с репликой во вложенный ExecuteInTransactionAsync ЗАПРЕЩЕНО
         // для предотвращения скрытой потери атомарности.
 
         var sp = InitServiceCollection().BuildServiceProvider();
@@ -564,15 +564,16 @@ public class ExecuteInTransactionTests : BaseTest
 
         await masterContext.ExecuteInTransactionAsync(async ct =>
         {
-            masterContext.Users.Add(new TestUser { Name = "MasterUser" });
+            masterContext.Users.Add(new TestUser {Name = "MasterUser"});
             await masterContext.SaveChangesAsync(ct);
 
             // Попытка обернуть работу с репликой в ExecuteInTransactionAsync ДОЛЖНА выбросить исключение.
-            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
             {
-                await replicaContext.ExecuteInTransactionAsync(async ctReplica => { _ = await replicaContext.Users.AnyAsync(ctReplica); }, _ => Task.FromResult(false),
+                await replicaContext.ExecuteInTransactionAsync(async ctReplica => { _ = await replicaContext.Users.AnyAsync(ctReplica); },
+                    _ => Task.FromResult(false),
                     cancellationToken: ct);
-            });
+            }));
 
             NUnit.Framework.Assert.That(ex!.Message, Does.Contain("Detected a nested call to ExecuteInTransactionAsync using a different DbContext instance"));
             NUnit.Framework.Assert.That(ex.Message, Does.Contain("If you only need retry logic for the second context without a transaction"));
@@ -595,13 +596,13 @@ public class ExecuteInTransactionTests : BaseTest
 
         await context.ExecuteInTransactionAsync(async ct =>
         {
-            context.Users.Add(new TestUser { Id = id1, Name = "Outer", Years = 10 });
+            context.Users.Add(new TestUser {Id = id1, Name = "Outer", Years = 10});
             await context.SaveChangesAsync(ct);
 
             // Вложенный вызов должен увидеть, что транзакция уже есть, и просто выполнить код в ней.
             await context.ExecuteInTransactionAsync(async ctInner =>
             {
-                context.Users.Add(new TestUser { Id = id2, Name = "Inner", Years = 20 });
+                context.Users.Add(new TestUser {Id = id2, Name = "Inner", Years = 20});
                 await context.SaveChangesAsync(ctInner);
                 return true;
             }, _ => Task.FromResult(false), cancellationToken: ct);
@@ -643,7 +644,7 @@ public class ExecuteInTransactionTests : BaseTest
                     TestContext.WriteLine($"Root attempt #{rootAttempt}");
 
                     // Вставляем первого пользователя
-                    context.Users.Add(new TestUser { Id = userId1, Name = "RootUser", Years = 10 });
+                    context.Users.Add(new TestUser {Id = userId1, Name = "RootUser", Years = 10});
                     await context.SaveChangesAsync(ct);
 
                     await context.ExecuteInTransactionAsync(async ctInner =>
@@ -651,7 +652,7 @@ public class ExecuteInTransactionTests : BaseTest
                         nestedAttempt++;
                         TestContext.WriteLine($"Nested attempt #{nestedAttempt}");
 
-                        context.Users.Add(new TestUser { Id = userId2, Name = "NestedUser", Years = 20 });
+                        context.Users.Add(new TestUser {Id = userId2, Name = "NestedUser", Years = 20});
                         await context.SaveChangesAsync(ctInner);
 
                         if (nestedAttempt == 1)
@@ -664,7 +665,7 @@ public class ExecuteInTransactionTests : BaseTest
                     return true;
                 },
                 _ => Task.FromResult(false),
-                options: new EfTransactionOptions { ClearChangeTrackerOnRetry = true });
+                options: new EfTransactionOptions {ClearChangeTrackerOnRetry = true});
 
             Assert.AreEqual(2, rootAttempt);
             Assert.AreEqual(2, nestedAttempt);
@@ -692,7 +693,7 @@ public class ExecuteInTransactionTests : BaseTest
         {
             await context.ExecuteInTransactionAsync(async ct1 =>
             {
-                await context.Users.AddAsync(new TestUser { Id = userId, Name = "Level1" }, ct1);
+                await context.Users.AddAsync(new TestUser {Id = userId, Name = "Level1"}, ct1);
 
                 await context.ExecuteInTransactionAsync(async ct2 =>
                 {
@@ -738,7 +739,7 @@ public class ExecuteInTransactionTests : BaseTest
                 // Nested call with manual SaveChanges
                 await context.ExecuteInTransactionAsync(async ctInner =>
                 {
-                    await context.Users.AddAsync(new TestUser { Id = userId, Name = "NestedUser" }, ctInner);
+                    await context.Users.AddAsync(new TestUser {Id = userId, Name = "NestedUser"}, ctInner);
                     await context.SaveChangesAsync(ctInner); // This flushes to DB but shouldn't COMMIT
                 }, _ => Task.FromResult(false), cancellationToken: ct);
 
@@ -779,7 +780,7 @@ public class ExecuteInTransactionTests : BaseTest
                 }
 
                 // Track an entity
-                context.Users.Add(new TestUser { Id = userId, Name = "RetryUser" });
+                context.Users.Add(new TestUser {Id = userId, Name = "RetryUser"});
 
                 if (attempt == 1)
                 {
@@ -790,7 +791,7 @@ public class ExecuteInTransactionTests : BaseTest
 
                 // Re-add and succeed (already added above)
                 await context.SaveChangesAsync(ct);
-            }, _ => Task.FromResult(false), new EfTransactionOptions { ClearChangeTrackerOnRetry = true });
+            }, _ => Task.FromResult(false), new EfTransactionOptions {ClearChangeTrackerOnRetry = true});
 
             Assert.AreEqual(2, attempt);
         }
