@@ -7,6 +7,8 @@ using Dex.Cap.Outbox.Interfaces;
 using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Ef.Extensions;
 
@@ -52,6 +54,17 @@ public static class MicrosoftDependencyInjectionExtensions
     }
 
     /// <summary>
+    /// To clean obsolete db-records, to improve performance. Configure scheduler options explicitly
+    /// (period, cleanup, and init-delay ranges).
+    /// </summary>
+    /// <exception cref="ArgumentNullException"><paramref name="configure"/> is <see langword="null"/>.</exception>
+    public static IServiceCollection AddDefaultOutboxScheduler<TDbContext>(this IServiceCollection services, Action<OutboxHandlerOptions> configure)
+        where TDbContext : DbContext
+    {
+        return AddOutboxScheduler<OutboxCleanupDataProviderEf<TDbContext>>(services, configure);
+    }
+
+    /// <summary>
     /// To clean obsolete db-records, to improve performance
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
@@ -66,17 +79,37 @@ public static class MicrosoftDependencyInjectionExtensions
         if (cleanupDays <= 0)
             throw new ArgumentOutOfRangeException(nameof(cleanupDays), cleanupDays, "Should be a positive number");
 
+        return AddOutboxScheduler<TCleanUpDataProvider>(services, options =>
+        {
+            options.Period = TimeSpan.FromSeconds(periodSeconds);
+            options.CleanupOlderThan = TimeSpan.FromDays(cleanupDays);
+            options.CleanupInterval = TimeSpan.FromHours(1);
+        });
+    }
+
+    /// <summary>
+    /// To clean obsolete db-records, to improve performance. Configure scheduler options explicitly
+    /// (period, cleanup, and init-delay ranges).
+    /// </summary>
+    /// <exception cref="ArgumentNullException"><paramref name="configure"/> is <see langword="null"/>.</exception>
+    public static IServiceCollection AddOutboxScheduler<TCleanUpDataProvider>(this IServiceCollection services, Action<OutboxHandlerOptions> configure)
+        where TCleanUpDataProvider : class, IOutboxCleanupDataProvider
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configure);
+
         services
             .AddHealthChecks()
             .AddCheck<OutboxHealthCheck>("outbox-scheduler", tags: ["outbox-scheduler"]);
 
+        services.AddOptions<OutboxHandlerOptions>()
+            .Configure(configure)
+            .ValidateOnStart();
+
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<OutboxHandlerOptions>, OutboxHandlerOptionsValidator>());
+
         services
-            .AddSingleton(new OutboxHandlerOptions
-            {
-                Period = TimeSpan.FromSeconds(periodSeconds),
-                CleanupOlderThan = TimeSpan.FromDays(cleanupDays),
-                CleanupInterval = TimeSpan.FromHours(1)
-            })
             .AddScoped<IOutboxCleanupDataProvider, TCleanUpDataProvider>()
             .AddScoped<IOutboxCleanerHandler, OutboxCleanerHandler>()
             .AddHostedService<OutboxHandlerBackgroundService>()
