@@ -10,7 +10,10 @@ namespace Dex.Cap.Outbox.AspNetScheduler.Options;
 /// </summary>
 public sealed class InitDelayRange
 {
+    /// <summary>Lower bound of the delay range (inclusive).</summary>
     public TimeSpan Min { get; init; }
+
+    /// <summary>Upper bound of the delay range (exclusive when Min &lt; Max).</summary>
     public TimeSpan Max { get; init; }
 
     /// <summary>

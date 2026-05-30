@@ -38,3 +38,21 @@ public class InitDelayRangeTests
         }
     }
 }
+
+[TestFixture]
+public class OutboxHandlerOptionsDefaultsTests
+{
+    [Test]
+    public void Defaults_PreserveHardcodedInitDelays()
+    {
+        var options = new OutboxHandlerOptions();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(5)));
+            Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(15)));
+            Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(20)));
+            Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(40)));
+        });
+    }
+}

@@ -1,8 +1,11 @@
-﻿using System;
+using System;
 
 namespace Dex.Cap.Outbox.AspNetScheduler.Options;
 
-internal sealed class OutboxHandlerOptions
+/// <summary>
+/// Configuration options for the Outbox background handler and cleaner services.
+/// </summary>
+public sealed class OutboxHandlerOptions
 {
     /// <summary>
     /// Period between cycle OutboxHandler
@@ -21,4 +24,16 @@ internal sealed class OutboxHandlerOptions
     /// Default 30d
     /// </summary>
     public TimeSpan CleanupOlderThan { get; set; } = TimeSpan.FromDays(30);
+
+    /// <summary>
+    /// Initial delay range for the handler (split-brain jitter). Default 5–15s.
+    /// </summary>
+    public InitDelayRange HandlerInitDelay { get; set; } =
+        new() { Min = TimeSpan.FromSeconds(5), Max = TimeSpan.FromSeconds(15) };
+
+    /// <summary>
+    /// Initial delay range for the cleaner (split-brain jitter). Default 20–40s.
+    /// </summary>
+    public InitDelayRange CleanerInitDelay { get; set; } =
+        new() { Min = TimeSpan.FromSeconds(20), Max = TimeSpan.FromSeconds(40) };
 }
