@@ -24,7 +24,8 @@ public class OutboxSchedulerRegistrationTests
 
         var options = Resolve(services);
 
-        Assert.Multiple(() =>
+        // TestDelegate явно: в новом Roslyn голая лямбда неоднозначна между Assert.Multiple(TestDelegate) и (Action).
+        TestDelegate assertions = () =>
         {
             Assert.That(options.Period, Is.EqualTo(TimeSpan.FromSeconds(5)));
             Assert.That(options.CleanupOlderThan, Is.EqualTo(TimeSpan.FromDays(7)));
@@ -32,7 +33,8 @@ public class OutboxSchedulerRegistrationTests
             Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(15)));
             Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(20)));
             Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(40)));
-        });
+        };
+        Assert.Multiple(assertions);
     }
 
     [Test]
@@ -47,13 +49,14 @@ public class OutboxSchedulerRegistrationTests
 
         var options = Resolve(services);
 
-        Assert.Multiple(() =>
+        TestDelegate assertions = () =>
         {
             Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.Zero));
             Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.Zero));
             Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(1)));
             Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(1)));
-        });
+        };
+        Assert.Multiple(assertions);
     }
 
     [Test]
@@ -67,8 +70,8 @@ public class OutboxSchedulerRegistrationTests
 
         using var provider = services.BuildServiceProvider();
 
-        Assert.Throws<OptionsValidationException>(
-            () => _ = provider.GetRequiredService<IOptions<OutboxHandlerOptions>>().Value);
+        TestDelegate act = () => _ = provider.GetRequiredService<IOptions<OutboxHandlerOptions>>().Value;
+        Assert.Throws<OptionsValidationException>(act);
     }
 
     [TestCase(0)]
@@ -77,8 +80,8 @@ public class OutboxSchedulerRegistrationTests
     {
         var services = new ServiceCollection();
 
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds, cleanupDays: 1));
+        TestDelegate act = () => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds, cleanupDays: 1);
+        Assert.Throws<ArgumentOutOfRangeException>(act);
     }
 
     [TestCase(0)]
@@ -87,7 +90,7 @@ public class OutboxSchedulerRegistrationTests
     {
         var services = new ServiceCollection();
 
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds: 1, cleanupDays: cleanupDays));
+        TestDelegate act = () => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds: 1, cleanupDays: cleanupDays);
+        Assert.Throws<ArgumentOutOfRangeException>(act);
     }
 }

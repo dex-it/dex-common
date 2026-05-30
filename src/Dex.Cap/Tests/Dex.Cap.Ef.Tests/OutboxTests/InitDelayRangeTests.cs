@@ -58,12 +58,14 @@ public class OutboxHandlerOptionsDefaultsTests
     {
         var options = new OutboxHandlerOptions();
 
-        Assert.Multiple(() =>
+        // TestDelegate явно: в новом Roslyn голая лямбда неоднозначна между Assert.Multiple(TestDelegate) и (Action).
+        TestDelegate assertions = () =>
         {
             Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(5)));
             Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(15)));
             Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(20)));
             Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(40)));
-        });
+        };
+        Assert.Multiple(assertions);
     }
 }

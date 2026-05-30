@@ -68,7 +68,7 @@ public class OutboxHandlerOptionsValidatorTests
     [Test]
     public void Validate_NullOptions_Throws()
     {
-        Assert.Throws<ArgumentNullException>(
-            () => new OutboxHandlerOptionsValidator().Validate(null, null!));
+        TestDelegate act = () => new OutboxHandlerOptionsValidator().Validate(null, null!);
+        Assert.Throws<ArgumentNullException>(act);
     }
 }
