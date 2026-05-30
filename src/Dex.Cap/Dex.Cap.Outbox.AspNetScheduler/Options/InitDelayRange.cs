@@ -27,7 +27,16 @@ public sealed class InitDelayRange
         }
 
         // int-каст безопасен: значения init-delay задаются в секундах, переполнение int возникло бы лишь при Max > ~24.8 дней, что отклоняется валидатором опций.
-        var milliseconds = RandomNumberGenerator.GetInt32((int)Min.TotalMilliseconds, (int)Max.TotalMilliseconds);
+        var minMs = (int)Min.TotalMilliseconds;
+        var maxMs = (int)Max.TotalMilliseconds;
+
+        // Защита от суб-миллисекундного диапазона (Min < Max, но после каста в ms равны): RandomNumberGenerator.GetInt32 требует fromInclusive < toExclusive.
+        if (maxMs <= minMs)
+        {
+            return Min;
+        }
+
+        var milliseconds = RandomNumberGenerator.GetInt32(minMs, maxMs);
         return TimeSpan.FromMilliseconds(milliseconds);
     }
 }

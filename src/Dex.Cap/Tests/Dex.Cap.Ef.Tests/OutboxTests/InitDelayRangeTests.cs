@@ -24,6 +24,17 @@ public class InitDelayRangeTests
     }
 
     [Test]
+    public void GetDelay_WhenSubMillisecondRange_ReturnsMin()
+    {
+        // Min < Max, но после каста в ms оба = 0 — GetInt32(0, 0) бросил бы исключение без защиты.
+        var min = TimeSpan.FromTicks(1000); // 0.1 ms
+        var max = TimeSpan.FromTicks(5000); // 0.5 ms
+        var range = new InitDelayRange { Min = min, Max = max };
+
+        Assert.That(range.GetDelay(), Is.EqualTo(min));
+    }
+
+    [Test]
     public void GetDelay_WhenMinLessThanMax_ReturnsValueInHalfOpenInterval()
     {
         var min = TimeSpan.FromSeconds(5);
