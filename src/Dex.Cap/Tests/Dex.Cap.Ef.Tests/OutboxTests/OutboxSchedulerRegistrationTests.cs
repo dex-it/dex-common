@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests;
+namespace Dex.Cap.Ef.Tests.OutboxTests;
 
 [TestFixture]
 public class OutboxSchedulerRegistrationTests
@@ -24,17 +24,18 @@ public class OutboxSchedulerRegistrationTests
 
         var options = Resolve(services);
 
-        // TestDelegate явно: в новом Roslyn голая лямбда неоднозначна между Assert.Multiple(TestDelegate) и (Action).
-        TestDelegate assertions = () =>
+        NUnit.Framework.Assert.Multiple((Action)Assertions);
+        return;
+
+        void Assertions()
         {
-            Assert.That(options.Period, Is.EqualTo(TimeSpan.FromSeconds(5)));
-            Assert.That(options.CleanupOlderThan, Is.EqualTo(TimeSpan.FromDays(7)));
-            Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(5)));
-            Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(15)));
-            Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(20)));
-            Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(40)));
-        };
-        Assert.Multiple(assertions);
+            NUnit.Framework.Assert.That(options.Period, Is.EqualTo(TimeSpan.FromSeconds(5)));
+            NUnit.Framework.Assert.That(options.CleanupOlderThan, Is.EqualTo(TimeSpan.FromDays(7)));
+            NUnit.Framework.Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(5)));
+            NUnit.Framework.Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(15)));
+            NUnit.Framework.Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(20)));
+            NUnit.Framework.Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(40)));
+        }
     }
 
     [Test]
@@ -49,14 +50,16 @@ public class OutboxSchedulerRegistrationTests
 
         var options = Resolve(services);
 
-        TestDelegate assertions = () =>
+        NUnit.Framework.Assert.Multiple((Action)Assertions);
+        return;
+
+        void Assertions()
         {
-            Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.Zero));
-            Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.Zero));
-            Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(1)));
-            Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(1)));
-        };
-        Assert.Multiple(assertions);
+            NUnit.Framework.Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.Zero));
+            NUnit.Framework.Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.Zero));
+            NUnit.Framework.Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(1)));
+            NUnit.Framework.Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(1)));
+        }
     }
 
     [Test]
@@ -68,10 +71,11 @@ public class OutboxSchedulerRegistrationTests
             o.HandlerInitDelay = new InitDelayRange { Min = TimeSpan.FromSeconds(10), Max = TimeSpan.FromSeconds(1) };
         });
 
-        using var provider = services.BuildServiceProvider();
-
-        TestDelegate act = () => _ = provider.GetRequiredService<IOptions<OutboxHandlerOptions>>().Value;
-        Assert.Throws<OptionsValidationException>(act);
+        NUnit.Framework.Assert.Throws<OptionsValidationException>((Action)(() =>
+        {
+            using var provider = services.BuildServiceProvider();
+            _ = provider.GetRequiredService<IOptions<OutboxHandlerOptions>>().Value;
+        }));
     }
 
     [TestCase(0)]
@@ -80,8 +84,10 @@ public class OutboxSchedulerRegistrationTests
     {
         var services = new ServiceCollection();
 
-        TestDelegate act = () => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds, cleanupDays: 1);
-        Assert.Throws<ArgumentOutOfRangeException>(act);
+        NUnit.Framework.Assert.Throws<ArgumentOutOfRangeException>((Action)Act);
+        return;
+
+        void Act() => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds, cleanupDays: 1);
     }
 
     [TestCase(0)]
@@ -90,7 +96,9 @@ public class OutboxSchedulerRegistrationTests
     {
         var services = new ServiceCollection();
 
-        TestDelegate act = () => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds: 1, cleanupDays: cleanupDays);
-        Assert.Throws<ArgumentOutOfRangeException>(act);
+        NUnit.Framework.Assert.Throws<ArgumentOutOfRangeException>((Action)Act);
+        return;
+
+        void Act() => services.AddDefaultOutboxScheduler<TestDbContext>(periodSeconds: 1, cleanupDays: cleanupDays);
     }
 }

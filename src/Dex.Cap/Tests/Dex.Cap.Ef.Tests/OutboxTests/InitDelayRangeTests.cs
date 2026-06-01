@@ -2,7 +2,7 @@ using System;
 using Dex.Cap.Outbox.AspNetScheduler.Options;
 using NUnit.Framework;
 
-namespace Dex.Cap.Ef.Tests;
+namespace Dex.Cap.Ef.Tests.OutboxTests;
 
 [TestFixture]
 public class InitDelayRangeTests
@@ -12,7 +12,7 @@ public class InitDelayRangeTests
     {
         var range = new InitDelayRange { Min = TimeSpan.FromSeconds(7), Max = TimeSpan.FromSeconds(7) };
 
-        Assert.That(range.GetDelay(), Is.EqualTo(TimeSpan.FromSeconds(7)));
+        NUnit.Framework.Assert.That(range.GetDelay(), Is.EqualTo(TimeSpan.FromSeconds(7)));
     }
 
     [Test]
@@ -20,7 +20,7 @@ public class InitDelayRangeTests
     {
         var range = new InitDelayRange { Min = TimeSpan.Zero, Max = TimeSpan.Zero };
 
-        Assert.That(range.GetDelay(), Is.EqualTo(TimeSpan.Zero));
+        NUnit.Framework.Assert.That(range.GetDelay(), Is.EqualTo(TimeSpan.Zero));
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class InitDelayRangeTests
         var max = TimeSpan.FromTicks(5000); // 0.5 ms
         var range = new InitDelayRange { Min = min, Max = max };
 
-        Assert.That(range.GetDelay(), Is.EqualTo(min));
+        NUnit.Framework.Assert.That(range.GetDelay(), Is.EqualTo(min));
     }
 
     [Test]
@@ -44,28 +44,8 @@ public class InitDelayRangeTests
         for (var i = 0; i < 100; i++)
         {
             var delay = range.GetDelay();
-            Assert.That(delay, Is.GreaterThanOrEqualTo(min));
-            Assert.That(delay, Is.LessThan(max));
+            NUnit.Framework.Assert.That(delay, Is.GreaterThanOrEqualTo(min));
+            NUnit.Framework.Assert.That(delay, Is.LessThan(max));
         }
-    }
-}
-
-[TestFixture]
-public class OutboxHandlerOptionsDefaultsTests
-{
-    [Test]
-    public void Defaults_PreserveHardcodedInitDelays()
-    {
-        var options = new OutboxHandlerOptions();
-
-        // TestDelegate явно: в новом Roslyn голая лямбда неоднозначна между Assert.Multiple(TestDelegate) и (Action).
-        TestDelegate assertions = () =>
-        {
-            Assert.That(options.HandlerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(5)));
-            Assert.That(options.HandlerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(15)));
-            Assert.That(options.CleanerInitDelay.Min, Is.EqualTo(TimeSpan.FromSeconds(20)));
-            Assert.That(options.CleanerInitDelay.Max, Is.EqualTo(TimeSpan.FromSeconds(40)));
-        };
-        Assert.Multiple(assertions);
     }
 }

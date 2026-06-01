@@ -35,8 +35,8 @@ public class ExecuteInTransactionTests : BaseTest
                 (dbContext, outboxService),
                 async (state, token) =>
                 {
-                    await state.dbContext.Users.AddAsync(new TestUser {Name = name}, token);
-                    await state.outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello world"}, cancellationToken: token);
+                    await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
                     await state.dbContext.SaveChangesAsync(token);
                 },
                 (_, _) => Task.FromResult(false));
@@ -78,7 +78,7 @@ public class ExecuteInTransactionTests : BaseTest
                 (dbContext, outboxService),
                 async (state, token) =>
                 {
-                    await state.dbContext.Users.AddAsync(new TestUser {Name = name}, token);
+                    await state.dbContext.Users.AddAsync(new TestUser { Name = name }, token);
 
                     if (failureCount-- > 0)
                     {
@@ -86,7 +86,7 @@ public class ExecuteInTransactionTests : BaseTest
                         throw new TimeoutException();
                     }
 
-                    await state.outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello world"},
+                    await state.outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" },
                         cancellationToken: token);
                     await state.dbContext.SaveChangesAsync(token);
                 }, (_, _) => Task.FromResult(false));
@@ -120,13 +120,13 @@ public class ExecuteInTransactionTests : BaseTest
         // act
         await dbContext.ExecuteInTransactionAsync(async token =>
         {
-            await dbContext.Users.AddAsync(new TestUser {Name = name1}, token);
+            await dbContext.Users.AddAsync(new TestUser { Name = name1 }, token);
             await dbContext.SaveChangesAsync(token);
 
             // Nested call
             await dbContext.ExecuteInTransactionAsync(async ct =>
             {
-                await dbContext.Users.AddAsync(new TestUser {Name = name2}, ct);
+                await dbContext.Users.AddAsync(new TestUser { Name = name2 }, ct);
                 await dbContext.SaveChangesAsync(ct);
             }, _ => Task.FromResult(false), cancellationToken: token);
         }, _ => Task.FromResult(false));
@@ -160,7 +160,7 @@ public class ExecuteInTransactionTests : BaseTest
             await dbContext.ExecuteInTransactionAsync(
                 async token =>
                 {
-                    await dbContext.Users.AddAsync(new TestUser {Name = name}, token);
+                    await dbContext.Users.AddAsync(new TestUser { Name = name }, token);
 
                     if (failureCount-- > 0)
                     {
@@ -169,7 +169,7 @@ public class ExecuteInTransactionTests : BaseTest
                         throw new TimeoutException("Simulated transient error");
                     }
 
-                    await outboxService.EnqueueAsync(new TestOutboxCommand {Args = "hello world"}, cancellationToken: token);
+                    await outboxService.EnqueueAsync(new TestOutboxCommand { Args = "hello world" }, cancellationToken: token);
                     await dbContext.SaveChangesAsync(token);
                 },
                 _ => Task.FromResult(false));
@@ -222,7 +222,7 @@ public class ExecuteInTransactionTests : BaseTest
             {
                 return Task.FromException(exception);
             }
-        }, _ => Task.FromResult(false), new EfTransactionOptions {IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted});
+        }, _ => Task.FromResult(false), new EfTransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted });
     }
 
     [Test]
@@ -240,12 +240,12 @@ public class ExecuteInTransactionTests : BaseTest
             // Задача: проверить, что если verifySucceeded находит данные в БД (имитация "успешного коммита с потерей ACK"),
             // то стратегия НЕ делает повторную попытку.
             _ = await context.ExecuteInTransactionAsync(
-                state: new {UserId = userId},
+                state: new { UserId = userId },
                 operation: async (st, ct) =>
                 {
                     attemptCount++;
 
-                    context.Users.Add(new TestUser {Id = st.UserId, Name = "VerifyUser", Years = 25});
+                    context.Users.Add(new TestUser { Id = st.UserId, Name = "VerifyUser", Years = 25 });
                     await context.SaveChangesAsync(ct);
 
                     // Имитируем "Lost ACK":
@@ -307,7 +307,7 @@ public class ExecuteInTransactionTests : BaseTest
                 outerAttemptCount++;
 
                 // Outer: вставляем пользователя
-                context.Users.Add(new TestUser {Name = outerName, Years = 30});
+                context.Users.Add(new TestUser { Name = outerName, Years = 30 });
                 await context.SaveChangesAsync(ct);
 
                 // Nested: вставляем другого пользователя, первая попытка — transient failure
@@ -316,7 +316,7 @@ public class ExecuteInTransactionTests : BaseTest
                     innerAttemptCount++;
                     TestContext.WriteLine($"Inner attempt #{innerAttemptCount}");
 
-                    context.Users.Add(new TestUser {Name = innerName, Years = 20});
+                    context.Users.Add(new TestUser { Name = innerName, Years = 20 });
                     await context.SaveChangesAsync(ctInner);
 
                     if (innerAttemptCount == 1)
@@ -371,7 +371,7 @@ public class ExecuteInTransactionTests : BaseTest
 
         await outerCtx.ExecuteInTransactionAsync(async ct =>
         {
-            outerCtx.Users.Add(new TestUser {Id = outerId, Name = "Outer_" + outerId, Years = 30});
+            outerCtx.Users.Add(new TestUser { Id = outerId, Name = "Outer_" + outerId, Years = 30 });
             await outerCtx.SaveChangesAsync(ct);
 
             using var innerScope = sp.CreateScope();
@@ -384,7 +384,7 @@ public class ExecuteInTransactionTests : BaseTest
             {
                 await innerCtx.ExecuteInTransactionAsync(async ctInner =>
                 {
-                    innerCtx.Users.Add(new TestUser {Id = innerId, Name = "Inner_" + innerId, Years = 20});
+                    innerCtx.Users.Add(new TestUser { Id = innerId, Name = "Inner_" + innerId, Years = 20 });
                     await innerCtx.SaveChangesAsync(ctInner);
                 }, _ => Task.FromResult(false), cancellationToken: ct);
             }));
@@ -453,7 +453,7 @@ public class ExecuteInTransactionTests : BaseTest
             await context.ExecuteInTransactionAsync(async ct =>
             {
                 outerAttemptCount++;
-                context.Users.Add(new TestUser {Name = "Outer_" + outerAttemptCount});
+                context.Users.Add(new TestUser { Name = "Outer_" + outerAttemptCount });
                 await context.SaveChangesAsync(ct);
 
                 await context.ExecuteInTransactionAsync(async ctInner =>
@@ -467,7 +467,7 @@ public class ExecuteInTransactionTests : BaseTest
                         throw new TimeoutException("Nested transient error");
                     }
 
-                    context.Users.Add(new TestUser {Name = "Inner_" + innerAttemptCount});
+                    context.Users.Add(new TestUser { Name = "Inner_" + innerAttemptCount });
                     await context.SaveChangesAsync(ctInner);
                 }, _ => Task.FromResult(false), cancellationToken: ct);
 
@@ -508,7 +508,7 @@ public class ExecuteInTransactionTests : BaseTest
         await masterContext.ExecuteInTransactionAsync(async ct =>
         {
             // Пишем в мастер
-            masterContext.Users.Add(new TestUser {Id = userId, Name = userName, Years = 25});
+            masterContext.Users.Add(new TestUser { Id = userId, Name = userName, Years = 25 });
             await masterContext.SaveChangesAsync(ct);
 
             // Читаем из реплики ВНУТРИ транзакции мастера.
@@ -540,7 +540,7 @@ public class ExecuteInTransactionTests : BaseTest
 
         await masterContext.ExecuteInTransactionAsync(async ct =>
         {
-            masterContext.Users.Add(new TestUser {Name = "MasterEntry"});
+            masterContext.Users.Add(new TestUser { Name = "MasterEntry" });
             await masterContext.SaveChangesAsync(ct);
 
             // Прямой запрос к реплике РАЗРЕШЕН и работает.
@@ -560,16 +560,16 @@ public class ExecuteInTransactionTests : BaseTest
 
         var sp = InitServiceCollection().BuildServiceProvider();
         var masterContext = sp.GetRequiredService<TestDbContext>();
-        await using var replicaContext = new TestDbContext(DbName);
 
         await masterContext.ExecuteInTransactionAsync(async ct =>
         {
-            masterContext.Users.Add(new TestUser {Name = "MasterUser"});
+            masterContext.Users.Add(new TestUser { Name = "MasterUser" });
             await masterContext.SaveChangesAsync(ct);
 
             // Попытка обернуть работу с репликой в ExecuteInTransactionAsync ДОЛЖНА выбросить исключение.
             var ex = NUnit.Framework.Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
             {
+                await using var replicaContext = new TestDbContext(DbName);
                 await replicaContext.ExecuteInTransactionAsync(async ctReplica => { _ = await replicaContext.Users.AnyAsync(ctReplica); },
                     _ => Task.FromResult(false),
                     cancellationToken: ct);
@@ -596,13 +596,13 @@ public class ExecuteInTransactionTests : BaseTest
 
         await context.ExecuteInTransactionAsync(async ct =>
         {
-            context.Users.Add(new TestUser {Id = id1, Name = "Outer", Years = 10});
+            context.Users.Add(new TestUser { Id = id1, Name = "Outer", Years = 10 });
             await context.SaveChangesAsync(ct);
 
             // Вложенный вызов должен увидеть, что транзакция уже есть, и просто выполнить код в ней.
             await context.ExecuteInTransactionAsync(async ctInner =>
             {
-                context.Users.Add(new TestUser {Id = id2, Name = "Inner", Years = 20});
+                context.Users.Add(new TestUser { Id = id2, Name = "Inner", Years = 20 });
                 await context.SaveChangesAsync(ctInner);
                 return true;
             }, _ => Task.FromResult(false), cancellationToken: ct);
@@ -644,7 +644,7 @@ public class ExecuteInTransactionTests : BaseTest
                     TestContext.WriteLine($"Root attempt #{rootAttempt}");
 
                     // Вставляем первого пользователя
-                    context.Users.Add(new TestUser {Id = userId1, Name = "RootUser", Years = 10});
+                    context.Users.Add(new TestUser { Id = userId1, Name = "RootUser", Years = 10 });
                     await context.SaveChangesAsync(ct);
 
                     await context.ExecuteInTransactionAsync(async ctInner =>
@@ -652,7 +652,7 @@ public class ExecuteInTransactionTests : BaseTest
                         nestedAttempt++;
                         TestContext.WriteLine($"Nested attempt #{nestedAttempt}");
 
-                        context.Users.Add(new TestUser {Id = userId2, Name = "NestedUser", Years = 20});
+                        context.Users.Add(new TestUser { Id = userId2, Name = "NestedUser", Years = 20 });
                         await context.SaveChangesAsync(ctInner);
 
                         if (nestedAttempt == 1)
@@ -665,7 +665,7 @@ public class ExecuteInTransactionTests : BaseTest
                     return true;
                 },
                 _ => Task.FromResult(false),
-                options: new EfTransactionOptions {ClearChangeTrackerOnRetry = true});
+                options: new EfTransactionOptions { ClearChangeTrackerOnRetry = true });
 
             Assert.AreEqual(2, rootAttempt);
             Assert.AreEqual(2, nestedAttempt);
@@ -693,7 +693,7 @@ public class ExecuteInTransactionTests : BaseTest
         {
             await context.ExecuteInTransactionAsync(async ct1 =>
             {
-                await context.Users.AddAsync(new TestUser {Id = userId, Name = "Level1"}, ct1);
+                await context.Users.AddAsync(new TestUser { Id = userId, Name = "Level1" }, ct1);
 
                 await context.ExecuteInTransactionAsync(async ct2 =>
                 {
@@ -739,7 +739,7 @@ public class ExecuteInTransactionTests : BaseTest
                 // Nested call with manual SaveChanges
                 await context.ExecuteInTransactionAsync(async ctInner =>
                 {
-                    await context.Users.AddAsync(new TestUser {Id = userId, Name = "NestedUser"}, ctInner);
+                    await context.Users.AddAsync(new TestUser { Id = userId, Name = "NestedUser" }, ctInner);
                     await context.SaveChangesAsync(ctInner); // This flushes to DB but shouldn't COMMIT
                 }, _ => Task.FromResult(false), cancellationToken: ct);
 
@@ -780,7 +780,7 @@ public class ExecuteInTransactionTests : BaseTest
                 }
 
                 // Track an entity
-                context.Users.Add(new TestUser {Id = userId, Name = "RetryUser"});
+                context.Users.Add(new TestUser { Id = userId, Name = "RetryUser" });
 
                 if (attempt == 1)
                 {
@@ -791,7 +791,7 @@ public class ExecuteInTransactionTests : BaseTest
 
                 // Re-add and succeed (already added above)
                 await context.SaveChangesAsync(ct);
-            }, _ => Task.FromResult(false), new EfTransactionOptions {ClearChangeTrackerOnRetry = true});
+            }, _ => Task.FromResult(false), new EfTransactionOptions { ClearChangeTrackerOnRetry = true });
 
             Assert.AreEqual(2, attempt);
         }

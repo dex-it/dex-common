@@ -8,23 +8,19 @@ using Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 
-public class IdempotentCreateUserCommandHandler : IdempotentOutboxHandler<TestUserCreatorCommand, TestDbContext>
+public class IdempotentCreateUserCommandHandler(
+    IOnceExecutor<IEfTransactionOptions, TestDbContext> onceExecutor,
+    TestDbContext dbContext)
+    : IdempotentOutboxHandler<TestUserCreatorCommand, TestDbContext>(onceExecutor)
 {
-    private readonly TestDbContext _dbContext;
     public static int CountDown { get; set; }
-
-    public IdempotentCreateUserCommandHandler(IOnceExecutor<IEfTransactionOptions, TestDbContext> onceExecutor,
-        TestDbContext dbContext) : base(onceExecutor)
-    {
-        _dbContext = dbContext;
-    }
 
     protected override async Task IdempotentProcess(TestUserCreatorCommand message,
         CancellationToken cancellationToken)
     {
-        _dbContext.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
+        dbContext.Set<TestUser>().Add(new TestUser { Id = message.Id, Name = message.UserName });
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         if (CountDown-- > 0)
             throw new InvalidOperationException("CountDown > 0");

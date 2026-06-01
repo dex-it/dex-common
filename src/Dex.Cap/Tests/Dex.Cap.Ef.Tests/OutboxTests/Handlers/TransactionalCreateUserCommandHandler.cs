@@ -5,14 +5,9 @@ using Dex.Cap.Outbox.OnceExecutor.MassTransit;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 
-public class TransactionalCreateUserCommandHandler : TransactionalOutboxHandler<TestUserCreatorCommand, TestDbContext>
+public class TransactionalCreateUserCommandHandler(TestDbContext dbContext) : TransactionalOutboxHandler<TestUserCreatorCommand, TestDbContext>(dbContext)
 {
-    private readonly TestDbContext _dbContext;
-
-    public TransactionalCreateUserCommandHandler(TestDbContext dbContext) : base(dbContext)
-    {
-        _dbContext = dbContext;
-    }
+    private readonly TestDbContext _dbContext = dbContext;
 
     protected override async Task ProcessInTransaction(TestUserCreatorCommand message,
         CancellationToken cancellationToken)
