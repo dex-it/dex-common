@@ -7,7 +7,9 @@ namespace Dex.Extensions.Test
     public class ExpressionsTest
     {
         private const string Field1 = "field1";
+
         private string Prop1 { get; set; }
+
         private ExpressionsTest Exp2 { get; set; }
 
         [Test]
@@ -19,9 +21,9 @@ namespace Dex.Extensions.Test
         [Test]
         public void InvalidAccessTest()
         {
-            Assert.Catch<ArgumentException>(() => { TestExpressionFunc<ExpressionsTest>(x => Field1); });
-            Assert.Catch<ArgumentException>(() => { TestExpressionFunc<ExpressionsTest>(x => x.ToString()); });
-            Assert.Catch<ArgumentException>(() => { TestExpressionFunc<ExpressionsTest>(x => x.Exp2.Prop1); });
+            Assert.Catch<ArgumentException>((Action)(() => { TestExpressionFunc<ExpressionsTest>(x => Field1); }));
+            Assert.Catch<ArgumentException>((Action)(() => { TestExpressionFunc<ExpressionsTest>(x => x.ToString()); }));
+            Assert.Catch<ArgumentException>((Action)(() => { TestExpressionFunc<ExpressionsTest>(x => x.Exp2.Prop1); }));
         }
 
         private static void TestExpressionFunc<T>(Expression<Func<T, string>> selector)

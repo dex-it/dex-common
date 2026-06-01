@@ -29,7 +29,7 @@ public class BaseOnceExecutorTests : BaseTest
         var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
         var stepId = Guid.NewGuid().ToString("N");
-        var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+        var user = new TestUser {Name = "OnceExecuteTest", Years = 18};
 
         await executor.ExecuteAsync(stepId, async (context, token) =>
         {
@@ -50,16 +50,16 @@ public class BaseOnceExecutorTests : BaseTest
 
         var dbContext = sp.GetRequiredService<TestDbContext>();
 
-        NUnit.Framework.Assert.CatchAsync<DbUpdateException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<DbUpdateException>((Func<Task>)(async () =>
         {
-            var user = new TestUser { Name = "DoubleInsertTest", Years = 18 };
+            var user = new TestUser {Name = "DoubleInsertTest", Years = 18};
 
             await dbContext.Users.AddAsync(user);
             await dbContext.SaveChangesAsync();
 
             await dbContext.Users.AddAsync(user);
             await dbContext.SaveChangesAsync();
-        });
+        }));
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class BaseOnceExecutorTests : BaseTest
         var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
         var stepId = Guid.NewGuid().ToString("N");
-        var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+        var user = new TestUser {Name = "OnceExecuteTest", Years = 18};
 
         var firstResult = await executor.ExecuteAsync(stepId, async (context, ct) =>
             {
@@ -107,11 +107,11 @@ public class BaseOnceExecutorTests : BaseTest
 
         TestUser? result = null;
 
-        NUnit.Framework.Assert.CatchAsync<RetryLimitExceededException>(async () =>
+        NUnit.Framework.Assert.CatchAsync<RetryLimitExceededException>((Func<Task>)(async () =>
         {
             result = await executor.ExecuteAsync(stepId, async (context, ct) =>
                 {
-                    var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+                    var user = new TestUser {Name = "OnceExecuteTest", Years = 18};
                     await context.Users.AddAsync(user, ct);
                     await context.SaveChangesAsync(ct);
 
@@ -121,7 +121,7 @@ public class BaseOnceExecutorTests : BaseTest
                 },
                 (context, ct) => context.Users.FirstOrDefaultAsync(x => x.Name == "OnceExecuteTest", ct)
             );
-        });
+        }));
 
         Assert.IsNull(result);
     }
@@ -147,7 +147,7 @@ public class BaseOnceExecutorTests : BaseTest
                 await executor.ExecuteAsync(stepId, async (context, c) =>
                     {
                         await Task.Delay(1000, c);
-                        var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+                        var user = new TestUser {Name = "OnceExecuteTest", Years = 18};
                         await context.Users.AddAsync(user, c);
                         await context.SaveChangesAsync(c);
                     }
@@ -164,7 +164,7 @@ public class BaseOnceExecutorTests : BaseTest
             var uniqueViolationExceptions = aggregateEx.InnerExceptions
                 .Where(ex => ex is DbUpdateException
                 {
-                    InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }
+                    InnerException: PostgresException {SqlState: PostgresErrorCodes.UniqueViolation}
                 }).ToArray();
 
             NUnit.Framework.Assert.That(aggregateEx.InnerExceptions.Count,
@@ -192,7 +192,7 @@ public class BaseOnceExecutorTests : BaseTest
         var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
 
         var stepId = Guid.NewGuid().ToString("N");
-        var user = new TestUser { Name = "OnceExecuteTest", Years = 18 };
+        var user = new TestUser {Name = "OnceExecuteTest", Years = 18};
 
         try
         {
@@ -225,10 +225,10 @@ public class BaseOnceExecutorTests : BaseTest
 
         var dbContext = sp.GetRequiredService<TestDbContext>();
         var executor = sp.GetRequiredService<IOnceExecutor<IEfTransactionOptions, TestDbContext>>();
-        var efOptions = new EfTransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted };
+        var efOptions = new EfTransactionOptions {IsolationLevel = IsolationLevel.ReadCommitted};
 
         var stepId = Guid.NewGuid().ToString("N");
-        var user = new TestUser { Name = "OnceExecuteBeginTransactionTest", Years = 18 };
+        var user = new TestUser {Name = "OnceExecuteBeginTransactionTest", Years = 18};
 
         // transaction 1
         var result = await executor.ExecuteAsync(stepId, async (context, token) =>
@@ -245,7 +245,7 @@ public class BaseOnceExecutorTests : BaseTest
         Assert.IsNotNull(result);
         Assert.AreEqual(user.Id, result!.Id);
 
-        await dbContext.Users.AddAsync(new TestUser { Name = "OnceExecuteBeginTransactionTest-2" });
+        await dbContext.Users.AddAsync(new TestUser {Name = "OnceExecuteBeginTransactionTest-2"});
         // transaction 2
         await dbContext.SaveChangesAsync();
 

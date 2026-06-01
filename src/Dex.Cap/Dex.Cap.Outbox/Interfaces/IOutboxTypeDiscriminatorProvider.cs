@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Frozen;
-using System.Collections.Immutable;
 
 namespace Dex.Cap.Outbox.Interfaces;
 
@@ -15,7 +14,7 @@ public interface IOutboxTypeDiscriminatorProvider
     /// Дискриминаторы, у которых сообщения должны удаляться сразу после выполнения работы.
     /// Рекомендуется для очень крупных и очень часто генерируемых сообщений
     /// </summary>
-    ImmutableArray<string> ImmediatelyDeletableMessages { get; }
+    FrozenSet<string> ImmediatelyDeletableMessages { get; }
 
     /// <summary>
     /// Все дискриминаторы, известные этому сервису

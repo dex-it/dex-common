@@ -1,109 +1,131 @@
 # Dex.DistributedCache
 
-Distributed Cache Management - managing data caching in distributed applications.
+Distributed HTTP-response cache for ASP.NET Core on top of `IDistributedCache` (Redis, in-memory, etc.). Adds:
 
-* Caching the results of HTTP requests.
-* Full support for ETag notation.
-* Implemented on the basis of IDistributedCache.
+* `[CacheActionFilter]` attribute that caches an MVC action's full response.
+* Full ETag negotiation (`If-None-Match` → `304 Not Modified`).
+* Variable cache keys (per-user, per-locale, per-anything via `ICacheVariableKeyResolver`).
+* Dependency-driven invalidation (one cache entry can be invalidated through any of its registered dependency keys).
 
-Solved problems:
-* The problem of updating the cache - is that there are many services that want to write or reuse the cache.
-* Cache dependency problem - cached items can have many dependencies, the modification of which should raise an event for invalidation (reset)/cache update.
-* Cache invalidation problem - events that affect invalidation occur throughout the system.
+### Problems it solves
+
+* **Stale cache across services** — multiple services share the same backing store via `IDistributedCache`.
+* **Cache dependencies** — a single cached entry can be linked to many domain keys; modifying any one of them invalidates all dependent entries.
+* **Cross-cutting invalidation** — invalidation events can originate anywhere in the system, not only at the writer of the entry.
+
+---
 
 ### Basic usage
+
 ```csharp
-// For basic usage caching (without dependencies), you only need to set the [CacheActionFilter] attribute on the controller method.
-// Also you can specify absolute expiration time in seconds for caching.
+// Controller — cache the response for 600 seconds, no variability:
 [HttpGet]
 [CacheActionFilter(600)]
-public async Task<ActionResult> Get(){...}
+public async Task<ActionResult<Product[]>> Get() { … }
+```
 
-// Startup
-var serviceCollection = new ServiceCollection()
-    .AddStackExchangeRedisCache(_ => { })
+```csharp
+// Startup / Program.cs
+services
+    .AddStackExchangeRedisCache(opt => opt.Configuration = "localhost:6379")
     .AddDistributedCache();
 ```
 
-### Advanced usage
-```csharp
-// For advanced usage caching (with dependencies), you need to set the [CacheActionFilter] attribute on the controller method with indication of variability keys.
-[HttpGet]
-[CacheActionFilter(600, typeof(ICacheUserVariableKey))]
-public async Task<ActionResult> Get(){...}
+If `[CacheActionFilter]` is applied without arguments, the default expiration is **3600 seconds** (1 hour).
 
-// Startup
-var serviceCollection = new ServiceCollection()
-    .AddStackExchangeRedisCache(_ => { })
+---
+
+### Advanced usage — variability + dependencies
+
+```csharp
+// Per-user response, invalidated on changes to UserId or CardInfo.Id
+[HttpGet]
+[CacheActionFilter(600, typeof(ICacheUserVariableKeyResolver))]
+public async Task<ActionResult<CardInfo[]>> GetCards() { … }
+```
+
+```csharp
+services
+    .AddStackExchangeRedisCache(opt => opt.Configuration = "localhost:6379")
     .AddDistributedCache()
-    .RegisterCacheVariableKeyService<ICacheUserVariableKey, CacheUserVariableKey>()
+    .RegisterCacheVariableKeyResolver<ICacheUserVariableKeyResolver, CacheUserVariableKeyResolver>()
     .RegisterCacheDependencyService<CardInfo[], CardInfoCacheService>();
 ```
 
-It is necessary to add a service CardInfoCacheService (will provide dependent data for caching) that implements an interface ICacheDependencyService<T>.
+#### Variable key resolver
 
-Dependencies - additional keys pointing to the cache object, allow you to reset the cache when the dependency changes.
+A resolver returns a string that varies the cache key (e.g. the current user id). Built-in marker interfaces: `ICacheUserVariableKeyResolver`, `ICacheLocaleVariableKeyResolver`. You can declare your own by inheriting `ICacheVariableKeyResolver`.
+
 ```csharp
-public class CardInfoCacheService : ICacheDependencyService<CardInfo[]>
+public class CacheUserVariableKeyResolver(IUserIdService userIdService) : ICacheUserVariableKeyResolver
 {
-    private readonly ICacheService _cacheService;
-    private readonly IUserIdService _userIdService;
+    public string GetVariableKey() => userIdService.UserId.ToString();
+}
+```
 
-    public CardInfoCacheService(ICacheService cacheService, IUserIdService userIdService)
+#### Dependency service
+
+For a given action result type, registers extra dependency keys on the cache entry. When any of those keys is later invalidated, the entry is dropped.
+
+```csharp
+public class CardInfoCacheService(ICacheService cacheService, IUserIdService userIdService)
+    : ICacheDependencyService<CardInfo[]>
+{
+    public async Task SetAsync(string key, CardInfo[]? valueData, int expiration, CancellationToken ct)
     {
-        _cacheService = cacheService;
-        _userIdService = userIdService;
-    }
-
-    public async Task SetAsync(string key, CardInfo[]? valueData, int expiration, CancellationToken cancellation)
-    {
-        var dependencies = new List<CacheDependency>();
-        dependencies.Add(new CacheDependency(_userIdService.UserId.ToString()));
-
-        if (valueData != null)
+        var deps = new List<CacheDependency>
         {
-            var cardList = valueData.Select(x => new CacheDependency(x.Id.ToString())).Distinct();
-            dependencies.AddRange(cardList);
-        }
+            new(userIdService.UserId.ToString())
+        };
 
-        if (dependencies.Any())
-        {
-            await _cacheService.SetDependencyValueDataAsync(key, dependencies, expiration, cancellation);
-        }
+        if (valueData is not null)
+            deps.AddRange(valueData.Select(x => new CacheDependency(x.Id.ToString())).Distinct());
+
+        if (deps.Count > 0)
+            await cacheService.SetDependencyValueDataAsync(key, deps, expiration, ct);
     }
 }
 ```
 
-Also you need to add a service, which will receive a variable key, for example CacheUserVariableKeyResolver that implements an interface ICacheUserVariableKeyResolver : ICacheVariableKeyResolver.
+---
 
-Cache variability parameters - a separate cache object is created for each variable parameter.
+### Invalidation
 
-It is possible to use our interfaces of classic cache variability keys: ICacheUserVariableKeyResolver, ICacheLocaleVariableKeyResolver.
+Directly, from anywhere in the code:
+
 ```csharp
-public class CacheUserVariableKeyResolver : ICacheUserVariableKeyResolver
-{
-    private readonly IUserIdService _userIdService;
-
-    public CacheUserVariableKeyResolver(IUserIdService userIdService)
-    {
-        _userIdService = userIdService;
-    }
-
-    public string GetVariableKey()
-    {
-        return _userIdService.UserId.ToString();
-    }
-}
+var deps = updatedCards.Select(c => new CacheDependency(c.Id.ToString()));
+await cacheService.InvalidateByDependenciesAsync(deps, ct);
 ```
 
-Invalidate cache by dependencies:
-```csharp
-var invalidateValues = values.Select(x => new CacheDependency(x.Id.ToString()));
-await cacheService.InvalidateByDependenciesAsync(invalidateValues, CancellationToken.None);
-```
+Via middleware — a special request header `ForceInvalidateCacheByUser` invalidates all entries dependent on the current user's `ICacheUserVariableKeyResolver` value:
 
-It is possible to invalidate cache using middleware.
-To do this, an empty special header must be added to the request: ForceInvalidateCacheByUser.
 ```csharp
 app.UseInvalidateCacheByUserMiddleware();
 ```
+
+The middleware silently logs and swallows exceptions (cache errors never break the request pipeline) and requires `ICacheUserVariableKeyResolver` to be registered.
+
+---
+
+### Public API surface
+
+| Type | Purpose |
+|---|---|
+| `[CacheActionFilter(int expiration = 3600, params Type[] cacheVariableKeyResolvers)]` | Caches the full action response with the listed variability resolvers. |
+| `ICacheService` | `SetDependencyValueDataAsync`, `InvalidateByDependenciesAsync`. |
+| `ICacheVariableKeyResolver` | Implement to add a new variability axis. Marker subtypes: `ICacheUserVariableKeyResolver`, `ICacheLocaleVariableKeyResolver`. |
+| `ICacheDependencyService<TValue>` | Computes the dependency keys for an action result of type `TValue`. |
+| `CacheDependency(string Value)` | Record used as a dependency key. |
+| `AddDistributedCache()` | Registers core services on top of an already-registered `IDistributedCache`. |
+| `RegisterCacheVariableKeyResolver<TInterface, TService>()` | Registers a variability resolver. |
+| `RegisterCacheDependencyService<TValue, TService>()` | Registers a dependency producer for a result type. |
+| `UseInvalidateCacheByUserMiddleware()` | Enables the `ForceInvalidateCacheByUser` header. |
+
+---
+
+### Notes
+
+* `AddDistributedCache()` only wires up the cache services; the underlying `IDistributedCache` provider (Redis, in-memory, SQL Server) must be registered separately.
+* Cache keys are MD5 hashes of `(request URL, variable keys)` and prefixed with `dc:` plus a kind suffix (`meta` / `value` / `dep`). Treat the Redis namespace as owned by this package.
+* All cache writes use `AbsoluteExpirationRelativeToNow = expiration` seconds — there is no sliding expiration.

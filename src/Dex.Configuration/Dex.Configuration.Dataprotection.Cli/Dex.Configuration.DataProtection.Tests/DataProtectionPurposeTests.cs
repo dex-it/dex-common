@@ -15,9 +15,9 @@ public sealed class DataProtectionPurposeTests
     [InlineData("NonExistentApp")]
     public void PurposeGenerationFailsForInvalidApplicationNames(string applicationName)
     {
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidOperationException>((Action)(() =>
         {
             new TemplateDataProtectionPurpose().ComputePurpose(applicationName);
-        });
+        }));
     }
 }
