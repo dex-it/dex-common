@@ -34,8 +34,8 @@ internal sealed class OutboxCleanerBackgroundService(
             {
                 using (var scope = scopeFactory.CreateScope())
                 {
-                    var loggerInner = (ILogger)scope.ServiceProvider.GetRequiredService(typeof(ILogger<OutboxCleanerBackgroundService>));
-                    loggerInner.LogDebug("Background service '{ServiceName}' Tick event", GetType());
+                    var loggerInner = scope.ServiceProvider.GetRequiredService<ILogger<OutboxCleanerBackgroundService>>();
+                    loggerInner.LogDebug("Background service '{ServiceName}' Tick event", TypeName);
 
                     await OnTick(scope.ServiceProvider, loggerInner, stoppingToken).ConfigureAwait(false);
                 }

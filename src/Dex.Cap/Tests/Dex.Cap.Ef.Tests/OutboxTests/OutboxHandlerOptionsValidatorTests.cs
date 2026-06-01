@@ -73,4 +73,55 @@ public class OutboxHandlerOptionsValidatorTests
 
         void Act() => new OutboxHandlerOptionsValidator().Validate(null, null!);
     }
+
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void Validate_PeriodNotPositive_Fails(int seconds)
+    {
+        var options = ValidOptions();
+        options.Period = TimeSpan.FromSeconds(seconds);
+
+        var result = new OutboxHandlerOptionsValidator().Validate(null, options);
+
+        NUnit.Framework.Assert.That(result.Failed, Is.True);
+        NUnit.Framework.Assert.That(result.FailureMessage, Does.Contain("Period must be > 0"));
+    }
+
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void Validate_CleanupIntervalNotPositive_Fails(int seconds)
+    {
+        var options = ValidOptions();
+        options.CleanupInterval = TimeSpan.FromSeconds(seconds);
+
+        var result = new OutboxHandlerOptionsValidator().Validate(null, options);
+
+        NUnit.Framework.Assert.That(result.Failed, Is.True);
+        NUnit.Framework.Assert.That(result.FailureMessage, Does.Contain("CleanupInterval must be > 0"));
+    }
+
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void Validate_CleanupOlderThanNotPositive_Fails(int days)
+    {
+        var options = ValidOptions();
+        options.CleanupOlderThan = TimeSpan.FromDays(days);
+
+        var result = new OutboxHandlerOptionsValidator().Validate(null, options);
+
+        NUnit.Framework.Assert.That(result.Failed, Is.True);
+        NUnit.Framework.Assert.That(result.FailureMessage, Does.Contain("CleanupOlderThan must be > 0"));
+    }
+
+    [Test]
+    public void Validate_InitDelayMaxExceedsOneHour_Fails()
+    {
+        var options = ValidOptions();
+        options.HandlerInitDelay = new InitDelayRange { Min = TimeSpan.Zero, Max = TimeSpan.FromHours(2) };
+
+        var result = new OutboxHandlerOptionsValidator().Validate(null, options);
+
+        NUnit.Framework.Assert.That(result.Failed, Is.True);
+        NUnit.Framework.Assert.That(result.FailureMessage, Does.Contain("HandlerInitDelay.Max must be <="));
+    }
 }

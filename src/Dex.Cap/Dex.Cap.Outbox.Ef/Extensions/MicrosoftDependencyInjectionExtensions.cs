@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Dex.Cap.Outbox.AspNetScheduler;
 using Dex.Cap.Outbox.AspNetScheduler.BackgroundServices;
 using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
@@ -14,6 +15,9 @@ namespace Dex.Cap.Outbox.Ef.Extensions;
 
 public static class MicrosoftDependencyInjectionExtensions
 {
+    // Маркер для однократной регистрации OutboxHealthCheck (guard от дублирования при повторном вызове AddOutboxScheduler).
+    private sealed class OutboxHealthCheckRegistered;
+
     public static IServiceCollection AddOutbox<TDbContext>(
         this IServiceCollection services,
         Action<IServiceProvider, OutboxRetryStrategyConfigurator>? retryStrategyImplementation = null)
@@ -98,9 +102,14 @@ public static class MicrosoftDependencyInjectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
 
-        services
-            .AddHealthChecks()
-            .AddCheck<OutboxHealthCheck>("outbox-scheduler", tags: ["outbox-scheduler"]);
+        if (services.All(d => d.ServiceType != typeof(OutboxHealthCheckRegistered)))
+        {
+            services.AddSingleton<OutboxHealthCheckRegistered>();
+
+            services
+                .AddHealthChecks()
+                .AddCheck<OutboxHealthCheck>("outbox-scheduler", tags: ["outbox-scheduler"]);
+        }
 
         services.AddOptions<OutboxHandlerOptions>()
             .Configure(configure)

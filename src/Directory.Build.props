@@ -1,0 +1,16 @@
+<Project>
+
+  <!--
+    На Linux-девелоперской машине (WSL) перенаправляем артефакты сборки в /tmp/,
+    чтобы не загрязнять Windows-файловую систему.
+    Не применяется в GitHub Actions и внутри Docker-контейнеров.
+  -->
+  <PropertyGroup Condition="
+    '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'
+    And '$(GITHUB_ACTIONS)' == ''
+    And '$(DOTNET_RUNNING_IN_CONTAINER)' == ''">
+    <BaseIntermediateOutputPath>/tmp/dex-common/$(MSBuildProjectName)/obj/</BaseIntermediateOutputPath>
+    <BaseOutputPath>/tmp/dex-common/$(MSBuildProjectName)/bin/</BaseOutputPath>
+  </PropertyGroup>
+
+</Project>

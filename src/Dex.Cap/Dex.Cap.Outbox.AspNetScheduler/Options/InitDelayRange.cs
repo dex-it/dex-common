@@ -8,7 +8,7 @@ namespace Dex.Cap.Outbox.AspNetScheduler.Options;
 /// Min == Max — фиксированная задержка (в т.ч. <see cref="TimeSpan.Zero"/> — без задержки).
 /// Инвариант (Min &gt;= 0, Min &lt;= Max) проверяется валидатором опций на старте хоста.
 /// </summary>
-public sealed class InitDelayRange
+public sealed record InitDelayRange
 {
     /// <summary>Lower bound of the delay range (inclusive).</summary>
     public TimeSpan Min { get; init; }
@@ -26,7 +26,7 @@ public sealed class InitDelayRange
             return Min;
         }
 
-        // int-каст безопасен: значения init-delay задаются в секундах, переполнение int возникло бы лишь при Max > ~24.8 дней, что отклоняется валидатором опций.
+        // int-каст безопасен: валидатор ограничивает Max ≤ 1h → maxMs ≤ 3_600_000, что значительно ниже int.MaxValue (~2.1 млрд).
         var minMs = (int)Min.TotalMilliseconds;
         var maxMs = (int)Max.TotalMilliseconds;
 
