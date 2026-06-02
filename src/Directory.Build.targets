@@ -105,7 +105,7 @@
         <PackageReference Update="Google.Protobuf" Version="3.35.0"/>
         <PackageReference Update="Grpc.Net.ClientFactory" Version="2.80.0"/>
         <PackageReference Update="Grpc.Net.Client" Version="2.80.0"/>
-        <PackageReference Update="Grpc.Tools" Version="2.80.0"/>
+        <PackageReference Update="Grpc.Tools" Version="2.81.0"/>
         <PackageReference Update="Grpc.AspNetCore.Server" Version="2.80.0"/>
         <PackageReference Update="Grpc.Core.Api" Version="2.80.0"/>
 

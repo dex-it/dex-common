@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace Dex.Extensions
 {
@@ -28,6 +31,24 @@ namespace Dex.Extensions
                     $"Expression '{propertyLambda}' refers to a property that is not from type {type}.");
 
             return propInfo;
+        }
+
+        public static IEnumerable<Exception> GetInnerExceptions(this Exception exception, int count = 5)
+        {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(exception);
+#endif
+
+            if (count <= 0) yield break;
+
+            var innerException = exception;
+            do
+            {
+                yield return innerException;
+
+                innerException = innerException.InnerException;
+                count--;
+            } while (innerException != null && count > 0);
         }
     }
 }

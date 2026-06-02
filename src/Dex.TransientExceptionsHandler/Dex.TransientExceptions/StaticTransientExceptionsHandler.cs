@@ -1,8 +1,8 @@
 ﻿using System.Collections.Frozen;
 using System.Net;
 using System.Net.Sockets;
+using Dex.Extensions;
 using Dex.TransientExceptions.Exceptions;
-using Dex.TransientExceptions.Helpers;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
