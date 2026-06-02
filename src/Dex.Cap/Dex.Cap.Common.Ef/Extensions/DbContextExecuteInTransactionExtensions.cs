@@ -140,7 +140,10 @@ public static class DbContextExecuteInTransactionExtensions
 
             var dataIsolationLevel = MapIsolationLevel(options.IsolationLevel);
 
+#pragma warning disable CA2007 // await using не поддерживает ConfigureAwait без потери типа; SynchronizationContext в ASP.NET Core отсутствует
             await using var transaction = await context.Database.BeginTransactionAsync(dataIsolationLevel, ct).ConfigureAwait(false);
+#pragma warning restore CA2007
+
             CurrentLogicalTransaction.Value = transaction;
 
             try
