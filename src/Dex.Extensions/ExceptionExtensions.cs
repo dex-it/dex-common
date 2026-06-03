@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Dex.Extensions
 {
-    public static class ExceptionToStringExtensions
+    public static class ExceptionExtensions
     {
         public static IEnumerable<string> ExplainToString(this Exception? exception, int deep = 5)
         {
