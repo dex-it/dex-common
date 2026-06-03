@@ -1,4 +1,4 @@
-﻿namespace Dex.RfcExceptionsHandler.Rfc;
+﻿namespace Dex.RfcExceptionsHandler.Constants;
 
 internal static class RfcExtensionKeys
 {

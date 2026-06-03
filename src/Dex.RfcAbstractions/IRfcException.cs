@@ -1,7 +1,6 @@
 ﻿using System.Collections.Immutable;
-using Microsoft.AspNetCore.Http;
 
-namespace Dex.RfcExceptionsHandler.Rfc;
+namespace Dex.RfcExceptions;
 
 /// <summary>
 /// Represents an application exception that can be converted to
@@ -24,7 +23,7 @@ public interface IRfcException
     /// </summary>
     /// <value>
     /// A valid HTTP status code, for example
-    /// <see cref="StatusCodes.Status400BadRequest"/>,
+    /// <see cref="Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest"/>,
     /// <see cref="StatusCodes.Status404NotFound"/>,
     /// <see cref="StatusCodes.Status409Conflict"/>.
     /// </value>
