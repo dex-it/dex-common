@@ -1,4 +1,4 @@
-﻿namespace Dex.RfcExceptionsHandler.Rfc;
+﻿namespace Dex.RfcExceptions;
 
 /// <summary>
 /// RFC 7807 problem type identifiers.
