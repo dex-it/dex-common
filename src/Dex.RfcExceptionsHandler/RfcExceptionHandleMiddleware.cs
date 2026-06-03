@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Dex.Extensions;
+using Dex.RfcExceptions;
 using Dex.RfcExceptionsHandler.Rfc;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
