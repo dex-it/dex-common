@@ -4,10 +4,11 @@
         <Nullable>enable</Nullable>
         <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
         <InformationalVersion>1.0</InformationalVersion>
-        <PackageVersion>1.0.36</PackageVersion>
+        <PackageVersion>1.0.37</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
+
     <!--Для NuGet-->
     <PropertyGroup>
         <PackageProjectUrl>https://github.com/dex-it/dex-common</PackageProjectUrl>
@@ -22,5 +23,8 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
+    </ItemGroup>
     <!--/Для NuGet-->
 </Project>

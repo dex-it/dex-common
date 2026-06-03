@@ -75,7 +75,7 @@
         <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>
         <PackageReference Update="RazorLight" Version="2.3.1"/>
         <PackageReference Update="OpenTelemetry*" Version="1.9.0"/>             <!-- дальше, подтягивает пакеты 9 версии, по этому до обновления на net10 поднимать нежелательно -->
-        <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.8"/>
+        <PackageReference Update="Octonica.ClickHouseClient" Version="3.1.9"/>  <!-- дальше, вплоть до 4.1.4, пакет некорректно работает с дапером, ждем фикс -->
         <PackageReference Update="MediatR" Version="12.5.0"/>                   <!-- дальше, коммерческая лицензия -->
         <PackageReference Update="Swashbuckle.AspNetCore" Version="8.1.4"/>
         <PackageReference Update="Swashbuckle.AspNetCore.Swagger" Version="8.1.4"/>
@@ -120,7 +120,7 @@
         <PackageReference Update="Google.Protobuf" Version="3.35.0"/>
         <PackageReference Update="Grpc.Net.ClientFactory" Version="2.80.0"/>
         <PackageReference Update="Grpc.Net.Client" Version="2.80.0"/>
-        <PackageReference Update="Grpc.Tools" Version="2.80.0"/>
+        <PackageReference Update="Grpc.Tools" Version="2.81.0"/>
         <PackageReference Update="Grpc.AspNetCore.Server" Version="2.80.0"/>
         <PackageReference Update="Grpc.Core.Api" Version="2.80.0"/>
 
