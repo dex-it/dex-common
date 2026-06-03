@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Grpc.Core;
 using Microsoft.AspNetCore.Http;
 
 namespace Dex.RfcExceptionsHandler;
 
+/// <inheritdoc/>>
 public class DefaultRfcExceptionHandleConfig : IRfcExceptionHandleConfig
 {
     /// <summary>
@@ -11,8 +13,13 @@ public class DefaultRfcExceptionHandleConfig : IRfcExceptionHandleConfig
     /// </summary>
     private const int Status499ClientClosedRequest = 499;
 
+    /// <inheritdoc/>>
+    public JsonSerializerOptions JsonSerializerOptions => JsonSerializerOptions.Default;
+
+    /// <inheritdoc/>>
     public virtual Exception Map(Exception exception) => exception;
 
+    /// <inheritdoc/>>
     public virtual int ResolveHttpStatusCode(Exception exception) => exception switch
     {
         UnauthorizedAccessException => StatusCodes.Status403Forbidden,
@@ -27,6 +34,10 @@ public class DefaultRfcExceptionHandleConfig : IRfcExceptionHandleConfig
             StatusCode.Unavailable => StatusCodes.Status408RequestTimeout,
             StatusCode.Cancelled => Status499ClientClosedRequest,
             StatusCode.NotFound => StatusCodes.Status404NotFound,
+            StatusCode.PermissionDenied => StatusCodes.Status403Forbidden,
+            StatusCode.Unauthenticated => StatusCodes.Status401Unauthorized,
+            StatusCode.InvalidArgument => StatusCodes.Status400BadRequest,
+            StatusCode.AlreadyExists => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         },
 

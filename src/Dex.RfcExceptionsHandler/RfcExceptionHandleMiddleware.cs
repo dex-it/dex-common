@@ -4,6 +4,7 @@ using Dex.Extensions;
 using Dex.RfcExceptionsHandler.Rfc;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -19,7 +20,8 @@ internal sealed class RfcExceptionHandleMiddleware(
 {
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var cToken = context.RequestAborted;
+        // перехват ошибок лучше не отменять
+        var cToken = CancellationToken.None;
 
         try
         {
@@ -40,15 +42,15 @@ internal sealed class RfcExceptionHandleMiddleware(
 
             // rfc stackTrace
             if (string.IsNullOrEmpty(exception.StackTrace) is false && environment.IsProduction() is false)
-                rfcProblem.Extensions[RfcExtensions.StackTrace] = string.Join(Environment.NewLine, exception.GetInnerExceptions().Select(x => x.StackTrace));
+                rfcProblem.Extensions[RfcExtensionKeys.StackTrace] = string.Join(Environment.NewLine, exception.GetInnerExceptions().Select(x => x.StackTrace));
 
             // rfc traceId
-            rfcProblem.Extensions[RfcExtensions.TraceId] = Activity.Current?.Id ?? context.TraceIdentifier;
+            rfcProblem.Extensions[RfcExtensionKeys.TraceId] = Activity.Current?.Id ?? context.TraceIdentifier;
 
             // rfc Instance
-            rfcProblem.Instance = GetRfcInstance(context.Request);
+            rfcProblem.Instance = context.Request.GetEncodedPathAndQuery();
 
-            var responseJson = JsonSerializer.Serialize(rfcProblem);
+            var responseJson = JsonSerializer.Serialize(rfcProblem, config.JsonSerializerOptions);
             if (rfcProblem.Status >= StatusCodes.Status500InternalServerError)
                 logger.LogError(exception, "Request failed");
             else
@@ -57,7 +59,7 @@ internal sealed class RfcExceptionHandleMiddleware(
             try
             {
                 context.Response.StatusCode = rfcProblem.Status.Value;
-                context.Response.ContentType = "application/json";
+                context.Response.ContentType = "application/problem+json";
 
                 await context.Response.WriteAsync(responseJson, cancellationToken: cToken);
             }
@@ -82,7 +84,7 @@ internal sealed class RfcExceptionHandleMiddleware(
         StatusCodes.Status404NotFound => RfcTypes.NotFound,
         StatusCodes.Status405MethodNotAllowed => RfcTypes.MethodNotAllowed,
         StatusCodes.Status406NotAcceptable => RfcTypes.NotAcceptable,
-        StatusCodes.Status407ProxyAuthenticationRequired => RfcTypes.Unauthorized,
+        StatusCodes.Status407ProxyAuthenticationRequired => RfcTypes.ProxyAuthenticationRequired,
         StatusCodes.Status408RequestTimeout => RfcTypes.Timeout,
         StatusCodes.Status409Conflict => RfcTypes.Conflict,
         StatusCodes.Status410Gone => RfcTypes.Gone,
@@ -120,15 +122,4 @@ internal sealed class RfcExceptionHandleMiddleware(
 
         _ => "unknown"
     };
-
-    private static string GetRfcInstance(HttpRequest contextRequest)
-    {
-        var instance = new
-        {
-            Path = contextRequest.Path.ToString(),
-            Query = contextRequest.QueryString.ToString()
-        };
-
-        return JsonSerializer.Serialize(instance);
-    }
 }

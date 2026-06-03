@@ -1,6 +1,6 @@
 ﻿namespace Dex.RfcExceptionsHandler.Rfc;
 
-public static class RfcExtensions
+internal static class RfcExtensionKeys
 {
     public const int DefaultExtensionsCapacity = 4;
 

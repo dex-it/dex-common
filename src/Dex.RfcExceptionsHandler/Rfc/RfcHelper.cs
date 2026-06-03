@@ -5,7 +5,7 @@ namespace Dex.RfcExceptionsHandler.Rfc;
 /// <summary>
 /// Provides helper methods for converting exceptions to <see cref="ProblemDetails"/>.
 /// </summary>
-public static class RfcHelper
+internal static class RfcHelper
 {
     /// <summary>
     /// Converts the specified exception to a <see cref="ProblemDetails"/> instance.
@@ -19,24 +19,24 @@ public static class RfcHelper
     /// <returns>
     /// A <see cref="ProblemDetails"/> instance.
     /// </returns>
-    public static ProblemDetails ToProblemDetails<T>(this T exception) where T : Exception
+    internal static ProblemDetails ToProblemDetails<T>(this T exception) where T : Exception
     {
         ArgumentNullException.ThrowIfNull(exception);
 
-        var extensions = new Dictionary<string, object?>(RfcExtensions.DefaultExtensionsCapacity)
+        var extensions = new Dictionary<string, object?>(RfcExtensionKeys.DefaultExtensionsCapacity)
         {
-            [RfcExtensions.ExceptionType] = exception.GetType().Name.Replace("`1", string.Empty, StringComparison.Ordinal)
+            [RfcExtensionKeys.ExceptionType] = exception.GetType().Name.Replace("`1", string.Empty, StringComparison.Ordinal)
         };
 
         if (exception.Data.Count > 0)
-            extensions[RfcExtensions.ExceptionData] = exception.Data;
+            extensions[RfcExtensionKeys.ExceptionData] = exception.Data;
 
         // generic вариант, для ошибок, не реализующих IRfcException
         if (exception is not IRfcException rfcException)
             return new ProblemDetails
             {
                 Title = "Unexpected error occurred",
-                Detail = exception.Message,
+                Detail = $"Details not available for non-rfc exception typeof {typeof(T).Name}",
                 Extensions = extensions
             };
 
