@@ -5,16 +5,12 @@ using Microsoft.AspNetCore.Http;
 
 namespace Dex.RfcExceptionsHandler;
 
-/// <inheritdoc/>>
 public class DefaultRfcExceptionHandleConfig : IRfcExceptionHandleConfig
 {
-    /// <inheritdoc/>>
     public JsonSerializerOptions JsonSerializerOptions => JsonSerializerOptions.Default;
 
-    /// <inheritdoc/>>
     public virtual Exception Map(Exception exception) => exception;
 
-    /// <inheritdoc/>>
     public virtual int ResolveHttpStatusCode(Exception exception) => exception switch
     {
         UnauthorizedAccessException => StatusCodes.Status403Forbidden,
