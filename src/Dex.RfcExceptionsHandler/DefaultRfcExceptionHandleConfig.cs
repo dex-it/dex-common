@@ -8,11 +8,6 @@ namespace Dex.RfcExceptionsHandler;
 /// <inheritdoc/>>
 public class DefaultRfcExceptionHandleConfig : IRfcExceptionHandleConfig
 {
-    /// <summary>
-    /// Client Closed Request
-    /// </summary>
-    private const int Status499ClientClosedRequest = 499;
-
     /// <inheritdoc/>>
     public JsonSerializerOptions JsonSerializerOptions => JsonSerializerOptions.Default;
 
@@ -27,12 +22,12 @@ public class DefaultRfcExceptionHandleConfig : IRfcExceptionHandleConfig
         ArgumentException or ValidationException => StatusCodes.Status400BadRequest,
 
         TimeoutException => StatusCodes.Status408RequestTimeout,
-        OperationCanceledException => Status499ClientClosedRequest,
+        OperationCanceledException => StatusCodes.Status499ClientClosedRequest,
 
         RpcException x => x.StatusCode switch
         {
             StatusCode.Unavailable => StatusCodes.Status408RequestTimeout,
-            StatusCode.Cancelled => Status499ClientClosedRequest,
+            StatusCode.Cancelled => StatusCodes.Status499ClientClosedRequest,
             StatusCode.NotFound => StatusCodes.Status404NotFound,
             StatusCode.PermissionDenied => StatusCodes.Status403Forbidden,
             StatusCode.Unauthenticated => StatusCodes.Status401Unauthorized,
