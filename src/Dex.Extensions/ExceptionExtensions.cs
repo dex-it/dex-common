@@ -17,7 +17,7 @@ namespace Dex.Extensions
                 for (var i = 0; i < deep; i++)
                 {
                     yield return ex.Message;
-                    yield return ex.StackTrace;
+                    yield return ex.StackTrace ?? string.Empty;
                     ex = ex.InnerException;
                     if (ex == null) break;
                 }

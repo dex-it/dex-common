@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Dex.Extensions;
 using Dex.RfcExceptionsHandler.Rfc;
@@ -124,6 +125,7 @@ internal sealed class RfcExceptionHandleMiddleware(
         _ => "unknown"
     };
 
+    [SuppressMessage("ReSharper", "SuspiciousTypeConversion.Global", Justification = "Инстансы, реализующие интерфейс, будут в конкретных проектах")]
     private ProblemDetails ToProblemDetails<T>(T exception) where T : Exception
     {
         ArgumentNullException.ThrowIfNull(exception);
