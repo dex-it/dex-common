@@ -3,7 +3,7 @@ using System.Linq;
 using Dex.Pagination.Conditions;
 using NUnit.Framework.Legacy;
 
-namespace Dex.Pagination.Test
+namespace Dex.Pagination.Tests
 {
     public class PagingTests
     {

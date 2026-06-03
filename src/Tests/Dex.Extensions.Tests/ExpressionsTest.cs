@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using NUnit.Framework;
 
-namespace Dex.Extensions.Test
+namespace Dex.Extensions.Tests
 {
     public class ExpressionsTest
     {

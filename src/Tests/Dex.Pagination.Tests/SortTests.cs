@@ -4,7 +4,7 @@ using Dex.TestDomain;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 
-namespace Dex.Pagination.Test
+namespace Dex.Pagination.Tests
 {
     public class SortTests
     {

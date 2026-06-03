@@ -19,7 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Tests", "_Tests", "{DC15F5
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Entity", "Dex.Entity\Dex.Entity.csproj", "{DC6B199F-B25F-453B-B77E-148D51037ACB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Pagination.Test", "Tests\Dex.Pagination.Test\Dex.Pagination.Test.csproj", "{A8867D9D-1E47-48CD-80AB-07D93F0336E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Pagination.Tests", "Tests\Dex.Pagination.Tests\Dex.Pagination.Tests.csproj", "{A8867D9D-1E47-48CD-80AB-07D93F0336E5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{5A64EE5F-BCD5-404C-BBBB-781844F5790C}"
 EndProject
@@ -33,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.TestDomain", "Tests\Dex
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Neo4J", "Dex.Neo4J\Dex.Neo4J.csproj", "{1AA6F854-7939-46EF-A1A0-5E703F27A1D8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Extensions.Test", "Tests\Dex.Extensions.Test\Dex.Extensions.Test.csproj", "{7FAFBDCB-E597-49B7-B2D7-DF5121F5ABEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dex.Extensions.Tests", "Tests\Dex.Extensions.Tests\Dex.Extensions.Tests.csproj", "{7FAFBDCB-E597-49B7-B2D7-DF5121F5ABEB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Types.Tests", "Tests\Dex.Types.Tests\Dex.Types.Tests.csproj", "{6D4537FB-06F2-4209-AD8F-1CE29C3624B4}"
 EndProject
@@ -46,6 +46,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.RfcAbstractions", "Dex.RfcAbstractions\Dex.RfcAbstractions.csproj", "{DFA3DAD7-860D-4392-A71A-C7F0572D5A09}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Rfc", "Rfc", "{FBAFC9F1-A2D5-4836-B936-7F867880771A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.RfcExceptionsHandler.Tests", "Tests\Dex.RfcExceptionsHandler.Tests\Dex.RfcExceptionsHandler.Tests.csproj", "{378CC525-2E92-4DFD-AC74-CE35BE56C698}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -569,6 +571,34 @@ Global
 		{DFA3DAD7-860D-4392-A71A-C7F0572D5A09}.Test|Any CPU.Build.0 = Debug|Any CPU
 		{DFA3DAD7-860D-4392-A71A-C7F0572D5A09}.Test|x86.ActiveCfg = Debug|Any CPU
 		{DFA3DAD7-860D-4392-A71A-C7F0572D5A09}.Test|x86.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Debug|x86.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Dev|Any CPU.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Dev|Any CPU.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Dev|x86.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Dev|x86.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_plehanova|Any CPU.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_plehanova|Any CPU.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_plehanova|x86.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_plehanova|x86.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_soviet|Any CPU.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_soviet|Any CPU.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_soviet|x86.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release_soviet|x86.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release|Any CPU.Build.0 = Release|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release|x86.ActiveCfg = Release|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Release|x86.Build.0 = Release|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Stage|Any CPU.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Stage|Any CPU.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Stage|x86.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Stage|x86.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Test|x86.ActiveCfg = Debug|Any CPU
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698}.Test|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -587,6 +617,7 @@ Global
 		{FBAFC9F1-A2D5-4836-B936-7F867880771A} = {4FC263A7-8CF0-4411-826F-7CAE72318788}
 		{DFA3DAD7-860D-4392-A71A-C7F0572D5A09} = {FBAFC9F1-A2D5-4836-B936-7F867880771A}
 		{200E9738-2215-46D9-9DBC-031EE84E079D} = {FBAFC9F1-A2D5-4836-B936-7F867880771A}
+		{378CC525-2E92-4DFD-AC74-CE35BE56C698} = {DC15F503-F8C8-4B09-B096-B25B8BB178A1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {40E5F767-F9A2-4A4F-B479-E3EE53E22A64}
