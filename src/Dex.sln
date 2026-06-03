@@ -43,7 +43,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.RfcExceptionsHandler", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExceptionsHandle", "ExceptionsHandle", "{4FC263A7-8CF0-4411-826F-7CAE72318788}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.RfcExceptions", "Dex.RfcExceptions\Dex.RfcExceptions.csproj", "{DFA3DAD7-860D-4392-A71A-C7F0572D5A09}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.RfcAbstractions", "Dex.RfcAbstractions\Dex.RfcAbstractions.csproj", "{DFA3DAD7-860D-4392-A71A-C7F0572D5A09}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Rfc", "Rfc", "{FBAFC9F1-A2D5-4836-B936-7F867880771A}"
 EndProject

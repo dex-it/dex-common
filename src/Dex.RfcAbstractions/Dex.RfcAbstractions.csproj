@@ -8,6 +8,7 @@
         <PackageVersion>8.0.1</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
+        <RootNamespace>Dex.RfcExceptions</RootNamespace>
     </PropertyGroup>
 
     <!--Для NuGet-->

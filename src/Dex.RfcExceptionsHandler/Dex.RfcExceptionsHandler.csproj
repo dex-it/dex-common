@@ -35,7 +35,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Dex.Extensions\Dex.Extensions.csproj" />
-      <ProjectReference Include="..\Dex.RfcExceptions\Dex.RfcExceptions.csproj" />
+      <ProjectReference Include="..\Dex.RfcAbstractions\Dex.RfcAbstractions.csproj" />
     </ItemGroup>
 
     <ItemGroup>
