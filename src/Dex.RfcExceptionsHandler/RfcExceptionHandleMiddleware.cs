@@ -5,6 +5,7 @@ using Dex.RfcExceptionsHandler.Rfc;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -32,7 +33,7 @@ internal sealed class RfcExceptionHandleMiddleware(
             exception = config.Map(exception);
 
             // rfc problem
-            var rfcProblem = exception.ToProblemDetails();
+            var rfcProblem = ToProblemDetails(exception);
 
             // rfc code
             rfcProblem.Status ??= config.ResolveHttpStatusCode(exception);
@@ -122,4 +123,42 @@ internal sealed class RfcExceptionHandleMiddleware(
 
         _ => "unknown"
     };
+
+    private ProblemDetails ToProblemDetails<T>(T exception) where T : Exception
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        var extensions = new Dictionary<string, object?>(RfcExtensionKeys.DefaultExtensionsCapacity)
+        {
+            [RfcExtensionKeys.ExceptionType] = exception.GetType().Name.Replace("`1", string.Empty, StringComparison.Ordinal)
+        };
+
+        if (exception.Data.Count > 0)
+            extensions[RfcExtensionKeys.ExceptionData] = exception.Data;
+
+        // generic вариант, для ошибок, не реализующих IRfcException
+        if (exception is not IRfcException rfcException)
+            return new ProblemDetails
+            {
+                Title = "Unexpected error occurred",
+                Detail = environment.IsProduction() ? $"Details not available for non-rfc exception typeof {typeof(T).Name}" : exception.Message,
+                Extensions = extensions
+            };
+
+        // custom rfc extensions
+        if (rfcException.RfcExtensions.Count > 0)
+            foreach (var rfcExtension in rfcException.RfcExtensions)
+                extensions[rfcExtension.Key] = rfcExtension.Value;
+
+        var problemDetails = new ProblemDetails
+        {
+            Type = rfcException.RfcType,
+            Title = rfcException.Title,
+            Status = rfcException.StatusCode,
+            Detail = rfcException.Detail,
+            Extensions = extensions
+        };
+
+        return problemDetails;
+    }
 }
