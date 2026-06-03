@@ -1,5 +1,20 @@
 <Project>
 
+  <!--
+    Когда BaseIntermediateOutputPath перенаправлен в /tmp/ (см. Directory.Build.props),
+    SDK меняет DefaultExcludesInProjectFolder на /tmp/**, поэтому старые obj/ от Rider
+    попадают в **/*.cs glob и компилируются дважды (CS0579).
+
+    **/*.cs glob добавляет items с ОТНОСИТЕЛЬНЫМИ путями (obj/...), поэтому Remove
+    тоже должен быть относительным. Directory.Build.targets применяется после SDK.
+  -->
+  <ItemGroup Condition="
+    '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'
+    And '$(GITHUB_ACTIONS)' == ''
+    And '$(DOTNET_RUNNING_IN_CONTAINER)' == ''">
+    <Compile Remove="obj/**" />
+  </ItemGroup>
+
     <PropertyGroup>
         <FrameworkVersion>8.0.27</FrameworkVersion>
     </PropertyGroup>

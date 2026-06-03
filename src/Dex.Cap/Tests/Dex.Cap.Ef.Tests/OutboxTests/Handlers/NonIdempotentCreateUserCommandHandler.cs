@@ -7,15 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Ef.Tests.OutboxTests.Handlers;
 
-public class NonIdempotentCreateUserCommandHandler : IOutboxMessageHandler<TestUserCreatorCommand>
+public class NonIdempotentCreateUserCommandHandler(TestDbContext dbContext) : IOutboxMessageHandler<TestUserCreatorCommand>
 {
-    private readonly DbContext _dbContext;
+    private readonly DbContext _dbContext = dbContext;
     public static int CountDown { get; set; }
-
-    public NonIdempotentCreateUserCommandHandler(TestDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
 
     public async Task Process(TestUserCreatorCommand message, CancellationToken cancellationToken)
     {

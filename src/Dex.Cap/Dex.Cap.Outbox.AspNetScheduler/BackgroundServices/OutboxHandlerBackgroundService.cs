@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Outbox.AspNetScheduler.Options;
@@ -7,17 +6,21 @@ using Dex.Cap.Outbox.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.AspNetScheduler.BackgroundServices;
 
 internal sealed class OutboxHandlerBackgroundService(
     IServiceScopeFactory scopeFactory,
-    OutboxHandlerOptions options,
+    IOptions<OutboxHandlerOptions> options,
     ILogger<OutboxHandlerBackgroundService> logger)
     : BackgroundService
 {
     private const string ServiceNameIsStatus = "Background service '{ServiceName}' is {Status}";
     private const string TypeName = nameof(OutboxHandlerBackgroundService);
+
+    // Снимок опций на старте: hosted-сервис живёт всё время работы хоста, hot-reload не поддерживается намеренно.
+    private readonly OutboxHandlerOptions _options = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -31,14 +34,14 @@ internal sealed class OutboxHandlerBackgroundService(
             {
                 using (var scope = scopeFactory.CreateScope())
                 {
-                    var loggerInner = (ILogger)scope.ServiceProvider.GetRequiredService(typeof(ILogger<OutboxHandlerBackgroundService>));
-                    logger.LogDebug("Background service '{ServiceName}' Tick event", GetType());
+                    var loggerInner = scope.ServiceProvider.GetRequiredService<ILogger<OutboxHandlerBackgroundService>>();
+                    loggerInner.LogDebug("Background service '{ServiceName}' Tick event", TypeName);
 
                     await OnTick(scope.ServiceProvider, loggerInner, stoppingToken).ConfigureAwait(false);
                 }
 
-                logger.LogDebug("Pause for {Seconds} seconds", (int)options.Period.TotalSeconds);
-                await Task.Delay(options.Period, stoppingToken).ConfigureAwait(false);
+                logger.LogDebug("Pause for {Seconds} seconds", (int)_options.Period.TotalSeconds);
+                await Task.Delay(_options.Period, stoppingToken).ConfigureAwait(false);
             }
         }
     }
@@ -70,7 +73,7 @@ internal sealed class OutboxHandlerBackgroundService(
     /// </summary>
     private Task InitDelay(CancellationToken cancellationToken)
     {
-        var initDelay = TimeSpan.FromMilliseconds(RandomNumberGenerator.GetInt32(5000, 15_000));
+        var initDelay = _options.HandlerInitDelay.GetDelay();
         logger.LogDebug("Initial delay for {Seconds} seconds to solve split brain problem", (int)initDelay.TotalSeconds);
         return Task.Delay(initDelay, cancellationToken);
     }
