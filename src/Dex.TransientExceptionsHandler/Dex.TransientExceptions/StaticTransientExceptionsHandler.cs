@@ -83,21 +83,26 @@ public partial class TransientExceptionsHandler
         }
     }.ToFrozenDictionary();
 
-    private static bool TransientExceptionInterfaceCheck(Exception exception, int innerExceptionsSearchDepth)
+    // null = кандидат не найден, продолжать проверки
+    // true/false = кандидат найден, его решение финальное
+    private static bool? TransientExceptionInterfaceCheck(Exception exception, int innerExceptionsSearchDepth)
     {
         if (exception is ITransientException)
             return true;
 
-        if (exception is ITransientExceptionCandidate {IsTransient: true})
-            return true;
+        if (exception is ITransientExceptionCandidate candidate)
+            return candidate.IsTransient;
 
-        if (exception.GetInnerExceptions(innerExceptionsSearchDepth).Any(x => x is ITransientException))
-            return true;
+        foreach (var inner in exception.GetInnerExceptions(innerExceptionsSearchDepth))
+        {
+            if (inner is ITransientException)
+                return true;
 
-        if (exception.GetInnerExceptions(innerExceptionsSearchDepth).Any(x => x is ITransientExceptionCandidate {IsTransient: true}))
-            return true;
+            if (inner is ITransientExceptionCandidate innerCandidate)
+                return innerCandidate.IsTransient;
+        }
 
-        return false;
+        return null;
     }
 
     private static bool StaticCheck(Exception exception, int innerExceptionsSearchDepth)

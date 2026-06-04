@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using Microsoft.AspNetCore.Http;
 
 namespace Dex.RfcExceptions;
 

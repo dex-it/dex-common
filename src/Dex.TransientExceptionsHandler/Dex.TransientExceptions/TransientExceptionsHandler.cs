@@ -81,7 +81,7 @@ public partial class TransientExceptionsHandler
         if (BuildCompleted)
             throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");
 
-        _transientExceptionsPredicatePreBuildConfig!.Add(typeof(T), (Func<Exception, bool>)predicate);
+        _transientExceptionsPredicatePreBuildConfig!.Add(typeof(T), ex => predicate((T)ex));
 
         return this;
     }
@@ -97,8 +97,9 @@ public partial class TransientExceptionsHandler
             throw new InvalidOperationException(
                 $"Завершите настройку {nameof(TransientExceptionsHandler)} и вызовите {nameof(Build)} перед использованием {nameof(Check)}");
 
-        if (TransientExceptionInterfaceCheck(exception, _innerExceptionsSearchDepth))
-            return true;
+        var interfaceCheckResult = TransientExceptionInterfaceCheck(exception, _innerExceptionsSearchDepth);
+        if (interfaceCheckResult.HasValue)
+            return interfaceCheckResult.Value;
 
         if (ExceptionsCheckInternal(_transientExceptions!, exception, _innerExceptionsSearchDepth))
             return true;

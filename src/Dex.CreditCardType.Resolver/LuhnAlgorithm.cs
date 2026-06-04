@@ -15,7 +15,7 @@ namespace Dex.CreditCardType.Resolver
         private static readonly int[] Results = {0, 2, 4, 6, 8, 1, 3, 5, 7, 9};
 
         /// <summary>
-        /// For a list of digits, compute the ending checkdigit
+        /// For a list of digits, compute the ending check digit
         /// </summary>
         /// <param name="digits">The list of digits for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -27,10 +27,10 @@ namespace Dex.CreditCardType.Resolver
         }
 
         /// <summary>
-        /// Return a list of digits including the checkdigit
+        /// Return a list of digits including the check digit
         /// </summary>
         /// <param name="digits">The original list of digits</param>
-        /// <returns>the new list of digits including checkdigit</returns>
+        /// <returns>the new list of digits including check digit</returns>
         public static IList<int> AppendCheckDigit(IList<int> digits)
         {
             var result = digits;
@@ -54,14 +54,14 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">the original string</param>
         /// <returns>the list of ints</returns>
-        private static IList<int> ToDigitList(string digits)
+        private static List<int> ToDigitList(string digits)
         {
             CheckCorrectStringPan(digits);
             return digits.Select(d => d - 48).ToList();
         }
 
         /// <summary>
-        /// For a string of digits, compute the ending checkdigit
+        /// For a string of digits, compute the ending check digit
         /// </summary>
         /// <param name="digits">The string of digits for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -72,20 +72,20 @@ namespace Dex.CreditCardType.Resolver
         }
 
         /// <summary>
-        /// Return a string of digits including the checkdigit
+        /// Return a string of digits including the check digit
         /// </summary>
         /// <param name="digits">The original string of digits</param>
-        /// <returns>the new string of digits including checkdigit</returns>
+        /// <returns>the new string of digits including check digit</returns>
         public static string AppendCheckDigit(string digits)
         {
             return digits + ComputeCheckDigit(digits);
         }
 
         /// <summary>
-        /// Returns true when a string of digits has a valid checkdigit
+        /// Returns true when a string of digits has a valid check digit
         /// </summary>
         /// <param name="digits">The string of digits to check</param>
-        /// <returns>true/false depending on valid checkdigit</returns>
+        /// <returns>true/false depending on valid check digit</returns>
         public static bool HasValidCheckDigit(string digits)
         {
             CheckCorrectStringPan(digits);
@@ -108,13 +108,13 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">the original int</param>
         /// <returns>the list of ints</returns>
-        private static IList<int> ToDigitList(int digits)
+        private static List<int> ToDigitList(int digits)
         {
             return digits.ToString(CultureInfo.InvariantCulture).Select(d => d - 48).ToList();
         }
 
         /// <summary>
-        /// For an integer, compute the ending checkdigit
+        /// For an integer, compute the ending check digit
         /// </summary>
         /// <param name="digits">The integer for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -124,20 +124,20 @@ namespace Dex.CreditCardType.Resolver
         }
 
         /// <summary>
-        /// Return an integer including the checkdigit
+        /// Return an integer including the check digit
         /// </summary>
         /// <param name="digits">The original integer</param>
-        /// <returns>the new integer including checkdigit</returns>
+        /// <returns>the new integer including check digit</returns>
         public static int AppendCheckDigit(int digits)
         {
             return digits * 10 + ComputeCheckDigit(digits);
         }
 
         /// <summary>
-        /// Returns true when an integer has a valid checkdigit
+        /// Returns true when an integer has a valid check digit
         /// </summary>
         /// <param name="digits">The integer to check</param>
-        /// <returns>true/false depending on valid checkdigit</returns>
+        /// <returns>true/false depending on valid check digit</returns>
         public static bool HasValidCheckDigit(int digits)
         {
             return HasValidCheckDigit(ToDigitList(digits));
@@ -148,13 +148,13 @@ namespace Dex.CreditCardType.Resolver
         /// </summary>
         /// <param name="digits">the original int</param>
         /// <returns>the list of ints</returns>
-        private static IList<int> ToDigitList(long digits)
+        private static List<int> ToDigitList(long digits)
         {
             return digits.ToString(CultureInfo.InvariantCulture).Select(d => d - 48).ToList();
         }
 
         /// <summary>
-        /// For an integer, compute the ending checkdigit
+        /// For an integer, compute the ending check digit
         /// </summary>
         /// <param name="digits">The integer for which to compute the check digit</param>
         /// <returns>the check digit</returns>
@@ -164,20 +164,20 @@ namespace Dex.CreditCardType.Resolver
         }
 
         /// <summary>
-        /// Return an integer including the checkdigit
+        /// Return an integer including the check digit
         /// </summary>
         /// <param name="digits">The original integer</param>
-        /// <returns>the new integer including checkdigit</returns>
+        /// <returns>the new integer including check digit</returns>
         public static long AppendCheckDigit(long digits)
         {
             return digits * 10 + ComputeCheckDigit(digits);
         }
 
         /// <summary>
-        /// Returns true when an integer has a valid checkdigit
+        /// Returns true when an integer has a valid check digit
         /// </summary>
         /// <param name="digits">The integer to check</param>
-        /// <returns>true/false depending on valid checkdigit</returns>
+        /// <returns>true/false depending on valid check digit</returns>
         public static bool HasValidCheckDigit(long digits)
         {
             return HasValidCheckDigit(ToDigitList(digits));
