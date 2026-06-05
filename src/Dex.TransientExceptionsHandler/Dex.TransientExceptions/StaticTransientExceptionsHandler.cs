@@ -42,7 +42,7 @@ public partial class TransientExceptionsHandler
 
     private static readonly FrozenDictionary<Type, Func<Exception, bool>> StaticTransientExceptionsPredicate = new Dictionary<Type, Func<Exception, bool>>
     {
-        [typeof(NpgsqlException)] = exception => exception is NpgsqlException {IsTransient: true},
+        [typeof(NpgsqlException)] = exception => exception is NpgsqlException { IsTransient: true },
         [typeof(HttpRequestException)] = exception => exception is HttpRequestException
         {
             StatusCode:
@@ -87,19 +87,21 @@ public partial class TransientExceptionsHandler
     // true/false = кандидат найден, его решение финальное
     private static bool? TransientExceptionInterfaceCheck(Exception exception, int innerExceptionsSearchDepth)
     {
-        if (exception is ITransientException)
-            return true;
-
+        // ITransientExceptionCandidate проверяется первым — более специфичный контракт,
+        // позволяет явно переопределить поведение даже если базовый класс реализует ITransientException
         if (exception is ITransientExceptionCandidate candidate)
             return candidate.IsTransient;
 
+        if (exception is ITransientException)
+            return true;
+
         foreach (var inner in exception.GetInnerExceptions(innerExceptionsSearchDepth))
         {
-            if (inner is ITransientException)
-                return true;
-
             if (inner is ITransientExceptionCandidate innerCandidate)
                 return innerCandidate.IsTransient;
+
+            if (inner is ITransientException)
+                return true;
         }
 
         return null;

@@ -380,4 +380,30 @@ public class TransientExceptionsHandlerTests
     {
         public bool IsTransient { get; } = isTransient;
     }
+
+    // Симулирует класс который одновременно ITransientException (базовый) и ITransientExceptionCandidate (переопределяет)
+    private sealed class TestCandidateOverridesTransientException(bool isTransient)
+        : Exception("test"), ITransientException, ITransientExceptionCandidate
+    {
+        public bool IsTransient { get; } = isTransient;
+    }
+
+    // -------------------------------------------------------------------------
+    // ITransientExceptionCandidate имеет приоритет над ITransientException
+    // -------------------------------------------------------------------------
+
+    [Test]
+    public void Check_CandidateFalse_WhenAlsoImplementsITransientException_ReturnsFalse()
+    {
+        // Класс реализует оба интерфейса — Candidate(false) должен побеждать ITransientException
+        var ex = new TestCandidateOverridesTransientException(isTransient: false);
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void Check_CandidateTrue_WhenAlsoImplementsITransientException_ReturnsTrue()
+    {
+        var ex = new TestCandidateOverridesTransientException(isTransient: true);
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
 }
