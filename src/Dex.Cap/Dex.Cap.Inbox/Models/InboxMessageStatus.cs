@@ -1,0 +1,25 @@
+namespace Dex.Cap.Inbox.Models;
+
+public enum InboxMessageStatus
+{
+    /// <summary>
+    /// Принято, ожидает обработки.
+    /// </summary>
+    New = 0,
+
+    /// <summary>
+    /// Попытка обработки завершилась ошибкой, сообщение будет обработано повторно.
+    /// </summary>
+    Failed = 1,
+
+    /// <summary>
+    /// Успешно обработано.
+    /// </summary>
+    Succeeded = 2,
+
+    /// <summary>
+    /// Попытки исчерпаны, автоматическая обработка прекращена.
+    /// </summary>
+    /// <remarks>Терминальный статус: требует ручного разбора, из него нет автоматического возврата.</remarks>
+    DeadLettered = 3
+}
