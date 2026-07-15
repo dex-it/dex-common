@@ -61,8 +61,14 @@ internal sealed class MainLoopInboxHandler(
 
                 using var activity = new Activity($"Process inbox message: {job.Envelope.Id}");
                 activity.AddBaggage("Type", job.Envelope.MessageType);
-                activity.AddBaggage("MessageId", job.Envelope.MessageId);
-                activity.AddBaggage("ConsumerId", job.Envelope.ConsumerId);
+                activity.AddBaggage("MessageId", job.Envelope.Id.ToString());
+
+                // Идентификаторы источника идут тегами, а не baggage: baggage по определению уезжает за
+                // пределы процесса в заголовках исходящих вызовов, а MessageId здесь это внешнее значение
+                // (идентификатор сообщения брокера или Idempotency-Key HTTP-запроса), и светить им
+                // третьим сервисам, в которые сходит обработчик, незачем.
+                activity.AddTag("SourceMessageId", job.Envelope.MessageId);
+                activity.AddTag("ConsumerId", job.Envelope.ConsumerId);
 
                 // Продолжаем трассу источника: иначе фоновая обработка выглядит как не связанная с приёмом операция.
                 if (string.IsNullOrEmpty(job.Envelope.ActivityId) is false)

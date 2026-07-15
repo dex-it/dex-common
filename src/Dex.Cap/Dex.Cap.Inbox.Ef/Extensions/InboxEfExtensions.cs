@@ -33,7 +33,7 @@ public static class InboxEfExtensions
 
         entity
             .Property(x => x.LockTimeout)
-            .HasDefaultValue(TimeSpan.FromSeconds(30))
+            .HasDefaultValue(InboxEnvelope.DefaultLockTimeout)
             .HasComment("Maximum allowable blocking time");
 
         entity

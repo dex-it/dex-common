@@ -4,7 +4,15 @@ using Dex.Cap.Inbox.Models;
 
 namespace Dex.Cap.Inbox.Jobs;
 
-public interface IInboxLockedJob : IDisposable
+/// <summary>
+/// Задача инбокса с захваченной арендой.
+/// </summary>
+/// <remarks>
+/// Internal, а не public: тип фигурирует только во внутренних контрактах, реализация имеет internal
+/// конструктор, и снаружи его нельзя ни получить, ни осмысленно реализовать. У Outbox аналог публичен,
+/// но это лишняя публичная поверхность, а не точка расширения.
+/// </remarks>
+internal interface IInboxLockedJob : IDisposable
 {
     /// <summary>
     /// Ключ идемпотентности захваченной аренды.

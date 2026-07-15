@@ -25,6 +25,20 @@ public class InboxEnvelope
     /// <remarks>Ограничение нужно, потому что обе колонки входят в уникальный индекс.</remarks>
     public const int MaxIdentityLength = 256;
 
+    /// <summary>
+    /// Минимально допустимая аренда.
+    /// </summary>
+    /// <remarks>
+    /// Обработка гасится за 5 секунд до окончания аренды, чтобы успеть зафиксировать исход,
+    /// поэтому меньшая аренда не оставила бы обработчику окна вовсе.
+    /// </remarks>
+    public static readonly TimeSpan MinLockTimeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Аренда по умолчанию.
+    /// </summary>
+    public static readonly TimeSpan DefaultLockTimeout = TimeSpan.FromSeconds(30);
+
     [UsedImplicitly]
     private InboxEnvelope()
     {
@@ -40,7 +54,7 @@ public class InboxEnvelope
         ArgumentOutOfRangeException.ThrowIfGreaterThan(consumerId.Length, MaxIdentityLength);
 
         if (lockTimeout.HasValue)
-            ArgumentOutOfRangeException.ThrowIfLessThan(lockTimeout.Value, TimeSpan.FromSeconds(10));
+            ArgumentOutOfRangeException.ThrowIfLessThan(lockTimeout.Value, MinLockTimeout);
 
         Id = id;
         MessageId = messageId;
@@ -53,7 +67,7 @@ public class InboxEnvelope
         StartAtUtc = now;
         ScheduledStartIndexing = now;
 
-        LockTimeout = lockTimeout ?? TimeSpan.FromSeconds(30);
+        LockTimeout = lockTimeout ?? DefaultLockTimeout;
         ActivityId = Activity.Current?.Id;
     }
 
