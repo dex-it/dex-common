@@ -31,7 +31,23 @@ internal class TestLoggerProvider : ILoggerProvider
 
         public IDisposable BeginScope<TState>(TState state)
         {
-            throw new NotImplementedException();
+            // Скоупы в вывод теста не пишем, но и бросать нельзя: инфраструктура (например
+            // HealthCheckService) открывает скоуп сама, и исключение отсюда роняет её работу,
+            // а не тестируемый код.
+            return NullScope.Instance;
+        }
+    }
+
+    private sealed class NullScope : IDisposable
+    {
+        public static readonly NullScope Instance = new();
+
+        private NullScope()
+        {
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

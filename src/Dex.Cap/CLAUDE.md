@@ -72,7 +72,7 @@ Outbox: EF Core (PostgreSQL-only SQL), Neo4j (Cypher, без pessimistic locks).
 
 ## Тесты
 
-NUnit. `BaseTest`: уникальная БД на тест (`"db_test_" + DateTime.Now.Ticks`), `EnsureDeleted/Created` в Setup/TearDown. `TestDbContext`: PostgreSQL, `EnableRetryOnFailure(3)`, вызывает `OutboxModelCreating()` + `OnceExecutorModelCreating()`.
+NUnit. `BaseTest`: уникальная БД на тест (`"db_test_" + DateTime.Now.Ticks`), `EnsureDeleted/Created` в Setup/TearDown. `TestDbContext`: PostgreSQL, `EnableRetryOnFailure(3)`, вызывает `OutboxModelCreating()` + `InboxModelCreating()` + `OnceExecutorModelCreating()`. Тесты идут через `EnsureCreated`, миграции в `Tests/.../Migrations` не применяются.
 
 ## Ограничения и gotchas
 
@@ -84,6 +84,7 @@ NUnit. `BaseTest`: уникальная БД на тест (`"db_test_" + DateTi
 - Дискриминатор ищется через `AppDomain.CurrentDomain.GetAssemblies()` (reflection). Сборка с IOutboxMessage должна быть загружена
 - Background service стартует с random 5-15s delay (split brain prevention). В тестах не ждать мгновенной обработки
 - `AddHealthChecks()` нужно вызвать ДО `AddDefaultOutboxScheduler()`, иначе health check не регистрируется
+- Inbox: порядок вызова `AddHealthChecks()` не важен, `AddInboxScheduler` регистрирует его сам. Но health check отдаёт `Degraded`, а ASP.NET Core по умолчанию мапит `Degraded` в HTTP 200: k8s посчитает вставший инбокс здоровым, если явно не задать `ResultStatusCodes`
 - Outbox.Ef работает ТОЛЬКО с PostgreSQL (CTE + FOR UPDATE SKIP LOCKED)
 - `DiscriminatorResolveException` при enqueue, если тип сообщения не найден в загруженных сборках
 - Inbox.Ef тоже ТОЛЬКО PostgreSQL (`FOR UPDATE SKIP LOCKED` + `ON CONFLICT DO NOTHING`)

@@ -368,7 +368,18 @@ whereas a status flag would stay stuck forever.
 
 `CleanupOlderThan` deletes processed messages, and the row *is* the deduplication key. Once it is gone, a
 redelivery of that message is accepted as new. Keep the retention comfortably above the maximum redelivery horizon
-of the source. `DeadLettered` messages are never deleted by cleanup — they exist to be investigated.
+of the source. `DeadLettered` messages are never deleted by cleanup — they exist to be investigated, and
+`DeadLetteredJobCount` reports how many are waiting.
+
+Returning a message to processing after you fixed the cause takes three columns, not one: the status alone is not
+enough, because the fetch requires `ScheduledStartIndexing IS NOT NULL` and the next failure would bury the message
+again on the spot unless `Retries` is below `InboxOptions.Retries`.
+
+```sql
+UPDATE cap.inbox
+SET "Status" = 0, "Retries" = 0, "ScheduledStartIndexing" = "StartAtUtc"
+WHERE "Id" = '...';
+```
 
 ### Retry strategy
 
@@ -393,8 +404,19 @@ Two things to size correctly, or the strategy is decorative:
 
 ### Health check
 
-`AddInboxScheduler` registers the `inbox-scheduler` health check (tag `inbox-scheduler`). It reports `Degraded` when
-the last processing cycle is older than `2 × Period`. Call `AddHealthChecks()` **before** registering the scheduler.
+`AddInboxScheduler` registers the `inbox-scheduler` health check (tag `inbox-scheduler`) itself, so the registration
+order does not matter. It reports `Degraded` when the last processing cycle is older than `2 × Period`.
+
+Note that ASP.NET Core maps `Degraded` to HTTP 200 by default, so a Kubernetes probe treats a stalled inbox as
+healthy. If you want a stalled worker to fail the probe, map it explicitly:
+
+```csharp
+app.MapHealthChecks("/health/inbox", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("inbox-scheduler"),
+    ResultStatusCodes = { [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable },
+});
+```
 
 ### Metrics
 
