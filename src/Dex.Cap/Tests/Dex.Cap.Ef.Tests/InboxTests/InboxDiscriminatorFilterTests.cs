@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace Dex.Cap.Ef.Tests.InboxTests;
 public class InboxDiscriminatorFilterTests : BaseTest
 {
     [Test]
-    public async Task Process_MessageOfAnotherConsumer_IsLeftUntouched()
+    public async Task Process_MessageWithNoHandlerInThisService_IsLeftUntouched()
     {
         // Обработчик есть только у TestInboxCommand. TestErrorInboxCommand в этом сервисе не обслуживается,
         // но лежит в той же таблице.
@@ -63,6 +64,35 @@ public class InboxDiscriminatorFilterTests : BaseTest
         // Глубина очереди этого сервиса: чужое сообщение он не заберёт никогда, и включать его в свою
         // глубину означало бы навсегда залипший алерт.
         Assert.AreEqual(1, provider.GetFreeMessagesCount());
-        Assert.AreEqual(0, provider.GetDeadLetteredMessagesCount());
+    }
+
+    [Test]
+    public async Task DeadLetteredCount_CountsOnlyWhatThisServiceCanHandle()
+    {
+        var sp = InitInboxServiceCollection()
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        var inbox = sp.GetRequiredService<IInboxService>();
+        await inbox.EnqueueAsync(new TestInboxCommand { Args = "mine" }, new InboxMessageIdentity("m-1", "c-1"));
+        await inbox.EnqueueAsync(new TestErrorInboxCommand { Args = "not mine" }, new InboxMessageIdentity("m-2", "c-1"));
+
+        // Хороним обе строки: свою и чужую. Разбирать чужую не этому сервису.
+        using (var buryScope = sp.CreateScope())
+        {
+            await buryScope.ServiceProvider.GetRequiredService<TestDbContext>()
+                .Set<InboxEnvelope>()
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.Status, InboxMessageStatus.DeadLettered)
+                    .SetProperty(x => x.ScheduledStartIndexing, (DateTime?)null));
+        }
+
+        using var scope = sp.CreateScope();
+        var provider = scope.ServiceProvider.GetRequiredService<IInboxDataProvider>();
+
+        // Ровно та же логика охвата, что и у глубины очереди: иначе алерт на разбор похороненных
+        // залипнет на чужих сообщениях.
+        Assert.AreEqual(1, provider.GetDeadLetteredMessagesCount());
+        Assert.AreEqual(0, provider.GetFreeMessagesCount(), "buried messages leave the queue depth");
     }
 }

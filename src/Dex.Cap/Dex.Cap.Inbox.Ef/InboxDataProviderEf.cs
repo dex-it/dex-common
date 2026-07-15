@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
@@ -89,7 +90,85 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     {
         var envelopes = await GetFreeMessages(cancellationToken).ConfigureAwait(false);
 
-        return envelopes.Select(IInboxLockedJob (x) => new InboxLockedJob(x)).ToArray();
+        // Непригодные строки отсеиваются ДО сборки задач. Иначе одна такая строка роняла бы сборку всей
+        // партии, а её сообщения уже захвачены арендой: инбокс вставал бы навсегда, отдавая наружу
+        // только LogCritical раз в цикл, и на следующем цикле повторял бы то же самое.
+        var poisoned = envelopes.Where(x => x.LockTimeout < InboxEnvelope.MinLockTimeout).ToArray();
+
+        if (poisoned.Length is not 0)
+        {
+            await DeadLetterPoisoned(poisoned, cancellationToken).ConfigureAwait(false);
+        }
+
+        return CreateJobs(envelopes.Where(x => x.LockTimeout >= InboxEnvelope.MinLockTimeout));
+    }
+
+    /// <summary>
+    /// Похоронить строки, которые невозможно взять в обработку.
+    /// </summary>
+    /// <remarks>
+    /// Единственная причина сюда попасть это LockTimeout ниже минимума, а такое значение может появиться
+    /// только внеполосной записью: конструктор конверта проверяет минимум, у колонки есть дефолт. Само не
+    /// починится, поэтому пропускать строку из цикла в цикл означало бы вечно тратить на неё захват.
+    /// Хороним явно, чтобы её увидели при разборе, а не искали причину простоя по логам.
+    /// </remarks>
+    private async Task DeadLetterPoisoned(InboxEnvelope[] poisoned, CancellationToken cancellationToken)
+    {
+        var ids = poisoned.Select(x => x.Id).ToArray();
+
+        foreach (var envelope in poisoned)
+        {
+            logger.LogError(
+                "Inbox message {MessageId} has LockTimeout {LockTimeout} below the minimum of {MinLockTimeout} and is dead lettered. " +
+                "Such a value can only come from an out-of-band write",
+                envelope.Id, envelope.LockTimeout, InboxEnvelope.MinLockTimeout);
+        }
+
+        await dbContext
+            .Set<InboxEnvelope>()
+            .Where(x => ids.Contains(x.Id))
+            .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.Status, InboxMessageStatus.DeadLettered)
+                    .SetProperty(x => x.ScheduledStartIndexing, (DateTime?)null)
+                    .SetProperty(x => x.Updated, DateTime.UtcNow)
+                    .SetProperty(x => x.LockId, (Guid?)null)
+                    .SetProperty(x => x.ErrorMessage, $"LockTimeout is below the minimum of {InboxEnvelope.MinLockTimeout}"),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        for (var i = 0; i < poisoned.Length; i++)
+        {
+            MetricCollector.IncDeadLetteredCount();
+        }
+    }
+
+    /// <summary>
+    /// Собрать задачи, не оставив висящих таймеров, если сборка всё же прервётся.
+    /// </summary>
+    private static IInboxLockedJob[] CreateJobs(IEnumerable<InboxEnvelope> envelopes)
+    {
+        var jobs = new List<IInboxLockedJob>();
+
+        try
+        {
+            foreach (var envelope in envelopes)
+            {
+                jobs.Add(new InboxLockedJob(envelope));
+            }
+
+            return jobs.ToArray();
+        }
+        catch
+        {
+            // Каждая уже созданная задача держит взведённый таймер отмены. Раскрутка стека их не соберёт,
+            // а партия с непригодной строкой захватывается снова и снова, поэтому течь будет бесконечно.
+            foreach (var job in jobs)
+            {
+                job.Dispose();
+            }
+
+            throw;
+        }
     }
 
     public override int GetFreeMessagesCount()
@@ -111,9 +190,18 @@ internal sealed class InboxDataProviderEf<TDbContext>(
 
     public override int GetDeadLetteredMessagesCount()
     {
+        // Тот же фильтр, что и у глубины очереди, и по той же причине: чужие похороненные сообщения
+        // разбирать не этому сервису, и включать их в свою метрику означало бы залипший алерт.
+        var supported = discriminatorProvider.SupportedDiscriminators;
+
+        if (supported.Count is 0)
+        {
+            return 0;
+        }
+
         return dbContext
             .Set<InboxEnvelope>()
-            .Count(x => x.Status == InboxMessageStatus.DeadLettered);
+            .Count(x => x.Status == InboxMessageStatus.DeadLettered && supported.Contains(x.MessageType));
     }
 
     private Task<InboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)
