@@ -5,6 +5,9 @@ using Dex.Cap.Inbox.Models;
 
 namespace Dex.Cap.Inbox.Interfaces;
 
+/// <summary>
+/// Приём входящих сообщений: точка входа инбокса для транспорта.
+/// </summary>
 public interface IInboxService
 {
     /// <summary>

@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.Inbox.Interfaces;
 
+/// <summary>
+/// Удаление обработанных сообщений из хранилища.
+/// </summary>
 public interface IInboxCleanupDataProvider
 {
     /// <summary>

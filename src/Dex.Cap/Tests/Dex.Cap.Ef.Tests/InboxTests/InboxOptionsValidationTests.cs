@@ -1,20 +1,17 @@
 using System;
-using System.Threading.Tasks;
 using Dex.Cap.Inbox.AspNetScheduler.Options;
-using Dex.Cap.Inbox.Ef.Extensions;
 using Dex.Cap.Inbox.Options;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.InboxTests;
 
 /// <summary>
-/// Валидаторы опций. Проверяются через реальный старт хоста: ValidateOnStart срабатывает только там,
-/// а не при BuildServiceProvider, поэтому иначе правила существовали бы только на бумаге.
+/// Правила валидаторов опций и арифметика стартовой задержки. Базы данных здесь не нужно,
+/// поэтому фикстура не наследует <see cref="BaseTest"/>. Применение правил на старте хоста
+/// проверяет <see cref="InboxOptionsStartupTests"/>.
 /// </summary>
-public class InboxOptionsValidationTests : BaseTest
+[TestFixture]
+public class InboxOptionsValidationTests
 {
     [Test]
     public void Options_Defaults_AreValid()
@@ -51,30 +48,6 @@ public class InboxOptionsValidationTests : BaseTest
 
         Assert.IsFalse(result.Succeeded);
         Assert.IsTrue(result.FailureMessage!.Contains(nameof(InboxOptions.GetFreeMessagesTimeout), StringComparison.Ordinal));
-    }
-
-    [Test]
-    public void StartHost_InvalidInboxOptions_FailsAtStartup()
-    {
-        // Главное в этом тесте: правило вообще применяется на старте, а не лежит мёртвым.
-        using var host = new HostBuilder()
-            .ConfigureServices(services =>
-            {
-                AddLogging(services);
-                services
-                    .AddScoped(_ => new TestDbContext(DbName))
-                    .AddInbox<TestDbContext>(options =>
-                    {
-                        options.MessagesToProcess = 5;
-                        options.ConcurrencyLimit = 50;
-                    });
-            })
-            .Build();
-
-        var ex = NUnit.Framework.Assert.ThrowsAsync<OptionsValidationException>(
-            (Func<Task>)(async () => await host.StartAsync()));
-
-        Assert.IsTrue(ex!.Message.Contains(nameof(InboxOptions.ConcurrencyLimit), StringComparison.Ordinal));
     }
 
     [Test]

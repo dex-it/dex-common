@@ -44,7 +44,7 @@ public class InboxStartupValidationTests : BaseTest
     {
         // Производный тип наследует статический дискриминатор базового. Компилятор такой код принимает,
         // дискавери подхватывает оба типа, и честный исход это конфликт: два типа заявили один
-        // идентификатор. Раньше сообщение врало: «производный тип не задал InboxTypeId».
+        // идентификатор.
         using var host = BuildHost(typeof(BaseClaimant), typeof(InheritingClaimant));
 
         var ex = NUnit.Framework.Assert.ThrowsAsync<DiscriminatorConflictException>(

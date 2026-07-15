@@ -8,6 +8,11 @@ namespace Dex.Cap.Inbox.AspNetScheduler.Options;
 /// Min == Max — фиксированная задержка (в т.ч. <see cref="TimeSpan.Zero"/> — без задержки).
 /// Инвариант (Min &gt;= 0, Min &lt;= Max) проверяется валидатором опций на старте хоста.
 /// </summary>
+/// <remarks>
+/// Копия Dex.Cap.Outbox.AspNetScheduler.Options.InitDelayRange. Пакеты инбокса и аутбокса
+/// намеренно не связаны друг с другом, а вынести тип в Dex.Cap.Common нельзя, не сломав
+/// потребителей уже опубликованного Dex.Cap.Outbox.AspNetScheduler. Менять обе копии.
+/// </remarks>
 public sealed record InitDelayRange
 {
     /// <summary>Lower bound of the delay range (inclusive).</summary>

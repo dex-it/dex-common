@@ -16,6 +16,7 @@
         <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
+        <Description>Хранилище Dex.Cap.Inbox на Entity Framework Core и PostgreSQL: атомарный захват сообщения и его обработка в одной транзакции с обработчиком.</Description>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>

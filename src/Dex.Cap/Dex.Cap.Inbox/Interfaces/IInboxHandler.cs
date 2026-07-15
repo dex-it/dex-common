@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 
 namespace Dex.Cap.Inbox.Interfaces;
 
+/// <summary>
+/// Разбор инбокса: один цикл захвата и обработки принятых сообщений.
+/// </summary>
 public interface IInboxHandler
 {
     /// <summary>

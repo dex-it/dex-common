@@ -80,7 +80,6 @@ public class InboxPoisonedRowTests : BaseTest
         Assert.AreEqual(0, await handler.ProcessAsync(CancellationToken.None));
 
         // Ключевое: строка похоронена, поэтому следующий цикл её не перезахватывает и не падает снова.
-        // Раньше здесь был вечный LogCritical при формально поднятом хосте.
         Assert.AreEqual(0, await handler.ProcessAsync(CancellationToken.None));
 
         // Новое сообщение обрабатывается как ни в чём не бывало.

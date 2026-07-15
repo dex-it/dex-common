@@ -3,6 +3,9 @@ using Dex.Cap.Inbox.Interfaces;
 
 namespace Dex.Cap.Inbox.RetryStrategies;
 
+/// <summary>
+/// Выбор стратегии повторов. По умолчанию повторы идут без задержки.
+/// </summary>
 public sealed class InboxRetryStrategyConfigurator
 {
     private IInboxRetryStrategy _retryStrategy = new DefaultInboxRetryStrategy();
@@ -12,11 +15,6 @@ public sealed class InboxRetryStrategyConfigurator
         get => _retryStrategy;
         set => _retryStrategy = value ?? throw new ArgumentNullException(nameof(value));
     }
-
-    /// <summary>
-    /// Повторять без задержки.
-    /// </summary>
-    public void UseDefaultStrategy() => RetryStrategy = new DefaultInboxRetryStrategy();
 
     /// <summary>
     /// Повторять с фиксированным интервалом.

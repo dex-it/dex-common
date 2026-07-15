@@ -16,6 +16,7 @@
         <PackageProjectUrl>https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
+        <Description>Transactional Inbox: приём сообщений ровно один раз по эффекту (дедупликация) и store-and-forward. Транспорт- и storage-агностичное ядро.</Description>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>

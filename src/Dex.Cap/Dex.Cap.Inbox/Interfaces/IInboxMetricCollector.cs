@@ -21,7 +21,13 @@ internal interface IInboxMetricCollector : IInboxStatistic
     void AddProcessJobDuration(TimeSpan duration);
 }
 
+/// <summary>
+/// Признаки жизни обработчика инбокса. Используется health check'ом.
+/// </summary>
 public interface IInboxStatistic
 {
+    /// <summary>
+    /// Момент последнего завершённого цикла обработки.
+    /// </summary>
     DateTime GetLastStamp();
 }

@@ -21,8 +21,8 @@ public class InboxHealthCheckTests : BaseTest
     [Test]
     public void Scheduler_RegistersHealthCheck_RegardlessOfAddHealthChecksOrder()
     {
-        // README раньше требовал звать AddHealthChecks() ДО планировщика. Требование ложное:
-        // AddInboxScheduler зовёт его сам, а сам AddHealthChecks идемпотентен.
+        // Порядок вызова AddHealthChecks не важен: планировщик регистрирует его сам, а сам
+        // AddHealthChecks идемпотентен. У Outbox порядок важен, поэтому проверяем оба.
         Assert.AreEqual(1, CountInboxRegistrations(services => services
             .AddScoped(_ => new TestDbContext(DbName))
             .AddInbox<TestDbContext>()

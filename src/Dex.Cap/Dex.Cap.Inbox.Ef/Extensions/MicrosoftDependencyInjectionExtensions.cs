@@ -15,6 +15,9 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Inbox.Ef.Extensions;
 
+/// <summary>
+/// Регистрация инбокса и его фоновых сервисов в контейнере.
+/// </summary>
 public static class MicrosoftDependencyInjectionExtensions
 {
     /// <summary>

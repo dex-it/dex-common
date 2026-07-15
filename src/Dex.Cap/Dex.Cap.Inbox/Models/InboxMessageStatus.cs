@@ -1,5 +1,8 @@
 namespace Dex.Cap.Inbox.Models;
 
+/// <summary>
+/// Состояние принятого сообщения. Значения хранятся в БД числами, менять их нельзя.
+/// </summary>
 public enum InboxMessageStatus
 {
     /// <summary>

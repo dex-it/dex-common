@@ -2,6 +2,9 @@ using System;
 
 namespace Dex.Cap.Inbox.Options;
 
+/// <summary>
+/// Настройки приёма и обработки сообщений. Проверяются валидатором на старте хоста.
+/// </summary>
 public class InboxOptions
 {
     /// <summary>
