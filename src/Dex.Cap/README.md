@@ -342,7 +342,7 @@ been acknowledged.
 | `Retries` | 3 | Attempts before the message is dead-lettered. |
 | `MessagesToProcess` | 100 | Batch size claimed per cycle. |
 | `ConcurrencyLimit` | 1 | Degree of parallelism; must not exceed `MessagesToProcess`. |
-| `GetFreeMessagesTimeout` | 20s | Timeout of the claim query. |
+| `GetFreeMessagesTimeout` | 20s | Timeout of the claim query. Whole seconds, at least `1s`: the command timeout has second granularity, so a smaller value would truncate to zero and silently leave the timeout unset. |
 
 `InboxHandlerOptions` (scheduler): `Period` 30s, `CleanupInterval` 1h, `CleanupOlderThan` 30d,
 `HandlerInitDelay` 5–15s, `CleanerInitDelay` 20–40s.
@@ -403,7 +403,13 @@ Two things to size correctly, or the strategy is decorative:
 * A delay below `Period` (default 30s) is not observable: the next attempt happens on the next cycle anyway.
 * The exponent is bounded by `Retries`. The attempt that exhausts the limit dead-letters the message without
   computing a delay, so with `Retries = N` the multiplier never exceeds `2^(N-2)`. With the default `Retries = 3`
-  you only ever get `baseDelay` and `2*baseDelay`, and `maxDelay` is unreachable.
+  and a `maxDelay` above `2*baseDelay` you only ever get `baseDelay` and `2*baseDelay`, and the cap is unreachable.
+  A smaller `maxDelay` is allowed, and then the cap bites earlier.
+
+`UseExponentialStrategy` shortens each delay by a random amount of up to 10%. A mass failure (a downstream service
+is out) fails a whole batch at once, so without jitter every message would become ready again at the same instant
+and hand the recovering service the sharpest possible ramp. The jitter only ever shortens, so `maxDelay` stays a
+hard ceiling and the spread survives at the cap, where messages pile up the most.
 
 ### Health check
 
@@ -424,12 +430,17 @@ app.MapHealthChecks("/health/inbox", new HealthCheckOptions
 ### Metrics
 
 Meter `Inbox`: `ProcessCount`, `EmptyProcessCount`, `ProcessJobCount`, `ProcessJobSuccessCount`,
-`ProcessJobFailedCount`, `DeadLetteredCount`, `DuplicateCount`, `ExpiredBeforeStartCount`, `ProcessDuration`,
-plus two observable up/down counters: `FreeJobCount` (depth of what *this* service can handle) and
+`ProcessJobFailedCount`, `DeadLetteredCount`, `DuplicateCount`, `ExpiredBeforeStartCount`, `LeaseLostCount`,
+`ProcessDuration`, plus two observable up/down counters: `FreeJobCount` (depth of what *this* service can handle) and
 `DeadLetteredJobCount` (buried messages **this** service is expected to review, never removed by cleanup).
 
-A steadily non-zero `ExpiredBeforeStartCount` means the lease dies while the claimed batch is still draining:
-raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`.
+`ProcessJobFailedCount` and `DeadLetteredCount` count what was actually written, not what was intended: when the
+lease is lost the outcome is not written at all, and counting the intent would page someone about a dead-lettered
+message that does not exist.
+
+A steadily non-zero `ExpiredBeforeStartCount` or `LeaseLostCount` means the lease dies before the claimed batch is
+drained: raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`. The first counts leases that
+died while the message waited its turn, the second leases lost during processing itself.
 
 ### The message body is stored, so its schema is a contract
 
