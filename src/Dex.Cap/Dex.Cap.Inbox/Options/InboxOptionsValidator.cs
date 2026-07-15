@@ -6,6 +6,9 @@ namespace Dex.Cap.Inbox.Options;
 
 internal sealed class InboxOptionsValidator : IValidateOptions<InboxOptions>
 {
+    /// <summary>Наименьший таймаут захвата, переживающий перевод в целые секунды.</summary>
+    private static readonly TimeSpan MinGetFreeMessagesTimeout = TimeSpan.FromSeconds(1);
+
     public ValidateOptionsResult Validate(string? name, InboxOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -28,8 +31,13 @@ internal sealed class InboxOptionsValidator : IValidateOptions<InboxOptions>
                 $"{nameof(InboxOptions.MessagesToProcess)} ({options.MessagesToProcess}): extra parallelism has nothing to process");
         }
 
-        if (options.GetFreeMessagesTimeout <= TimeSpan.Zero)
-            failures.Add($"{nameof(InboxOptions.GetFreeMessagesTimeout)} should be positive, but was {options.GetFreeMessagesTimeout}");
+        if (options.GetFreeMessagesTimeout < MinGetFreeMessagesTimeout)
+        {
+            failures.Add(
+                $"{nameof(InboxOptions.GetFreeMessagesTimeout)} should be at least {MinGetFreeMessagesTimeout}, " +
+                $"but was {options.GetFreeMessagesTimeout}: the command timeout is expressed in whole seconds, " +
+                "so a smaller value truncates to zero and silently leaves the timeout unset");
+        }
 
         return failures.Count > 0
             ? ValidateOptionsResult.Fail(failures)

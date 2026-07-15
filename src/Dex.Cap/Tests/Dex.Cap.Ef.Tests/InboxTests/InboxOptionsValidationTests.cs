@@ -41,13 +41,33 @@ public class InboxOptionsValidationTests
         Assert.IsTrue(result.FailureMessage!.Contains(expectedInMessage, StringComparison.Ordinal), result.FailureMessage);
     }
 
-    [Test]
-    public void Options_NonPositiveGetFreeMessagesTimeout_IsRejected()
+    /// <summary>
+    /// Таймаут команды задаётся целыми секундами, поэтому доля секунды усекается в ноль, а ноль означает
+    /// «таймаут не задан»: настройка молча потерялась бы целиком, а захват партии ушёл бы с дефолтом провайдера,
+    /// то есть с временем БОЛЬШИМ запрошенного. Валидатор обязан отвергать такое значение на старте.
+    /// </summary>
+    [TestCase(0)]
+    [TestCase(-1000)]
+    [TestCase(500)]
+    [TestCase(999)]
+    public void Options_GetFreeMessagesTimeoutBelowOneSecond_IsRejected(int milliseconds)
     {
-        var result = new InboxOptionsValidator().Validate(null, new InboxOptions { GetFreeMessagesTimeout = TimeSpan.Zero });
+        var options = new InboxOptions { GetFreeMessagesTimeout = TimeSpan.FromMilliseconds(milliseconds) };
+
+        var result = new InboxOptionsValidator().Validate(null, options);
 
         Assert.IsFalse(result.Succeeded);
         Assert.IsTrue(result.FailureMessage!.Contains(nameof(InboxOptions.GetFreeMessagesTimeout), StringComparison.Ordinal));
+    }
+
+    [Test]
+    public void Options_GetFreeMessagesTimeoutOfExactlyOneSecond_IsAccepted()
+    {
+        var options = new InboxOptions { GetFreeMessagesTimeout = TimeSpan.FromSeconds(1) };
+
+        var result = new InboxOptionsValidator().Validate(null, options);
+
+        Assert.IsTrue(result.Succeeded, result.FailureMessage ?? string.Empty);
     }
 
     [Test]
