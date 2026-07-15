@@ -9,8 +9,8 @@ namespace Dex.Cap.Inbox.RetryStrategies;
 /// </summary>
 internal sealed class DefaultInboxRetryStrategy : IInboxRetryStrategy
 {
-    public DateTime CalculateNextStartDate(InboxRetryStrategyOptions? options)
+    public DateTime CalculateNextStartDate(InboxRetryStrategyOptions options)
     {
-        return options?.StartDate ?? DateTime.UtcNow;
+        return options.StartDate;
     }
 }

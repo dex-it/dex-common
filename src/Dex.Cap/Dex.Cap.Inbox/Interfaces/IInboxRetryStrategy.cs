@@ -11,5 +11,6 @@ public interface IInboxRetryStrategy
     /// <summary>
     /// Вычислить момент следующей попытки.
     /// </summary>
-    DateTime CalculateNextStartDate(InboxRetryStrategyOptions? options = default);
+    /// <param name="options">Момент отказа и номер уже сделанной попытки.</param>
+    DateTime CalculateNextStartDate(InboxRetryStrategyOptions options);
 }
