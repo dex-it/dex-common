@@ -17,10 +17,12 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
     private readonly IInboxMessageTypeSource _typeSource;
     private readonly ILogger<InboxTypeDiscriminatorProvider> _logger;
 
-    // Lazy, а не "??=": реестр читают конкурентно (приём из HTTP и фоновая обработка), а построение
-    // сканирует все загруженные сборки. ExecutionAndPublication гарантирует ровно одно построение и,
-    // что важнее, кэширует исключение: ошибка конфигурации не должна пересканировать сборки на каждом
-    // обращении, она обязана оставаться одной и той же ошибкой.
+    /// <remarks>
+    /// Lazy, а не "??=": реестр читают конкурентно (приём из транспорта и фоновая обработка), а построение
+    /// сканирует все загруженные сборки. ExecutionAndPublication гарантирует ровно одно построение и, что
+    /// важнее, кэширует исключение: ошибка конфигурации не должна пересканировать сборки на каждом
+    /// обращении, она обязана оставаться одной и той же ошибкой.
+    /// </remarks>
     private readonly Lazy<FrozenDictionary<string, Type>> _currentDomainInboxMessageTypes;
     private readonly Lazy<FrozenSet<string>> _supportedDiscriminators;
 
@@ -51,6 +53,15 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
         _ = SupportedDiscriminators;
     }
 
+    /// <summary>
+    /// Построить реестр «дискриминатор - тип сообщения» по типам, известным этому домену.
+    /// </summary>
+    /// <remarks>
+    /// Конфликт дискриминаторов это ошибка конфигурации, а не повод выбрать один из типов: молчаливый
+    /// выбор лишил бы сохранённое сообщение однозначного восстановления, и обработка ушла бы не в тот
+    /// обработчик.
+    /// </remarks>
+    /// <exception cref="DiscriminatorConflictException">Один дискриминатор заявлен несколькими типами.</exception>
     private Dictionary<string, Type> BuildRegistry()
     {
         var result = new Dictionary<string, Type>(StringComparer.Ordinal);
@@ -61,8 +72,6 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
 
             if (result.TryGetValue(discriminator, out var existingType))
             {
-                // Молчаливо выбрать один из типов нельзя: сохранённое сообщение перестанет
-                // однозначно восстанавливаться, и обработка уйдёт не в тот обработчик.
                 throw new DiscriminatorConflictException(
                     $"Discriminator '{discriminator}' is declared by several inbox message types: " +
                     $"'{existingType.FullName}' and '{type.FullName}'. A discriminator must be unique.");
@@ -102,12 +111,24 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
         return result;
     }
 
+    /// <summary>
+    /// Прочитать дискриминатор, объявленный типом сообщения.
+    /// </summary>
+    /// <remarks>
+    /// FlattenHierarchy обязателен: статический член, объявленный базовым классом, иначе не виден, и тип,
+    /// унаследовавший дискриминатор, отвергался бы с сообщением «не задал InboxTypeId», хотя компилятор
+    /// такой код принимает. Честный исход для такой иерархии это конфликт дискриминаторов: базовый и
+    /// производный типы заявляют один и тот же идентификатор.
+    /// <para>
+    /// Набор символов намеренно не ограничен: дискриминатор уходит в SQL захвата параметром, а не
+    /// подстановкой в текст запроса, поэтому ни кавычка, ни фигурная скобка запрос не ломают. Ограничение
+    /// отвергало бы заведомо рабочие значения, например MessageUrn MassTransit ('urn:message:...') или имя
+    /// вложенного типа ('Outer+Inner'), а сменить дискриминатор существующему типу нельзя: он лежит в БД.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="DiscriminatorResolveException">Тип не объявил непустой дискриминатор.</exception>
     private static string GetDiscriminator(Type type)
     {
-        // FlattenHierarchy: статический член, объявленный базовым классом, иначе не виден, и тип,
-        // унаследовавший дискриминатор, отвергался бы с сообщением «не задал InboxTypeId», хотя
-        // компилятор такой код принимает. Честный исход для такой иерархии это конфликт
-        // дискриминаторов ниже: базовый и производный типы заявляют один и тот же идентификатор.
         var discriminatorProperty = type.GetProperty(
             nameof(IInboxMessage.InboxTypeId),
             BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
@@ -119,10 +140,6 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
                 "A discriminator must be non-empty and stable.");
         }
 
-        // Набор символов не ограничиваем: дискриминатор уходит в SQL захвата параметром, а не подстановкой
-        // в текст запроса, поэтому ни кавычка, ни фигурная скобка запрос не ломают. Ограничение отвергало бы
-        // заведомо рабочие значения, например MessageUrn MassTransit ('urn:message:...') или имя вложенного
-        // типа ('Outer+Inner'), а сменить дискриминатор существующему типу нельзя: он лежит в БД.
         return discriminator;
     }
 }

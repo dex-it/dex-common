@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,89 +17,123 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(
     : IInboxCleanupDataProvider
     where TDbContext : DbContext
 {
-    private const int Limit = 1000;
+    private const int BatchSize = 1000;
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// Удаляет только сообщения ЭТОГО сервиса. Одну таблицу могут обслуживать несколько сервисов, у
+    /// каждого свой набор дискриминаторов и свой ретеншен. Ретеншен здесь это окно дедупликации, поэтому
+    /// сервис с недельным ретеншеном, вычистив чужие строки, молча укоротил бы окно соседа и тот начал бы
+    /// принимать повторы как новые сообщения. Тот же фильтр стоит в выборке и в метриках.
+    /// <para>
+    /// Удаляет пачками, пока очередная пачка не придёт пустой. Неполная пачка не означает, что чистить
+    /// больше нечего: строку мог увести на новый адрес конкурентный писатель или занять соседняя реплика.
+    /// Выход по неполной пачке бросил бы оставшийся хвост до следующего запуска, то есть на час.
+    /// </para>
+    /// <para>
+    /// Цикл конечен при любом темпе приёма сообщений: граница возраста вычисляется до цикла, поэтому
+    /// множество подходящих строк только сокращается, а новые сообщения в него не попадают.
+    /// </para>
+    /// </remarks>
     public async Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
     {
         EnsureNpgsql();
 
-        // Чистим только СВОИ сообщения. Одну таблицу могут обслуживать несколько сервисов, у каждого
-        // свой набор дискриминаторов и свой ретеншен. Ретеншен здесь это окно дедупликации, поэтому
-        // сервис с cleanupDays: 1, вычистив чужие строки, молча укоротил бы окно соседа с 30 дней до
-        // одного дня, и сосед начал бы принимать повторы как новые сообщения. Тот же фильтр стоит в
-        // выборке и в метриках.
-        var discriminators = discriminatorProvider.SupportedDiscriminators;
+        var ownDiscriminators = discriminatorProvider.SupportedDiscriminators;
 
-        if (discriminators.Count is 0)
+        if (ownDiscriminators.Count is 0)
         {
-            // Не молча: без обработчиков чистка не смотрит НИ на одну строку, и «удалено 0» на вызывающей
-            // стороне выглядит как «чистить было нечего». Строки типов, у которых в этом сервисе не осталось
-            // обработчика, не удалит уже никто, поэтому факт пропуска обязан быть виден в логе.
-            logger.LogWarning("Inbox cleanup skipped: the service has no message handlers, so it owns no messages to clean up");
+            LogSkippedBecauseServiceOwnsNothing();
             return 0;
         }
 
-        var stamp = DateTime.UtcNow.Subtract(olderThan);
+        var createdBefore = DateTime.UtcNow.Subtract(olderThan);
+        var sql = BuildDeleteBatchSql();
         var total = 0;
-        int affected;
+        int removed;
 
-        logger.LogDebug("Cleaning up inbox messages older than {Timestamp} with status {Status}", stamp, InboxMessageStatus.Succeeded);
+        logger.LogDebug("Cleaning up inbox messages older than {Timestamp} with status {Status}",
+            createdBefore, InboxMessageStatus.Succeeded);
 
-        // Удаляем по физическому адресу строки, а не по первичному ключу. LINQ-вариант
-        // (Where(...).Take(...).ExecuteDelete()) EF превращает в DELETE ... WHERE "Id" IN (SELECT ...),
-        // и планировщик берёт на внешнем удалении Seq Scan с Hash Semi Join: индекс отбора работает,
-        // но всю таблицу приходится читать на КАЖДУЮ пачку (замер на 210 тыс. строк: на порядок
-        // дороже по времени). Удаление по списку ключей ещё хуже: тысяча случайных uuid по btree
-        // дороже последовательного чтения.
-        //
-        // ctid безопасен именно здесь: подзапрос и удаление это ОДИН стейтмент с одним снимком, а
-        // FOR UPDATE ниже удерживает адрес строки до конца стейтмента.
-        //
-        // FOR UPDATE SKIP LOCKED, а не голый подзапрос: чистильщики работают на каждой реплике, и без
-        // него они выбирают ОДНИ И ТЕ ЖЕ строки. Проигравший ждёт победителя, а потом получает пустой
-        // результат (его строки уже удалены) и по условию выхода ниже считает, что чистить нечего.
-        // Со SKIP LOCKED реплики берут непересекающиеся пачки и не ждут друг друга.
-        //
-        // Без ORDER BY. Сортировка по CreatedUtc не нужна (цикл выгребает ВСЕ подходящие строки, порядок
-        // внутри вызова ни на что не влияет), а плану вредит: при нескольких своих дискриминаторах индекс
-        // не даёт готового порядка по одному CreatedUtc, и планировщик уходит в Seq Scan со снятием
-        // сортировки поверх. Индекс (Status, MessageType, CreatedUtc) и так отдаёт старейшие первыми
-        // внутри каждого дискриминатора.
-        //
-        // Удаляем только Succeeded. DeadLettered остаётся: это сообщения, требующие ручного разбора,
-        // и молча стирать их означало бы прятать инциденты.
-        var sql = $$"""
-                    DELETE FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
-                    WHERE ctid IN (
-                        SELECT ctid
-                        FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
-                        WHERE "{{nameof(InboxEnvelope.Status)}}" = {{InboxMessageStatus.Succeeded:D}}
-                          AND "{{nameof(InboxEnvelope.CreatedUtc)}}" < {0}
-                          AND "{{nameof(InboxEnvelope.MessageType)}}" = ANY({1})
-                        LIMIT {{Limit}}
-                        FOR UPDATE SKIP LOCKED
-                    )
-                    """;
-
-        var supported = discriminators.ToArray();
-
-        // Выходим по ПУСТОЙ пачке, а не по неполной. Неполная пачка не означает, что чистить больше нечего:
-        // строку могли обновить (тогда EPQ уводит её на новый ctid) или её держит соседняя реплика (SKIP
-        // LOCKED пропускает такие). Выход по неполной пачке бросал бы оставшийся хвост до следующего
-        // запуска, то есть на час. Цикл конечен при любом темпе вставки: stamp зафиксирован ДО цикла,
-        // поэтому множество подходящих строк только сокращается, а новые сообщения в него не попадают.
         do
         {
-            affected = await dbContext.Database
-                .ExecuteSqlRawAsync(sql, new object[] { stamp, supported }, cancellationToken)
-                .ConfigureAwait(false);
-
-            total += affected;
+            removed = await DeleteBatchAsync(sql, createdBefore, ownDiscriminators, cancellationToken).ConfigureAwait(false);
+            total += removed;
         }
-        while (affected > 0);
+        while (removed > 0);
 
         return total;
     }
+
+    /// <summary>
+    /// Удалить одну пачку обработанных сообщений этого сервиса.
+    /// </summary>
+    /// <returns>Количество удалённых строк; ноль означает, что подходящих строк не осталось.</returns>
+    private async Task<int> DeleteBatchAsync(
+        string sql,
+        DateTime createdBefore,
+        IReadOnlyCollection<string> ownDiscriminators,
+        CancellationToken cancellationToken)
+    {
+        var parameters = new object[] { createdBefore, ownDiscriminators.ToArray() };
+
+        return await dbContext.Database
+            .ExecuteSqlRawAsync(sql, parameters, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Собрать запрос удаления одной пачки: только обработанные сообщения этого сервиса старше границы.
+    /// </summary>
+    /// <remarks>
+    /// Строки адресуются по ctid, а не по первичному ключу. LINQ-вариант EF превращает в
+    /// <c>DELETE ... WHERE "Id" IN (SELECT ...)</c>, на котором планировщик берёт Seq Scan с Hash Semi
+    /// Join: индекс отбора работает, но всю таблицу приходится читать на каждую пачку. Удаление по списку
+    /// ключей ещё хуже: тысяча случайных uuid по btree дороже последовательного чтения. Адрес строки
+    /// безопасен здесь потому, что подзапрос и удаление это один стейтмент с одним снимком, а FOR UPDATE
+    /// удерживает адрес до конца стейтмента.
+    /// <para>
+    /// SKIP LOCKED обязателен: чистильщик живёт на каждой реплике, и без него реплики выбирают одни и те
+    /// же строки. Проигравший ждал бы победителя (а с ним и любого чужого писателя), после чего получал
+    /// бы пустой результат и считал, что чистить нечего. Занятая строка пропускается и удаляется
+    /// следующим заходом.
+    /// </para>
+    /// <para>
+    /// Без ORDER BY: порядок удаления внутри вызова ни на что не влияет, потому что цикл выгребает все
+    /// подходящие строки. Сортировка по одному <see cref="InboxEnvelope.CreatedUtc"/> при нескольких
+    /// дискриминаторах не берётся из индекса и уводит планировщик в Seq Scan. Индекс
+    /// (Status, MessageType, CreatedUtc) и так отдаёт старейшие первыми внутри каждого дискриминатора.
+    /// </para>
+    /// <para>
+    /// Удаляются только <see cref="InboxMessageStatus.Succeeded"/>. Строки
+    /// <see cref="InboxMessageStatus.DeadLettered"/> требуют ручного разбора, и стирать их значило бы
+    /// прятать инциденты.
+    /// </para>
+    /// </remarks>
+    private static string BuildDeleteBatchSql() =>
+        $$"""
+          DELETE FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
+          WHERE ctid IN (
+              SELECT ctid
+              FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
+              WHERE "{{nameof(InboxEnvelope.Status)}}" = {{InboxMessageStatus.Succeeded:D}}
+                AND "{{nameof(InboxEnvelope.CreatedUtc)}}" < {0}
+                AND "{{nameof(InboxEnvelope.MessageType)}}" = ANY({1})
+              LIMIT {{BatchSize}}
+              FOR UPDATE SKIP LOCKED
+          )
+          """;
+
+    /// <summary>
+    /// Сообщить, что чистка не рассматривала ни одной строки.
+    /// </summary>
+    /// <remarks>
+    /// Сервис без обработчиков не владеет ни одним сообщением, и «удалено 0» на вызывающей стороне
+    /// неотличимо от «чистить было нечего». Строки типов, у которых в этом сервисе не осталось
+    /// обработчика, не удалит уже никто, поэтому факт пропуска обязан быть виден в логе.
+    /// </remarks>
+    private void LogSkippedBecauseServiceOwnsNothing() =>
+        logger.LogWarning("Inbox cleanup skipped: the service has no message handlers, so it owns no messages to clean up");
 
     private void EnsureNpgsql()
     {

@@ -21,10 +21,22 @@ internal sealed class InboxHandlerBackgroundService(
     private const string ServiceNameIsStatus = "Background service '{ServiceName}' is {Status}";
     private const string TypeName = nameof(InboxHandlerBackgroundService);
 
-    // Снимок опций на старте: hosted-сервис живёт всё время работы хоста, hot-reload не поддерживается намеренно.
+    /// <remarks>
+    /// Снимок опций на старте: hosted-сервис живёт всё время работы хоста, hot-reload не поддерживается
+    /// намеренно.
+    /// </remarks>
     private readonly InboxHandlerOptions _options = options.Value;
+
     private readonly int _messagesToProcess = inboxOptions.Value.MessagesToProcess;
 
+    /// <summary>
+    /// Разбирать инбокс, пока хост жив.
+    /// </summary>
+    /// <remarks>
+    /// Пауза делается, только когда партия пришла неполной, то есть очередь исчерпана. Безусловная пауза
+    /// после каждого цикла превратила бы Period в жёсткий потолок пропускной способности
+    /// (MessagesToProcess сообщений за Period) независимо от реальной нагрузки.
+    /// </remarks>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation(ServiceNameIsStatus, TypeName, "starting");
@@ -45,9 +57,6 @@ internal sealed class InboxHandlerBackgroundService(
                     processed = await OnTick(scope.ServiceProvider, loggerInner, stoppingToken).ConfigureAwait(false);
                 }
 
-                // Пауза только когда партия неполная, то есть очередь исчерпана. Безусловная пауза после
-                // каждого цикла превратила бы Period в жёсткий потолок пропускной способности
-                // (MessagesToProcess сообщений за Period), независимо от реальной нагрузки.
                 if (processed >= _messagesToProcess)
                 {
                     continue;
@@ -59,6 +68,14 @@ internal sealed class InboxHandlerBackgroundService(
         }
     }
 
+    /// <summary>
+    /// Один цикл разбора инбокса.
+    /// </summary>
+    /// <remarks>
+    /// Цикл переживает ошибку тика, но нулевой результат уводит следующий заход в паузу: при устойчивом
+    /// сбое (например, недоступна БД) разбор без паузы превратился бы в busy-loop.
+    /// </remarks>
+    /// <returns>Количество обработанных сообщений; ноль в том числе при ошибке тика.</returns>
     private static async Task<int> OnTick(IServiceProvider serviceProvider, ILogger loggerInner, CancellationToken cancellationToken)
     {
         loggerInner.LogDebug("Resolving IInboxHandler");
@@ -80,8 +97,6 @@ internal sealed class InboxHandlerBackgroundService(
         {
             loggerInner.LogCritical(ex, "Critical error in Inbox background handler '{ServiceName}'", service.GetType());
 
-            // Цикл переживает ошибку тика, но следующий заход делаем с паузой, а не сразу:
-            // при устойчивом сбое (например, недоступна БД) дренаж без паузы превратится в busy-loop.
             return 0;
         }
     }

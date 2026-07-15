@@ -44,6 +44,11 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
 
     public abstract int GetDeadLetteredMessagesCount();
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// Аренда не требуется: неудача фиксируется после отката транзакции обработчика, ронять нечего. Если
+    /// аренда уже у другого обработчика, запись не состоится и он отработает сообщение сам.
+    /// </remarks>
     public virtual async Task JobFail(
         IInboxLockedJob inboxJob,
         string? errorMessage = null,
@@ -62,27 +67,13 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
 
         if (deadLettered)
         {
-            // Попытки исчерпаны. Хороним явным статусом, а не тем, что сообщение просто перестаёт
-            // попадать в выборку: молчаливое исчезновение неотличимо от успеха при разборе инцидента.
-            envelope.Status = InboxMessageStatus.DeadLettered;
-            envelope.ScheduledStartIndexing = null;
+            DeadLetter(envelope);
         }
         else
         {
-            envelope.Status = InboxMessageStatus.Failed;
-
-            // Отсчёт от момента отказа, а не от прежнего StartAtUtc. Отсчёт от расписания даёт задержку
-            // только пока обработка успевает за расписанием: стоит ей отстать (бэклог, долгий обработчик),
-            // и StartAtUtc + delay оказывается в прошлом, то есть повтор идёт мгновенно и все попытки
-            // сгорают за миллисекунды. Backoff нужен ровно в этом случае, поэтому он не может от него зависеть.
-            var calculatedStartDate = _retryStrategy.CalculateNextStartDate(
-                new InboxRetryStrategyOptions(DateTime.UtcNow, envelope.Retries));
-            envelope.StartAtUtc = calculatedStartDate;
-            envelope.ScheduledStartIndexing = calculatedStartDate;
+            ScheduleRetry(envelope);
         }
 
-        // Аренду не требуем: неудача фиксируется после отката транзакции обработчика, ронять нечего.
-        // Если аренда уже у другого обработчика, запись не состоится и он отработает сообщение сам.
         await CompleteJobAsync(inboxJob, requireLease: false, cancellationToken).ConfigureAwait(false);
 
         MetricCollector.IncProcessJobFailedCount();
@@ -93,6 +84,15 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         }
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// Аренда требуется: вызов идёт внутри транзакции обработчика, и если аренда потеряна, единственный
+    /// способ не применить эффект дважды это откатить транзакцию исключением.
+    /// <para>
+    /// Сброс ScheduledStartIndexing выводит сообщение из выборки и из частичного индекса: строка остаётся
+    /// только как ключ дедупликации.
+    /// </para>
+    /// </remarks>
     public virtual async Task JobSucceed(IInboxLockedJob inboxJob, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(inboxJob);
@@ -102,15 +102,45 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         envelope.Updated = DateTime.UtcNow;
         envelope.ErrorMessage = null;
         envelope.Error = null;
-
-        // Выводим из выборки и из частичного индекса: строка остаётся только как ключ дедупликации.
         envelope.ScheduledStartIndexing = null;
 
-        // Аренду требуем: этот вызов идёт внутри транзакции обработчика. Если аренда потеряна,
-        // единственный способ не применить эффект дважды - откатить транзакцию исключением.
         await CompleteJobAsync(inboxJob, requireLease: true, cancellationToken).ConfigureAwait(false);
 
         MetricCollector.IncProcessJobSuccessCount();
+    }
+
+    /// <summary>
+    /// Попытки исчерпаны: сообщение выводится из обработки до ручного разбора.
+    /// </summary>
+    /// <remarks>
+    /// Статус проставляется явно, а не подразумевается тем, что сообщение просто перестаёт попадать в
+    /// выборку: молчаливое исчезновение неотличимо от успеха при разборе инцидента.
+    /// </remarks>
+    private static void DeadLetter(InboxEnvelope envelope)
+    {
+        envelope.Status = InboxMessageStatus.DeadLettered;
+        envelope.ScheduledStartIndexing = null;
+    }
+
+    /// <summary>
+    /// Запланировать следующую попытку.
+    /// </summary>
+    /// <remarks>
+    /// Задержка отсчитывается от момента отказа, а не от прежнего StartAtUtc. Отсчёт от расписания даёт
+    /// задержку только пока обработка успевает за расписанием: стоит ей отстать (бэклог, долгий
+    /// обработчик), и StartAtUtc + delay оказывается в прошлом, то есть повтор идёт мгновенно и все
+    /// попытки сгорают за миллисекунды. Backoff нужен ровно в этом случае, поэтому он не может от него
+    /// зависеть.
+    /// </remarks>
+    private void ScheduleRetry(InboxEnvelope envelope)
+    {
+        envelope.Status = InboxMessageStatus.Failed;
+
+        var nextStartDate = _retryStrategy.CalculateNextStartDate(
+            new InboxRetryStrategyOptions(DateTime.UtcNow, envelope.Retries));
+
+        envelope.StartAtUtc = nextStartDate;
+        envelope.ScheduledStartIndexing = nextStartDate;
     }
 
     /// <summary>

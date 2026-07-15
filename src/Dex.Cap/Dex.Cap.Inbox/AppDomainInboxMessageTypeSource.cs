@@ -24,6 +24,12 @@ internal sealed class AppDomainInboxMessageTypeSource(ILogger<AppDomainInboxMess
             .Where(t => typeof(IInboxMessage).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false, ContainsGenericParameters: false });
     }
 
+    /// <summary>
+    /// Прочитать типы сборки.
+    /// </summary>
+    /// <remarks>
+    /// Частично загружаемая сборка не должна валить дискавери целиком: берём то, что загрузилось.
+    /// </remarks>
     private IEnumerable<Type> GetLoadableTypes(Assembly assembly)
     {
         try
@@ -32,7 +38,6 @@ internal sealed class AppDomainInboxMessageTypeSource(ILogger<AppDomainInboxMess
         }
         catch (ReflectionTypeLoadException e)
         {
-            // Частично загружаемая сборка не должна валить дискавери целиком: берём то, что загрузилось.
             logger.LogWarning(e, "Assembly {Assembly} is partially loadable, inbox message types may be incomplete", assembly.FullName);
             return e.Types.Where(t => t is not null)!;
         }

@@ -7,8 +7,10 @@ namespace Dex.Cap.Inbox;
 
 internal sealed class InboxMessageHandlerFactory(IServiceProvider serviceProvider) : IInboxMessageHandlerFactory
 {
-    // Инвокеры не зависят от scope, поэтому переживают его: словарь статический, чтобы не строить
-    // закрытый generic-тип на каждое сообщение.
+    /// <remarks>
+    /// Инвокеры не зависят от scope, поэтому переживают его: словарь статический, чтобы не строить
+    /// закрытый generic-тип на каждое сообщение.
+    /// </remarks>
     private static readonly ConcurrentDictionary<Type, IInboxMessageInvoker> Invokers = new();
 
     public object GetMessageHandler(Type messageType)

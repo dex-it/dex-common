@@ -20,6 +20,16 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
     private readonly Histogram<double> _processDuration;
     private long _lastTime = DateTime.UtcNow.Ticks;
 
+    /// <summary>
+    /// Завести счётчики инбокса.
+    /// </summary>
+    /// <remarks>
+    /// Глубина очереди и число похороненных сообщений это UpDownCounter, а не Counter: обе величины
+    /// растут на приёме и убывают на обработке или чистке, тогда как асинхронный Counter по спецификации
+    /// обязан быть монотонно возрастающим, и экспортёр читает падение монотонного счётчика как его сброс,
+    /// дорисовывая фантомный прирост. Gauge тоже неверен: глубина аддитивна по инстансам, а Gauge
+    /// складывать не предполагается.
+    /// </remarks>
     public DefaultInboxMetricCollector(IServiceScopeFactory scopeFactory)
     {
         ArgumentNullException.ThrowIfNull(scopeFactory);
@@ -36,10 +46,6 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
             "ExpiredBeforeStartCount",
             description: "Count of messages whose lease expired while the claimed batch was draining, before the handler started");
 
-        // UpDownCounter, а не Counter: обе величины растут на приёме и убывают на обработке или чистке,
-        // тогда как асинхронный Counter по спецификации обязан быть монотонно возрастающим. Экспортёр
-        // читает падение монотонного счётчика как его сброс и дорисовывает фантомный прирост.
-        // Gauge тоже неверен: глубина аддитивна по инстансам, а Gauge складывать не предполагается.
         _meter.CreateObservableUpDownCounter(
             "FreeJobCount",
             () => GetCount(p => p.GetFreeMessagesCount()),

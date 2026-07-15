@@ -14,10 +14,11 @@ namespace Dex.Cap.Inbox;
 internal sealed class InboxMessageInvoker<TMessage> : IInboxMessageInvoker
     where TMessage : IInboxMessage
 {
-    public Task InvokeAsync(object handler, object message, CancellationToken cancellationToken)
-    {
-        // Приведение безопасно: обработчик получен из DI именно по этому закрытому интерфейсу,
-        // а сообщение десериализовано в тип, из которого этот интерфейс и построен.
-        return ((IInboxMessageHandler<TMessage>)handler).Process((TMessage)message, cancellationToken);
-    }
+    /// <inheritdoc />
+    /// <remarks>
+    /// Приведение безопасно: обработчик получен из DI именно по этому закрытому интерфейсу, а сообщение
+    /// десериализовано в тип, из которого этот интерфейс и построен.
+    /// </remarks>
+    public Task InvokeAsync(object handler, object message, CancellationToken cancellationToken) =>
+        ((IInboxMessageHandler<TMessage>)handler).Process((TMessage)message, cancellationToken);
 }

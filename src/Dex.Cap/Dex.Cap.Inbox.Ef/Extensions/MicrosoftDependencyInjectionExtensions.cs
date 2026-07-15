@@ -39,6 +39,18 @@ public static class MicrosoftDependencyInjectionExtensions
     /// <summary>
     /// Зарегистрировать инбокс и EF-провайдер данных.
     /// </summary>
+    /// <remarks>
+    /// Опции валидируются на старте хоста: неверная конфигурация должна падать при запуске, а не
+    /// проявляться поведением на проде. Там же строится реестр типов сообщений: коллизия дискриминаторов
+    /// обязана ронять старт, а не всплывать позже внутри фонового обработчика, где она превратилась бы в
+    /// LogCritical при формально поднятом хосте.
+    /// <para>
+    /// Синглтоны регистрируются через TryAdd: повторный вызов иначе оставляет в коллекции лишние
+    /// дескрипторы, а регистрация потребителя, сделанная ДО этого вызова, молча проигрывала бы дефолтной.
+    /// Scoped-сервисы, включая <see cref="IInboxSerializer"/>, регистрируются обычным Add, поэтому
+    /// побеждает регистрация потребителя, сделанная ПОСЛЕ.
+    /// </para>
+    /// </remarks>
     public static IServiceCollection AddInbox<TDbContext>(
         this IServiceCollection services,
         Action<InboxOptions> configure,
@@ -48,24 +60,17 @@ public static class MicrosoftDependencyInjectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
 
-        // Опции валидируются на старте хоста: неверная конфигурация должна падать при запуске,
-        // а не проявляться поведением на проде.
         services.AddOptions<InboxOptions>()
             .Configure(configure)
             .ValidateOnStart();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<InboxOptions>, InboxOptionsValidator>());
 
-        // TryAdd, а не Add: повторный AddInbox иначе оставляет в коллекции лишние дескрипторы, а
-        // регистрация потребителя, сделанная ДО AddInbox, молча проигрывала бы дефолтной.
         services.TryAddSingleton<IInboxMetricCollector, DefaultInboxMetricCollector>();
         services.TryAddSingleton<IInboxMessageTypeSource, AppDomainInboxMessageTypeSource>();
         services.TryAddSingleton<IInboxTypeDiscriminatorProvider, InboxTypeDiscriminatorProvider>();
         services.TryAddSingleton<IInboxStatistic>(provider => provider.GetRequiredService<IInboxMetricCollector>());
 
-        // Реестр типов сообщений строится на старте хоста, а не при первом обращении: коллизия
-        // дискриминаторов обязана ронять старт, а не всплывать позже внутри фонового обработчика,
-        // где она превратилась бы в LogCritical при формально поднятом хосте.
         services.AddHostedService<InboxRegistryWarmupService>();
 
         services.AddScoped<IInboxService, InboxService>();

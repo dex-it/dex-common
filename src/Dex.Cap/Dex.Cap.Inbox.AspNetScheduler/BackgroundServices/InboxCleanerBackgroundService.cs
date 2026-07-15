@@ -19,7 +19,10 @@ internal sealed class InboxCleanerBackgroundService(
     private const string ServiceNameIsStatus = "Background service '{ServiceName}' is {Status}";
     private const string TypeName = nameof(InboxCleanerBackgroundService);
 
-    // Снимок опций на старте: hosted-сервис живёт всё время работы хоста, hot-reload не поддерживается намеренно.
+    /// <remarks>
+    /// Снимок опций на старте: hosted-сервис живёт всё время работы хоста, hot-reload не поддерживается
+    /// намеренно.
+    /// </remarks>
     private readonly InboxHandlerOptions _options = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

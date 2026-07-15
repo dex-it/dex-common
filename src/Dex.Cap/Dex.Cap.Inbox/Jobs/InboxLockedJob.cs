@@ -9,26 +9,36 @@ namespace Dex.Cap.Inbox.Jobs;
 /// </summary>
 internal sealed class InboxLockedJob : IInboxLockedJob
 {
+    /// <summary>Запас времени на фиксацию исхода, вычитаемый из аренды.</summary>
+    private static readonly TimeSpan CompletionReserve = TimeSpan.FromSeconds(5);
+
     /// <summary>Минимальное окно обработки, остающееся после вычета запаса на фиксацию исхода.</summary>
     private static readonly TimeSpan MinTimeout = TimeSpan.FromSeconds(5);
 
     private readonly CancellationTokenSource _cts;
 
+    /// <summary>
+    /// Взять сообщение в работу, взведя таймер аренды.
+    /// </summary>
+    /// <remarks>
+    /// Обработка гасится на <see cref="CompletionReserve"/> раньше окончания аренды в БД, чтобы успеть
+    /// зафиксировать исход, пока аренда ещё наша: иначе фиксация не найдёт строку по ключу аренды и
+    /// результат потеряется.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Аренда конверта короче минимума. Конструктор <see cref="InboxEnvelope"/> этого не допускает, но
+    /// сюда конверт приезжает из БД через приватный конструктор EF, минуя проверку. Строка с некорректным
+    /// LockTimeout (правка руками, чужой писатель, изменённый дефолт колонки) дала бы отрицательный
+    /// CancelAfter, а он бросает: это уронило бы материализацию ВСЕЙ партии, то есть один битый ряд
+    /// остановил бы весь инбокс навсегда, отдавая наружу только LogCritical раз в цикл.
+    /// </exception>
     internal InboxLockedJob(InboxEnvelope envelope)
     {
         ArgumentNullException.ThrowIfNull(envelope);
 
         Envelope = envelope;
+        Timeout = envelope.LockTimeout.Subtract(CompletionReserve);
 
-        // Гасим обработку на 5 секунд раньше окончания аренды в БД, чтобы успеть зафиксировать исход,
-        // пока аренда ещё наша: иначе Complete не найдёт строку по LockId и результат потеряется.
-        Timeout = envelope.LockTimeout.Add(-TimeSpan.FromSeconds(5));
-
-        // Конструктор InboxEnvelope требует LockTimeout не меньше 10 секунд, но сюда конверт приезжает
-        // из БД через приватный конструктор EF, минуя эту проверку. Строка с некорректным LockTimeout
-        // (правка руками, чужой писатель, изменённый дефолт колонки) дала бы отрицательный CancelAfter,
-        // а он бросает. Это уронило бы материализацию ВСЕЙ партии в GetWaitingJobs, то есть один битый
-        // ряд остановил бы весь инбокс навсегда, отдавая наружу только LogCritical раз в Period.
         if (Timeout < MinTimeout)
         {
             throw new ArgumentOutOfRangeException(

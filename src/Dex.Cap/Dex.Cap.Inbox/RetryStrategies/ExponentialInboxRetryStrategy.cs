@@ -23,6 +23,10 @@ namespace Dex.Cap.Inbox.RetryStrategies;
 /// </remarks>
 internal sealed class ExponentialInboxRetryStrategy(TimeSpan baseDelay, TimeSpan maxDelay) : IInboxRetryStrategy
 {
+    /// <inheritdoc />
+    /// <remarks>
+    /// Множитель 2^(retry-1) считается через double, чтобы не переполнить тики на большом числе попыток.
+    /// </remarks>
     public DateTime CalculateNextStartDate(InboxRetryStrategyOptions? options)
     {
         var startDate = options?.StartDate ?? DateTime.UtcNow;
@@ -31,7 +35,6 @@ internal sealed class ExponentialInboxRetryStrategy(TimeSpan baseDelay, TimeSpan
         if (retry < 1)
             retry = 1;
 
-        // 2^(retry-1) считаем через double, чтобы не переполнить тики на большом числе попыток.
         var multiplier = Math.Pow(2, retry - 1);
         var delayTicks = baseDelay.Ticks * multiplier;
 
