@@ -20,7 +20,7 @@ internal sealed class MainLoopInboxHandler(
 {
     private const string NoMessagesToProcess = "No messages to process";
 
-    public async Task ProcessAsync(CancellationToken cancellationToken)
+    public async Task<int> ProcessAsync(CancellationToken cancellationToken)
     {
         logger.LogDebug("Inbox processor has been started");
 
@@ -32,7 +32,7 @@ internal sealed class MainLoopInboxHandler(
         {
             metricCollector.IncEmptyProcessCount();
             logger.LogDebug(NoMessagesToProcess);
-            return;
+            return 0;
         }
 
         // Semaphore to control the degree of parallelism
@@ -80,5 +80,7 @@ internal sealed class MainLoopInboxHandler(
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
         logger.LogDebug("Inbox processor completed");
+
+        return jobs.Length;
     }
 }

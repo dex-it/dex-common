@@ -8,5 +8,9 @@ public interface IInboxHandler
     /// <summary>
     /// Обработать партию принятых сообщений.
     /// </summary>
-    Task ProcessAsync(CancellationToken cancellationToken = default);
+    /// <returns>
+    /// Количество захваченных на обработку сообщений. Позволяет вызывающему коду отличить
+    /// пустую очередь от полной партии и не делать паузу, пока есть что обрабатывать.
+    /// </returns>
+    Task<int> ProcessAsync(CancellationToken cancellationToken = default);
 }
