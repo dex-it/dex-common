@@ -31,13 +31,16 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(
     /// Выход по неполной пачке бросил бы оставшийся хвост до следующего запуска, то есть на час.
     /// </para>
     /// <para>
-    /// Цикл конечен при любом темпе приёма сообщений: граница возраста вычисляется до цикла, поэтому
-    /// множество подходящих строк только сокращается, а новые сообщения в него не попадают.
+    /// Цикл конечен при любом темпе приёма сообщений: граница возраста вычисляется до цикла, поэтому строки с
+    /// подходящим CreatedUtc образуют фиксированное конечное множество, и каждая удаляется однократно. Само
+    /// множество подходящих под удаление строк при этом может и пополняться, когда старое необработанное
+    /// сообщение становится Succeeded прямо во время цикла, но пополняться ему неоткуда, кроме этого же
+    /// конечного набора.
     /// </para>
     /// </remarks>
     public async Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
     {
-        EnsureNpgsql();
+        dbContext.Database.EnsureNpgsql();
 
         var ownDiscriminators = discriminatorProvider.SupportedDiscriminators;
 
@@ -134,12 +137,4 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(
     /// </remarks>
     private void LogSkippedBecauseServiceOwnsNothing() =>
         logger.LogWarning("Inbox cleanup skipped: the service has no message handlers, so it owns no messages to clean up");
-
-    private void EnsureNpgsql()
-    {
-        var providerName = dbContext.Database.ProviderName;
-
-        if (providerName is not "Npgsql.EntityFrameworkCore.PostgreSQL")
-            throw new NotSupportedException($"The provider {providerName} is not supported.");
-    }
 }

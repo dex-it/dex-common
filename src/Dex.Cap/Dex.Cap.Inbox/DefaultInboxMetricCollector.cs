@@ -17,6 +17,7 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
     private readonly Counter<long> _deadLetteredCount;
     private readonly Counter<long> _duplicateCount;
     private readonly Counter<long> _expiredBeforeStartCount;
+    private readonly Counter<long> _leaseLostCount;
     private readonly Histogram<double> _processDuration;
     private long _lastTime = DateTime.UtcNow.Ticks;
 
@@ -45,6 +46,9 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
         _expiredBeforeStartCount = _meter.CreateCounter<long>(
             "ExpiredBeforeStartCount",
             description: "Count of messages whose lease expired while the claimed batch was draining, before the handler started");
+        _leaseLostCount = _meter.CreateCounter<long>(
+            "LeaseLostCount",
+            description: "Count of messages whose lease was lost during processing, so the outcome could not be committed");
 
         _meter.CreateObservableUpDownCounter(
             "FreeJobCount",
@@ -92,6 +96,8 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
     public void IncDuplicateCount() => _duplicateCount.Add(1);
 
     public void IncExpiredBeforeStartCount() => _expiredBeforeStartCount.Add(1);
+
+    public void IncLeaseLostCount() => _leaseLostCount.Add(1);
 
     public void AddProcessJobDuration(TimeSpan duration) => _processDuration.Record(duration.TotalMilliseconds);
 

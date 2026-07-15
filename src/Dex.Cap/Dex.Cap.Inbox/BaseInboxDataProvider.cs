@@ -48,6 +48,11 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
     /// <remarks>
     /// Аренда не требуется: неудача фиксируется после отката транзакции обработчика, ронять нечего. Если
     /// аренда уже у другого обработчика, запись не состоится и он отработает сообщение сам.
+    /// <para>
+    /// Метрики считают фактическую запись, а не намерение. Иначе потерянная аренда давала бы счётчик
+    /// захоронений, которому в БД не соответствует ни одна строка: дежурного разбудил бы алерт на инцидент,
+    /// которого нет, а сообщение в это время спокойно обрабатывал бы новый владелец аренды.
+    /// </para>
     /// </remarks>
     public virtual async Task JobFail(
         IInboxLockedJob inboxJob,
@@ -74,7 +79,12 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
             ScheduleRetry(envelope);
         }
 
-        await CompleteJobAsync(inboxJob, requireLease: false, cancellationToken).ConfigureAwait(false);
+        var outcomeWritten = await CompleteJobAsync(inboxJob, requireLease: false, cancellationToken).ConfigureAwait(false);
+
+        if (!outcomeWritten)
+        {
+            return;
+        }
 
         MetricCollector.IncProcessJobFailedCount();
 
@@ -153,5 +163,9 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
     /// это штатный исход, запись просто не состоится.
     /// </param>
     /// <param name="cancellationToken">Токен отмены.</param>
-    protected abstract Task CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken);
+    /// <returns>
+    /// <see langword="true"/>, если исход записан. <see langword="false"/> означает потерю аренды при
+    /// <paramref name="requireLease"/> = <see langword="false"/>: строку уже ведёт другой обработчик.
+    /// </returns>
+    protected abstract Task<bool> CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken);
 }

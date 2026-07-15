@@ -49,7 +49,7 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         ArgumentNullException.ThrowIfNull(inboxEnvelope);
         cancellationToken.ThrowIfCancellationRequested();
 
-        EnsureNpgsql();
+        dbContext.Database.EnsureNpgsql();
         EnsureNoEnclosingTransaction();
 
         using var command = dbContext.Database.GetDbConnection().CreateCommand();
@@ -131,23 +131,25 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     /// метод внутри транзакции обработчика (Common.Ef не позволяет повышать уровень у вложенной
     /// транзакции), а именно там фиксируется успех.
     /// </remarks>
-    protected override Task CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken)
+    protected override Task<bool> CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken)
     {
         return dbContext.ExecuteInTransactionAsync(
-            (DbContext: dbContext, LockedJob: lockedJob, Logger: logger, RequireLease: requireLease),
+            (DbContext: dbContext, LockedJob: lockedJob, Logger: logger, RequireLease: requireLease, Metrics: MetricCollector),
             static async (state, ct) =>
             {
-                var (context, job, log, requireLease) = state;
+                var (context, job, log, requireLease, metrics) = state;
                 var affected = await WriteOutcomeAsync(context, job, ct).ConfigureAwait(false);
 
                 if (affected is 0)
                 {
-                    ReportLostLease(job.Envelope, requireLease, log);
+                    ReportLostLease(job.Envelope, requireLease, log, metrics);
                 }
+
+                return affected is not 0;
             },
             static async (state, ct) =>
             {
-                var (context, job, _, _) = state;
+                var (context, job, _, _, _) = state;
                 var envelope = job.Envelope;
 
                 var existLocked = await context.Set<InboxEnvelope>()
@@ -205,9 +207,11 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     /// </para>
     /// </remarks>
     /// <exception cref="InboxLeaseLostException">Аренда потеряна на пути успеха.</exception>
-    private static void ReportLostLease(InboxEnvelope envelope, bool requireLease, ILogger logger)
+    private static void ReportLostLease(InboxEnvelope envelope, bool requireLease, ILogger logger, IInboxMetricCollector metrics)
     {
         const string advice = "Increase LockTimeout above the time needed to drain the whole claimed batch";
+
+        metrics.IncLeaseLostCount();
 
         if (requireLease)
         {
@@ -370,7 +374,7 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     /// </remarks>
     private string GenerateFetchPlatformSpecificSql()
     {
-        EnsureNpgsql();
+        dbContext.Database.EnsureNpgsql();
 
         const string cScheduledStartIndexing = nameof(InboxEnvelope.ScheduledStartIndexing);
         const string cStatus = nameof(InboxEnvelope.Status);
@@ -453,14 +457,6 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         }
 
         return parameter;
-    }
-
-    private void EnsureNpgsql()
-    {
-        var providerName = dbContext.Database.ProviderName;
-
-        if (providerName is not "Npgsql.EntityFrameworkCore.PostgreSQL")
-            throw new NotSupportedException($"The provider {providerName} is not supported.");
     }
 
     /// <summary>
