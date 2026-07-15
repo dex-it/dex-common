@@ -72,6 +72,48 @@ public class InboxCleanupTests : BaseTest
     }
 
     [Test]
+    public async Task Cleanup_MoreRowsThanOneBatch_RemovesThemAll()
+    {
+        // Цикл чистки останавливается по неполной пачке (limit = 1000). Ошибка в условии выхода либо
+        // оставила бы хвост навсегда, либо закрутила бы бесконечный цикл.
+        const int rows = 2345;
+
+        var sp = InitInboxServiceCollection()
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        using (var seedScope = sp.CreateScope())
+        {
+            var seedDb = seedScope.ServiceProvider.GetRequiredService<TestDbContext>();
+            var stale = DateTime.UtcNow.AddDays(-10);
+
+            for (var i = 0; i < rows; i++)
+            {
+                var envelope = new InboxEnvelope(Guid.NewGuid(), $"m-{i}", "consumer-1", TestInboxCommand.InboxTypeId, "{}")
+                {
+                    Status = InboxMessageStatus.Succeeded,
+                    ScheduledStartIndexing = null,
+                    CreatedUtc = stale
+                };
+
+                seedDb.Set<InboxEnvelope>().Add(envelope);
+            }
+
+            await seedDb.SaveChangesAsync();
+        }
+
+        using var scope = sp.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+        var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
+            db, scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
+
+        var removed = await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
+
+        Assert.AreEqual(rows, removed, "every eligible row must be removed, not just the first batch");
+        Assert.AreEqual(0, await db.Set<InboxEnvelope>().CountAsync());
+    }
+
+    [Test]
     public async Task Cleanup_KeepsRecentSucceeded_BecauseRetentionIsTheDeduplicationWindow()
     {
         var sp = InitInboxServiceCollection()
