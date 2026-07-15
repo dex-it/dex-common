@@ -71,8 +71,12 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         {
             envelope.Status = InboxMessageStatus.Failed;
 
+            // Отсчёт от момента отказа, а не от прежнего StartAtUtc. Отсчёт от расписания даёт задержку
+            // только пока обработка успевает за расписанием: стоит ей отстать (бэклог, долгий обработчик),
+            // и StartAtUtc + delay оказывается в прошлом, то есть повтор идёт мгновенно и все попытки
+            // сгорают за миллисекунды. Backoff нужен ровно в этом случае, поэтому он не может от него зависеть.
             var calculatedStartDate = _retryStrategy.CalculateNextStartDate(
-                new InboxRetryStrategyOptions(envelope.StartAtUtc, envelope.Retries));
+                new InboxRetryStrategyOptions(DateTime.UtcNow, envelope.Retries));
             envelope.StartAtUtc = calculatedStartDate;
             envelope.ScheduledStartIndexing = calculatedStartDate;
         }

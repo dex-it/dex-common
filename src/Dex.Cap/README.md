@@ -373,12 +373,23 @@ of the source. `DeadLettered` messages are never deleted by cleanup — they exi
 ### Retry strategy
 
 ```csharp
-services.AddInbox<AppDbContext>((_, configurator) =>
-    configurator.UseExponentialStrategy(baseDelay: TimeSpan.FromSeconds(1), maxDelay: TimeSpan.FromMinutes(5)));
+services.AddInbox<AppDbContext>(
+    options => options.Retries = 6,
+    (_, configurator) =>
+        configurator.UseExponentialStrategy(baseDelay: TimeSpan.FromMinutes(1), maxDelay: TimeSpan.FromMinutes(30)));
 ```
+
+The delay is measured **from the moment the attempt failed**, so a backlog does not eat it.
 
 Default is no extra delay — the next cycle picks the message up. `UseIncrementalStrategy(interval)` and
 `UseExponentialStrategy(baseDelay, maxDelay)` are also available.
+
+Two things to size correctly, or the strategy is decorative:
+
+* A delay below `Period` (default 30s) is not observable: the next attempt happens on the next cycle anyway.
+* The exponent is bounded by `Retries`. The attempt that exhausts the limit dead-letters the message without
+  computing a delay, so with `Retries = N` the multiplier never exceeds `2^(N-2)`. With the default `Retries = 3`
+  you only ever get `baseDelay` and `2*baseDelay`, and `maxDelay` is unreachable.
 
 ### Health check
 
