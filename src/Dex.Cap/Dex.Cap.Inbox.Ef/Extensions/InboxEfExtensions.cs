@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dex.Cap.Inbox.Ef.Extensions;
 
+/// <summary>
+/// Подключение таблицы инбокса к модели EF Core.
+/// </summary>
 public static class InboxEfExtensions
 {
     /// <summary>
@@ -27,9 +30,12 @@ public static class InboxEfExtensions
             .HasIndex(x => new { x.ScheduledStartIndexing, x.Status })
             .HasFilter($"\"{nameof(InboxEnvelope.ScheduledStartIndexing)}\" IS NOT NULL");
 
-        // Индекс чистки: покрывает WHERE Status = Succeeded AND CreatedUtc < @stamp ORDER BY CreatedUtc.
+        // Индекс чистки: WHERE Status = Succeeded AND MessageType = ANY(@own) AND CreatedUtc < @stamp.
+        // MessageType стоит ДО CreatedUtc, потому что чистка обязана быстро отвечать «своих строк нет»:
+        // одну таблицу могут обслуживать несколько сервисов, и без него холостой проход (а он случается
+        // каждый час на каждой реплике) вырождается в Seq Scan по всем строкам соседа.
         entity
-            .HasIndex(x => new { x.Status, x.CreatedUtc });
+            .HasIndex(x => new { x.Status, x.MessageType, x.CreatedUtc });
 
         entity
             .Property(x => x.LockTimeout)

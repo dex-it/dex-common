@@ -17,40 +17,6 @@ namespace Dex.Cap.Ef.Tests.InboxTests;
 
 public class InboxCleanupTests : BaseTest
 {
-    /// <summary>
-    /// Дождаться, пока запрос чистки реально встанет на блокировке строки.
-    /// </summary>
-    /// <remarks>
-    /// Ждём наблюдаемое состояние в самой БД, а не спим фиксированное время: сон либо не дожидается
-    /// запроса на загруженной машине, либо переживает таймаут команды, и тест начинает мерцать.
-    /// </remarks>
-    private static async Task WaitUntilCleanupIsBlocked(string connectionString, string dbName)
-    {
-        await using var observer = new NpgsqlConnection(connectionString);
-        await observer.OpenAsync();
-
-        var deadline = DateTime.UtcNow.AddSeconds(20);
-
-        while (DateTime.UtcNow < deadline)
-        {
-            await using var command = observer.CreateCommand();
-            command.CommandText = """
-                                  SELECT count(*) FROM pg_stat_activity
-                                  WHERE datname = @db AND wait_event_type = 'Lock' AND query ILIKE '%DELETE FROM cap.inbox%'
-                                  """;
-            command.Parameters.AddWithValue("db", dbName);
-
-            if (Convert.ToInt32(await command.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture) > 0)
-            {
-                return;
-            }
-
-            await Task.Delay(50);
-        }
-
-        Assert.Fail("cleanup did not block on the locked row, the test can not prove anything");
-    }
-
     [Test]
     public async Task Cleanup_RemovesOnlyOldSucceeded_AndKeepsFailedAndDeadLettered()
     {
@@ -153,11 +119,13 @@ public class InboxCleanupTests : BaseTest
     }
 
     [Test]
-    public async Task Cleanup_BatchShortenedByAConcurrentUpdate_StillDrainsTheTail()
+    public async Task Cleanup_RowHeldByAnotherWriter_SkipsItAndStillDrainsTheTail()
     {
-        // Удаление идёт по физическому адресу строки. Конкурентное обновление уводит строку на новый
-        // адрес, перепроверка её пропускает, и пачка приходит КОРОЧЕ лимита. Выход из цикла по неполной
-        // пачке принял бы это за «чистить больше нечего» и бросил бы весь хвост до следующего запуска.
+        // Строку держит чужая незакоммиченная транзакция. SKIP LOCKED пропускает такую строку, поэтому
+        // пачка приходит КОРОЧЕ лимита. Выход из цикла по неполной пачке принял бы это за «чистить больше
+        // нечего» и бросил бы весь хвост до следующего запуска, то есть на час.
+        // Заодно фиксируем: чистка НЕ ждёт чужого писателя. Иначе долгая внешняя транзакция подвешивала
+        // бы её на неопределённое время, а пропущенная строка всё равно удаляется следующим заходом.
         const int rows = 2345;
 
         var sp = InitInboxServiceCollection()
@@ -207,21 +175,70 @@ public class InboxCleanupTests : BaseTest
             await command.ExecuteNonQueryAsync();
         }
 
-        // Чистка упрётся в заблокированную строку и будет ждать коммита.
-        var cleanupTask = cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
+        // Чистка идёт, пока блокировка ДЕРЖИТСЯ: она обязана не ждать её, а пропустить строку.
+        var removed = await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
 
-        // Ждём ФАКТ блокировки, а не произвольную паузу: под нагрузкой фиксированная задержка либо
-        // не дожидается запроса, либо упирается в таймаут команды, и тест начинает мерцать.
-        await WaitUntilCleanupIsBlocked(db.Database.GetConnectionString()!, DbName);
+        Assert.AreEqual(rows - 1, removed, "a short batch must not be mistaken for an empty queue");
+        Assert.AreEqual(1, await db.Set<InboxEnvelope>().CountAsync(), "only the locked row may be left behind");
 
+        // Писатель отпустил строку: следующий заход обязан её забрать, иначе она осталась бы навсегда.
         await blockerTx.CommitAsync();
 
-        // После коммита строка живёт по НОВОМУ адресу, перепроверка её пропускает,
-        // и первая пачка приходит неполной.
-        var removed = await cleanupTask;
+        Assert.AreEqual(1, await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None));
+        Assert.AreEqual(0, await db.Set<InboxEnvelope>().CountAsync(), "the skipped row must not be left forever");
+    }
 
-        Assert.AreEqual(rows, removed, "a short batch must not be mistaken for an empty queue");
-        Assert.AreEqual(0, await db.Set<InboxEnvelope>().CountAsync(), "the tail must not be left behind");
+    [Test]
+    public async Task Cleanup_TwoCleanersInParallel_RemoveEveryRowExactlyOnce()
+    {
+        // Чистильщик живёт на КАЖДОЙ реплике, поэтому параллельный запуск это норма, а не экзотика.
+        // Без SKIP LOCKED реплики выбирают одни и те же строки: проигравший ждёт победителя, получает
+        // пустой результат и по условию выхода решает, что чистить больше нечего, бросая хвост на час.
+        const int rows = 3000;
+
+        var sp = InitInboxServiceCollection()
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        var stale = DateTime.UtcNow.AddDays(-10);
+
+        using (var seedScope = sp.CreateScope())
+        {
+            var seedDb = seedScope.ServiceProvider.GetRequiredService<TestDbContext>();
+
+            for (var i = 0; i < rows; i++)
+            {
+                seedDb.Set<InboxEnvelope>().Add(
+                    new InboxEnvelope(Guid.NewGuid(), $"m-{i}", "consumer-1", TestInboxCommand.InboxTypeId, "{}")
+                    {
+                        Status = InboxMessageStatus.Succeeded,
+                        ScheduledStartIndexing = null,
+                        CreatedUtc = stale.AddSeconds(i)
+                    });
+            }
+
+            await seedDb.SaveChangesAsync();
+        }
+
+        // Каждому чистильщику свой scope: это разные реплики, а не общий DbContext.
+        var cleanups = Enumerable.Range(0, 2).Select(async _ =>
+        {
+            using var scope = sp.CreateScope();
+            var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
+                scope.ServiceProvider.GetRequiredService<TestDbContext>(),
+                scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+                scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
+
+            return await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
+        });
+
+        var removed = await Task.WhenAll(cleanups);
+
+        using var checkScope = sp.CreateScope();
+        var db = checkScope.ServiceProvider.GetRequiredService<TestDbContext>();
+
+        Assert.AreEqual(0, await db.Set<InboxEnvelope>().CountAsync(), "two cleaners must not leave a tail behind");
+        Assert.AreEqual(rows, removed.Sum(), "every row must be counted by exactly one cleaner");
     }
 
     [Test]
