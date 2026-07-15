@@ -53,8 +53,8 @@ public static class MicrosoftDependencyInjectionExtensions
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<InboxOptions>, InboxOptionsValidator>());
 
-        // TryAdd, а не Add: повторный AddInbox иначе даст второй DefaultInboxMetricCollector, то есть
-        // второй Meter("Inbox") и удвоение наблюдаемых метрик, и второй реестр типов со своим сканом сборок.
+        // TryAdd, а не Add: повторный AddInbox иначе оставляет в коллекции лишние дескрипторы, а
+        // регистрация потребителя, сделанная ДО AddInbox, молча проигрывала бы дефолтной.
         services.TryAddSingleton<IInboxMetricCollector, DefaultInboxMetricCollector>();
         services.TryAddSingleton<IInboxMessageTypeSource, AppDomainInboxMessageTypeSource>();
         services.TryAddSingleton<IInboxTypeDiscriminatorProvider, InboxTypeDiscriminatorProvider>();

@@ -39,19 +39,19 @@ public class InboxStartupValidationTests : BaseTest
         Assert.IsTrue(ex.Message.Contains(nameof(SecondClaimant), StringComparison.Ordinal));
     }
 
-    [TestCase(typeof(QuotedDiscriminator), '\'', TestName = "StartHost_DiscriminatorWithQuote_FailsAtStartup")]
-    [TestCase(typeof(BracedDiscriminator), '{', TestName = "StartHost_DiscriminatorWithBrace_FailsAtStartup")]
-    [TestCase(typeof(SpacedDiscriminator), ' ', TestName = "StartHost_DiscriminatorWithSpace_FailsAtStartup")]
-    public void StartHost_DiscriminatorWithUnsupportedCharacter_FailsAtStartup(Type messageType, char offender)
+    [Test]
+    public void StartHost_InheritedDiscriminator_ReportsTheConflictHonestly()
     {
-        // Кавычка ломает SQL выборки на стороне Postgres, фигурная скобка ещё раньше, на string.Format
-        // внутри EF. Оба падали бы на каждом цикле фоновой обработки, поэтому ловим на старте.
-        using var host = BuildHost(messageType);
+        // Производный тип наследует статический дискриминатор базового. Компилятор такой код принимает,
+        // дискавери подхватывает оба типа, и честный исход это конфликт: два типа заявили один
+        // идентификатор. Раньше сообщение врало: «производный тип не задал InboxTypeId».
+        using var host = BuildHost(typeof(BaseClaimant), typeof(InheritingClaimant));
 
-        var ex = NUnit.Framework.Assert.ThrowsAsync<DiscriminatorResolveException>(
+        var ex = NUnit.Framework.Assert.ThrowsAsync<DiscriminatorConflictException>(
             (Func<Task>)(async () => await host.StartAsync()));
 
-        Assert.IsTrue(ex!.Message.Contains($"unsupported character '{offender}'", StringComparison.Ordinal), ex.Message);
+        Assert.IsTrue(ex!.Message.Contains(nameof(BaseClaimant), StringComparison.Ordinal), ex.Message);
+        Assert.IsTrue(ex.Message.Contains(nameof(InheritingClaimant), StringComparison.Ordinal), ex.Message);
     }
 
     [Test]
@@ -122,20 +122,12 @@ public class InboxStartupValidationTests : BaseTest
         public static string InboxTypeId => SharedDiscriminator;
     }
 
-    private sealed class QuotedDiscriminator
+    private class BaseClaimant
     {
-        public static string InboxTypeId => "O'Brien";
+        public static string InboxTypeId => SharedDiscriminator;
     }
 
-    private sealed class BracedDiscriminator
-    {
-        public static string InboxTypeId => "cmd-{0}";
-    }
-
-    private sealed class SpacedDiscriminator
-    {
-        public static string InboxTypeId => "order created";
-    }
+    private sealed class InheritingClaimant : BaseClaimant;
 
     private sealed class EmptyDiscriminator
     {

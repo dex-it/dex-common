@@ -107,9 +107,10 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     /// Похоронить строки, которые невозможно взять в обработку.
     /// </summary>
     /// <remarks>
-    /// Единственная причина сюда попасть это LockTimeout ниже минимума, а такое значение может появиться
-    /// только внеполосной записью: конструктор конверта проверяет минимум, у колонки есть дефолт. Само не
-    /// починится, поэтому пропускать строку из цикла в цикл означало бы вечно тратить на неё захват.
+    /// Единственная причина сюда попасть это LockTimeout ниже минимума. Конструктор конверта проверяет
+    /// минимум, у колонки есть дефолт, но сущность публична и её свойства изменяемы, поэтому значение
+    /// может приехать и через обычный EF-код потребителя, и правкой руками. Само не починится, поэтому
+    /// пропускать строку из цикла в цикл означало бы вечно тратить на неё захват.
     /// Хороним явно, чтобы её увидели при разборе, а не искали причину простоя по логам.
     /// </remarks>
     private async Task DeadLetterPoisoned(InboxEnvelope[] poisoned, CancellationToken cancellationToken)
@@ -120,13 +121,17 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         {
             logger.LogError(
                 "Inbox message {MessageId} has LockTimeout {LockTimeout} below the minimum of {MinLockTimeout} and is dead lettered. " +
-                "Such a value can only come from an out-of-band write",
+                "The value can only come from a write that bypassed the envelope constructor",
                 envelope.Id, envelope.LockTimeout, InboxEnvelope.MinLockTimeout);
         }
 
-        await dbContext
+        // Предикат повторяет само условие непригодности, а не только Id. Так метод самоперепроверяется:
+        // если строку уже похоронил другой инстанс, а оператор успел починить LockTimeout и вернуть её
+        // в обработку задокументированным сбросом, запоздалый вызов не перехоронит здоровую строку
+        // с уже неверной причиной.
+        var affected = await dbContext
             .Set<InboxEnvelope>()
-            .Where(x => ids.Contains(x.Id))
+            .Where(x => ids.Contains(x.Id) && x.LockTimeout < InboxEnvelope.MinLockTimeout)
             .ExecuteUpdateAsync(s => s
                     .SetProperty(x => x.Status, InboxMessageStatus.DeadLettered)
                     .SetProperty(x => x.ScheduledStartIndexing, (DateTime?)null)
@@ -136,7 +141,8 @@ internal sealed class InboxDataProviderEf<TDbContext>(
                 cancellationToken)
             .ConfigureAwait(false);
 
-        for (var i = 0; i < poisoned.Length; i++)
+        // Считаем фактически похороненные строки, а не намерение: строку мог похоронить другой инстанс.
+        for (var i = 0; i < affected; i++)
         {
             MetricCollector.IncDeadLetteredCount();
         }
@@ -217,14 +223,17 @@ internal sealed class InboxDataProviderEf<TDbContext>(
             new { LockId = lockId, DbContext = dbContext },
             async (state, token) =>
             {
-                var sql = GenerateFetchPlatformSpecificSql(state.LockId);
+                var discriminators = discriminatorProvider.SupportedDiscriminators;
 
-                if (sql is null)
+                // Ни одного обработчика в этом сервисе: брать нечего, и незачем ходить в БД.
+                if (discriminators.Count is 0)
                     return [];
+
+                var sql = GenerateFetchPlatformSpecificSql();
 
                 var lockedEnvelopes = await state.DbContext
                     .Set<InboxEnvelope>()
-                    .FromSqlRaw(sql)
+                    .FromSqlRaw(sql, discriminators.ToArray(), state.LockId)
                     .AsNoTracking()
                     .ToArrayAsync(cancellationToken: token)
                     .ConfigureAwait(false);
@@ -360,7 +369,23 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         }
     }
 
-    private string? GenerateFetchPlatformSpecificSql(Guid lockId)
+    /// <summary>
+    /// Собрать SQL захвата партии.
+    /// </summary>
+    /// <remarks>
+    /// Дискриминаторы и ключ аренды передаются ПАРАМЕТРАМИ ({0} и {1} подставляет EF), а не подстановкой
+    /// в текст запроса. Подстановка требовала бы ограничивать набор символов дискриминатора: кавычка
+    /// сломала бы литерал на стороне Postgres, а фигурная скобка ещё раньше, на string.Format внутри EF.
+    /// Ограничивать пришлось бы с запасом, отвергая заведомо безопасные значения вроде MessageUrn
+    /// MassTransit ('urn:message:...') или имени вложенного типа ('Outer+Inner'). Параметр снимает
+    /// вопрос целиком: значение не попадает в текст запроса вообще.
+    /// <para>
+    /// LIMIT намеренно остаётся литералом: планировщику нужно знать его на этапе построения плана, чтобы
+    /// оборвать упорядоченный обход индекса на первых MessagesToProcess строках. Значение это int,
+    /// проверенный валидатором опций на старте.
+    /// </para>
+    /// </remarks>
+    private string GenerateFetchPlatformSpecificSql()
     {
         EnsureNpgsql();
 
@@ -372,36 +397,29 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         const string cStartAtUtc = nameof(InboxEnvelope.StartAtUtc);
         const string cMessageType = nameof(InboxEnvelope.MessageType);
 
-        var discriminators = discriminatorProvider.SupportedDiscriminators;
-
-        if (discriminators.Count is 0)
-            return null;
-
-        var discriminatorsSql = string.Join(", ", discriminators.Select(d => $"'{d}'"));
-
         // FOR UPDATE SKIP LOCKED + простановка аренды одним стейтментом: конкурентные инстансы
         // не могут захватить одну и ту же строку, поэтому сервис масштабируется горизонтально.
         // Статус DeadLettered и Succeeded в выборку не попадают: у них ScheduledStartIndexing IS NULL.
-        return $"""
-                WITH cte AS (
-                    SELECT "Id"
-                    FROM {NameConst.SchemaName}.{NameConst.TableName}
-                    WHERE "{cScheduledStartIndexing}" IS NOT NULL
-                      AND "{cMessageType}" IN ({discriminatorsSql})
-                      AND CURRENT_TIMESTAMP >= "{cStartAtUtc}"
-                      AND ("{cStatus}" = {InboxMessageStatus.New:D} OR "{cStatus}" = {InboxMessageStatus.Failed:D})
-                      AND ("{cLockId}" IS NULL OR "{cLockExpirationTimeUtc}" IS NULL OR "{cLockExpirationTimeUtc}" < CURRENT_TIMESTAMP)
-                    ORDER BY "{cScheduledStartIndexing}"
-                    LIMIT {Options.MessagesToProcess}
-                    FOR UPDATE SKIP LOCKED
-                )
-                UPDATE {NameConst.SchemaName}.{NameConst.TableName} AS ie
-                SET
-                    "{cLockId}" = '{lockId:D}',
-                    "{cLockExpirationTimeUtc}" = CURRENT_TIMESTAMP + ie."{cLockTimeout}"
-                FROM cte
-                WHERE ie."Id" = cte."Id"
-                RETURNING ie.*;
-                """;
+        return $$"""
+                 WITH cte AS (
+                     SELECT "Id"
+                     FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
+                     WHERE "{{cScheduledStartIndexing}}" IS NOT NULL
+                       AND "{{cMessageType}}" = ANY({0})
+                       AND CURRENT_TIMESTAMP >= "{{cStartAtUtc}}"
+                       AND ("{{cStatus}}" = {{InboxMessageStatus.New:D}} OR "{{cStatus}}" = {{InboxMessageStatus.Failed:D}})
+                       AND ("{{cLockId}}" IS NULL OR "{{cLockExpirationTimeUtc}}" IS NULL OR "{{cLockExpirationTimeUtc}}" < CURRENT_TIMESTAMP)
+                     ORDER BY "{{cScheduledStartIndexing}}"
+                     LIMIT {{Options.MessagesToProcess}}
+                     FOR UPDATE SKIP LOCKED
+                 )
+                 UPDATE {{NameConst.SchemaName}}.{{NameConst.TableName}} AS ie
+                 SET
+                     "{{cLockId}}" = {1},
+                     "{{cLockExpirationTimeUtc}}" = CURRENT_TIMESTAMP + ie."{{cLockTimeout}}"
+                 FROM cte
+                 WHERE ie."Id" = cte."Id"
+                 RETURNING ie.*;
+                 """;
     }
 }

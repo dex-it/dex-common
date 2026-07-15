@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Inbox.Interfaces;
@@ -8,7 +9,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Inbox.Ef;
 
-internal sealed class InboxCleanupDataProviderEf<TDbContext>(TDbContext dbContext, ILogger<InboxCleanupDataProviderEf<TDbContext>> logger)
+internal sealed class InboxCleanupDataProviderEf<TDbContext>(
+    TDbContext dbContext,
+    IInboxTypeDiscriminatorProvider discriminatorProvider,
+    ILogger<InboxCleanupDataProviderEf<TDbContext>> logger)
     : IInboxCleanupDataProvider
     where TDbContext : DbContext
 {
@@ -17,6 +21,18 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(TDbContext dbContex
     public async Task<int> Cleanup(TimeSpan olderThan, CancellationToken cancellationToken)
     {
         EnsureNpgsql();
+
+        // Чистим только СВОИ сообщения. Одну таблицу могут обслуживать несколько сервисов, у каждого
+        // свой набор дискриминаторов и свой ретеншен. Ретеншен здесь это окно дедупликации, поэтому
+        // сервис с cleanupDays: 1, вычистив чужие строки, молча укоротил бы окно соседа с 30 дней до
+        // одного дня, и сосед начал бы принимать повторы как новые сообщения. Тот же фильтр стоит в
+        // выборке и в метриках.
+        var discriminators = discriminatorProvider.SupportedDiscriminators;
+
+        if (discriminators.Count is 0)
+        {
+            return 0;
+        }
 
         var stamp = DateTime.UtcNow.Subtract(olderThan);
         var total = 0;
@@ -37,27 +53,35 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(TDbContext dbContex
         //
         // Удаляем только Succeeded. DeadLettered остаётся: это сообщения, требующие ручного разбора,
         // и молча стирать их означало бы прятать инциденты.
-        var sql = $"""
-                   DELETE FROM {NameConst.SchemaName}.{NameConst.TableName}
-                   WHERE ctid IN (
-                       SELECT ctid
-                       FROM {NameConst.SchemaName}.{NameConst.TableName}
-                       WHERE "{nameof(InboxEnvelope.Status)}" = {InboxMessageStatus.Succeeded:D}
-                         AND "{nameof(InboxEnvelope.CreatedUtc)}" < @p0
-                       ORDER BY "{nameof(InboxEnvelope.CreatedUtc)}"
-                       LIMIT {Limit}
-                   )
-                   """;
+        var sql = $$"""
+                    DELETE FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
+                    WHERE ctid IN (
+                        SELECT ctid
+                        FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
+                        WHERE "{{nameof(InboxEnvelope.Status)}}" = {{InboxMessageStatus.Succeeded:D}}
+                          AND "{{nameof(InboxEnvelope.CreatedUtc)}}" < {0}
+                          AND "{{nameof(InboxEnvelope.MessageType)}}" = ANY({1})
+                        ORDER BY "{{nameof(InboxEnvelope.CreatedUtc)}}"
+                        LIMIT {{Limit}}
+                    )
+                    """;
 
+        var supported = discriminators.ToArray();
+
+
+        // Выходим по ПУСТОЙ пачке, а не по неполной. Неполная пачка не означает, что чистить больше
+        // нечего: конкурентное обновление строки уводит её на новый ctid, перепроверка EPQ такую строку
+        // пропускает, и пачка приходит короче лимита. Выход по неполной пачке бросал бы весь оставшийся
+        // хвост до следующего запуска чистки, то есть на час.
         do
         {
             affected = await dbContext.Database
-                .ExecuteSqlRawAsync(sql, [stamp], cancellationToken)
+                .ExecuteSqlRawAsync(sql, new object[] { stamp, supported }, cancellationToken)
                 .ConfigureAwait(false);
 
             total += affected;
         }
-        while (affected == Limit);
+        while (affected > 0);
 
         return total;
     }

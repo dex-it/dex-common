@@ -104,8 +104,13 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
 
     private static string GetDiscriminator(Type type)
     {
-        // static abstract член виден только на самом конкретном типе: GetProperty не ищет по иерархии.
-        var discriminatorProperty = type.GetProperty(nameof(IInboxMessage.InboxTypeId), BindingFlags.Public | BindingFlags.Static);
+        // FlattenHierarchy: статический член, объявленный базовым классом, иначе не виден, и тип,
+        // унаследовавший дискриминатор, отвергался бы с сообщением «не задал InboxTypeId», хотя
+        // компилятор такой код принимает. Честный исход для такой иерархии это конфликт
+        // дискриминаторов ниже: базовый и производный типы заявляют один и тот же идентификатор.
+        var discriminatorProperty = type.GetProperty(
+            nameof(IInboxMessage.InboxTypeId),
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
         if (discriminatorProperty?.GetValue(null) is not string discriminator || string.IsNullOrWhiteSpace(discriminator))
         {
@@ -114,27 +119,10 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
                 "A discriminator must be non-empty and stable.");
         }
 
-        // Дискриминатор подставляется в SQL выборки литералом, а сам SQL проходит через string.Format
-        // внутри EF. Поэтому кавычка ломает запрос на стороне Postgres, а фигурная скобка ещё раньше, на
-        // форматировании. И то, и другое падало бы на каждом цикле фоновой обработки, где превращается
-        // в LogCritical при формально живом хосте, поэтому проверяем здесь, при построении реестра.
-        //
-        // Белый список, а не перечисление опасных символов: дискриминатор это стабильный идентификатор
-        // типа (на практике GUID или имя), у него нет причин содержать что-то кроме букв, цифр, дефиса,
-        // подчёркивания и точки. Запрещать по списку значит однажды забыть очередной символ.
-        foreach (var symbol in discriminator)
-        {
-            if (char.IsAsciiLetterOrDigit(symbol) || symbol is '-' or '_' or '.')
-            {
-                continue;
-            }
-
-            throw new DiscriminatorResolveException(
-                $"Inbox message type '{type.FullName}' defines {nameof(IInboxMessage.InboxTypeId)} " +
-                $"'{discriminator}' containing the unsupported character '{symbol}'. " +
-                "A discriminator may only contain ASCII letters, digits, '-', '_' and '.'.");
-        }
-
+        // Набор символов не ограничиваем: дискриминатор уходит в SQL захвата параметром, а не подстановкой
+        // в текст запроса, поэтому ни кавычка, ни фигурная скобка запрос не ломают. Ограничение отвергало бы
+        // заведомо рабочие значения, например MessageUrn MassTransit ('urn:message:...') или имя вложенного
+        // типа ('Outer+Inner'), а сменить дискриминатор существующему типу нельзя: он лежит в БД.
         return discriminator;
     }
 }

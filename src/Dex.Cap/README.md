@@ -368,8 +368,11 @@ whereas a status flag would stay stuck forever.
 
 `CleanupOlderThan` deletes processed messages, and the row *is* the deduplication key. Once it is gone, a
 redelivery of that message is accepted as new. Keep the retention comfortably above the maximum redelivery horizon
-of the source. `DeadLettered` messages are never deleted by cleanup — they exist to be investigated, and
-`DeadLetteredJobCount` reports how many are waiting.
+of the source. Cleanup only removes messages of the discriminators **this** service handles, so a co-tenant sharing the table
+keeps its own deduplication window regardless of your `CleanupOlderThan`.
+
+`DeadLettered` messages are never deleted by cleanup — they exist to be investigated, and
+`DeadLetteredJobCount` reports how many of this service's own messages are waiting.
 
 Returning a message to processing after you fixed the cause takes three columns, not one: the status alone is not
 enough, because the fetch requires `ScheduledStartIndexing IS NOT NULL` and the next failure would bury the message
@@ -423,7 +426,7 @@ app.MapHealthChecks("/health/inbox", new HealthCheckOptions
 Meter `Inbox`: `ProcessCount`, `EmptyProcessCount`, `ProcessJobCount`, `ProcessJobSuccessCount`,
 `ProcessJobFailedCount`, `DeadLetteredCount`, `DuplicateCount`, `ExpiredBeforeStartCount`, `ProcessDuration`,
 plus two observable up/down counters: `FreeJobCount` (depth of what *this* service can handle) and
-`DeadLetteredJobCount` (buried messages awaiting review, never removed by cleanup).
+`DeadLetteredJobCount` (buried messages **this** service is expected to review, never removed by cleanup).
 
 A steadily non-zero `ExpiredBeforeStartCount` means the lease dies while the claimed batch is still draining:
 raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`.
@@ -449,9 +452,9 @@ Replace `IInboxSerializer` if you need different options; it is resolved from DI
 * PostgreSQL only (`Dex.Cap.Inbox.Ef` uses `FOR UPDATE SKIP LOCKED` and `ON CONFLICT`).
 * Message types are discovered by reflection over loaded assemblies, so the assembly declaring `IInboxMessage`
   implementations must be loaded. In practice registering the handler loads it. The registry is built during host
-  start (`AddInbox` registers a warm-up hosted service), so a duplicate or malformed discriminator fails the host
-  start rather than surfacing later inside the background worker. A discriminator may only contain ASCII letters,
-  digits, `-`, `_` and `.` — it is inlined into the claim SQL, so anything else breaks every processing cycle.
+  start (`AddInbox` registers a warm-up hosted service), so a duplicate or missing discriminator fails the host
+  start rather than surfacing later inside the background worker. The discriminator itself is unrestricted: it
+  reaches the claim SQL as a parameter, so a MassTransit `urn:message:...` or a nested type name is fine.
 * Ordering between messages is not guaranteed; design handlers to be order-independent.
 
 ---
