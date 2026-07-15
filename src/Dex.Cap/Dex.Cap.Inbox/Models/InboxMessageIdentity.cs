@@ -1,0 +1,42 @@
+using System;
+
+namespace Dex.Cap.Inbox.Models;
+
+/// <summary>
+/// Идентичность входящего сообщения: ключ дедупликации.
+/// </summary>
+/// <remarks>
+/// Ядро не знает про транспорт, поэтому оба значения задаёт вызывающая сторона.
+/// </remarks>
+public readonly record struct InboxMessageIdentity
+{
+    public InboxMessageIdentity(string messageId, string consumerId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(messageId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(consumerId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(messageId.Length, InboxEnvelope.MaxIdentityLength);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(consumerId.Length, InboxEnvelope.MaxIdentityLength);
+
+        MessageId = messageId;
+        ConsumerId = consumerId;
+    }
+
+    /// <summary>
+    /// Идентификатор сообщения в источнике: для шины — идентификатор сообщения брокера,
+    /// для HTTP — значение Idempotency-Key.
+    /// </summary>
+    /// <remarks>
+    /// Обязан быть стабилен между повторными доставками одного и того же сообщения,
+    /// иначе дедупликация не работает: каждая доставка будет принята как новая.
+    /// </remarks>
+    public string MessageId { get; }
+
+    /// <summary>
+    /// Идентификатор потребителя: имя эндпоинта, тип консьюмера, маршрут HTTP.
+    /// </summary>
+    /// <remarks>
+    /// Обязан быть стабилен между перезапусками и одинаков на всех инстансах сервиса,
+    /// поэтому значения, меняющиеся от инстанса к инстансу, использовать нельзя.
+    /// </remarks>
+    public string ConsumerId { get; }
+}
