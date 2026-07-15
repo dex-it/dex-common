@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
@@ -58,9 +59,11 @@ public class InboxFailureTests : BaseTest
     }
 
     [Test]
-    public async Task Process_CorruptedPayload_MarksMessageFailedInsteadOfCrashing()
+    public async Task Process_CorruptedPayload_IsRetriedAsAnOrdinaryFailure()
     {
-        var sp = InitInboxServiceCollection(retries: 1)
+        // retries: 3, чтобы пройти путь Failed -> повтор, а не сразу DeadLettered: битое тело
+        // не особый случай, это обычный отказ обработки.
+        var sp = InitInboxServiceCollection(retries: 3)
             .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
             .BuildServiceProvider();
 
@@ -76,14 +79,48 @@ public class InboxFailureTests : BaseTest
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.Content, "{ this is not json"));
         }
 
-        // Не бросает: битое тело — это исход сообщения, а не авария процесса. Ровно на этом
+        // Не бросает: битое тело это исход сообщения, а не авария процесса. Ровно на этом
         // самописный инбокс роняет весь под и уходит в краш-луп.
         var processed = await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
         Assert.AreEqual(1, processed);
 
         var envelope = await GetDb(sp).Set<InboxEnvelope>().SingleAsync();
+        Assert.AreEqual(InboxMessageStatus.Failed, envelope.Status, "the first failure must be retriable, not terminal");
+        Assert.AreEqual(1, envelope.Retries);
+        Assert.IsNotNull(envelope.ScheduledStartIndexing, "the message must stay in the fetch set for a retry");
+
+        // Ассерт по содержимому: без него тест зелёный при ЛЮБОЙ ошибке и не доказывает,
+        // что сработала именно ветка разбора тела.
+        Assert.IsTrue(envelope.Error!.Contains(nameof(JsonException), StringComparison.Ordinal),
+            $"the outcome must record the deserialization failure, but was: {envelope.ErrorMessage}");
+    }
+
+    [Test]
+    public async Task Process_CorruptedPayload_EventuallyGoesToDeadLetter()
+    {
+        var sp = InitInboxServiceCollection(retries: 1)
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        await sp.GetRequiredService<IInboxService>().EnqueueAsync(
+            new TestInboxCommand { Args = "valid" },
+            new InboxMessageIdentity("message-1", "consumer-1"));
+
+        using (var breakScope = sp.CreateScope())
+        {
+            var breakDb = breakScope.ServiceProvider.GetRequiredService<TestDbContext>();
+            await breakDb.Set<InboxEnvelope>()
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Content, "{ this is not json"));
+        }
+
+        await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
+
+        // Тело само не починится, поэтому по исчерпании попыток сообщение обязано быть похоронено,
+        // а не крутиться вечно.
+        var envelope = await GetDb(sp).Set<InboxEnvelope>().SingleAsync();
         Assert.AreEqual(InboxMessageStatus.DeadLettered, envelope.Status);
-        Assert.IsNotNull(envelope.Error);
+        Assert.IsNull(envelope.ScheduledStartIndexing);
+        Assert.IsTrue(envelope.Error!.Contains(nameof(JsonException), StringComparison.Ordinal));
     }
 
     [Test]

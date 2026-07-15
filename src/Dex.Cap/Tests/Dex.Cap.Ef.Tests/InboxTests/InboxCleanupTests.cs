@@ -17,9 +17,11 @@ namespace Dex.Cap.Ef.Tests.InboxTests;
 public class InboxCleanupTests : BaseTest
 {
     [Test]
-    public async Task Cleanup_RemovesOldSucceededAndKeepsDeadLettered()
+    public async Task Cleanup_RemovesOnlyOldSucceeded_AndKeepsFailedAndDeadLettered()
     {
-        var sp = InitInboxServiceCollection(retries: 1)
+        // retries: 2, чтобы получить строку, застрявшую в Failed между попытками: чистка обязана
+        // обходить её стороной, иначе сообщение, ждущее ретрая, исчезнет молча.
+        var sp = InitInboxServiceCollection(retries: 2)
             .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
             .AddScoped<IInboxMessageHandler<TestErrorInboxCommand>, TestErrorInboxCommandHandler>()
             .BuildServiceProvider();
@@ -28,9 +30,16 @@ public class InboxCleanupTests : BaseTest
         await inboxService.EnqueueAsync(new TestInboxCommand(), new InboxMessageIdentity("ok-1", "consumer-1"));
         await inboxService.EnqueueAsync(new TestErrorInboxCommand(), new InboxMessageIdentity("fail-1", "consumer-1"));
 
+        // Первый цикл: успех уходит в Succeeded, падение в Failed (попытки ещё есть).
         await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
 
-        // Состариваем обе строки, чтобы обе попали под порог ретеншена.
+        var failedId = new InboxMessageIdentity("dead-1", "consumer-1");
+        await inboxService.EnqueueAsync(new TestErrorInboxCommand(), failedId);
+
+        // Второй и третий циклы добивают обе падающие строки: первая уходит в DeadLettered,
+        // вторая остаётся в Failed.
+        await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
+
         using (var ageScope = sp.CreateScope())
         {
             var ageDb = ageScope.ServiceProvider.GetRequiredService<TestDbContext>();
@@ -40,18 +49,26 @@ public class InboxCleanupTests : BaseTest
 
         using var scope = sp.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+
+        var statusesBefore = await db.Set<InboxEnvelope>().Select(x => x.Status).ToListAsync();
+        Assert.IsTrue(statusesBefore.Contains(InboxMessageStatus.Succeeded), "setup must produce a Succeeded row");
+        Assert.IsTrue(statusesBefore.Contains(InboxMessageStatus.Failed), "setup must produce a Failed row");
+        Assert.IsTrue(statusesBefore.Contains(InboxMessageStatus.DeadLettered), "setup must produce a DeadLettered row");
+
         var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
             db, scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
         var removed = await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
 
-        Assert.AreEqual(1, removed);
+        Assert.AreEqual(1, removed, "only the Succeeded row is old enough and eligible");
 
-        var left = await db.Set<InboxEnvelope>().ToListAsync();
-        Assert.AreEqual(1, left.Count);
+        var left = await db.Set<InboxEnvelope>().Select(x => x.Status).ToListAsync();
 
-        // DeadLettered переживает чистку: это сообщения для ручного разбора, стирать их молча нельзя.
-        Assert.AreEqual(InboxMessageStatus.DeadLettered, left[0].Status);
+        // Succeeded удалён, а Failed и DeadLettered живы: первое ещё ждёт ретрая, второе ждёт разбора.
+        Assert.AreEqual(2, left.Count);
+        Assert.IsFalse(left.Contains(InboxMessageStatus.Succeeded));
+        Assert.IsTrue(left.Contains(InboxMessageStatus.Failed), "a message awaiting a retry must survive cleanup");
+        Assert.IsTrue(left.Contains(InboxMessageStatus.DeadLettered), "a buried message must survive cleanup");
     }
 
     [Test]
