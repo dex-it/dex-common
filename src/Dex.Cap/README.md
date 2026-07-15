@@ -428,6 +428,22 @@ plus two observable up/down counters: `FreeJobCount` (depth of what *this* servi
 A steadily non-zero `ExpiredBeforeStartCount` means the lease dies while the claimed batch is still draining:
 raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`.
 
+### The message body is stored, so its schema is a contract
+
+The body is serialized on enqueue and deserialized **after a restart and after a deploy**, exactly like the
+discriminator. `System.Text.Json` with default options is used, so the schema must stay backward compatible with
+whatever is still sitting in the table (up to `CleanupOlderThan`):
+
+* **Enums are written as numbers.** Reordering or removing enum members silently changes the meaning of stored
+  messages. Append new members at the end, or serialize enums as strings via a custom `IInboxSerializer`.
+* **Renaming a property, or changing its type**, makes stored bodies unreadable: deserialization throws, the message
+  is retried and then dead-lettered. Add new properties instead, and keep the old ones readable.
+* **Adding a property is safe**: missing members deserialize to their default value.
+* Property matching is case-sensitive by default.
+
+Replace `IInboxSerializer` if you need different options; it is resolved from DI, so registering your own after
+`AddInbox` wins.
+
 ### Limitations
 
 * PostgreSQL only (`Dex.Cap.Inbox.Ef` uses `FOR UPDATE SKIP LOCKED` and `ON CONFLICT`).

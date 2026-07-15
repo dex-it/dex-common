@@ -62,7 +62,7 @@ public class InboxLeaseLossTests : BaseTest
         Assert.AreEqual(0, await db.Users.CountAsync(), "handler effect must not be committed without the status");
 
         var envelope = await db.Set<InboxEnvelope>().SingleAsync();
-        Assert.AreNotEqual(InboxMessageStatus.Succeeded, envelope.Status, "the message must not be marked as handled");
+        Assert.AreEqual(InboxMessageStatus.New, envelope.Status, "the message must stay exactly as it was");
 
         // Попытка не потрачена: обработку завершит владелец аренды, а не этот инстанс.
         Assert.AreEqual(0, envelope.Retries, "losing the lease must not spend an attempt");
@@ -95,7 +95,9 @@ public class InboxLeaseLossTests : BaseTest
         Assert.AreEqual(0, await db.Users.CountAsync(), "handler effect must not be committed without the status");
 
         var envelope = await db.Set<InboxEnvelope>().SingleAsync();
-        Assert.AreNotEqual(InboxMessageStatus.Succeeded, envelope.Status);
+        Assert.AreEqual(InboxMessageStatus.New, envelope.Status, "the message must stay exactly as it was");
+        Assert.AreEqual(0, envelope.Retries, "losing the lease must not spend an attempt");
+        Assert.IsNotNull(envelope.ScheduledStartIndexing, "the message must stay in the fetch set");
     }
 
     [Test]
