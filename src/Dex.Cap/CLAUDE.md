@@ -1,10 +1,10 @@
 # Dex.Cap
 
-Два паттерна транзакционной надёжности: Outbox и OnceExecutor. Общий код в `Dex.Cap.Common` (интерфейсы) и `Dex.Cap.Common.Ef` (транзакции, savepoints, retry).
+Три паттерна транзакционной надёжности: Outbox (исходящие), Inbox (входящие) и OnceExecutor (идемпотентность). Общий код в `Dex.Cap.Common` (интерфейсы) и `Dex.Cap.Common.Ef` (транзакции, retry).
 
-## Структура solution (15 проектов)
+## Структура solution (18 проектов)
 
-Common, Common.Ef, Outbox (+ Ef, Neo4j, AspNetScheduler), OnceExecutor (+ Ef, Neo4j, ClickHouse, Memory, AspNetScheduler), Outbox.OnceExecutor.MassTransit. Тесты: `Tests/Dex.Cap.Ef.Tests` (основной), `Tests/Dex.Cap.OnceExecutor.Memory.Test`, `Tests/Dex.Cap.ClickHouse.Test`, `Tests/Dex.Outbox.Command.Test`.
+Common, Common.Ef, Outbox (+ Ef, Neo4j, AspNetScheduler), Inbox (+ Ef, AspNetScheduler), OnceExecutor (+ Ef, Neo4j, ClickHouse, Memory, AspNetScheduler), Outbox.OnceExecutor.MassTransit. Тесты: `Tests/Dex.Cap.Ef.Tests` (основной), `Tests/Dex.Cap.OnceExecutor.Memory.Test`, `Tests/Dex.Cap.ClickHouse.Test`, `Tests/Dex.Outbox.Command.Test`.
 
 ## Outbox
 
@@ -18,9 +18,23 @@ DB-модель `OutboxEnvelope`: Id, CorrelationId, MessageType (discriminator)
 
 Обработчики: `IOutboxMessageHandler<T>`. Если `AllowAutoPublishing=true` и нет явного handler, `AddOutboxPublisher()` авто-публикует через `IPublishEndpoint`. Если `AllowAutoPublishing=false` и нет handler, job fails.
 
+## Inbox
+
+Сообщение реализует `IInboxMessage`: `static abstract string InboxTypeId` (дискриминатор). Обработчик `IInboxMessageHandler<T>` обязателен: выбираются только сообщения с зарегистрированным обработчиком.
+
+Приём: `IInboxService.EnqueueAsync(message, new InboxMessageIdentity(messageId, consumerId), lockTimeout)`. В отличие от Outbox сохраняет НЕМЕДЛЕННО, своей транзакцией: смысл в фиксации сообщения до подтверждения источнику. Возвращает `Accepted`/`Duplicate`; дубль — штатный исход, не исключение.
+
+Pipeline: Enqueue (`INSERT ... ON CONFLICT ("MessageId","ConsumerId") DO NOTHING`) -> Claim (CTE + `FOR UPDATE SKIP LOCKED` + аренда, PostgreSQL-only) -> Process (обработчик + перевод в Succeeded ОДНОЙ транзакцией) -> Fail (отдельной транзакцией после отката).
+
+DB-модель `InboxEnvelope` (таблица `cap.inbox`): Id, MessageId + ConsumerId (уникальный индекс = ключ дедупликации), MessageType, Content (JSON), ActivityId, Retries, Status (New=0/Failed=1/Succeeded=2/DeadLettered=3), ErrorMessage + Error, CreatedUtc, Updated, StartAtUtc, ScheduledStartIndexing, LockTimeout + LockId + LockExpirationTimeUtc. Индексы: уникальный `(MessageId, ConsumerId)`; частичный `(ScheduledStartIndexing, Status)` с фильтром `ScheduledStartIndexing IS NOT NULL`; `(Status, CreatedUtc)` под чистку.
+
+Транспорт-агностичен: ключ дедупликации задаёт вызывающая сторона, поэтому источником может быть и шина (`context.MessageId`), и HTTP (`Idempotency-Key`). Зависимости на MassTransit нет.
+
 ## OnceExecutor
 
 Два варианта: `IOnceExecutor<TOptions>` (прямая работа с DbContext) и `IStrategyOnceExecutor<TArg, TResult>` (стратегия с `IsAlreadyExecuted`, `Execute`, `Read`). DB-модель `LastTransaction`: PK `string IdempotentKey`, `DateTime Created`.
+
+Отличие от Inbox: OnceExecutor выполняет логику ИНЛАЙН в консьюмере и не хранит тело сообщения, поэтому у него нет ни отложенной обработки, ни ретраев с состоянием, ни статусов. Это дедупликатор эффекта, а не инбокс.
 
 ## DI-регистрация
 
@@ -28,6 +42,8 @@ DB-модель `OutboxEnvelope`: Id, CorrelationId, MessageType (discriminator)
 services.AddOutbox<TDbContext>();
 services.AddDefaultOutboxScheduler<TDbContext>(periodSeconds: 5, cleanupDays: 7);
 services.AddOutboxPublisher();  // авто-обработчик для AllowAutoPublishing=true
+services.AddInbox<TDbContext>();
+services.AddDefaultInboxScheduler<TDbContext>(periodSeconds: 30, cleanupDays: 30);
 services.AddOnceExecutor<TDbContext>();
 services.AddStrategyOnceExecutor<TArg, TResult, TStrategy, TDbContext>();
 services.AddDefaultOnceExecutorScheduler<TDbContext>(periodSeconds, cleanupDays);
@@ -36,6 +52,7 @@ services.AddDefaultOnceExecutorScheduler<TDbContext>(periodSeconds, cleanupDays)
 EF-конфигурация (обязательно в `OnModelCreating`):
 ```csharp
 modelBuilder.OutboxModelCreating();       // таблица OutboxEnvelope
+modelBuilder.InboxModelCreating();        // таблица InboxEnvelope
 modelBuilder.OnceExecutorModelCreating(); // таблица LastTransaction
 ```
 
@@ -69,3 +86,9 @@ NUnit. `BaseTest`: уникальная БД на тест (`"db_test_" + DateTi
 - `AddHealthChecks()` нужно вызвать ДО `AddDefaultOutboxScheduler()`, иначе health check не регистрируется
 - Outbox.Ef работает ТОЛЬКО с PostgreSQL (CTE + FOR UPDATE SKIP LOCKED)
 - `DiscriminatorResolveException` при enqueue, если тип сообщения не найден в загруженных сборках
+- Inbox.Ef тоже ТОЛЬКО PostgreSQL (`FOR UPDATE SKIP LOCKED` + `ON CONFLICT DO NOTHING`)
+- Inbox: `CleanupOlderThan` это НЕ просто ретеншен, а окно дедупликации. Удалили строку — повтор того же сообщения будет принят как новый. Держать выше максимального горизонта передоставки источника
+- Inbox: `ConsumerId` обязан быть стабилен между рестартами и одинаков на всех инстансах. Значение, меняющееся от инстанса к инстансу, отключает дедупликацию
+- Inbox: обработчик НЕ должен вызывать `SaveChangesAsync` сам — коммит делает транзакция обработки, вместе с переводом сообщения в Succeeded
+- Inbox: транзакция покрывает только БД. Внешние вызовы обработчика (HTTP, пуши, брокер) повторятся при ретрае, поэтому обязаны быть идемпотентны сами по себе. Гарантия — effectively once, не exactly once
+- Inbox: коллизия дискриминаторов роняет построение реестра (`DiscriminatorConflictException`), в отличие от Outbox, который молча берёт первый тип
