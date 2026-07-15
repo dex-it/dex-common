@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Dex.Cap.Ef.Tests.Model;
+using Dex.Cap.Inbox.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +58,7 @@ public class TestDbContext(string dbName) : DbContext
 
         modelBuilder.OnceExecutorModelCreating();
         modelBuilder.OutboxModelCreating();
+        modelBuilder.InboxModelCreating();
     }
 
     // ReSharper disable once UnusedType.Local

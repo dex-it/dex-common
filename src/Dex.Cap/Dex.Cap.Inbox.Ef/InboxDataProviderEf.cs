@@ -1,4 +1,5 @@
 using System;
+using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,25 +46,28 @@ internal sealed class InboxDataProviderEf<TDbContext>(
                    ON CONFLICT ("MessageId", "ConsumerId") DO NOTHING
                    """;
 
-        var affected = await dbContext.Database.ExecuteSqlRawAsync(
-                sql,
-                [
-                    inboxEnvelope.Id,
-                    inboxEnvelope.MessageId,
-                    inboxEnvelope.ConsumerId,
-                    inboxEnvelope.MessageType,
-                    inboxEnvelope.Content,
-                    (object?)inboxEnvelope.ActivityId ?? DBNull.Value,
-                    inboxEnvelope.Retries,
-                    (int)inboxEnvelope.Status,
-                    inboxEnvelope.CreatedUtc,
-                    // Оба поля заполняет конструктор InboxEnvelope, у принимаемого сообщения они всегда есть.
-                    inboxEnvelope.StartAtUtc!.Value,
-                    inboxEnvelope.ScheduledStartIndexing!.Value,
-                    inboxEnvelope.LockTimeout
-                ],
-                cancellationToken)
-            .ConfigureAwait(false);
+        // Параметры создаём через провайдера: ExecuteSqlRawAsync не умеет выводить тип для null,
+        // а ActivityId может быть пустым, если приём идёт вне активной трассы.
+        using var command = dbContext.Database.GetDbConnection().CreateCommand();
+
+        var parameters = new object[]
+        {
+            CreateParameter(command, "p0", inboxEnvelope.Id),
+            CreateParameter(command, "p1", inboxEnvelope.MessageId),
+            CreateParameter(command, "p2", inboxEnvelope.ConsumerId),
+            CreateParameter(command, "p3", inboxEnvelope.MessageType),
+            CreateParameter(command, "p4", inboxEnvelope.Content),
+            CreateParameter(command, "p5", inboxEnvelope.ActivityId, System.Data.DbType.String),
+            CreateParameter(command, "p6", inboxEnvelope.Retries),
+            CreateParameter(command, "p7", (int)inboxEnvelope.Status),
+            CreateParameter(command, "p8", inboxEnvelope.CreatedUtc),
+            // Оба поля заполняет конструктор InboxEnvelope, у принимаемого сообщения они всегда есть.
+            CreateParameter(command, "p9", inboxEnvelope.StartAtUtc!.Value),
+            CreateParameter(command, "p10", inboxEnvelope.ScheduledStartIndexing!.Value),
+            CreateParameter(command, "p11", inboxEnvelope.LockTimeout)
+        };
+
+        var affected = await dbContext.Database.ExecuteSqlRawAsync(sql, parameters, cancellationToken).ConfigureAwait(false);
 
         if (affected != 0)
         {
@@ -182,6 +186,20 @@ internal sealed class InboxDataProviderEf<TDbContext>(
             },
             EfTransactionOptions.Default,
             cancellationToken: cancellationToken);
+    }
+
+    private static DbParameter CreateParameter(DbCommand command, string name, object? value, System.Data.DbType? dbType = null)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+
+        if (dbType.HasValue)
+        {
+            parameter.DbType = dbType.Value;
+        }
+
+        return parameter;
     }
 
     private void EnsureNpgsql()

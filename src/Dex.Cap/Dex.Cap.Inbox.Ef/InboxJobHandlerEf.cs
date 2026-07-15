@@ -39,6 +39,8 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
                 "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}",
                 job.Envelope.Id);
 
+            DiscardRolledBackChanges();
+
             // Аренда истекла: фиксируем неудачу вне отменённого токена, иначе исход потеряется.
             // Строку мог уже перехватить другой обработчик — тогда CompleteJobAsync ничего не изменит и предупредит.
             await dataProvider.JobFail(job, "Lock is expired", cancellationToken: CancellationToken.None).ConfigureAwait(false);
@@ -57,8 +59,27 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
             // а по исчерпании попыток в DeadLettered, но хост продолжит работать.
             logger.LogError(ex, "Failed to process inbox message {MessageId}", job.Envelope.Id);
 
+            DiscardRolledBackChanges();
+
             await dataProvider.JobFail(job, ex.Message, ex, CancellationToken.None).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Выбросить изменения обработчика, оставшиеся в ChangeTracker после отката транзакции.
+    /// </summary>
+    /// <remarks>
+    /// Обработчик мог успеть добавить сущности до падения. Транзакция откатилась, и в БД их нет,
+    /// но в ChangeTracker они остались: без очистки следующая транзакция (фиксация неудачи) упала бы
+    /// на защите от несохранённых изменений, а сама неудача не записалась бы.
+    /// <para>
+    /// Чистка безопасна именно здесь: транзакция уже откачена, поэтому все отслеживаемые изменения
+    /// заведомо устарели, а DbContext создаётся на каждое сообщение и ни с кем не разделяется.
+    /// </para>
+    /// </remarks>
+    private void DiscardRolledBackChanges()
+    {
+        dbContext.ChangeTracker.Clear();
     }
 
     /// <summary>

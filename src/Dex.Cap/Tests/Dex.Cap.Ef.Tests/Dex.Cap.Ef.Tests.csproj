@@ -28,6 +28,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Dex.Cap.Common.Ef\Dex.Cap.Common.Ef.csproj"/>
+        <ProjectReference Include="..\..\Dex.Cap.Inbox.Ef\Dex.Cap.Inbox.Ef.csproj"/>
         <ProjectReference Include="..\..\Dex.Cap.Outbox.AspNetScheduler\Dex.Cap.Outbox.AspNetScheduler.csproj"/>
         <ProjectReference Include="..\..\Dex.Cap.OnceExecutor.Ef\Dex.Cap.OnceExecutor.Ef.csproj"/>
         <ProjectReference Include="..\..\Dex.Cap.Outbox.Ef\Dex.Cap.Outbox.Ef.csproj"/>

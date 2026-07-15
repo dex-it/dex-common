@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Dex.Cap.Inbox.Ef.Extensions;
+using Dex.Cap.Inbox.RetryStrategies;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Options;
@@ -47,6 +49,33 @@ public abstract class BaseTest
                 options.MessagesToProcess = messageToProcessLimit;
                 options.ConcurrencyLimit = parallelLimit;
             });
+
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Сервисы для тестов инбокса. Отдельно от <see cref="InitServiceCollection"/>, чтобы тесты Outbox
+    /// не тащили за собой реестр сообщений инбокса и наоборот.
+    /// </summary>
+    protected IServiceCollection InitInboxServiceCollection(
+        int messageToProcessLimit = 10,
+        int parallelLimit = 2,
+        int retries = 3,
+        Action<InboxRetryStrategyConfigurator>? strategyConfigure = null)
+    {
+        var serviceCollection = new ServiceCollection();
+        AddLogging(serviceCollection);
+
+        serviceCollection
+            .AddScoped(_ => new TestDbContext(DbName))
+            .AddInbox<TestDbContext>(
+                options =>
+                {
+                    options.MessagesToProcess = messageToProcessLimit;
+                    options.ConcurrencyLimit = parallelLimit;
+                    options.Retries = retries;
+                },
+                (_, configurator) => strategyConfigure?.Invoke(configurator));
 
         return serviceCollection;
     }
