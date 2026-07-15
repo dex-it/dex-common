@@ -42,7 +42,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
 
     public abstract int GetFreeMessagesCount();
 
-    public virtual Task JobFail(
+    public virtual async Task JobFail(
         IInboxLockedJob inboxJob,
         string? errorMessage = null,
         Exception? exception = null,
@@ -56,13 +56,14 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         envelope.ErrorMessage = errorMessage;
         envelope.Error = exception?.ToString();
 
-        if (envelope.Retries >= Options.Retries)
+        var deadLettered = envelope.Retries >= Options.Retries;
+
+        if (deadLettered)
         {
             // Попытки исчерпаны. Хороним явным статусом, а не тем, что сообщение просто перестаёт
             // попадать в выборку: молчаливое исчезновение неотличимо от успеха при разборе инцидента.
             envelope.Status = InboxMessageStatus.DeadLettered;
             envelope.ScheduledStartIndexing = null;
-            MetricCollector.IncDeadLetteredCount();
         }
         else
         {
@@ -74,12 +75,19 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
             envelope.ScheduledStartIndexing = calculatedStartDate;
         }
 
+        // Аренду не требуем: неудача фиксируется после отката транзакции обработчика, ронять нечего.
+        // Если аренда уже у другого обработчика, запись не состоится и он отработает сообщение сам.
+        await CompleteJobAsync(inboxJob, requireLease: false, cancellationToken).ConfigureAwait(false);
+
         MetricCollector.IncProcessJobFailedCount();
 
-        return CompleteJobAsync(inboxJob, cancellationToken);
+        if (deadLettered)
+        {
+            MetricCollector.IncDeadLetteredCount();
+        }
     }
 
-    public virtual Task JobSucceed(IInboxLockedJob inboxJob, CancellationToken cancellationToken)
+    public virtual async Task JobSucceed(IInboxLockedJob inboxJob, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(inboxJob);
 
@@ -92,13 +100,22 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         // Выводим из выборки и из частичного индекса: строка остаётся только как ключ дедупликации.
         envelope.ScheduledStartIndexing = null;
 
-        MetricCollector.IncProcessJobSuccessCount();
+        // Аренду требуем: этот вызов идёт внутри транзакции обработчика. Если аренда потеряна,
+        // единственный способ не применить эффект дважды - откатить транзакцию исключением.
+        await CompleteJobAsync(inboxJob, requireLease: true, cancellationToken).ConfigureAwait(false);
 
-        return CompleteJobAsync(inboxJob, cancellationToken);
+        MetricCollector.IncProcessJobSuccessCount();
     }
 
     /// <summary>
     /// Зафиксировать исход обработки в хранилище, если аренда всё ещё принадлежит этой задаче.
     /// </summary>
-    protected abstract Task CompleteJobAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken);
+    /// <param name="lockedJob">Задача с захваченной арендой.</param>
+    /// <param name="requireLease">
+    /// <see langword="true"/> - потеря аренды это ошибка, реализация обязана бросить
+    /// <see cref="Exceptions.InboxLeaseLostException"/>. <see langword="false"/> - потеря аренды
+    /// это штатный исход, запись просто не состоится.
+    /// </param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    protected abstract Task CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken);
 }

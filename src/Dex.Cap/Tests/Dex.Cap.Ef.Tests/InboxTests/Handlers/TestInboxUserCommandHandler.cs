@@ -13,6 +13,12 @@ namespace Dex.Cap.Ef.Tests.InboxTests.Handlers;
 /// </summary>
 public class TestInboxUserCommandHandler(TestDbContext dbContext) : IInboxMessageHandler<TestInboxUserCommand>
 {
+    /// <summary>
+    /// Точка вмешательства между бизнес-эффектом и фиксацией успеха. Нужна, чтобы имитировать
+    /// потерю аренды ровно в этом окне.
+    /// </summary>
+    public static Func<Task>? OnProcessed { get; set; }
+
     public async Task Process(TestInboxUserCommand message, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -22,6 +28,13 @@ public class TestInboxUserCommandHandler(TestDbContext dbContext) : IInboxMessag
         if (message.ThrowAfterEffect)
         {
             throw new InvalidOperationException("Handler failed after the business effect");
+        }
+
+        var hook = OnProcessed;
+
+        if (hook is not null)
+        {
+            await hook().ConfigureAwait(false);
         }
     }
 }

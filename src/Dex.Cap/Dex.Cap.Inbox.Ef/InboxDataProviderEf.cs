@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
+using Dex.Cap.Inbox.Exceptions;
 using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.Jobs;
 using Dex.Cap.Inbox.Models;
@@ -130,17 +131,17 @@ internal sealed class InboxDataProviderEf<TDbContext>(
             cancellationToken: cancellationToken);
     }
 
-    protected override Task CompleteJobAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken)
+    protected override Task CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken)
     {
         // ReadCommitted, а не RepeatableRead: корректность обеспечивает предикат владения арендой
         // прямо в UPDATE, а не уровень изоляции. Более строгий уровень здесь запрещал бы
         // переиспользование этого метода внутри транзакции обработчика (Common.Ef не позволяет
         // повышать уровень у вложенной транзакции), а именно там фиксируется успех.
         return dbContext.ExecuteInTransactionAsync(
-            (DbContext: dbContext, LockedJob: lockedJob, Logger: logger),
+            (DbContext: dbContext, LockedJob: lockedJob, Logger: logger, RequireLease: requireLease),
             static async (state, ct) =>
             {
-                var (context, job, log) = state;
+                var (context, job, log, requireLease) = state;
                 var envelope = job.Envelope;
 
                 // ExecuteUpdate, а не загрузка сущности с последующим SaveChanges: одиночный UPDATE
@@ -163,19 +164,34 @@ internal sealed class InboxDataProviderEf<TDbContext>(
                         ct)
                     .ConfigureAwait(false);
 
-                if (affected == 0)
+                if (affected != 0)
                 {
-                    // Аренда истекла и сообщение уже перехвачено другим обработчиком. Молча это глотать нельзя:
-                    // значит LockTimeout меньше реального времени обработки, и сообщения обрабатываются дважды.
-                    log.LogWarning(
-                        "Inbox job {JobId} can not be completed: the lock has expired and the message was taken by another handler. " +
-                        "Increase LockTimeout above the real processing time",
-                        envelope.Id);
+                    return;
                 }
+
+                // Аренда истекла или её перехватил другой обработчик.
+                if (requireLease)
+                {
+                    // Путь успеха: этот вызов идёт внутри транзакции обработчика. Вернуться нормально
+                    // означало бы закоммитить изменения обработчика со старым статусом сообщения, и тогда
+                    // следующий владелец аренды применил бы эффект второй раз. Исключение откатывает
+                    // транзакцию, поэтому эффект применит ровно тот, кто владеет арендой.
+                    throw new InboxLeaseLostException(
+                        $"Inbox job {envelope.Id} lost its lease before the outcome was committed. " +
+                        "The handler transaction is rolled back. " +
+                        "Increase LockTimeout above the time needed to drain the whole claimed batch");
+                }
+
+                // Путь неудачи: транзакция обработчика уже откачена, ронять нечего. Сообщение остаётся
+                // за новым владельцем аренды, он его и обработает.
+                log.LogWarning(
+                    "Inbox job {JobId} can not be completed: the lease has expired and the message was taken by another handler. " +
+                    "Increase LockTimeout above the time needed to drain the whole claimed batch",
+                    envelope.Id);
             },
             static async (state, ct) =>
             {
-                var (context, job, _) = state;
+                var (context, job, _, _) = state;
                 var envelope = job.Envelope;
 
                 var existLocked = await context.Set<InboxEnvelope>()

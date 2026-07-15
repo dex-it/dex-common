@@ -52,6 +52,14 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
             logger.LogDebug("Operation canceled due to host stopping. MessageId: {MessageId}", job.Envelope.Id);
             throw;
         }
+        catch (InboxLeaseLostException ex)
+        {
+            // Аренду перехватили до фиксации успеха. Транзакция обработчика откачена, эффект не применён,
+            // поэтому попытку не тратим и в строку не пишем: ею уже владеет другой обработчик, он её и закроет.
+            logger.LogWarning(ex, "Inbox message {MessageId} lost its lease before completion, leaving it to the new owner", job.Envelope.Id);
+
+            DiscardRolledBackChanges();
+        }
         catch (Exception ex)
         {
             // Любая ошибка обработки — это исход сообщения, а не авария процесса. Сюда попадает и битое тело
