@@ -325,10 +325,13 @@ public async Task<IActionResult> CreateOrder(
 | Parameter | Meaning |
 |---|---|
 | `identity` | `(MessageId, ConsumerId)` — the deduplication key. `MessageId` must be stable across redeliveries; `ConsumerId` must be stable across restarts and identical on every instance. |
-| `lockTimeout` | Lease duration, default 30s, minimum 10s. **Must exceed the real processing time**, otherwise the lease expires mid-flight and the message is processed twice. |
+| `lockTimeout` | Lease duration, default 30s, minimum 10s. **Must exceed the time needed to drain the whole claimed batch**, not just one message: the lease of every message in a batch starts ticking at claim time. Otherwise the lease expires mid-flight, the outcome cannot be committed, and the message is handed to another worker. |
 
 Unlike `IOutboxService.EnqueueAsync`, this method **persists immediately in its own transaction**: the point of the
 inbox is to store the message *before* the source is acknowledged, and there is no business work to be atomic with.
+For the same reason enqueuing inside a transaction of your own is rejected with an `InboxException`: an enclosing
+`DbContext` transaction or an ambient `TransactionScope` would roll the message back while the source has already
+been acknowledged.
 
 ### Inbox options
 

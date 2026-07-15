@@ -22,7 +22,7 @@ DB-модель `OutboxEnvelope`: Id, CorrelationId, MessageType (discriminator)
 
 Сообщение реализует `IInboxMessage`: `static abstract string InboxTypeId` (дискриминатор). Обработчик `IInboxMessageHandler<T>` обязателен: выбираются только сообщения с зарегистрированным обработчиком.
 
-Приём: `IInboxService.EnqueueAsync(message, new InboxMessageIdentity(messageId, consumerId), lockTimeout)`. В отличие от Outbox сохраняет НЕМЕДЛЕННО, своей транзакцией: смысл в фиксации сообщения до подтверждения источнику. Возвращает `Accepted`/`Duplicate`; дубль — штатный исход, не исключение.
+Приём: `IInboxService.EnqueueAsync(message, new InboxMessageIdentity(messageId, consumerId), lockTimeout)`. В отличие от Outbox сохраняет НЕМЕДЛЕННО, своей транзакцией: смысл в фиксации сообщения до подтверждения источнику. Поэтому приём внутри чужой транзакции (открытая транзакция DbContext или окружающий `TransactionScope`) отвергается с `InboxException`: на откате сообщение исчезло бы после ack источнику. Возвращает `Accepted`/`Duplicate`; дубль — штатный исход, не исключение.
 
 Pipeline: Enqueue (`INSERT ... ON CONFLICT ("MessageId","ConsumerId") DO NOTHING`) -> Claim (CTE + `FOR UPDATE SKIP LOCKED` + аренда, PostgreSQL-only) -> Process (обработчик + перевод в Succeeded ОДНОЙ транзакцией) -> Fail (отдельной транзакцией после отката).
 

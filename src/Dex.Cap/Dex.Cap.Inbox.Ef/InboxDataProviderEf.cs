@@ -35,6 +35,7 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         cancellationToken.ThrowIfCancellationRequested();
 
         EnsureNpgsql();
+        EnsureNoEnclosingTransaction();
 
         // Дедупликацию решает уникальный индекс, а не предварительная проверка: SELECT-затем-INSERT
         // даёт гонку между конкурентными доставками одного сообщения. ON CONFLICT DO NOTHING
@@ -224,6 +225,34 @@ internal sealed class InboxDataProviderEf<TDbContext>(
 
         if (providerName is not "Npgsql.EntityFrameworkCore.PostgreSQL")
             throw new NotSupportedException($"The provider {providerName} is not supported.");
+    }
+
+    /// <summary>
+    /// Убедиться, что приём не выполняется внутри чужой транзакции.
+    /// </summary>
+    /// <remarks>
+    /// Инбокс обязан зафиксировать сообщение ДО того, как источнику уйдёт подтверждение. Внутри чужой
+    /// транзакции этой гарантии нет: INSERT заэнлистится в неё, и на откате сообщение исчезнет, хотя
+    /// EnqueueAsync уже вернул Accepted и источник получил ack. Падаем явно, потому что тихо
+    /// отработать «как получится» здесь означает молча терять сообщения.
+    /// </remarks>
+    private void EnsureNoEnclosingTransaction()
+    {
+        if (dbContext.Database.CurrentTransaction is not null)
+        {
+            throw new InboxException(
+                "Inbox message can not be enqueued inside an enclosing DbContext transaction: the message would be " +
+                "committed or rolled back together with the caller, while the source has already been acknowledged. " +
+                "Enqueue the message outside of the transaction.");
+        }
+
+        if (Transaction.Current is not null)
+        {
+            throw new InboxException(
+                "Inbox message can not be enqueued inside an ambient TransactionScope: the message would be " +
+                "committed or rolled back together with the caller, while the source has already been acknowledged. " +
+                "Enqueue the message outside of the scope, or suppress it with TransactionScopeOption.Suppress.");
+        }
     }
 
     private string? GenerateFetchPlatformSpecificSql(Guid lockId)
