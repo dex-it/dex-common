@@ -118,7 +118,7 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
             cancellationToken: cancellationToken);
     }
 
-    private async Task InvokeHandler(IInboxLockedJob job, CancellationToken cancellationToken)
+    private Task InvokeHandler(IInboxLockedJob job, CancellationToken cancellationToken)
     {
         var envelope = job.Envelope;
 
@@ -132,31 +132,13 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
 
         var handler = handlerFactory.GetMessageHandler(messageType);
 
-        var processMethod = handler.GetType()
-                                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                                .FirstOrDefault(m => m.Name == nameof(IInboxMessageHandler<InboxMessageExample>.Process))
-                            ?? throw new InboxException($"Can't find Process method for handler type '{handler.GetType()}'");
-
-        try
-        {
-            var task = (Task)processMethod.Invoke(handler, [message, cancellationToken])!;
-            await task.ConfigureAwait(false);
-        }
-        finally
-        {
-            if (handler is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Нужен только чтобы сослаться на имя метода через nameof: у IInboxMessage есть static abstract член,
-    /// поэтому сам интерфейс нельзя использовать как аргумент типа.
-    /// </summary>
-    private abstract class InboxMessageExample : IInboxMessage
-    {
-        public static string InboxTypeId => string.Empty;
+        // Вызов идёт через контракт интерфейса, а не поиском метода Process рефлексией. Поиск по имени
+        // выбирал произвольный метод у класса, обрабатывающего несколько типов сообщений, не находил явную
+        // реализацию интерфейса (она компилируется в приватный метод) и заворачивал синхронно брошенные
+        // исключения в TargetInvocationException, из-за чего фильтры отмены выше по стеку не срабатывали.
+        //
+        // Обработчик здесь не диспозится: он получен из DI, его время жизни принадлежит scope этой джобы,
+        // и scope закроет его сам. Диспоз чужого объекта сломал бы обработчик, зарегистрированный синглтоном.
+        return handlerFactory.GetInvoker(messageType).InvokeAsync(handler, message, cancellationToken);
     }
 }
