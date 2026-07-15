@@ -394,7 +394,9 @@ Meter `Inbox`: `ProcessCount`, `EmptyProcessCount`, `ProcessJobCount`, `ProcessJ
 
 * PostgreSQL only (`Dex.Cap.Inbox.Ef` uses `FOR UPDATE SKIP LOCKED` and `ON CONFLICT`).
 * Message types are discovered by reflection over loaded assemblies, so the assembly declaring `IInboxMessage`
-  implementations must be loaded. A discriminator declared by two types fails fast at startup.
+  implementations must be loaded. In practice registering the handler loads it. The registry is built during host
+  start (`AddInbox` registers a warm-up hosted service), so a duplicate, empty or quote-containing discriminator
+  fails the host start rather than surfacing later inside the background worker.
 * Ordering between messages is not guaranteed; design handlers to be order-independent.
 
 ---

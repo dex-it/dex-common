@@ -15,4 +15,9 @@ internal interface IInboxTypeDiscriminatorProvider
     /// </summary>
     /// <remarks>Только они выбираются на обработку: одна таблица может обслуживать несколько потребителей.</remarks>
     FrozenSet<string> SupportedDiscriminators { get; }
+
+    /// <summary>
+    /// Построить реестр немедленно, чтобы ошибки конфигурации проявились на старте хоста, а не в рантайме.
+    /// </summary>
+    void Warmup();
 }

@@ -54,8 +54,14 @@ public static class MicrosoftDependencyInjectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<InboxOptions>, InboxOptionsValidator>());
 
         services.AddSingleton<IInboxMetricCollector, DefaultInboxMetricCollector>();
+        services.TryAddSingleton<IInboxMessageTypeSource, AppDomainInboxMessageTypeSource>();
         services.AddSingleton<IInboxTypeDiscriminatorProvider, InboxTypeDiscriminatorProvider>();
         services.AddSingleton<IInboxStatistic>(provider => provider.GetRequiredService<IInboxMetricCollector>());
+
+        // Реестр типов сообщений строится на старте хоста, а не при первом обращении: коллизия
+        // дискриминаторов обязана ронять старт, а не всплывать позже внутри фонового обработчика,
+        // где она превратилась бы в LogCritical при формально поднятом хосте.
+        services.AddHostedService<InboxRegistryWarmupService>();
 
         services.AddScoped<IInboxService, InboxService>();
         services.AddScoped<IInboxEnvelopFactory, InboxEnvelopFactory>();

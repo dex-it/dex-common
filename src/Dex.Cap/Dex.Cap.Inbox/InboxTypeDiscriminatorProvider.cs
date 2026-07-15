@@ -3,6 +3,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using Dex.Cap.Inbox.Exceptions;
 using Dex.Cap.Inbox.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,28 +11,51 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.Cap.Inbox;
 
-internal sealed class InboxTypeDiscriminatorProvider(IServiceProvider serviceProvider, ILogger<InboxTypeDiscriminatorProvider> logger)
-    : IInboxTypeDiscriminatorProvider
+internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorProvider
 {
-    private FrozenDictionary<string, Type>? _currentDomainInboxMessageTypes;
-    private FrozenSet<string>? _supportedDiscriminators;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IInboxMessageTypeSource _typeSource;
+    private readonly ILogger<InboxTypeDiscriminatorProvider> _logger;
 
-    public FrozenDictionary<string, Type> CurrentDomainInboxMessageTypes =>
-        _currentDomainInboxMessageTypes ??= DiscoverMessageTypes().ToFrozenDictionary();
+    // Lazy, а не "??=": реестр читают конкурентно (приём из HTTP и фоновая обработка), а построение
+    // сканирует все загруженные сборки. ExecutionAndPublication гарантирует ровно одно построение и,
+    // что важнее, кэширует исключение: ошибка конфигурации не должна пересканировать сборки на каждом
+    // обращении, она обязана оставаться одной и той же ошибкой.
+    private readonly Lazy<FrozenDictionary<string, Type>> _currentDomainInboxMessageTypes;
+    private readonly Lazy<FrozenSet<string>> _supportedDiscriminators;
 
-    public FrozenSet<string> SupportedDiscriminators =>
-        _supportedDiscriminators ??= DiscoverSupportedDiscriminators().ToFrozenSet();
-
-    private Dictionary<string, Type> DiscoverMessageTypes()
+    public InboxTypeDiscriminatorProvider(
+        IServiceProvider serviceProvider,
+        IInboxMessageTypeSource typeSource,
+        ILogger<InboxTypeDiscriminatorProvider> logger)
     {
-        var messageTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => a.IsDynamic is false)
-            .SelectMany(GetLoadableTypes)
-            .Where(t => typeof(IInboxMessage).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false, ContainsGenericParameters: false });
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _typeSource = typeSource ?? throw new ArgumentNullException(nameof(typeSource));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+        _currentDomainInboxMessageTypes = new Lazy<FrozenDictionary<string, Type>>(
+            () => BuildRegistry().ToFrozenDictionary(),
+            LazyThreadSafetyMode.ExecutionAndPublication);
+
+        _supportedDiscriminators = new Lazy<FrozenSet<string>>(
+            () => DiscoverSupportedDiscriminators().ToFrozenSet(),
+            LazyThreadSafetyMode.ExecutionAndPublication);
+    }
+
+    public FrozenDictionary<string, Type> CurrentDomainInboxMessageTypes => _currentDomainInboxMessageTypes.Value;
+
+    public FrozenSet<string> SupportedDiscriminators => _supportedDiscriminators.Value;
+
+    public void Warmup()
+    {
+        _ = SupportedDiscriminators;
+    }
+
+    private Dictionary<string, Type> BuildRegistry()
+    {
         var result = new Dictionary<string, Type>(StringComparer.Ordinal);
 
-        foreach (var type in messageTypes)
+        foreach (var type in _typeSource.GetMessageTypes())
         {
             var discriminator = GetDiscriminator(type);
 
@@ -40,8 +64,8 @@ internal sealed class InboxTypeDiscriminatorProvider(IServiceProvider servicePro
                 // Молчаливо выбрать один из типов нельзя: сохранённое сообщение перестанет
                 // однозначно восстанавливаться, и обработка уйдёт не в тот обработчик.
                 throw new DiscriminatorConflictException(
-                    $"Дискриминатор '{discriminator}' объявлен несколькими типами сообщений инбокса: " +
-                    $"'{existingType.FullName}' и '{type.FullName}'. Дискриминатор обязан быть уникальным.");
+                    $"Discriminator '{discriminator}' is declared by several inbox message types: " +
+                    $"'{existingType.FullName}' and '{type.FullName}'. A discriminator must be unique.");
             }
 
             result.Add(discriminator, type);
@@ -54,7 +78,7 @@ internal sealed class InboxTypeDiscriminatorProvider(IServiceProvider servicePro
     {
         var result = new HashSet<string>(StringComparer.Ordinal);
 
-        using var scope = serviceProvider.CreateScope();
+        using var scope = _serviceProvider.CreateScope();
 
         foreach (var (discriminator, messageType) in CurrentDomainInboxMessageTypes)
         {
@@ -63,14 +87,14 @@ internal sealed class InboxTypeDiscriminatorProvider(IServiceProvider servicePro
 
             if (handler is null)
             {
-                logger.LogWarning(
+                _logger.LogWarning(
                     "No handler is registered for inbox message {DiscriminatorId} - {MessageType}, it will not be processed by this service",
                     discriminator, messageType.FullName);
                 continue;
             }
 
             result.Add(discriminator);
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Current service handles inbox message {DiscriminatorId} - {MessageType}",
                 discriminator, messageType.FullName);
         }
@@ -85,25 +109,20 @@ internal sealed class InboxTypeDiscriminatorProvider(IServiceProvider servicePro
 
         if (discriminatorProperty?.GetValue(null) is not string discriminator || string.IsNullOrWhiteSpace(discriminator))
         {
-            throw new DiscriminatorConflictException(
-                $"Тип сообщения инбокса '{type.FullName}' не задал {nameof(IInboxMessage.InboxTypeId)}. " +
-                "Дискриминатор обязан быть непустым и стабильным.");
+            throw new DiscriminatorResolveException(
+                $"Inbox message type '{type.FullName}' does not define {nameof(IInboxMessage.InboxTypeId)}. " +
+                "A discriminator must be non-empty and stable.");
+        }
+
+        // Дискриминатор подставляется в SQL выборки как литерал, поэтому кавычка сломала бы запрос
+        // на каждом цикле обработки. Ловим это при построении реестра, а не в фоновом воркере.
+        if (discriminator.Contains('\'', StringComparison.Ordinal))
+        {
+            throw new DiscriminatorResolveException(
+                $"Inbox message type '{type.FullName}' defines {nameof(IInboxMessage.InboxTypeId)} " +
+                $"'{discriminator}' containing a single quote. A discriminator must not contain quotes.");
         }
 
         return discriminator;
-    }
-
-    private IEnumerable<Type> GetLoadableTypes(Assembly assembly)
-    {
-        try
-        {
-            return assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException e)
-        {
-            // Частично загружаемая сборка не должна валить дискавери целиком: берём то, что загрузилось.
-            logger.LogWarning(e, "Assembly {Assembly} is partially loadable, inbox message types may be incomplete", assembly.FullName);
-            return e.Types.Where(t => t is not null)!;
-        }
     }
 }
