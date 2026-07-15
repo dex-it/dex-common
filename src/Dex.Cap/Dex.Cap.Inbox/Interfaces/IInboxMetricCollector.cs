@@ -11,6 +11,13 @@ internal interface IInboxMetricCollector : IInboxStatistic
     void IncProcessJobFailedCount();
     void IncDeadLetteredCount();
     void IncDuplicateCount();
+
+    /// <summary>
+    /// Сообщение даже не начали обрабатывать: аренда истекла, пока дренировалась партия.
+    /// </summary>
+    /// <remarks>Устойчиво ненулевое значение означает, что LockTimeout мал для MessagesToProcess.</remarks>
+    void IncExpiredBeforeStartCount();
+
     void AddProcessJobDuration(TimeSpan duration);
 }
 

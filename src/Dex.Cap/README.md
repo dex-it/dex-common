@@ -388,7 +388,12 @@ the last processing cycle is older than `2 × Period`. Call `AddHealthChecks()` 
 ### Metrics
 
 Meter `Inbox`: `ProcessCount`, `EmptyProcessCount`, `ProcessJobCount`, `ProcessJobSuccessCount`,
-`ProcessJobFailedCount`, `DeadLetteredCount`, `DuplicateCount`, `FreeJobCount` (queue depth), `ProcessDuration`.
+`ProcessJobFailedCount`, `DeadLetteredCount`, `DuplicateCount`, `ExpiredBeforeStartCount`, `ProcessDuration`,
+plus two observable up/down counters: `FreeJobCount` (depth of what *this* service can handle) and
+`DeadLetteredJobCount` (buried messages awaiting review, never removed by cleanup).
+
+A steadily non-zero `ExpiredBeforeStartCount` means the lease dies while the claimed batch is still draining:
+raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`.
 
 ### Limitations
 

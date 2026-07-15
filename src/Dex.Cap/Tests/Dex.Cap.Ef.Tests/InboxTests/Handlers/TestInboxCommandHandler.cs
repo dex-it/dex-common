@@ -10,9 +10,21 @@ public class TestInboxCommandHandler : IInboxMessageHandler<TestInboxCommand>
 {
     public static event EventHandler<TestInboxCommand>? OnProcess;
 
-    public Task Process(TestInboxCommand message, CancellationToken cancellationToken)
+    /// <summary>
+    /// Асинхронная точка вмешательства: позволяет задержать обработчик, чтобы воспроизвести
+    /// дренаж партии и истечение аренды в очереди ожидания.
+    /// </summary>
+    public static Func<TestInboxCommand, Task>? OnProcessAsync { get; set; }
+
+    public async Task Process(TestInboxCommand message, CancellationToken cancellationToken)
     {
         OnProcess?.Invoke(this, message);
-        return Task.CompletedTask;
+
+        var hook = OnProcessAsync;
+
+        if (hook is not null)
+        {
+            await hook(message).ConfigureAwait(false);
+        }
     }
 }

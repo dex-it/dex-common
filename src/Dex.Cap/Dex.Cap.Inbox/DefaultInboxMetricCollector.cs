@@ -16,6 +16,7 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
     private readonly Counter<long> _processJobFailedCount;
     private readonly Counter<long> _deadLetteredCount;
     private readonly Counter<long> _duplicateCount;
+    private readonly Counter<long> _expiredBeforeStartCount;
     private readonly Histogram<double> _processDuration;
     private long _lastTime = DateTime.UtcNow.Ticks;
 
@@ -31,14 +32,30 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
         _processJobFailedCount = _meter.CreateCounter<long>("ProcessJobFailedCount", description: "Process job failed count");
         _deadLetteredCount = _meter.CreateCounter<long>("DeadLetteredCount", description: "Count of messages moved to DeadLettered");
         _duplicateCount = _meter.CreateCounter<long>("DuplicateCount", description: "Count of rejected duplicate messages");
-        _meter.CreateObservableCounter<long>("FreeJobCount", () => GetFreeMessagesCount(), description: "Unprocessed jobs count (inbox depth)");
+        _expiredBeforeStartCount = _meter.CreateCounter<long>(
+            "ExpiredBeforeStartCount",
+            description: "Count of messages whose lease expired while the claimed batch was draining, before the handler started");
+
+        // UpDownCounter, а не Counter: обе величины растут на приёме и убывают на обработке или чистке,
+        // тогда как асинхронный Counter по спецификации обязан быть монотонно возрастающим. Экспортёр
+        // читает падение монотонного счётчика как его сброс и дорисовывает фантомный прирост.
+        // Gauge тоже неверен: глубина аддитивна по инстансам, а Gauge складывать не предполагается.
+        _meter.CreateObservableUpDownCounter(
+            "FreeJobCount",
+            () => GetCount(p => p.GetFreeMessagesCount()),
+            description: "Unprocessed jobs count this service can handle (inbox depth)");
+
+        _meter.CreateObservableUpDownCounter(
+            "DeadLetteredJobCount",
+            () => GetCount(p => p.GetDeadLetteredMessagesCount()),
+            description: "Dead lettered jobs waiting for manual review (cleanup never removes them)");
+
         _processDuration = _meter.CreateHistogram<double>("ProcessDuration", description: "Duration of job process, regardless of outcome");
 
-        int GetFreeMessagesCount()
+        long GetCount(Func<IInboxDataProvider, int> read)
         {
             using var scope = scopeFactory.CreateScope();
-            return scope.ServiceProvider.GetRequiredService<IInboxDataProvider>()
-                .GetFreeMessagesCount();
+            return read(scope.ServiceProvider.GetRequiredService<IInboxDataProvider>());
         }
     }
 
@@ -67,6 +84,8 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
     public void IncDeadLetteredCount() => _deadLetteredCount.Add(1);
 
     public void IncDuplicateCount() => _duplicateCount.Add(1);
+
+    public void IncExpiredBeforeStartCount() => _expiredBeforeStartCount.Add(1);
 
     public void AddProcessJobDuration(TimeSpan duration) => _processDuration.Record(duration.TotalMilliseconds);
 

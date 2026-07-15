@@ -42,6 +42,8 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
 
     public abstract int GetFreeMessagesCount();
 
+    public abstract int GetDeadLetteredMessagesCount();
+
     public virtual async Task JobFail(
         IInboxLockedJob inboxJob,
         string? errorMessage = null,

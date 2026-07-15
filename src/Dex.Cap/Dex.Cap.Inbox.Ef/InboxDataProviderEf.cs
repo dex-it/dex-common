@@ -94,9 +94,26 @@ internal sealed class InboxDataProviderEf<TDbContext>(
 
     public override int GetFreeMessagesCount()
     {
+        // Фильтр по поддерживаемым дискриминаторам обязателен: без него глубина включала бы сообщения
+        // чужих потребителей из той же таблицы, которые этот сервис не заберёт никогда, и алерт на
+        // глубину очереди залипал бы навсегда. Тот же фильтр стоит в выборке.
+        var supported = discriminatorProvider.SupportedDiscriminators;
+
+        if (supported.Count is 0)
+        {
+            return 0;
+        }
+
         return dbContext
             .Set<InboxEnvelope>()
-            .Count(x => x.ScheduledStartIndexing != null);
+            .Count(x => x.ScheduledStartIndexing != null && supported.Contains(x.MessageType));
+    }
+
+    public override int GetDeadLetteredMessagesCount()
+    {
+        return dbContext
+            .Set<InboxEnvelope>()
+            .Count(x => x.Status == InboxMessageStatus.DeadLettered);
     }
 
     private Task<InboxEnvelope[]> GetFreeMessages(CancellationToken cancellationToken)

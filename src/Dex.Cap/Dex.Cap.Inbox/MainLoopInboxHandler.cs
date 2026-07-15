@@ -42,6 +42,21 @@ internal sealed class MainLoopInboxHandler(
             await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
+                // Аренда всей партии тикает с момента захвата, а джобы идут по ConcurrencyLimit за раз,
+                // поэтому хвост партии может дождаться очереди уже с мёртвой арендой. Обрабатывать такое
+                // сообщение нельзя: строка больше не наша. Но и штрафовать его нельзя - обработчик его
+                // не видел, а попытки существуют, чтобы считать РЕАЛЬНЫЕ отказы обработки. Строку заберёт
+                // следующий цикл, здесь достаточно её отпустить.
+                if (job.LockToken.IsCancellationRequested)
+                {
+                    metricCollector.IncExpiredBeforeStartCount();
+                    logger.LogWarning(
+                        "Inbox job {Job} is skipped: its lease expired while the batch was draining. " +
+                        "Increase LockTimeout or lower MessagesToProcess",
+                        job.Envelope.Id);
+                    return;
+                }
+
                 metricCollector.IncProcessCount();
 
                 using var activity = new Activity($"Process inbox message: {job.Envelope.Id}");
