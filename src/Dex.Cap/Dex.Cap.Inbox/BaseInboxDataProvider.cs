@@ -19,9 +19,10 @@ namespace Dex.Cap.Inbox;
 internal abstract class BaseInboxDataProvider : IInboxDataProvider
 {
     private readonly IInboxRetryStrategy _retryStrategy;
-    private readonly IInboxMetricCollector _metricCollector;
 
     protected InboxOptions Options { get; }
+
+    protected IInboxMetricCollector MetricCollector { get; }
 
     protected BaseInboxDataProvider(
         IInboxRetryStrategy retryStrategy,
@@ -31,7 +32,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         ArgumentNullException.ThrowIfNull(options);
 
         _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
-        _metricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
+        MetricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
         Options = options.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
@@ -61,7 +62,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
             // попадать в выборку: молчаливое исчезновение неотличимо от успеха при разборе инцидента.
             envelope.Status = InboxMessageStatus.DeadLettered;
             envelope.ScheduledStartIndexing = null;
-            _metricCollector.IncDeadLetteredCount();
+            MetricCollector.IncDeadLetteredCount();
         }
         else
         {
@@ -73,7 +74,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
             envelope.ScheduledStartIndexing = calculatedStartDate;
         }
 
-        _metricCollector.IncProcessJobFailedCount();
+        MetricCollector.IncProcessJobFailedCount();
 
         return CompleteJobAsync(inboxJob, cancellationToken);
     }
@@ -91,7 +92,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         // Выводим из выборки и из частичного индекса: строка остаётся только как ключ дедупликации.
         envelope.ScheduledStartIndexing = null;
 
-        _metricCollector.IncProcessJobSuccessCount();
+        MetricCollector.IncProcessJobSuccessCount();
 
         return CompleteJobAsync(inboxJob, cancellationToken);
     }

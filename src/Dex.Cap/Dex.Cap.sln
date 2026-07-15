@@ -60,6 +60,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Inbox", "Dex.Cap.In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Inbox.AspNetScheduler", "Dex.Cap.Inbox.AspNetScheduler\Dex.Cap.Inbox.AspNetScheduler.csproj", "{74BF4824-4040-4828-B345-A42F47A67145}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dex.Cap.Inbox.Ef", "Dex.Cap.Inbox.Ef\Dex.Cap.Inbox.Ef.csproj", "{0F97CFF8-E063-435E-B2FE-713E1B67D32C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -322,6 +324,18 @@ Global
 		{74BF4824-4040-4828-B345-A42F47A67145}.Release|x64.Build.0 = Release|Any CPU
 		{74BF4824-4040-4828-B345-A42F47A67145}.Release|x86.ActiveCfg = Release|Any CPU
 		{74BF4824-4040-4828-B345-A42F47A67145}.Release|x86.Build.0 = Release|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Debug|x64.Build.0 = Debug|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Debug|x86.Build.0 = Debug|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Release|x64.ActiveCfg = Release|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Release|x64.Build.0 = Release|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Release|x86.ActiveCfg = Release|Any CPU
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -348,6 +362,7 @@ Global
 		{75E9D8E7-4F85-4E70-A627-093B4715A78C} = {CFE2A248-6F38-49B3-8102-E289E08A5400}
 		{54B5E9B5-6627-452D-8418-017CD951B622} = {C2344169-211B-4459-936C-B282F39050F7}
 		{74BF4824-4040-4828-B345-A42F47A67145} = {C2344169-211B-4459-936C-B282F39050F7}
+		{0F97CFF8-E063-435E-B2FE-713E1B67D32C} = {C2344169-211B-4459-936C-B282F39050F7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61070EF3-9A74-4E42-9835-3DDAAEB94E70}
