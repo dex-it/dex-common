@@ -28,7 +28,10 @@ public interface IInboxService
     /// обработано повторно. Значение по умолчанию 30 сек, минимальное 10 сек.
     /// </remarks>
     /// <exception cref="Exceptions.InboxException">
-    /// Приём выполняется внутри транзакции вызывающего кода, либо не найден обработчик метода сообщения.
+    /// Приём выполняется внутри транзакции вызывающего кода.
+    /// </exception>
+    /// <exception cref="Exceptions.DiscriminatorResolveException">
+    /// Тип сообщения не найден среди загруженных типов сервиса. Наследует <see cref="Exceptions.InboxException"/>.
     /// </exception>
     Task<InboxEnqueueStatus> EnqueueAsync<T>(
         T message,

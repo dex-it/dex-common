@@ -5,7 +5,7 @@ namespace Dex.Cap.Inbox.Exceptions;
 /// <summary>
 /// Не удалось сопоставить дискриминатор сохранённого сообщения с типом.
 /// </summary>
-public class DiscriminatorResolveException : Exception
+public class DiscriminatorResolveException : InboxException
 {
     public DiscriminatorResolveException()
     {

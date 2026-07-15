@@ -433,8 +433,9 @@ raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`.
 * PostgreSQL only (`Dex.Cap.Inbox.Ef` uses `FOR UPDATE SKIP LOCKED` and `ON CONFLICT`).
 * Message types are discovered by reflection over loaded assemblies, so the assembly declaring `IInboxMessage`
   implementations must be loaded. In practice registering the handler loads it. The registry is built during host
-  start (`AddInbox` registers a warm-up hosted service), so a duplicate, empty or quote-containing discriminator
-  fails the host start rather than surfacing later inside the background worker.
+  start (`AddInbox` registers a warm-up hosted service), so a duplicate or malformed discriminator fails the host
+  start rather than surfacing later inside the background worker. A discriminator may only contain ASCII letters,
+  digits, `-`, `_` and `.` — it is inlined into the claim SQL, so anything else breaks every processing cycle.
 * Ordering between messages is not guaranteed; design handlers to be order-independent.
 
 ---

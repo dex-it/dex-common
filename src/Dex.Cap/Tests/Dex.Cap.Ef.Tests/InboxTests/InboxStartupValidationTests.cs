@@ -39,16 +39,29 @@ public class InboxStartupValidationTests : BaseTest
         Assert.IsTrue(ex.Message.Contains(nameof(SecondClaimant), StringComparison.Ordinal));
     }
 
-    [Test]
-    public void StartHost_DiscriminatorWithQuote_FailsAtStartup()
+    [TestCase(typeof(QuotedDiscriminator), '\'', TestName = "StartHost_DiscriminatorWithQuote_FailsAtStartup")]
+    [TestCase(typeof(BracedDiscriminator), '{', TestName = "StartHost_DiscriminatorWithBrace_FailsAtStartup")]
+    [TestCase(typeof(SpacedDiscriminator), ' ', TestName = "StartHost_DiscriminatorWithSpace_FailsAtStartup")]
+    public void StartHost_DiscriminatorWithUnsupportedCharacter_FailsAtStartup(Type messageType, char offender)
     {
-        using var host = BuildHost(typeof(QuotedDiscriminator));
+        // Кавычка ломает SQL выборки на стороне Postgres, фигурная скобка ещё раньше, на string.Format
+        // внутри EF. Оба падали бы на каждом цикле фоновой обработки, поэтому ловим на старте.
+        using var host = BuildHost(messageType);
 
-        // Кавычка сломала бы SQL выборки на каждом цикле, поэтому ловим её на старте.
         var ex = NUnit.Framework.Assert.ThrowsAsync<DiscriminatorResolveException>(
             (Func<Task>)(async () => await host.StartAsync()));
 
-        Assert.IsTrue(ex!.Message.Contains("single quote", StringComparison.Ordinal));
+        Assert.IsTrue(ex!.Message.Contains($"unsupported character '{offender}'", StringComparison.Ordinal), ex.Message);
+    }
+
+    [Test]
+    public void RegistryExceptions_AreCatchableAsInboxException()
+    {
+        // XML IInboxService обещает InboxException. Если бы эти типы наследовали голый Exception,
+        // задокументированный catch их не поймал бы.
+        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(DiscriminatorResolveException)));
+        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(DiscriminatorConflictException)));
+        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(InboxLeaseLostException)));
     }
 
     [Test]
@@ -112,6 +125,16 @@ public class InboxStartupValidationTests : BaseTest
     private sealed class QuotedDiscriminator
     {
         public static string InboxTypeId => "O'Brien";
+    }
+
+    private sealed class BracedDiscriminator
+    {
+        public static string InboxTypeId => "cmd-{0}";
+    }
+
+    private sealed class SpacedDiscriminator
+    {
+        public static string InboxTypeId => "order created";
     }
 
     private sealed class EmptyDiscriminator

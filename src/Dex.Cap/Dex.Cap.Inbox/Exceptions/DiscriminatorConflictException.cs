@@ -9,7 +9,7 @@ namespace Dex.Cap.Inbox.Exceptions;
 /// Ошибка конфигурации, а не данных: при коллизии невозможно однозначно восстановить тип
 /// сохранённого сообщения, поэтому реестр не строится и сервис не стартует.
 /// </remarks>
-public class DiscriminatorConflictException : Exception
+public class DiscriminatorConflictException : InboxException
 {
     public DiscriminatorConflictException()
     {

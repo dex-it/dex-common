@@ -18,11 +18,14 @@ internal sealed class InboxEnvelopFactory(IInboxSerializer serializer, IInboxTyp
         if (!discriminatorProvider.CurrentDomainInboxMessageTypes.ContainsKey(discriminator))
         {
             throw new DiscriminatorResolveException(
-                $"Сообщение инбокса с дискриминатором '{discriminator}' не найдено среди загруженных типов данного сервиса");
+                $"Inbox message type '{typeof(T).FullName}' with discriminator '{discriminator}' is not found " +
+                "among the loaded types of this service. The assembly declaring the message type must be loaded.");
         }
 
-        var messageType = message.GetType();
-        var content = serializer.Serialize(messageType, message);
+        // Сериализуем по typeof(T), а не по message.GetType(): дискриминатор берётся из статического T,
+        // и рассогласование дало бы тело наследника под дискриминатором базового типа. Такое сообщение
+        // прочиталось бы как базовый тип, молча потеряв поля наследника.
+        var content = serializer.Serialize(typeof(T), message);
 
         return new InboxEnvelope(Guid.NewGuid(), identity.MessageId, identity.ConsumerId, discriminator, content, lockTimeout);
     }

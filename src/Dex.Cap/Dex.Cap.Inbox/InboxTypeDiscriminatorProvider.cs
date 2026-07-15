@@ -114,13 +114,25 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
                 "A discriminator must be non-empty and stable.");
         }
 
-        // Дискриминатор подставляется в SQL выборки как литерал, поэтому кавычка сломала бы запрос
-        // на каждом цикле обработки. Ловим это при построении реестра, а не в фоновом воркере.
-        if (discriminator.Contains('\'', StringComparison.Ordinal))
+        // Дискриминатор подставляется в SQL выборки литералом, а сам SQL проходит через string.Format
+        // внутри EF. Поэтому кавычка ломает запрос на стороне Postgres, а фигурная скобка ещё раньше, на
+        // форматировании. И то, и другое падало бы на каждом цикле фоновой обработки, где превращается
+        // в LogCritical при формально живом хосте, поэтому проверяем здесь, при построении реестра.
+        //
+        // Белый список, а не перечисление опасных символов: дискриминатор это стабильный идентификатор
+        // типа (на практике GUID или имя), у него нет причин содержать что-то кроме букв, цифр, дефиса,
+        // подчёркивания и точки. Запрещать по списку значит однажды забыть очередной символ.
+        foreach (var symbol in discriminator)
         {
+            if (char.IsAsciiLetterOrDigit(symbol) || symbol is '-' or '_' or '.')
+            {
+                continue;
+            }
+
             throw new DiscriminatorResolveException(
                 $"Inbox message type '{type.FullName}' defines {nameof(IInboxMessage.InboxTypeId)} " +
-                $"'{discriminator}' containing a single quote. A discriminator must not contain quotes.");
+                $"'{discriminator}' containing the unsupported character '{symbol}'. " +
+                "A discriminator may only contain ASCII letters, digits, '-', '_' and '.'.");
         }
 
         return discriminator;
