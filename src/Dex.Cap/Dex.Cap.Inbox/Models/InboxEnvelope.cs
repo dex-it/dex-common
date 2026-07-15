@@ -4,7 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using JetBrains.Annotations;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+// Non-nullable свойства заполняет EF через приватный конструктор при материализации из БД, поэтому компилятор
+// их не видит заполненными. required здесь неприменим: он потребовал бы инициализатора и от EF, и от вызывающего
+// кода, который заполняет сущность через публичный конструктор.
+#pragma warning disable CS8618
 
 namespace Dex.Cap.Inbox.Models;
 
@@ -26,13 +29,28 @@ public class InboxEnvelope
     public const int MaxIdentityLength = 256;
 
     /// <summary>
+    /// Запас времени на фиксацию исхода, вычитаемый из аренды.
+    /// </summary>
+    /// <remarks>
+    /// Обработка гасится на столько раньше окончания аренды в БД, чтобы успеть записать исход, пока аренда ещё
+    /// наша: иначе фиксация не найдёт строку по ключу аренды и результат потерялся бы.
+    /// </remarks>
+    internal static readonly TimeSpan CompletionReserve = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Наименьшее окно, которое обязано остаться обработчику после вычета <see cref="CompletionReserve"/>.
+    /// </summary>
+    private static readonly TimeSpan MinProcessingWindow = TimeSpan.FromSeconds(5);
+
+    /// <summary>
     /// Минимально допустимая аренда.
     /// </summary>
     /// <remarks>
-    /// Обработка гасится за 5 секунд до окончания аренды, чтобы успеть зафиксировать исход,
-    /// поэтому меньшая аренда не оставила бы обработчику окна вовсе.
+    /// Выводится из своих слагаемых, а не задаётся числом: минимум обязан совпадать с порогом, ниже которого
+    /// задачу невозможно создать, иначе строка проходила бы отбор непригодных и роняла материализацию всей
+    /// партии, то есть один ряд останавливал бы инбокс навсегда.
     /// </remarks>
-    public static readonly TimeSpan MinLockTimeout = TimeSpan.FromSeconds(10);
+    public static readonly TimeSpan MinLockTimeout = CompletionReserve + MinProcessingWindow;
 
     /// <summary>
     /// Аренда по умолчанию.
@@ -150,7 +168,11 @@ public class InboxEnvelope
     /// <summary>
     /// Максимально допустимое время удержания блокировки.
     /// </summary>
-    /// <remarks>Должен быть больше 10 секунд и превышать время обработки сообщения, иначе возможна повторная обработка.</remarks>
+    /// <remarks>
+    /// Не меньше <see cref="MinLockTimeout"/> и обязан превышать время обработки ВСЕЙ захваченной партии, а не
+    /// одного сообщения: аренда всех её сообщений тикает с момента захвата. Иначе аренда истечёт и сообщение
+    /// будет обработано повторно.
+    /// </remarks>
     [Required]
     public TimeSpan LockTimeout { get; set; }
 

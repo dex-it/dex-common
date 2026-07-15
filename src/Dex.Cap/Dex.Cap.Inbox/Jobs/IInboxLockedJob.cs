@@ -25,9 +25,4 @@ internal interface IInboxLockedJob : IDisposable
     /// Отражает время жизни захваченной аренды.
     /// </summary>
     CancellationToken LockToken { get; }
-
-    /// <summary>
-    /// Таймаут операции.
-    /// </summary>
-    TimeSpan Timeout { get; }
 }

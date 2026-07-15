@@ -50,31 +50,38 @@ internal sealed class MainLoopInboxHandler(
     /// <summary>
     /// Обработать одно сообщение партии, соблюдая предел параллелизма.
     /// </summary>
+    /// <remarks>
+    /// Задача владеет собой на всё время метода, включая ожидание слота: остановка хоста гасит WaitAsync
+    /// исключением, и без внешнего using взведённые таймеры аренды всех задач, не дождавшихся очереди,
+    /// утекли бы. Слот освобождается только тем, кто его занял.
+    /// </remarks>
     private async Task ProcessJob(IInboxLockedJob job, SemaphoreSlim semaphore, CancellationToken cancellationToken)
     {
-        await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-
-        try
+        using (job)
         {
-            if (job.LockToken.IsCancellationRequested)
+            await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            try
             {
-                SkipExpiredBeforeStart(job);
-                return;
+                if (job.LockToken.IsCancellationRequested)
+                {
+                    SkipExpiredBeforeStart(job);
+                    return;
+                }
+
+                metricCollector.IncProcessCount();
+
+                using var activity = StartActivity(job);
+                using var cts = CreateProcessingToken(job, cancellationToken);
+
+                await InvokeJobHandler(job, cts.Token).ConfigureAwait(false);
+
+                activity.Stop();
             }
-
-            metricCollector.IncProcessCount();
-
-            using var activity = StartActivity(job);
-            using var cts = CreateProcessingToken(job, cancellationToken);
-
-            await InvokeJobHandler(job, cts.Token).ConfigureAwait(false);
-
-            activity.Stop();
-        }
-        finally
-        {
-            job.Dispose();
-            semaphore.Release();
+            finally
+            {
+                semaphore.Release();
+            }
         }
     }
 
@@ -85,8 +92,8 @@ internal sealed class MainLoopInboxHandler(
     /// Аренда всей партии тикает с момента захвата, а задачи идут по ConcurrencyLimit за раз, поэтому
     /// хвост партии может дождаться очереди уже с мёртвой арендой. Обрабатывать такое сообщение нельзя:
     /// строка больше не наша. Штрафовать его тоже нельзя: обработчик его не видел, а попытки существуют,
-    /// чтобы считать РЕАЛЬНЫЕ отказы обработки. Строку заберёт следующий цикл, здесь достаточно её
-    /// отпустить.
+    /// чтобы считать РЕАЛЬНЫЕ отказы обработки. Писать в строку тоже нечего: аренда истекает в БД сама, после
+    /// чего сообщение возвращается в выборку и его заберёт следующий цикл.
     /// </remarks>
     private void SkipExpiredBeforeStart(IInboxLockedJob job)
     {
