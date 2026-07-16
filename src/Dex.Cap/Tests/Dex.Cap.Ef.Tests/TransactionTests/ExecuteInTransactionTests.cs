@@ -1,5 +1,7 @@
 using System;
+using System.Data.Common;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Ef.Extensions;
@@ -7,13 +9,96 @@ using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Outbox.Interfaces;
 using Dex.Outbox.Command.Test;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.TransactionTests;
 
 public class ExecuteInTransactionTests : BaseTest
 {
+    [TearDown]
+    public void ResetInterceptor()
+    {
+        TestDbContext.Interceptor = null;
+    }
+
+    /// <summary>
+    /// Коммит прошёл, подтверждение потерялось: verifySucceeded находит работу сделанной, операция не
+    /// переигрывается, и вызывающий обязан получить значение, которое операция посчитала.
+    /// </summary>
+    /// <remarks>
+    /// Соседний тест на verifySucceeded бросает исключение ИЗ САМОЙ операции, поэтому значения там не
+    /// возникает вовсе и возвращать нечего. Здесь операция отрабатывает целиком, а падает уже фиксация,
+    /// то есть воспроизводится реальный путь: значение посчитано, но результат коммита неизвестен.
+    /// </remarks>
+    [Test]
+    public async Task ExecuteInTransactionAsync_WhenAckIsLostAfterCommit_ReturnsWhatTheOperationProduced()
+    {
+        TestDbContext.IsRetryStrategy = true;
+        TestDbContext.Interceptor = new AckLossAfterCommitInterceptor();
+        try
+        {
+            var sp = InitServiceCollection().BuildServiceProvider();
+            var context = sp.GetRequiredService<TestDbContext>();
+
+            var userId = Guid.NewGuid();
+            var attempts = 0;
+
+            var produced = await context.ExecuteInTransactionAsync(
+                state: new { UserId = userId },
+                operation: async (st, ct) =>
+                {
+                    attempts++;
+                    context.Users.Add(new TestUser { Id = st.UserId, Name = "AckLossUser", Years = 30 });
+                    await context.SaveChangesAsync(ct);
+
+                    return $"produced-on-attempt-{attempts}";
+                },
+                verifySucceeded: async (st, ct) =>
+                {
+                    using var scope = sp.CreateScope();
+                    var checkContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+                    return await checkContext.Users.AnyAsync(x => x.Id == st.UserId, ct);
+                });
+
+            Assert.AreEqual(1, attempts, "verifySucceeded reported the work as done, so the operation must not be retried");
+
+            // Главное: без публикации результата в состояние здесь возвращался бы null, то есть вызывающий
+            // читал бы «операция ничего не вернула» про работу, которая в БД зафиксирована.
+            Assert.AreEqual("produced-on-attempt-1", produced,
+                "the caller must get the value the operation produced, not default(TResult)");
+
+            Assert.IsTrue(await context.Users.AnyAsync(x => x.Id == userId), "the row must really be committed");
+        }
+        finally
+        {
+            TestDbContext.IsRetryStrategy = false;
+        }
+    }
+
+    /// <summary>
+    /// Роняет первую фиксацию транзиентной ошибкой ПОСЛЕ того, как она успешно прошла.
+    /// </summary>
+    private sealed class AckLossAfterCommitInterceptor : DbTransactionInterceptor
+    {
+        private int _fired;
+
+        public override Task TransactionCommittedAsync(
+            DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Exchange(ref _fired, 1) == 0)
+            {
+                throw new NpgsqlException(
+                    "Fake connection loss right after a successful commit",
+                    new PostgresException("Error", "Severity", "Invariant", "57P01"));
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
     [Test]
     public async Task SimpleRunExecuteInTransactionTest()
     {

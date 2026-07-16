@@ -76,7 +76,21 @@ public static class DbContextExecuteInTransactionExtensions
 
         return executionStrategy.ExecuteAsync(
             new ExecutionStateAsync<TState, TResult>(operation, verifySucceeded, state),
-            (context, st, ct) => ExecuteInTransactionInternalAsync(context, st.State, st.Operation, options, isNested: false, ct),
+            (context, st, ct) => ExecuteInTransactionInternalAsync(
+                context,
+                st.State,
+                // Результат публикуется в состояние ДО коммита, как это делает Scope-вариант.
+                // Иначе на пути verifySucceeded (транзакция закоммичена, но подтверждение потеряно и
+                // операция не переигрывается) возвращать было бы нечего, и вызывающий получал бы
+                // default(TResult) вместо значения, которое операция уже посчитала.
+                async (operationState, operationToken) =>
+                {
+                    st.Result = await st.Operation(operationState, operationToken).ConfigureAwait(false);
+                    return st.Result;
+                },
+                options,
+                isNested: false,
+                ct),
             async (_, st, ct) => new ExecutionResult<TResult>(await st.VerifySucceeded(st.State, ct).ConfigureAwait(false), st.Result),
             cancellationToken
         );
