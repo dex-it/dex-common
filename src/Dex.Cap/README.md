@@ -325,7 +325,7 @@ public async Task<IActionResult> CreateOrder(
 | Parameter | Meaning |
 |---|---|
 | `identity` | `(MessageId, ConsumerId)` — the deduplication key. `MessageId` must be stable across redeliveries; `ConsumerId` must be stable across restarts and identical on every instance. |
-| `lockTimeout` | Lease duration, default 30s, minimum 10s. **Must exceed the time needed to drain the whole claimed batch**, not just one message: the lease of every message in a batch starts ticking at claim time. Otherwise the lease expires mid-flight, the outcome cannot be committed, and the message is handed to another worker. |
+| `lockTimeout` | Lease duration, default 30s, allowed range 10s to 1 day. **Must exceed the time needed to drain the whole claimed batch**, not just one message: the lease of every message in a batch starts ticking at claim time. If it runs out mid-flight the message is returned to the queue without spending an attempt, and `LeaseLostCount` goes up. The upper bound is technical: the cancellation timer does not accept intervals longer than about 24.8 days. |
 
 Unlike `IOutboxService.EnqueueAsync`, this method **persists immediately in its own transaction**: the point of the
 inbox is to store the message *before* the source is acknowledged, and there is no business work to be atomic with.
@@ -340,7 +340,7 @@ been acknowledged.
 | Option | Default | Meaning |
 |---|---|---|
 | `Retries` | 3 | Attempts before the message is dead-lettered. |
-| `MessagesToProcess` | 100 | Batch size claimed per cycle. |
+| `MessagesToProcess` | 25 | Batch size claimed per cycle. Together with the lease it sets the per-message time budget: `(lockTimeout - 5s) * ConcurrencyLimit / MessagesToProcess`, one second on the defaults. A bigger batch does not drain faster: whatever cannot start before the lease runs out simply returns to the queue. |
 | `ConcurrencyLimit` | 1 | Degree of parallelism; must not exceed `MessagesToProcess`. |
 | `GetFreeMessagesTimeout` | 20s | Timeout of the claim query. Whole seconds, at least `1s`: the command timeout has second granularity, so a smaller value would truncate to zero and silently leave the timeout unset. |
 
@@ -440,7 +440,8 @@ message that does not exist.
 
 A steadily non-zero `ExpiredBeforeStartCount` or `LeaseLostCount` means the lease dies before the claimed batch is
 drained: raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`. The first counts leases that
-died while the message waited its turn, the second leases lost during processing itself.
+died while the message waited its turn, the second leases lost during processing itself. Neither spends an attempt:
+a lease running out is a sizing mistake, not a message failure, so the message returns to the queue untouched.
 
 ### The message body is stored, so its schema is a contract
 

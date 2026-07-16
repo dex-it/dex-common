@@ -68,7 +68,7 @@ modelBuilder.OnceExecutorModelCreating(); // таблица LastTransaction
 
 `OutboxOptions`: Retries=3, MessagesToProcess=100, ConcurrencyLimit=1, GetFreeMessagesTimeout=20s.
 `OutboxHandlerOptions`: Period=30s, CleanupInterval=1h, CleanupOlderThan=30d.
-`InboxOptions`: Retries=3, MessagesToProcess=100, ConcurrencyLimit=1, GetFreeMessagesTimeout=20s (минимум 1s: таймаут команды задаётся целыми секундами, доля усекается в ноль, а ноль означает «не задан»). Валидируются на старте хоста (`ValidateOnStart`): неверная конфигурация роняет запуск.
+`InboxOptions`: Retries=3, MessagesToProcess=25, ConcurrencyLimit=1, GetFreeMessagesTimeout=20s (минимум 1s: таймаут команды задаётся целыми секундами, доля усекается в ноль, а ноль означает «не задан»). Валидируются на старте хоста (`ValidateOnStart`): неверная конфигурация роняет запуск.
 `InboxHandlerOptions`: Period=30s, CleanupInterval=1h, CleanupOlderThan=30d, HandlerInitDelay=5-15s, CleanerInitDelay=20-40s.
 `EfTransactionOptions`: TransactionScopeOption, IsolationLevel (ReadCommitted), TimeoutInSeconds=60, ClearChangeTrackerOnRetry=true. Пресеты: `DefaultRepeatableRead`, `DefaultRequiresNew`, `DefaultSuppress`.
 
@@ -88,7 +88,9 @@ Inbox, `Meter("Inbox")`: счётчики `ProcessCount`, `EmptyProcessCount`, `
 
 `ProcessJobFailedCount` и `DeadLetteredCount` считают ФАКТИЧЕСКУЮ запись, а не намерение: при потерянной аренде исход не пишется, и счётчик захоронений иначе указывал бы на строку, которой в `DeadLettered` нет.
 
-Устойчиво ненулевые `ExpiredBeforeStartCount` и `LeaseLostCount` означают одно и то же: `LockTimeout` мал для `MessagesToProcess`, потому что аренда всей партии тикает с момента захвата. Первый счётчик ловит случай, когда аренда умерла в очереди на обработку, второй - когда во время самой обработки.
+Устойчиво ненулевые `ExpiredBeforeStartCount` и `LeaseLostCount` означают одно и то же: `LockTimeout` мал для `MessagesToProcess`, потому что аренда всей партии тикает с момента захвата. Первый счётчик ловит случай, когда аренда умерла в очереди на обработку, второй - когда во время самой обработки. Ни один из них не тратит попытку: истечение аренды это ошибка размера `LockTimeout`, а не отказ сообщения. Иначе наказывался бы ИЗБИРАТЕЛЬНО обработчик, уважающий токен отмены (он отдаёт управление, пока аренда ещё жива, и исход записывается), а игнорирующий токен уходил бы безнаказанным.
+
+Бюджет времени на сообщение: `(LockTimeout - 5s) * ConcurrencyLimit / MessagesToProcess`. На дефолтах секунда.
 
 Health check инбокса регистрируется автоматически планировщиком под тегом `inbox-scheduler`, отдаёт `Degraded`, если обработчик не отчитывался дольше `Period * 2`.
 
@@ -111,7 +113,7 @@ dotnet test src/Dex.Cap/Dex.Cap.sln
 
 - `OutboxTypeId`/`InboxTypeId` это `static abstract`, не instance-свойство. Реализация: `public static string InboxTypeId => "guid-here"`
 - xmin concurrency: исключить `OutboxEnvelope`, `InboxEnvelope` и `LastTransaction` из `UseXminAsConcurrencyToken` (конфликт с LockId)
-- LockTimeout (default 30s, min 10s) ОБЯЗАН превышать время обработки ВСЕЙ захваченной партии, а не одного сообщения: аренда всех сообщений тикает с момента захвата
+- LockTimeout (default 30s, диапазон 10s..1d) ОБЯЗАН превышать время обработки ВСЕЙ захваченной партии, а не одного сообщения: аренда всех сообщений тикает с момента захвата. Верхняя граница техническая: таймер отмены не принимает интервал длиннее ~24.8 суток
 - `UnsavedChangesDetectedException`: если ChangeTracker содержит несохранённые изменения после modificator в OnceExecutor
 - `ClearChangeTrackerOnRetry=true` (default): на retry ВСЕ tracked entities очищаются
 - Дискриминатор ищется через `AppDomain.CurrentDomain.GetAssemblies()` (reflection). Сборка с сообщением должна быть загружена
