@@ -75,7 +75,7 @@ internal sealed class InboxHandlerBackgroundService(
     /// Цикл переживает ошибку тика, но нулевой результат уводит следующий заход в паузу: при устойчивом
     /// сбое (например, недоступна БД) разбор без паузы превратился бы в busy-loop.
     /// </remarks>
-    /// <returns>Количество обработанных сообщений; ноль в том числе при ошибке тика.</returns>
+    /// <returns>Количество захваченных сообщений; ноль в том числе при ошибке тика.</returns>
     private static async Task<int> OnTick(IServiceProvider serviceProvider, ILogger loggerInner, CancellationToken cancellationToken)
     {
         loggerInner.LogDebug("Resolving IInboxHandler");

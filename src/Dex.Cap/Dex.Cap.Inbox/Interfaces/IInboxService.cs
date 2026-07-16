@@ -28,7 +28,8 @@ public interface IInboxService
     /// </para>
     /// NOTE. lockTimeout должен превышать время обработки ВСЕЙ захваченной партии, а не одного сообщения:
     /// аренда всех сообщений партии тикает с момента захвата. Иначе аренда истечёт и сообщение будет
-    /// обработано повторно. Значение по умолчанию 30 сек, минимальное 10 сек.
+    /// обработано повторно. По умолчанию <see cref="Models.InboxEnvelope.DefaultLockTimeout"/>, диапазон от
+    /// <see cref="Models.InboxEnvelope.MinLockTimeout"/> до <see cref="Models.InboxEnvelope.MaxLockTimeout"/>.
     /// </remarks>
     /// <exception cref="Exceptions.InboxException">
     /// Приём выполняется внутри транзакции вызывающего кода.

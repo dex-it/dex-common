@@ -15,7 +15,7 @@ public sealed class InboxHandlerOptions
     public TimeSpan Period { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Cleanup processed messages period
+    /// Период запуска чистки обработанных сообщений.
     /// Default 1h
     /// </summary>
     public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromHours(1);

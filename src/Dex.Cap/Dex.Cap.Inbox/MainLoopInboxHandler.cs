@@ -121,7 +121,7 @@ internal sealed class MainLoopInboxHandler(
     {
         var activity = new Activity($"Process inbox message: {job.Envelope.Id}");
         activity.AddBaggage("Type", job.Envelope.MessageType);
-        activity.AddBaggage("MessageId", job.Envelope.Id.ToString());
+        activity.AddBaggage("EnvelopeId", job.Envelope.Id.ToString());
         activity.AddTag("SourceMessageId", job.Envelope.MessageId);
         activity.AddTag("ConsumerId", job.Envelope.ConsumerId);
 

@@ -11,7 +11,7 @@ namespace Dex.Cap.Inbox.Exceptions;
 /// Без этого изменения обработчика закоммитились бы, а статус сообщения остался бы прежним,
 /// и следующий владелец аренды применил бы эффект второй раз.
 /// </remarks>
-internal class InboxLeaseLostException : InboxException
+internal sealed class InboxLeaseLostException : InboxException
 {
     public InboxLeaseLostException()
     {
