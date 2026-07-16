@@ -16,6 +16,11 @@ public class TestInboxCommandHandler : IInboxMessageHandler<TestInboxCommand>
     /// </summary>
     public static Func<TestInboxCommand, Task>? OnProcessAsync { get; set; }
 
+    /// <summary>
+    /// То же, но с токеном обработки: нужен, чтобы отличить обработчик, уважающий отмену, от игнорирующего её.
+    /// </summary>
+    public static Func<TestInboxCommand, CancellationToken, Task>? OnProcessWithTokenAsync { get; set; }
+
     public async Task Process(TestInboxCommand message, CancellationToken cancellationToken)
     {
         OnProcess?.Invoke(this, message);
@@ -25,6 +30,13 @@ public class TestInboxCommandHandler : IInboxMessageHandler<TestInboxCommand>
         if (hook is not null)
         {
             await hook(message).ConfigureAwait(false);
+        }
+
+        var tokenHook = OnProcessWithTokenAsync;
+
+        if (tokenHook is not null)
+        {
+            await tokenHook(message, cancellationToken).ConfigureAwait(false);
         }
     }
 }

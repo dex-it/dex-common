@@ -18,6 +18,7 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
     IInboxSerializer serializer,
     IInboxMessageHandlerFactory handlerFactory,
     IInboxTypeDiscriminatorProvider discriminatorProvider,
+    IInboxMetricCollector metricCollector,
     ILogger<InboxJobHandlerEf<TDbContext>> logger) : IInboxJobHandler
     where TDbContext : DbContext
 {
@@ -41,7 +42,7 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
         }
         catch (OperationCanceledException) when (job.LockToken.IsCancellationRequested)
         {
-            await HandleExpiredLease(job).ConfigureAwait(false);
+            HandleExpiredLease(job);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -62,18 +63,28 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
     /// Аренда истекла прямо во время обработки.
     /// </summary>
     /// <remarks>
-    /// Неудача фиксируется вне отменённого токена, иначе исход потерялся бы. Строку мог уже перехватить
-    /// другой обработчик: тогда фиксация ничего не изменит и ограничится предупреждением.
+    /// Попытка не тратится и в строку ничего не пишется. Обработчик не отказал, ему не дали доработать:
+    /// аренда истекла, потому что LockTimeout мал для времени слива всей захваченной партии, то есть это
+    /// ошибка конфигурации, а не свойство сообщения. Списывать за неё попытку значило бы хоронить здоровые
+    /// сообщения, причём только те, чьи обработчики УВАЖАЮТ токен отмены: обработчик, который токен
+    /// игнорирует, доработает до конца, потеряет аренду на фиксации и попытку не потратит. Наказывать за
+    /// корректное поведение нельзя.
+    /// <para>
+    /// Транзакция обработчика откачена, эффект не применён. Аренда истекает в БД сама, после чего
+    /// сообщение возвращается в выборку. Наружу это видно счётчиком потерянных аренд.
+    /// </para>
     /// </remarks>
-    private async Task HandleExpiredLease(IInboxLockedJob job)
+    private void HandleExpiredLease(IInboxLockedJob job)
     {
-        logger.LogError(
-            "Operation canceled due to exceeding the message blocking time. MessageId: {MessageId}",
+        metricCollector.IncLeaseLostCount();
+
+        logger.LogWarning(
+            "Inbox message {MessageId} ran out of its lease while being processed and is returned to the queue without " +
+            "spending an attempt. Increase LockTimeout above the time needed to drain the whole claimed batch, " +
+            "or lower MessagesToProcess",
             job.Envelope.Id);
 
         DiscardRolledBackChanges();
-
-        await dataProvider.JobFail(job, "Lock is expired", cancellationToken: CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <summary>
