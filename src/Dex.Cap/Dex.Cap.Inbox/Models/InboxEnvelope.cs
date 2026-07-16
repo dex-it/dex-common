@@ -115,7 +115,7 @@ public class InboxEnvelope
     /// Первичный ключ конверта.
     /// </summary>
     [Key]
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
     /// <summary>
     /// Идентификатор сообщения в источнике: MessageId шины, Idempotency-Key HTTP-запроса и т.п.
@@ -123,7 +123,7 @@ public class InboxEnvelope
     /// <remarks>Задаётся вызывающей стороной, потому что ядро не знает про транспорт.</remarks>
     [Required]
     [MaxLength(MaxIdentityLength)]
-    public string MessageId { get; set; }
+    public string MessageId { get; init; }
 
     /// <summary>
     /// Идентификатор потребителя, для которого принято сообщение.
@@ -131,13 +131,13 @@ public class InboxEnvelope
     /// <remarks>Разделяет обработку одного сообщения разными потребителями в пределах одного хранилища.</remarks>
     [Required]
     [MaxLength(MaxIdentityLength)]
-    public string ConsumerId { get; set; }
+    public string ConsumerId { get; init; }
 
     /// <summary>
     /// Тип сообщения (дискриминатор).
     /// </summary>
     [Required]
-    public string MessageType { get; set; }
+    public string MessageType { get; init; }
 
     /// <summary>
     /// Сериализованное тело сообщения.
@@ -149,13 +149,13 @@ public class InboxEnvelope
     /// подходящего универсального предела у библиотеки нет.
     /// </remarks>
     [Required]
-    public string Content { get; set; }
+    public string Content { get; init; }
 
     /// <summary>
     /// Идентификатор Activity.Id подсистемы System.Diagnostics.Activity.
     /// </summary>
     /// <remarks>Сохраняется при приёме, чтобы фоновая обработка продолжила трассу источника, а не начала свою.</remarks>
-    public string? ActivityId { get; set; }
+    public string? ActivityId { get; init; }
 
     /// <summary>
     /// Кол-во выполненных попыток обработки.
@@ -182,7 +182,7 @@ public class InboxEnvelope
     /// Момент приёма сообщения.
     /// </summary>
     [Required]
-    public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     /// Момент последнего изменения статуса сообщения.
@@ -211,13 +211,13 @@ public class InboxEnvelope
     /// будет обработано повторно.
     /// </remarks>
     [Required]
-    public TimeSpan LockTimeout { get; set; }
+    public TimeSpan LockTimeout { get; init; }
 
     /// <summary>
     /// Уникальный ключ потока который захватил блокировку и только он имеет право её освободить (ключ идемпотентности).
     /// </summary>
     /// <remarks>Допускается игнорирование этого идентификатора если истекло время <see cref="LockExpirationTimeUtc"/>.</remarks>
-    public Guid? LockId { get; set; }
+    public Guid? LockId { get; init; }
 
     /// <summary>
     /// Максимально допустимый момент времени для удержания блокировки (превентивный тайм-аут).
@@ -226,7 +226,7 @@ public class InboxEnvelope
     /// Заменяет отдельный статус "в обработке": если процесс умер, аренда истечёт и сообщение вернётся в выборку,
     /// тогда как статус "в обработке" остался бы висеть навсегда.
     /// </remarks>
-    public DateTime? LockExpirationTimeUtc { get; set; }
+    public DateTime? LockExpirationTimeUtc { get; init; }
 
     #endregion
 }
