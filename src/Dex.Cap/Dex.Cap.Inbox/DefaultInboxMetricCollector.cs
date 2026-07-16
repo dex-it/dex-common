@@ -62,6 +62,8 @@ internal sealed class DefaultInboxMetricCollector : IInboxMetricCollector, IDisp
 
         _processDuration = _meter.CreateHistogram<double>("ProcessDuration", description: "Duration of job process, regardless of outcome");
 
+        return;
+
         long GetCount(Func<IInboxDataProvider, int> read)
         {
             using var scope = scopeFactory.CreateScope();

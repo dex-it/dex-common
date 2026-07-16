@@ -10,7 +10,6 @@ using Dex.Cap.Inbox.RetryStrategies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Inbox.Ef.Extensions;
@@ -105,7 +104,7 @@ public static class MicrosoftDependencyInjectionExtensions
         this IServiceCollection services, int periodSeconds = 30, int cleanupDays = 30)
         where TDbContext : DbContext
     {
-        return AddInboxScheduler<InboxCleanupDataProviderEf<TDbContext>>(services, periodSeconds, cleanupDays);
+        return services.AddInboxScheduler<InboxCleanupDataProviderEf<TDbContext>>(periodSeconds, cleanupDays);
     }
 
     /// <summary>
@@ -115,7 +114,7 @@ public static class MicrosoftDependencyInjectionExtensions
         this IServiceCollection services, Action<InboxHandlerOptions> configure)
         where TDbContext : DbContext
     {
-        return AddInboxScheduler<InboxCleanupDataProviderEf<TDbContext>>(services, configure);
+        return services.AddInboxScheduler<InboxCleanupDataProviderEf<TDbContext>>(configure);
     }
 
     /// <summary>
@@ -129,7 +128,7 @@ public static class MicrosoftDependencyInjectionExtensions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(periodSeconds);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cleanupDays);
 
-        return AddInboxScheduler<TCleanUpDataProvider>(services, options =>
+        return services.AddInboxScheduler<TCleanUpDataProvider>(options =>
         {
             options.Period = TimeSpan.FromSeconds(periodSeconds);
             options.CleanupOlderThan = TimeSpan.FromDays(cleanupDays);

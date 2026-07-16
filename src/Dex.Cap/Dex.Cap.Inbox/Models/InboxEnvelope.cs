@@ -77,6 +77,10 @@ public class InboxEnvelope
     {
     }
 
+    /// <summary>
+    /// Создать конверт принимаемого сообщения. Статус выставляется в New, а StartAtUtc и ScheduledStartIndexing
+    /// в текущее время, поэтому сообщение сразу попадает в выборку.
+    /// </summary>
     public InboxEnvelope(Guid id, string messageId, string consumerId, string messageType, string content, TimeSpan? lockTimeout = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageId);
@@ -107,6 +111,9 @@ public class InboxEnvelope
         ActivityId = Activity.Current?.Id;
     }
 
+    /// <summary>
+    /// Первичный ключ конверта.
+    /// </summary>
     [Key]
     public Guid Id { get; set; }
 
@@ -171,9 +178,15 @@ public class InboxEnvelope
     /// </summary>
     public string? Error { get; set; }
 
+    /// <summary>
+    /// Момент приёма сообщения.
+    /// </summary>
     [Required]
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Момент последнего изменения статуса сообщения.
+    /// </summary>
     public DateTime? Updated { get; set; }
 
     /// <summary>

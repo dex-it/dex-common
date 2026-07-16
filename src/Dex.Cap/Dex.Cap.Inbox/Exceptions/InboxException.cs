@@ -7,7 +7,7 @@ namespace Dex.Cap.Inbox.Exceptions;
 /// </summary>
 public class InboxException : Exception
 {
-    public InboxException()
+    protected InboxException()
     {
     }
 
@@ -15,7 +15,7 @@ public class InboxException : Exception
     {
     }
 
-    public InboxException(string message, Exception innerException) : base(message, innerException)
+    protected InboxException(string message, Exception innerException) : base(message, innerException)
     {
     }
 }

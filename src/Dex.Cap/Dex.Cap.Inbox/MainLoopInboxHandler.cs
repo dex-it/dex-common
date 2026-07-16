@@ -130,7 +130,7 @@ internal sealed class MainLoopInboxHandler(
         activity.AddTag("SourceMessageId", job.Envelope.MessageId);
         activity.AddTag("ConsumerId", job.Envelope.ConsumerId);
 
-        if (string.IsNullOrEmpty(job.Envelope.ActivityId) is false)
+        if (!string.IsNullOrEmpty(job.Envelope.ActivityId))
         {
             activity.SetParentId(job.Envelope.ActivityId);
         }

@@ -19,7 +19,7 @@ internal sealed class AppDomainInboxMessageTypeSource(ILogger<AppDomainInboxMess
     public IEnumerable<Type> GetMessageTypes()
     {
         return AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => a.IsDynamic is false)
+            .Where(a => !a.IsDynamic)
             .SelectMany(GetLoadableTypes)
             .Where(t => typeof(IInboxMessage).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false, ContainsGenericParameters: false });
     }

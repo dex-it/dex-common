@@ -21,6 +21,9 @@ public sealed class InboxRetryStrategyConfigurator
 
     private IInboxRetryStrategy _retryStrategy = new DefaultInboxRetryStrategy();
 
+    /// <summary>
+    /// Текущая стратегия повторов. По умолчанию повтор без задержки; присвоить null нельзя.
+    /// </summary>
     public IInboxRetryStrategy RetryStrategy
     {
         get => _retryStrategy;

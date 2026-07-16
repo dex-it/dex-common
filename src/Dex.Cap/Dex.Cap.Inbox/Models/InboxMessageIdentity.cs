@@ -10,6 +10,9 @@ namespace Dex.Cap.Inbox.Models;
 /// </remarks>
 public readonly record struct InboxMessageIdentity
 {
+    /// <summary>
+    /// Задать идентичность сообщения парой «идентификатор сообщения - потребитель».
+    /// </summary>
     public InboxMessageIdentity(string messageId, string consumerId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageId);

@@ -18,5 +18,10 @@ namespace Dex.Cap.Inbox.Interfaces;
 public interface IInboxMessageHandler<in TMessage>
     where TMessage : IInboxMessage
 {
+    /// <summary>
+    /// Обработать сообщение. Изменения через общий DbContext фиксируются атомарно с переводом сообщения в Succeeded.
+    /// </summary>
+    /// <param name="message">Восстановленное сообщение.</param>
+    /// <param name="cancellationToken">Токен отмены: гаснет по истечении аренды или остановке хоста.</param>
     Task Process(TMessage message, CancellationToken cancellationToken = default);
 }
