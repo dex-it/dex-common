@@ -53,6 +53,21 @@ public class InboxEnvelope
     public static readonly TimeSpan MinLockTimeout = CompletionReserve + MinProcessingWindow;
 
     /// <summary>
+    /// Максимально допустимая аренда.
+    /// </summary>
+    /// <remarks>
+    /// Ограничение техническое: таймер отмены, которым гасится обработка, не принимает интервалы длиннее
+    /// <see cref="int.MaxValue"/> миллисекунд (около 24.8 суток) и бросает. Без проверки такое значение
+    /// принималось бы приёмом, а падало позже, при сборке задач, роняя материализацию ВСЕЙ захваченной
+    /// партии: одно сообщение останавливало бы инбокс целиком.
+    /// <para>
+    /// Практического смысла в аренде такой длины нет: она означала бы, что упавший процесс держит свои
+    /// сообщения заблокированными неделями.
+    /// </para>
+    /// </remarks>
+    public static readonly TimeSpan MaxLockTimeout = TimeSpan.FromDays(1);
+
+    /// <summary>
     /// Аренда по умолчанию.
     /// </summary>
     public static readonly TimeSpan DefaultLockTimeout = TimeSpan.FromSeconds(30);
@@ -72,7 +87,10 @@ public class InboxEnvelope
         ArgumentOutOfRangeException.ThrowIfGreaterThan(consumerId.Length, MaxIdentityLength);
 
         if (lockTimeout.HasValue)
+        {
             ArgumentOutOfRangeException.ThrowIfLessThan(lockTimeout.Value, MinLockTimeout);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(lockTimeout.Value, MaxLockTimeout);
+        }
 
         Id = id;
         MessageId = messageId;
@@ -158,7 +176,7 @@ public class InboxEnvelope
     public DateTime? StartAtUtc { get; set; }
 
     /// <summary>
-    /// Копия <see cref="StartAtUtc"/> для покрывающего индекса выборки.
+    /// Копия <see cref="StartAtUtc"/> для частичного индекса выборки.
     /// </summary>
     /// <remarks>Сбрасывается в null у завершённых сообщений, чтобы вывести их из выборки и из индекса.</remarks>
     public DateTime? ScheduledStartIndexing { get; set; }

@@ -90,4 +90,64 @@ public class InboxPoisonedRowTests : BaseTest
         Assert.AreEqual(InboxMessageStatus.Succeeded,
             (await GetDb(sp).Set<InboxEnvelope>().SingleAsync(x => x.MessageId == "fresh")).Status);
     }
+
+    /// <summary>
+    /// Аренда сверх максимума так же непригодна, как и аренда ниже минимума.
+    /// </summary>
+    /// <remarks>
+    /// Таймер отмены не принимает интервал длиннее <see cref="int.MaxValue"/> миллисекунд и бросает, поэтому
+    /// без верхней границы такая строка роняла бы сборку ВСЕЙ захваченной партии, унося с собой здоровые
+    /// сообщения. Публичный конструктор такое значение отвергает, но из БД конверт приезжает мимо него.
+    /// </remarks>
+    [Test]
+    public async Task Process_RowWithLockTimeoutAboveMaximum_IsDeadLetteredAndTheBatchSurvives()
+    {
+        var sp = InitInboxServiceCollection()
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        var inbox = sp.GetRequiredService<IInboxService>();
+        await inbox.EnqueueAsync(new TestInboxCommand { Args = "healthy" }, new InboxMessageIdentity("healthy", "c-1"));
+        await inbox.EnqueueAsync(new TestInboxCommand { Args = "giant" }, new InboxMessageIdentity("giant", "c-1"));
+
+        using (var poisonScope = sp.CreateScope())
+        {
+            await poisonScope.ServiceProvider.GetRequiredService<TestDbContext>()
+                .Set<InboxEnvelope>()
+                .Where(x => x.MessageId == "giant")
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.LockTimeout, TimeSpan.FromDays(60)));
+        }
+
+        var processed = await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
+        Assert.AreEqual(1, processed, "the healthy message must survive a co-batch row with an oversized lease");
+
+        var envelopes = await GetDb(sp).Set<InboxEnvelope>().ToListAsync();
+
+        Assert.AreEqual(InboxMessageStatus.Succeeded, envelopes.Single(x => x.MessageId == "healthy").Status);
+
+        var giant = envelopes.Single(x => x.MessageId == "giant");
+        Assert.AreEqual(InboxMessageStatus.DeadLettered, giant.Status);
+        Assert.IsNull(giant.ScheduledStartIndexing);
+        Assert.IsTrue(giant.ErrorMessage!.Contains("LockTimeout", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Приём не принимает аренду сверх максимума: ошибка обязана прилететь вызывающему сразу, а не позже и
+    /// не фоновому обработчику.
+    /// </summary>
+    [Test]
+    public void Enqueue_LockTimeoutAboveMaximum_IsRejectedAtTheCallSite()
+    {
+        var sp = InitInboxServiceCollection()
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        var inbox = sp.GetRequiredService<IInboxService>();
+
+        NUnit.Framework.Assert.ThrowsAsync<ArgumentOutOfRangeException>((Func<Task>)(async () =>
+            await inbox.EnqueueAsync(
+                new TestInboxCommand { Args = "giant" },
+                new InboxMessageIdentity("giant", "c-1"),
+                lockTimeout: TimeSpan.FromDays(60))));
+    }
 }

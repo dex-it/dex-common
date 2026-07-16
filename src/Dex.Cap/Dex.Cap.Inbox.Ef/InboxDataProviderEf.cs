@@ -59,7 +59,7 @@ internal sealed class InboxDataProviderEf<TDbContext>(
             .ExecuteSqlRawAsync(InsertSql, parameters, cancellationToken)
             .ConfigureAwait(false);
 
-        return affected != 0
+        return affected is not 0
             ? InboxEnqueueStatus.Accepted
             : ReportDuplicate(inboxEnvelope);
     }
@@ -125,31 +125,50 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     }
 
     /// <inheritdoc />
+    protected override async Task WriteOutcomeOrThrowAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken)
+    {
+        var written = await CompleteJobAsync(lockedJob, cancellationToken).ConfigureAwait(false);
+
+        if (!written)
+        {
+            throw new InboxLeaseLostException(
+                $"Inbox job {lockedJob.Envelope.Id} lost its lease before the outcome was committed. " +
+                $"The handler transaction is rolled back. {LeaseAdvice}");
+        }
+    }
+
+    /// <inheritdoc />
+    protected override Task<bool> TryWriteOutcomeAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken) =>
+        CompleteJobAsync(lockedJob, cancellationToken);
+
+    /// <summary>
+    /// Записать исход одной транзакцией и сообщить, состоялась ли запись.
+    /// </summary>
     /// <remarks>
     /// Уровень изоляции ReadCommitted, а не RepeatableRead: корректность обеспечивает предикат владения
     /// арендой прямо в UPDATE, а не уровень изоляции. Более строгий уровень запрещал бы вызывать этот
     /// метод внутри транзакции обработчика (Common.Ef не позволяет повышать уровень у вложенной
     /// транзакции), а именно там фиксируется успех.
     /// </remarks>
-    protected override Task<bool> CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken)
+    private Task<bool> CompleteJobAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken)
     {
         return dbContext.ExecuteInTransactionAsync(
-            (DbContext: dbContext, LockedJob: lockedJob, Logger: logger, RequireLease: requireLease, Metrics: MetricCollector),
+            (DbContext: dbContext, LockedJob: lockedJob, Logger: logger, Metrics: MetricCollector),
             static async (state, ct) =>
             {
-                var (context, job, log, requireLease, metrics) = state;
+                var (context, job, log, metrics) = state;
                 var affected = await WriteOutcomeAsync(context, job, ct).ConfigureAwait(false);
 
                 if (affected is 0)
                 {
-                    ReportLostLease(job.Envelope, requireLease, log, metrics);
+                    ReportLostLease(job.Envelope, log, metrics);
                 }
 
                 return affected is not 0;
             },
             static async (state, ct) =>
             {
-                var (context, job, _, _, _) = state;
+                var (context, job, _, _) = state;
                 var envelope = job.Envelope;
 
                 var existLocked = await context.Set<InboxEnvelope>()
@@ -193,35 +212,22 @@ internal sealed class InboxDataProviderEf<TDbContext>(
             .ConfigureAwait(false);
     }
 
+    /// <summary>Совет, который одинаково полезен и в логе, и в тексте исключения.</summary>
+    private const string LeaseAdvice = "Increase LockTimeout above the time needed to drain the whole claimed batch";
+
     /// <summary>
-    /// Отреагировать на потерю аренды: аренда истекла или её перехватил другой обработчик.
+    /// Зафиксировать потерю аренды: она истекла или её перехватил другой обработчик.
     /// </summary>
     /// <remarks>
-    /// На пути успеха вызов идёт внутри транзакции обработчика. Вернуться нормально означало бы
-    /// закоммитить изменения обработчика со старым статусом сообщения, и тогда следующий владелец аренды
-    /// применил бы эффект второй раз. Исключение откатывает транзакцию, поэтому эффект применит ровно
-    /// тот, кто владеет арендой.
-    /// <para>
-    /// На пути неудачи транзакция обработчика уже откачена, ронять нечего: сообщение остаётся за новым
-    /// владельцем аренды, он его и обработает.
-    /// </para>
+    /// Единственная точка обнаружения потери, поэтому счётчик живёт здесь: иначе каждый вызывающий считал
+    /// бы её сам и рано или поздно забыл.
     /// </remarks>
-    /// <exception cref="InboxLeaseLostException">Аренда потеряна на пути успеха.</exception>
-    private static void ReportLostLease(InboxEnvelope envelope, bool requireLease, ILogger logger, IInboxMetricCollector metrics)
+    private static void ReportLostLease(InboxEnvelope envelope, ILogger logger, IInboxMetricCollector metrics)
     {
-        const string advice = "Increase LockTimeout above the time needed to drain the whole claimed batch";
-
         metrics.IncLeaseLostCount();
 
-        if (requireLease)
-        {
-            throw new InboxLeaseLostException(
-                $"Inbox job {envelope.Id} lost its lease before the outcome was committed. " +
-                $"The handler transaction is rolled back. {advice}");
-        }
-
         logger.LogWarning(
-            "Inbox job {JobId} can not be completed: the lease has expired and the message was taken by another handler. " + advice,
+            "Inbox job {JobId} can not be completed: the lease has expired and the message was taken by another handler. " + LeaseAdvice,
             envelope.Id);
     }
 
@@ -229,11 +235,13 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     /// Строку невозможно взять в обработку.
     /// </summary>
     /// <remarks>
-    /// Единственная причина это LockTimeout ниже минимума. Конструктор конверта проверяет минимум, у
-    /// колонки есть дефолт, но сущность публична и её свойства изменяемы, поэтому значение может приехать
-    /// и через обычный EF-код потребителя, и правкой руками.
+    /// Причина всегда одна: LockTimeout вне допустимого диапазона, из-за чего таймер отмены задачи либо не
+    /// оставил бы обработчику окна вовсе, либо не принял бы такой интервал и бросил. Конструктор конверта
+    /// проверяет обе границы, у колонки есть дефолт, но сущность публична и её свойства изменяемы, поэтому
+    /// значение может приехать и через обычный EF-код потребителя, и правкой руками.
     /// </remarks>
-    private static bool IsPoisoned(InboxEnvelope envelope) => envelope.LockTimeout < InboxEnvelope.MinLockTimeout;
+    private static bool IsPoisoned(InboxEnvelope envelope) =>
+        envelope.LockTimeout < InboxEnvelope.MinLockTimeout || envelope.LockTimeout > InboxEnvelope.MaxLockTimeout;
 
     /// <summary>
     /// Похоронить строки, которые невозможно взять в обработку.
@@ -255,20 +263,23 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         foreach (var envelope in poisoned)
         {
             logger.LogError(
-                "Inbox message {MessageId} has LockTimeout {LockTimeout} below the minimum of {MinLockTimeout} and is dead lettered. " +
-                "The value can only come from a write that bypassed the envelope constructor",
-                envelope.Id, envelope.LockTimeout, InboxEnvelope.MinLockTimeout);
+                "Inbox message {MessageId} has LockTimeout {LockTimeout} outside the allowed range " +
+                "[{MinLockTimeout}, {MaxLockTimeout}] and is dead lettered. The value can only come from a write " +
+                "that bypassed the envelope constructor",
+                envelope.Id, envelope.LockTimeout, InboxEnvelope.MinLockTimeout, InboxEnvelope.MaxLockTimeout);
         }
 
         var affected = await dbContext
             .Set<InboxEnvelope>()
-            .Where(x => ids.Contains(x.Id) && x.LockTimeout < InboxEnvelope.MinLockTimeout)
+            .Where(x => ids.Contains(x.Id)
+                        && (x.LockTimeout < InboxEnvelope.MinLockTimeout || x.LockTimeout > InboxEnvelope.MaxLockTimeout))
             .ExecuteUpdateAsync(s => s
                     .SetProperty(x => x.Status, InboxMessageStatus.DeadLettered)
                     .SetProperty(x => x.ScheduledStartIndexing, (DateTime?)null)
                     .SetProperty(x => x.Updated, DateTime.UtcNow)
                     .SetProperty(x => x.LockId, (Guid?)null)
-                    .SetProperty(x => x.ErrorMessage, $"LockTimeout is below the minimum of {InboxEnvelope.MinLockTimeout}"),
+                    .SetProperty(x => x.ErrorMessage,
+                        $"LockTimeout is outside the allowed range [{InboxEnvelope.MinLockTimeout}, {InboxEnvelope.MaxLockTimeout}]"),
                 cancellationToken)
             .ConfigureAwait(false);
 
