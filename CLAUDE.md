@@ -81,7 +81,7 @@ GitHub Actions (`publish.yml`): build, pack, validate (Meziantou), test, deploy 
 ## Conventions
 
 - NuGet-метаданные: секция `<!--Для NuGet-->` в каждом .csproj
-- PostgreSQL + xmin concurrency: исключать `OutboxEnvelope`, `LastTransaction` из `UseXminAsConcurrencyToken`
+- PostgreSQL + xmin concurrency: исключать `OutboxEnvelope`, `InboxEnvelope` и `LastTransaction` из `UseXminAsConcurrencyToken` (захват аренды пишет `LockId` через `UPDATE ... RETURNING` в обход трекера)
 - DI-регистрация через `IServiceCollection` extensions (`AddOutbox<T>()`, `AddOnceExecutor<T>()` и т.д.)
 - EF-конфигурация через `OnModelCreating` extensions (`OutboxModelCreating()`, `OnceExecutorModelCreating()`)
 - Тесты: xUnit и NUnit (зависит от модуля), FluentAssertions для ассертов, Moq для мокирования
