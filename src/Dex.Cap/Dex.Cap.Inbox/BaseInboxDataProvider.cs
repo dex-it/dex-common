@@ -45,6 +45,25 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
 
     public abstract int GetDeadLetteredMessagesCount();
 
+    /// <summary>
+    /// Вернуть в обработку одно похороненное сообщение.
+    /// </summary>
+    /// <remarks>
+    /// Возврат обязан согласованно сбросить состояние отказа: статус в New, число попыток в ноль, снять
+    /// аренду и заново открыть StartAtUtc вместе с ScheduledStartIndexing. Иначе выборка либо не увидит
+    /// строку (ScheduledStartIndexing остался null), либо первый же отказ снова похоронит её (Retries на
+    /// пределе). Затрагиваются только свои дискриминаторы и только строки в статусе DeadLettered.
+    /// </remarks>
+    /// <returns>Число возвращённых строк: ноль или один.</returns>
+    public abstract Task<int> RequeueDeadLetteredAsync(InboxMessageIdentity identity, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Вернуть в обработку все похороненные сообщения этого сервиса.
+    /// </summary>
+    /// <remarks>Сбрасывает состояние отказа так же, как <see cref="RequeueDeadLetteredAsync"/>, но для всех своих строк.</remarks>
+    /// <returns>Число возвращённых строк.</returns>
+    public abstract Task<int> RequeueAllDeadLetteredAsync(CancellationToken cancellationToken);
+
     /// <inheritdoc />
     /// <remarks>
     /// Аренда не требуется: неудача фиксируется после отката транзакции обработчика, ронять нечего. Если

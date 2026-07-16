@@ -74,6 +74,7 @@ public static class MicrosoftDependencyInjectionExtensions
         services.AddHostedService<InboxRegistryWarmupService>();
 
         services.AddScoped<IInboxService, InboxService>();
+        services.AddScoped<IInboxDeadLetterService, InboxDeadLetterService>();
         services.AddScoped<IInboxEnvelopFactory, InboxEnvelopFactory>();
         services.AddScoped<IInboxHandler, MainLoopInboxHandler>();
         services.AddScoped<IInboxJobHandler, InboxJobHandlerEf<TDbContext>>();

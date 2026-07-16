@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -122,6 +123,69 @@ internal sealed class InboxDataProviderEf<TDbContext>(
         return dbContext
             .Set<InboxEnvelope>()
             .Count(x => x.Status == InboxMessageStatus.DeadLettered && own.Contains(x.MessageType));
+    }
+
+    /// <inheritdoc />
+    public override Task<int> RequeueDeadLetteredAsync(InboxMessageIdentity identity, CancellationToken cancellationToken)
+    {
+        var own = discriminatorProvider.SupportedDiscriminators;
+
+        if (own.Count is 0)
+        {
+            return Task.FromResult(0);
+        }
+
+        return RequeueMatchingAsync(
+            x => x.MessageId == identity.MessageId
+                 && x.ConsumerId == identity.ConsumerId
+                 && x.Status == InboxMessageStatus.DeadLettered
+                 && own.Contains(x.MessageType),
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override Task<int> RequeueAllDeadLetteredAsync(CancellationToken cancellationToken)
+    {
+        var own = discriminatorProvider.SupportedDiscriminators;
+
+        if (own.Count is 0)
+        {
+            return Task.FromResult(0);
+        }
+
+        return RequeueMatchingAsync(
+            x => x.Status == InboxMessageStatus.DeadLettered && own.Contains(x.MessageType),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Сбросить состояние отказа так, чтобы строку снова забрала выборка.
+    /// </summary>
+    /// <remarks>
+    /// Обычный EF ExecuteUpdate без сырого SQL, поэтому перенесётся на любой EF-провайдер. Идемпотентен:
+    /// предикат требует статус DeadLettered, поэтому повторный вызов по уже возвращённой строке её не
+    /// находит и ничего не делает. Аренда снимается на случай строки, похороненной в обход штатного пути.
+    /// </remarks>
+    private Task<int> RequeueMatchingAsync(
+        Expression<Func<InboxEnvelope, bool>> predicate,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+
+        return dbContext
+            .Set<InboxEnvelope>()
+            .Where(predicate)
+            .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.Status, InboxMessageStatus.New)
+                    .SetProperty(x => x.Retries, 0)
+                    .SetProperty(x => x.StartAtUtc, now)
+                    .SetProperty(x => x.ScheduledStartIndexing, now)
+                    .SetProperty(x => x.ErrorMessage, (string?)null)
+                    .SetProperty(x => x.Error, (string?)null)
+                    .SetProperty(x => x.LockId, (Guid?)null)
+                    .SetProperty(x => x.LockExpirationTimeUtc, (DateTime?)null)
+                    .SetProperty(x => x.Updated, now),
+                cancellationToken);
     }
 
     /// <inheritdoc />

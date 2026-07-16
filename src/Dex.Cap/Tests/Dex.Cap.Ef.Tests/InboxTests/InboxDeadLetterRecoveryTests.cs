@@ -11,8 +11,10 @@ using NUnit.Framework;
 namespace Dex.Cap.Ef.Tests.InboxTests;
 
 /// <summary>
-/// Возврат похороненного сообщения в обработку. Проверяет ровно тот рецепт, который обещан в README:
-/// одного статуса мало, нужны ещё ScheduledStartIndexing и сброс Retries.
+/// Возврат похороненного сообщения в обработку на низком уровне: одного статуса мало, нужны ещё
+/// ScheduledStartIndexing и сброс Retries. Ровно этот согласованный сброс инкапсулирует
+/// <see cref="Dex.Cap.Inbox.Interfaces.IInboxDeadLetterService"/> (см. InboxRequeueTests); здесь он
+/// проверяется по колонкам напрямую, чтобы зафиксировать, почему сброс обязан быть согласованным.
 /// </summary>
 public class InboxDeadLetterRecoveryTests : BaseTest
 {

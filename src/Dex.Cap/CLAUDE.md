@@ -34,6 +34,8 @@ DB-модель `InboxEnvelope` (таблица `cap.inbox`): Id, MessageId + Co
 
 Чистка: удаляет только `Succeeded` и только СВОИХ дискриминаторов (одну таблицу могут обслуживать несколько сервисов с разным ретеншеном). `DeadLettered` не удаляется никогда: это материал для ручного разбора. Удаление идёт пачками по 1000 по ctid с `FOR UPDATE SKIP LOCKED`, без `ORDER BY`, выход по ПУСТОЙ пачке. Если у сервиса нет обработчиков, чистка не смотрит ни на одну строку и пишет Warning.
 
+Возврат `DeadLettered` в обработку идёт через публичный `IInboxDeadLetterService` (`RequeueAsync` по паре MessageId+ConsumerId, `RequeueAllAsync` массово), а не правкой таблицы руками: согласованный сброс Status/Retries/StartAtUtc/ScheduledStartIndexing и снятие аренды одним EF `ExecuteUpdate` (без сырого SQL, поэтому переносится на любой EF-провайдер), только свои дискриминаторы и только строки в статусе `DeadLettered`, поэтому вызов идемпотентен.
+
 Транспорт-агностичен: ключ дедупликации задаёт вызывающая сторона, поэтому источником может быть и шина (`context.MessageId`), и HTTP (`Idempotency-Key`). Зависимости на MassTransit нет.
 
 ## OnceExecutor

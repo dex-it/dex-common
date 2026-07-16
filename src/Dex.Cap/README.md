@@ -374,15 +374,21 @@ keeps its own deduplication window regardless of your `CleanupOlderThan`.
 `DeadLettered` messages are never deleted by cleanup — they exist to be investigated, and
 `DeadLetteredJobCount` reports how many of this service's own messages are waiting.
 
-Returning a message to processing after you fixed the cause takes three columns, not one: the status alone is not
-enough, because the fetch requires `ScheduledStartIndexing IS NOT NULL` and the next failure would bury the message
-again on the spot unless `Retries` is below `InboxOptions.Retries`.
+Once you have fixed the cause, return the message to processing through `IInboxDeadLetterService`, not by editing
+the table by hand. Returning a message takes a coordinated reset of several columns at once — status, attempt count,
+lease and the fetch index — and getting one of them wrong buries the message again on the next cycle, so the reset
+is encapsulated:
 
-```sql
-UPDATE cap.inbox
-SET "Status" = 0, "Retries" = 0, "ScheduledStartIndexing" = "StartAtUtc"
-WHERE "Id" = '...';
+```csharp
+// one message, by its (MessageId, ConsumerId):
+await deadLetterService.RequeueAsync(new InboxMessageIdentity("message-id", "consumer-id"));
+
+// or every dead lettered message of this service at once, after fixing a systemic cause:
+var returned = await deadLetterService.RequeueAllAsync();
 ```
+
+Both operations touch only this service's own discriminators and only rows that are actually dead lettered, so a
+shared table is safe. `DeadLetteredJobCount` drops on its own as the messages return to processing.
 
 ### Retry strategy
 

@@ -37,4 +37,16 @@ internal interface IInboxDataProvider
     /// </summary>
     /// <remarks>Чистка их не удаляет, поэтому объём нужно наблюдать отдельно.</remarks>
     int GetDeadLetteredMessagesCount();
+
+    /// <summary>
+    /// Вернуть в обработку одно похороненное сообщение по паре MessageId + ConsumerId.
+    /// </summary>
+    /// <returns>Число возвращённых строк: ноль или один.</returns>
+    Task<int> RequeueDeadLetteredAsync(InboxMessageIdentity identity, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Вернуть в обработку все похороненные сообщения этого сервиса.
+    /// </summary>
+    /// <returns>Число возвращённых строк.</returns>
+    Task<int> RequeueAllDeadLetteredAsync(CancellationToken cancellationToken = default);
 }
