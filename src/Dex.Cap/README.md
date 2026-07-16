@@ -465,6 +465,15 @@ whatever is still sitting in the table (up to `CleanupOlderThan`):
 Replace `IInboxSerializer` if you need different options; it is resolved from DI, so registering your own after
 `AddInbox` wins.
 
+### The body size is bounded by the transport, not the library
+
+`Content` is stored as PostgreSQL `text`, and the library sets no upper bound on its length, unlike `MessageId` and
+`ConsumerId`, which are capped because they sit in the unique index. The inbox stores what it is handed. If the
+source is untrusted, bound the body size where the message enters the process: on the broker (RabbitMQ
+`MaxMessageSize`, Kafka `message.max.bytes`) or on the HTTP host (Kestrel `MaxRequestBodySize`). Deduplication does
+not help against this, because the `MessageId` is the sender's to choose, so a hostile sender can keep producing
+large bodies under fresh keys that live until `CleanupOlderThan`.
+
 ### Limitations
 
 * PostgreSQL only (`Dex.Cap.Inbox.Ef` uses `FOR UPDATE SKIP LOCKED` and `ON CONFLICT`).

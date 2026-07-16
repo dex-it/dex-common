@@ -16,7 +16,7 @@ internal interface IInboxDataProvider
     /// <summary>
     /// Захватить партию сообщений, готовых к обработке, взяв на них аренду.
     /// </summary>
-    Task<IInboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken = default);
+    Task<InboxJobBatch> GetWaitingJobs(CancellationToken cancellationToken = default);
 
     Task JobFail(IInboxLockedJob inboxJob, string? errorMessage = null, Exception? exception = null,
         CancellationToken cancellationToken = default);

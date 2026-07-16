@@ -28,6 +28,22 @@ public sealed class InboxHandlerOptions
     public TimeSpan CleanupOlderThan { get; set; } = TimeSpan.FromDays(30);
 
     /// <summary>
+    /// Размер одной пачки удаления при чистке. Default 1000.
+    /// </summary>
+    public int CleanupBatchSize { get; set; } = 1000;
+
+    /// <summary>
+    /// Пауза между пачками удаления. Default 0 (без паузы).
+    /// </summary>
+    /// <remarks>
+    /// Чистка идёт пачками короткими транзакциями, но подряд. Первый проход после накопления окна ретеншена
+    /// удаляет разом всё накопившееся, давая всплеск WAL и нагрузку на autovacuum на живом трафике. Ненулевая
+    /// пауза размазывает этот первый большой проход во времени. В установившемся режиме удалять нужно примерно
+    /// час записей за час, поэтому дефолт нулевой.
+    /// </remarks>
+    public TimeSpan CleanupBatchDelay { get; set; } = TimeSpan.Zero;
+
+    /// <summary>
     /// Initial delay range for the handler (split-brain jitter). Default 5–15s.
     /// </summary>
     public InitDelayRange HandlerInitDelay { get; set; } =

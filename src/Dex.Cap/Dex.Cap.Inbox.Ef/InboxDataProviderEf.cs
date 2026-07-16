@@ -72,7 +72,7 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     /// только LogCritical раз в цикл и повторяя то же самое на следующем.
     /// </remarks>
     /// <exception cref="OperationCanceledException"/>
-    public override async Task<IInboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken)
+    public override async Task<InboxJobBatch> GetWaitingJobs(CancellationToken cancellationToken)
     {
         var envelopes = await GetFreeMessages(cancellationToken).ConfigureAwait(false);
         var poisoned = envelopes.Where(IsPoisoned).ToArray();
@@ -82,7 +82,11 @@ internal sealed class InboxDataProviderEf<TDbContext>(
             await DeadLetterPoisoned(poisoned, cancellationToken).ConfigureAwait(false);
         }
 
-        return CreateJobs(envelopes.Where(x => !IsPoisoned(x)));
+        var jobs = CreateJobs(envelopes.Where(x => !IsPoisoned(x)));
+
+        // ClaimedCount это все захваченные строки, включая похороненные непригодные: по нему планировщик судит
+        // о полноте партии, а не по числу дошедших до обработчика задач.
+        return new InboxJobBatch(jobs, envelopes.Length);
     }
 
     /// <inheritdoc />

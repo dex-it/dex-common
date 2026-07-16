@@ -39,7 +39,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
 
     public abstract Task<InboxEnqueueStatus> Add(InboxEnvelope inboxEnvelope, CancellationToken cancellationToken);
 
-    public abstract Task<IInboxLockedJob[]> GetWaitingJobs(CancellationToken cancellationToken);
+    public abstract Task<InboxJobBatch> GetWaitingJobs(CancellationToken cancellationToken);
 
     public abstract int GetFreeMessagesCount();
 

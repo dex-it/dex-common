@@ -21,6 +21,7 @@ public static class InboxEfExtensions
 
         AddDeduplicationKey(entity);
         AddFetchIndex(entity);
+        AddOwnFetchIndex(entity);
         AddCleanupIndex(entity);
 
         entity
@@ -59,6 +60,27 @@ public static class InboxEfExtensions
     private static void AddFetchIndex(EntityTypeBuilder<InboxEnvelope> entity) =>
         entity
             .HasIndex(x => new { x.ScheduledStartIndexing, x.Status })
+            .HasFilter($"\"{nameof(InboxEnvelope.ScheduledStartIndexing)}\" IS NOT NULL");
+
+    /// <summary>
+    /// Индекс выборки, ведущий по MessageType: под свои дискриминаторы.
+    /// </summary>
+    /// <remarks>
+    /// Захват и подсчёт глубины фильтруют по своим дискриминаторам, а MessageType в основном индексе выборки
+    /// стоит после ScheduledStartIndexing, поэтому этот фильтр ложится на строки уже после чтения из heap.
+    /// В общей таблице это бьёт по холостому опросу: сервис без своих сообщений всё равно прочёсывает весь
+    /// бэклог соседа на каждом тике и на каждой реплике. С MessageType впереди фильтр «мои строки» уходит в
+    /// Index Cond: подсчёт глубины считается по индексу вместо Seq Scan, а на PostgreSQL 17+ и захват получает
+    /// упорядоченный обход с обрывом по LIMIT прямо по этому индексу.
+    /// <para>
+    /// Существующий индекс (ScheduledStartIndexing, Status) оставлен: на PostgreSQL до 17 упорядоченный захват
+    /// с несколькими дискриминаторами идёт по нему, потому что ScalarArrayOp по ведущей колонке там ещё не
+    /// отдаёт вывод, упорядоченный по следующей.
+    /// </para>
+    /// </remarks>
+    private static void AddOwnFetchIndex(EntityTypeBuilder<InboxEnvelope> entity) =>
+        entity
+            .HasIndex(x => new { x.MessageType, x.ScheduledStartIndexing, x.Status })
             .HasFilter($"\"{nameof(InboxEnvelope.ScheduledStartIndexing)}\" IS NOT NULL");
 
     /// <summary>

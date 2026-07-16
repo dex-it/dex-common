@@ -4,12 +4,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
 using Dex.Cap.Ef.Tests.InboxTests.Messages;
+using Dex.Cap.Inbox.AspNetScheduler.Options;
 using Dex.Cap.Inbox.Ef;
 using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.InboxTests;
@@ -143,6 +145,7 @@ public class InboxDiscriminatorFilterTests : BaseTest
         var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
             scope.ServiceProvider.GetRequiredService<TestDbContext>(),
             scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+            Options.Create(new InboxHandlerOptions()),
             scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
         Assert.AreEqual(0, await cleaner.Cleanup(TimeSpan.FromDays(30), CancellationToken.None));

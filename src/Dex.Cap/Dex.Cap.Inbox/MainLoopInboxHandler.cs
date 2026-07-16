@@ -26,25 +26,30 @@ internal sealed class MainLoopInboxHandler(
     {
         logger.LogDebug("Inbox processor has been started");
 
-        var jobs = await dataProvider
+        var batch = await dataProvider
             .GetWaitingJobs(cancellationToken)
             .ConfigureAwait(false);
 
-        if (jobs.Length <= 0)
+        if (batch.ClaimedCount <= 0)
         {
             metricCollector.IncEmptyProcessCount();
             logger.LogDebug(NoMessagesToProcess);
             return 0;
         }
 
-        using var semaphore = new SemaphoreSlim(options.Value.ConcurrencyLimit);
-        var tasks = jobs.Select(job => ProcessJob(job, semaphore, cancellationToken)).ToArray();
+        // Партия могла состоять только из непригодных строк: они уже похоронены в провайдере, обрабатывать
+        // нечего, но захват был, поэтому наверх уходит ClaimedCount, чтобы планировщик не ушёл в паузу зря.
+        if (batch.Jobs.Length > 0)
+        {
+            using var semaphore = new SemaphoreSlim(options.Value.ConcurrencyLimit);
+            var tasks = batch.Jobs.Select(job => ProcessJob(job, semaphore, cancellationToken)).ToArray();
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+        }
 
         logger.LogDebug("Inbox processor completed");
 
-        return jobs.Length;
+        return batch.ClaimedCount;
     }
 
     /// <summary>

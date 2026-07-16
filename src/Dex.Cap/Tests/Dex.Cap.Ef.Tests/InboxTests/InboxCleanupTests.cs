@@ -4,12 +4,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
 using Dex.Cap.Ef.Tests.InboxTests.Messages;
+using Dex.Cap.Inbox.AspNetScheduler.Options;
 using Dex.Cap.Inbox.Ef;
 using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using NUnit.Framework;
 
@@ -59,6 +61,7 @@ public class InboxCleanupTests : BaseTest
         var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
             db,
             scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+            Options.Create(new InboxHandlerOptions()),
             scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
         var removed = await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
@@ -110,6 +113,7 @@ public class InboxCleanupTests : BaseTest
         var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
             db,
             scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+            Options.Create(new InboxHandlerOptions()),
             scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
         var removed = await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
@@ -159,6 +163,7 @@ public class InboxCleanupTests : BaseTest
         var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
             db,
             scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+            Options.Create(new InboxHandlerOptions()),
             scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
         // Внешний писатель отдельным соединением: именно так выглядит внеполосная правка, а заодно
@@ -227,6 +232,7 @@ public class InboxCleanupTests : BaseTest
             var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
                 scope.ServiceProvider.GetRequiredService<TestDbContext>(),
                 scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+                Options.Create(new InboxHandlerOptions()),
                 scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
             return await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
@@ -276,6 +282,7 @@ public class InboxCleanupTests : BaseTest
         var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
             db,
             scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+            Options.Create(new InboxHandlerOptions()),
             scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
         var removed = await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);
@@ -303,6 +310,7 @@ public class InboxCleanupTests : BaseTest
         var cleaner = new InboxCleanupDataProviderEf<TestDbContext>(
             db,
             scope.ServiceProvider.GetRequiredService<IInboxTypeDiscriminatorProvider>(),
+            Options.Create(new InboxHandlerOptions()),
             scope.ServiceProvider.GetRequiredService<ILogger<InboxCleanupDataProviderEf<TestDbContext>>>());
 
         var removed = await cleaner.Cleanup(TimeSpan.FromDays(1), CancellationToken.None);

@@ -40,8 +40,9 @@ public class InboxPoisonedRowTests : BaseTest
         }
 
         // Не бросает: одна непригодная строка не имеет права ронять сборку партии.
+        // Возврат это число ЗАХВАЧЕННЫХ строк (3): два здоровых плюс одна похороненная непригодная.
         var processed = await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
-        Assert.AreEqual(2, processed, "healthy messages of the batch must still be processed");
+        Assert.AreEqual(3, processed, "the claim of three rows must be reported in full, poisoned row included");
 
         var envelopes = await GetDb(sp).Set<InboxEnvelope>().ToListAsync();
 
@@ -77,7 +78,8 @@ public class InboxPoisonedRowTests : BaseTest
         }
 
         var handler = sp.GetRequiredService<IInboxHandler>();
-        Assert.AreEqual(0, await handler.ProcessAsync(CancellationToken.None));
+        // Одна непригодная строка захвачена и похоронена: захват был, поэтому возврат единица, а не ноль.
+        Assert.AreEqual(1, await handler.ProcessAsync(CancellationToken.None));
 
         // Ключевое: строка похоронена, поэтому следующий цикл её не перезахватывает и не падает снова.
         Assert.AreEqual(0, await handler.ProcessAsync(CancellationToken.None));
@@ -89,6 +91,40 @@ public class InboxPoisonedRowTests : BaseTest
         Assert.AreEqual(1, await handler.ProcessAsync(CancellationToken.None), "the inbox must keep working");
         Assert.AreEqual(InboxMessageStatus.Succeeded,
             (await GetDb(sp).Set<InboxEnvelope>().SingleAsync(x => x.MessageId == "fresh")).Status);
+    }
+
+    /// <summary>
+    /// Непригодная строка в ПОЛНОЙ партии не должна выглядеть как неполная партия.
+    /// </summary>
+    /// <remarks>
+    /// Планировщик паузит только при неполном захвате. Если бы возврат считал обработанные строки, а не
+    /// захваченные, одна похороненная непригодная строка занизила бы полную партию до неполной, и обработчик
+    /// ушёл бы в паузу на Period, хотя очередь не исчерпана.
+    /// </remarks>
+    [Test]
+    public async Task Process_FullBatchWithOnePoisonedRow_ReportsFullClaim()
+    {
+        const int batch = 3;
+
+        var sp = InitInboxServiceCollection(messageToProcessLimit: batch)
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        var inbox = sp.GetRequiredService<IInboxService>();
+        await inbox.EnqueueAsync(new TestInboxCommand { Args = "a" }, new InboxMessageIdentity("a", "c-1"));
+        await inbox.EnqueueAsync(new TestInboxCommand { Args = "poison" }, new InboxMessageIdentity("poison", "c-1"));
+        await inbox.EnqueueAsync(new TestInboxCommand { Args = "b" }, new InboxMessageIdentity("b", "c-1"));
+
+        using (var poisonScope = sp.CreateScope())
+        {
+            await poisonScope.ServiceProvider.GetRequiredService<TestDbContext>()
+                .Set<InboxEnvelope>()
+                .Where(x => x.MessageId == "poison")
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.LockTimeout, TimeSpan.FromSeconds(1)));
+        }
+
+        var claimed = await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
+        Assert.AreEqual(batch, claimed, "a full claim with one poisoned row must still report a full batch");
     }
 
     /// <summary>
@@ -118,8 +154,9 @@ public class InboxPoisonedRowTests : BaseTest
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.LockTimeout, TimeSpan.FromDays(60)));
         }
 
+        // Возврат это число захваченных строк (2): здоровая плюс похороненная негодная с огромной арендой.
         var processed = await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
-        Assert.AreEqual(1, processed, "the healthy message must survive a co-batch row with an oversized lease");
+        Assert.AreEqual(2, processed, "the claim of two rows must be reported in full, oversized-lease row included");
 
         var envelopes = await GetDb(sp).Set<InboxEnvelope>().ToListAsync();
 

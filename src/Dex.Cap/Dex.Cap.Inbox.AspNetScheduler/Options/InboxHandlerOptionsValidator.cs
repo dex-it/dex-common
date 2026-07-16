@@ -23,6 +23,12 @@ internal sealed class InboxHandlerOptionsValidator : IValidateOptions<InboxHandl
         if (options.CleanupOlderThan <= TimeSpan.Zero)
             failures.Add($"{nameof(InboxHandlerOptions.CleanupOlderThan)} should be positive, but was {options.CleanupOlderThan}");
 
+        if (options.CleanupBatchSize <= 0)
+            failures.Add($"{nameof(InboxHandlerOptions.CleanupBatchSize)} should be positive, but was {options.CleanupBatchSize}");
+
+        if (options.CleanupBatchDelay < TimeSpan.Zero)
+            failures.Add($"{nameof(InboxHandlerOptions.CleanupBatchDelay)} should not be negative, but was {options.CleanupBatchDelay}");
+
         Check(options.HandlerInitDelay, nameof(InboxHandlerOptions.HandlerInitDelay), failures);
         Check(options.CleanerInitDelay, nameof(InboxHandlerOptions.CleanerInitDelay), failures);
 

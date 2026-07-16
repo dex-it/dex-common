@@ -3,21 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dex.Cap.Inbox.AspNetScheduler.Options;
 using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Inbox.Ef;
 
 internal sealed class InboxCleanupDataProviderEf<TDbContext>(
     TDbContext dbContext,
     IInboxTypeDiscriminatorProvider discriminatorProvider,
+    IOptions<InboxHandlerOptions> options,
     ILogger<InboxCleanupDataProviderEf<TDbContext>> logger)
     : IInboxCleanupDataProvider
     where TDbContext : DbContext
 {
-    private const int BatchSize = 1000;
+    private readonly int _batchSize = options.Value.CleanupBatchSize;
+    private readonly TimeSpan _batchDelay = options.Value.CleanupBatchDelay;
 
     /// <inheritdoc />
     /// <remarks>
@@ -51,7 +55,7 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(
         }
 
         var createdBefore = DateTime.UtcNow.Subtract(olderThan);
-        var sql = BuildDeleteBatchSql();
+        var sql = BuildDeleteBatchSql(_batchSize);
         var total = 0;
         int removed;
 
@@ -62,6 +66,12 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(
         {
             removed = await DeleteBatchAsync(sql, createdBefore, ownDiscriminators, cancellationToken).ConfigureAwait(false);
             total += removed;
+
+            // Пауза только между непустыми пачками: размазать первый большой проход, не задерживая выход из цикла.
+            if (_batchDelay > TimeSpan.Zero && removed > 0)
+            {
+                await Task.Delay(_batchDelay, cancellationToken).ConfigureAwait(false);
+            }
         }
         while (removed > 0);
 
@@ -113,7 +123,7 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(
     /// прятать инциденты.
     /// </para>
     /// </remarks>
-    private static string BuildDeleteBatchSql() =>
+    private static string BuildDeleteBatchSql(int batchSize) =>
         $$"""
           DELETE FROM {{NameConst.SchemaName}}.{{NameConst.TableName}}
           WHERE ctid IN (
@@ -122,7 +132,7 @@ internal sealed class InboxCleanupDataProviderEf<TDbContext>(
               WHERE "{{nameof(InboxEnvelope.Status)}}" = {{InboxMessageStatus.Succeeded:D}}
                 AND "{{nameof(InboxEnvelope.CreatedUtc)}}" < {0}
                 AND "{{nameof(InboxEnvelope.MessageType)}}" = ANY({1})
-              LIMIT {{BatchSize}}
+              LIMIT {{batchSize}}
               FOR UPDATE SKIP LOCKED
           )
           """;
