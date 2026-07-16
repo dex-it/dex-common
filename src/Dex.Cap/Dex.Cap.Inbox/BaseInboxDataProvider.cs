@@ -13,8 +13,9 @@ namespace Dex.Cap.Inbox;
 /// Storage-agnostic политика завершения задач инбокса.
 /// </summary>
 /// <remarks>
-/// Здесь живёт решение «повторить или похоронить», а весь ввод-вывод сведён к <see cref="CompleteJobAsync"/>,
-/// который реализует конкретный провайдер хранилища.
+/// Здесь живёт решение «повторить или похоронить», а весь ввод-вывод сведён к
+/// <see cref="WriteOutcomeOrThrowAsync"/> и <see cref="TryWriteOutcomeAsync"/>, которые реализует конкретный
+/// провайдер хранилища.
 /// </remarks>
 internal abstract class BaseInboxDataProvider : IInboxDataProvider
 {
@@ -79,7 +80,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
             ScheduleRetry(envelope);
         }
 
-        var outcomeWritten = await CompleteJobAsync(inboxJob, requireLease: false, cancellationToken).ConfigureAwait(false);
+        var outcomeWritten = await TryWriteOutcomeAsync(inboxJob, cancellationToken).ConfigureAwait(false);
 
         if (!outcomeWritten)
         {
@@ -114,7 +115,7 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         envelope.Error = null;
         envelope.ScheduledStartIndexing = null;
 
-        await CompleteJobAsync(inboxJob, requireLease: true, cancellationToken).ConfigureAwait(false);
+        await WriteOutcomeOrThrowAsync(inboxJob, cancellationToken).ConfigureAwait(false);
 
         MetricCollector.IncProcessJobSuccessCount();
     }
@@ -154,18 +155,28 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
     }
 
     /// <summary>
-    /// Зафиксировать исход обработки в хранилище, если аренда всё ещё принадлежит этой задаче.
+    /// Зафиксировать исход обработки, потребовав, чтобы аренда всё ещё принадлежала этой задаче.
     /// </summary>
+    /// <remarks>
+    /// Для пути успеха, где вызов идёт внутри транзакции обработчика. Потеря аренды здесь не исход, а
+    /// ошибка: вернуться нормально означало бы закоммитить эффект обработчика со старым статусом
+    /// сообщения, и следующий владелец аренды применил бы эффект второй раз. Ронять транзакцию
+    /// исключением это единственный способ этого не допустить, поэтому метод и не возвращает признак.
+    /// </remarks>
     /// <param name="lockedJob">Задача с захваченной арендой.</param>
-    /// <param name="requireLease">
-    /// <see langword="true"/> - потеря аренды это ошибка, реализация обязана бросить
-    /// <see cref="Exceptions.InboxLeaseLostException"/>. <see langword="false"/> - потеря аренды
-    /// это штатный исход, запись просто не состоится.
-    /// </param>
     /// <param name="cancellationToken">Токен отмены.</param>
-    /// <returns>
-    /// <see langword="true"/>, если исход записан. <see langword="false"/> означает потерю аренды при
-    /// <paramref name="requireLease"/> = <see langword="false"/>: строку уже ведёт другой обработчик.
-    /// </returns>
-    protected abstract Task<bool> CompleteJobAsync(IInboxLockedJob lockedJob, bool requireLease, CancellationToken cancellationToken);
+    /// <exception cref="Exceptions.InboxLeaseLostException">Аренда потеряна: реализация обязана бросить.</exception>
+    protected abstract Task WriteOutcomeOrThrowAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Зафиксировать исход обработки, если аренда всё ещё принадлежит этой задаче.
+    /// </summary>
+    /// <remarks>
+    /// Для пути неудачи, где транзакция обработчика уже откачена и ронять нечего. Потеря аренды здесь
+    /// штатный исход: строку ведёт другой обработчик, он её и закроет.
+    /// </remarks>
+    /// <param name="lockedJob">Задача с захваченной арендой.</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns><see langword="true"/>, если исход записан; <see langword="false"/>, если аренда потеряна.</returns>
+    protected abstract Task<bool> TryWriteOutcomeAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken);
 }
