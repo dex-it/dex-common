@@ -153,10 +153,17 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
     /// Проверка идемпотентности нужна ретраю EF ExecutionStrategy: если транзакция всё же закоммитилась,
     /// повторять обработку нельзя.
     /// </para>
+    /// <para>
+    /// Успех считается ЗДЕСЬ, а не в <c>JobSucceed</c>, потому что владелец транзакции здесь, и только он
+    /// знает факт. Возврат из <c>ExecuteInTransactionAsync</c> означает ровно одно: строка закоммичена, причём
+    /// один раз. Оба его пути возврата это гарантируют, сколько бы попыток ни сделала стратегия повторов: либо
+    /// коммит прошёл, либо verifySucceeded нашёл работу уже сделанной. Любой отказ уходит в исключение, а его
+    /// перехватывают выше, где сообщение и получает свой исход.
+    /// </para>
     /// </remarks>
-    private Task ProcessJobCore(IInboxLockedJob job, CancellationToken cancellationToken)
+    private async Task ProcessJobCore(IInboxLockedJob job, CancellationToken cancellationToken)
     {
-        return dbContext.ExecuteInTransactionAsync(
+        await dbContext.ExecuteInTransactionAsync(
             job,
             async (state, token) =>
             {
@@ -168,7 +175,9 @@ internal sealed class InboxJobHandlerEf<TDbContext>(
                 .AnyAsync(x => x.Id == state.Envelope.Id && x.Status == InboxMessageStatus.Succeeded, token)
                 .ConfigureAwait(false),
             EfTransactionOptions.Default,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        metricCollector.IncProcessJobSuccessCount();
     }
 
     /// <summary>

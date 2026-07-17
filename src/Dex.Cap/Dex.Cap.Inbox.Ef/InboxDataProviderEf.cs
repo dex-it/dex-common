@@ -33,6 +33,15 @@ internal sealed class InboxDataProviderEf<TDbContext>(
     /// Дедупликацию решает уникальный индекс, а не предварительная проверка: SELECT-затем-INSERT даёт
     /// гонку между конкурентными доставками одного сообщения. ON CONFLICT DO NOTHING атомарен и делает
     /// повтор штатным исходом, а не исключением.
+    /// <para>
+    /// Вставка НЕ повторяется при транзиентном отказе, и это не упущение с двух сторон сразу. Со стороны EF:
+    /// <c>ExecuteSqlRawAsync</c> намеренно не использует стратегию повторов («the current ExecutionStrategy is
+    /// not used by this method since the SQL may not be idempotent and does not run in a transaction»), то есть
+    /// настроенный потребителем EnableRetryOnFailure сюда не распространяется. Со стороны инбокса повторять и
+    /// незачем: подтверждение источнику отдаётся только после успешной вставки, поэтому отказ обязан дойти до
+    /// вызывающего, а роль повтора играет редоставка источника. Внутренний повтор дублировал бы её и при этом
+    /// возвращал бы <see cref="InboxEnqueueStatus.Duplicate"/> на собственную строку.
+    /// </para>
     /// </remarks>
     private const string InsertSql = $"""
                                       INSERT INTO {NameConst.SchemaName}.{NameConst.TableName}

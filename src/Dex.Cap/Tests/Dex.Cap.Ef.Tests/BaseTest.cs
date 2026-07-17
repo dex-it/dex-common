@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests;
+using Dex.Cap.Ef.Tests.InboxTests.Handlers;
 using Dex.Cap.Inbox.Ef.Extensions;
 using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.RetryStrategies;
@@ -22,6 +23,11 @@ public abstract class BaseTest
     [SetUp]
     public virtual async Task Setup()
     {
+        // Статические хуки общего тест-обработчика чистятся здесь, до любого теста, чтобы изоляция не
+        // держалась на TearDown соседней фикстуры: базовый SetUp выполняется раньше SetUp наследника,
+        // поэтому фикстуры, которым хук нужен, всё равно ставят его уже после сброса.
+        TestInboxCommandHandler.Reset();
+
         var db = new TestDbContext(DbName);
         await db.Database.EnsureDeletedAsync();
         await db.Database.EnsureCreatedAsync();

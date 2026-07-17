@@ -31,16 +31,19 @@ public class InboxCleanupTests : BaseTest
 
         var inboxService = sp.GetRequiredService<IInboxService>();
         await inboxService.EnqueueAsync(new TestInboxCommand(), new InboxMessageIdentity("ok-1", "consumer-1"));
-        await inboxService.EnqueueAsync(new TestErrorInboxCommand(), new InboxMessageIdentity("fail-1", "consumer-1"));
+        // Имена строк отражают их итоговую судьбу: эта за две попытки дойдёт до DeadLettered.
+        await inboxService.EnqueueAsync(new TestErrorInboxCommand(), new InboxMessageIdentity("dead-1", "consumer-1"));
 
-        // Первый цикл: успех уходит в Succeeded, падение в Failed (попытки ещё есть).
+        // Первый цикл: успех уходит в Succeeded, падение в Failed (попытка ещё есть, retries: 2).
         await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
 
-        var failedId = new InboxMessageIdentity("dead-1", "consumer-1");
-        await inboxService.EnqueueAsync(new TestErrorInboxCommand(), failedId);
+        // Добавляется свежая падающая строка уже после первого цикла: ей предстоит одна попытка, поэтому
+        // она останется в Failed, а не будет похоронена.
+        var stillFailingId = new InboxMessageIdentity("fail-1", "consumer-1");
+        await inboxService.EnqueueAsync(new TestErrorInboxCommand(), stillFailingId);
 
-        // Второй и третий циклы добивают обе падающие строки: первая уходит в DeadLettered,
-        // вторая остаётся в Failed.
+        // Второй (и единственный здесь) цикл: у "dead-1" исчерпывается вторая попытка, и она уходит в
+        // DeadLettered; "fail-1" впервые падает и остаётся в Failed.
         await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);
 
         using (var ageScope = sp.CreateScope())

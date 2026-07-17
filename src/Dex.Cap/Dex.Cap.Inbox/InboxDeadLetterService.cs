@@ -9,6 +9,8 @@ internal sealed class InboxDeadLetterService(IInboxDataProvider inboxDataProvide
 {
     public async Task<bool> RequeueAsync(InboxMessageIdentity identity, CancellationToken cancellationToken = default)
     {
+        identity.EnsureInitialized(nameof(identity));
+
         var requeued = await inboxDataProvider.RequeueDeadLetteredAsync(identity, cancellationToken).ConfigureAwait(false);
 
         return requeued is not 0;

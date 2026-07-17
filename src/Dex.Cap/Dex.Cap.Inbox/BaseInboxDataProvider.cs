@@ -122,6 +122,16 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
     /// Сброс ScheduledStartIndexing выводит сообщение из выборки и из частичного индекса: строка остаётся
     /// только как ключ дедупликации.
     /// </para>
+    /// <para>
+    /// Успех здесь НЕ считается, в отличие от <see cref="JobFail"/>, и это не забытая симметрия. Тот же
+    /// принцип «считать факт, а не намерение» требует тут другого места: неудача пишется своей транзакцией,
+    /// поэтому вернувшийся <see cref="TryWriteOutcomeAsync"/> уже означает факт. Успех же пишется в ЧУЖУЮ
+    /// транзакцию (обработчика), и на момент возврата отсюда она ещё не закоммичена: её может откатить и
+    /// сам коммит, и переигровка всего блока стратегией повторов EF, которая на транзиентном отказе
+    /// выполняет операцию заново. Счётчик здесь давал бы плюс за каждую попытку при одной строке в БД.
+    /// Факт известен только владельцу транзакции, поэтому успех считает он: см.
+    /// <c>InboxJobHandlerEf.ProcessJobCore</c>.
+    /// </para>
     /// </remarks>
     public virtual async Task JobSucceed(IInboxLockedJob inboxJob, CancellationToken cancellationToken)
     {
@@ -135,8 +145,6 @@ internal abstract class BaseInboxDataProvider : IInboxDataProvider
         envelope.ScheduledStartIndexing = null;
 
         await WriteOutcomeOrThrowAsync(inboxJob, cancellationToken).ConfigureAwait(false);
-
-        MetricCollector.IncProcessJobSuccessCount();
     }
 
     /// <summary>

@@ -30,6 +30,14 @@ internal sealed class MainLoopInboxHandler(
             .GetWaitingJobs(cancellationToken)
             .ConfigureAwait(false);
 
+        // Цикл состоялся: выборка дошла до хранилища и вернула партию. Это и есть признак жизни, который
+        // читает health check, поэтому отметка ставится ЗДЕСЬ, а не в начале метода и не по каждой задаче.
+        // Раньше по неё считалась ветка «партия только из непригодных строк»: захват был, но задач ноль,
+        // ни один счётчик не срабатывал, и health check отдавал Degraded при живом обработчике.
+        // Ставить отметку до выборки нельзя ровно по обратной причине: цикл, упавший на недоступной БД,
+        // выглядел бы живым, и недоступность хранилища перестала бы детектироваться вовсе.
+        metricCollector.IncProcessCount();
+
         if (batch.ClaimedCount <= 0)
         {
             metricCollector.IncEmptyProcessCount();
@@ -73,8 +81,6 @@ internal sealed class MainLoopInboxHandler(
                     SkipExpiredBeforeStart(job);
                     return;
                 }
-
-                metricCollector.IncProcessCount();
 
                 using var activity = StartActivity(job);
                 using var cts = CreateProcessingToken(job, cancellationToken);

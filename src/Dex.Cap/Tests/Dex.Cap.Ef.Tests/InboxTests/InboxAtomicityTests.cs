@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
@@ -86,7 +87,14 @@ public class InboxAtomicityTests : BaseTest
         {
             var fixDb = fixScope.ServiceProvider.GetRequiredService<TestDbContext>();
             await fixDb.Set<InboxEnvelope>()
-                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Content, """{"UserName":"retried-user","ThrowAfterEffect":false}"""));
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.Content, """{"UserName":"retried-user","ThrowAfterEffect":false}""")
+                    // Тест про атомарность, а не про тайминг повтора. Делаем строку заведомо наступившей, чтобы
+                    // второй ProcessAsync забрал её при ЛЮБОЙ стратегии повторов. Иначе тест молча зависел бы от
+                    // нулевой задержки дефолтной стратегии: смена дефолта на Incremental/Exponential увела бы
+                    // StartAtUtc в будущее, строка не была бы выбрана, и падение выглядело бы как регресс
+                    // атомарности, а не как смена задержки.
+                    .SetProperty(x => x.StartAtUtc, DateTime.UtcNow.AddMinutes(-1)));
         }
 
         await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None);

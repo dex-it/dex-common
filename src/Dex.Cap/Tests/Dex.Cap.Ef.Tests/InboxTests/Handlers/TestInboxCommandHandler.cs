@@ -21,6 +21,19 @@ public class TestInboxCommandHandler : IInboxMessageHandler<TestInboxCommand>
     /// </summary>
     public static Func<TestInboxCommand, CancellationToken, Task>? OnProcessWithTokenAsync { get; set; }
 
+    /// <summary>
+    /// Сбросить все статические хуки. Обработчик общий для всех фикстур, а хуки статические, поэтому чистить
+    /// их обязана каждая фикстура на входе, а не полагаться на TearDown соседней. Вызывается из
+    /// <see cref="BaseTest.Setup"/>, поэтому любой тест инбокса стартует с чистого листа независимо от того,
+    /// что оставил после себя предыдущий (в том числе если тот упал до своего TearDown).
+    /// </summary>
+    public static void Reset()
+    {
+        OnProcess = null;
+        OnProcessAsync = null;
+        OnProcessWithTokenAsync = null;
+    }
+
     public async Task Process(TestInboxCommand message, CancellationToken cancellationToken)
     {
         OnProcess?.Invoke(this, message);

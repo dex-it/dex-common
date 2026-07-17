@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
@@ -73,6 +74,31 @@ public class EnqueueInboxTests : BaseTest
         Assert.AreEqual(1, envelopes.Count);
         // Сохранилась первая доставка: дубль игнорируется целиком, а не перезаписывает тело.
         Assert.IsTrue(envelopes[0].Content.Contains("first", StringComparison.Ordinal));
+    }
+
+    [Test]
+    public async Task Enqueue_SameIdentityConcurrently_StoresExactlyOneRowAndReportsSingleAccepted()
+    {
+        var sp = InitInboxServiceCollection()
+            .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
+            .BuildServiceProvider();
+
+        var identity = new InboxMessageIdentity("message-1", "consumer-1");
+
+        // Одновременный приём одного и того же (MessageId, ConsumerId). Последовательный дубль уже покрыт;
+        // здесь проверяется поведение под ГОНКОЙ: дедуп держится на уникальном индексе и ON CONFLICT DO
+        // NOTHING, а не на порядке. IInboxService и DbContext scoped, поэтому у каждой задачи своё соединение.
+        const int racers = 8;
+        var statuses = await Task.WhenAll(Enumerable.Range(0, racers).Select(i => Task.Run(async () =>
+        {
+            using var scope = sp.CreateScope();
+            return await scope.ServiceProvider.GetRequiredService<IInboxService>()
+                .EnqueueAsync(new TestInboxCommand { Args = "racer-" + i }, identity);
+        })));
+
+        Assert.AreEqual(1, statuses.Count(x => x == InboxEnqueueStatus.Accepted), "exactly one racer must win the insert");
+        Assert.AreEqual(racers - 1, statuses.Count(x => x == InboxEnqueueStatus.Duplicate), "every other racer must see a duplicate");
+        Assert.AreEqual(1, await GetDb(sp).Set<InboxEnvelope>().CountAsync(), "the unique index must keep exactly one row");
     }
 
     [Test]

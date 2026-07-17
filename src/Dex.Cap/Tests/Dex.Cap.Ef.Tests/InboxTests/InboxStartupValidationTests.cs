@@ -58,14 +58,27 @@ public class InboxStartupValidationTests : BaseTest
     }
 
     [Test]
-    public void RegistryExceptions_AreCatchableAsInboxException()
+    public void RegistryExceptions_AreCaughtAsInboxException()
     {
-        // XML IInboxService обещает InboxException. Если бы эти типы наследовали голый Exception,
-        // задокументированный catch их не поймал бы.
-        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(DiscriminatorResolveException)));
-        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(DiscriminatorConflictException)));
-        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(InboxLeaseLostException)));
-        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(AmbiguousMessageTypeException)));
+        // XML IInboxService обещает InboxException. Проверяем ПОВЕДЕНИЕ, а не иерархию типов: реально ли
+        // задокументированный catch (InboxException) ловит каждое из этих исключений. Если бы какое-то
+        // наследовало голый Exception, catch его пропустил бы, и тест обязан упасть на этом.
+        AssertCaughtAsInboxException(new DiscriminatorResolveException("registry error"));
+        AssertCaughtAsInboxException(new DiscriminatorConflictException("registry error"));
+        AssertCaughtAsInboxException(new InboxLeaseLostException("registry error"));
+        AssertCaughtAsInboxException(new AmbiguousMessageTypeException("registry error"));
+
+        static void AssertCaughtAsInboxException(Exception thrown)
+        {
+            try
+            {
+                throw thrown;
+            }
+            catch (InboxException caught)
+            {
+                Assert.AreSame(thrown, caught, "the exception must be caught as InboxException, not rethrown");
+            }
+        }
     }
 
     /// <summary>

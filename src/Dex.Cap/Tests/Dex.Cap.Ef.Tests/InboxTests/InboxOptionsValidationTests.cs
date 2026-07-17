@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Dex.Cap.Inbox.AspNetScheduler.Options;
 using Dex.Cap.Inbox.Options;
 using NUnit.Framework;
@@ -99,6 +101,63 @@ public class InboxOptionsValidationTests
 
         Assert.IsFalse(result.Succeeded);
         Assert.IsTrue(result.FailureMessage!.Contains(nameof(InboxHandlerOptions.Period), StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Величины, уходящие в <see cref="Task.Delay(TimeSpan, System.Threading.CancellationToken)"/>, обязаны
+    /// отвергаться на старте, а не ронять хост позже в фоне.
+    /// </summary>
+    /// <remarks>
+    /// Обе фоновые службы сначала выжидают свой InitDelay, поэтому без проверки хост успевал бы подняться
+    /// «здоровым», а падал бы уже фоном, где причину пришлось бы искать по логам.
+    /// </remarks>
+    [Test]
+    public void HandlerOptions_DelayBeyondTheTimerLimit_IsRejected(
+        [Values(nameof(InboxHandlerOptions.Period), nameof(InboxHandlerOptions.CleanupInterval), nameof(InboxHandlerOptions.CleanupBatchDelay))]
+        string propertyName)
+    {
+        // 49.71 суток это предел таймера платформы; всё, что больше, Task.Delay уже не принимает.
+        var beyondTheLimit = TimeSpan.FromMilliseconds(uint.MaxValue - 1) + TimeSpan.FromSeconds(1);
+        var options = new InboxHandlerOptions();
+
+        switch (propertyName)
+        {
+            case nameof(InboxHandlerOptions.Period):
+                options.Period = beyondTheLimit;
+                break;
+            case nameof(InboxHandlerOptions.CleanupInterval):
+                options.CleanupInterval = beyondTheLimit;
+                break;
+            default:
+                options.CleanupBatchDelay = beyondTheLimit;
+                break;
+        }
+
+        // Прежде всего: значение действительно нерабочее, а не просто «некрасивое».
+        Assert.Throws<ArgumentOutOfRangeException>((Action)(() => Task.Delay(beyondTheLimit, CancellationToken.None)));
+
+        var result = new InboxHandlerOptionsValidator().Validate(null, options);
+
+        Assert.IsFalse(result.Succeeded, $"{propertyName} beyond the timer limit must not pass validation");
+        Assert.IsTrue(result.FailureMessage!.Contains(propertyName, StringComparison.Ordinal), result.FailureMessage);
+    }
+
+    /// <summary>
+    /// Ретеншен это не ожидание: общий потолок задержки к нему не применяется.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="InboxHandlerOptions.CleanupOlderThan"/> уходит в <c>DateTime.Subtract</c>, а не в
+    /// <c>Task.Delay</c>. Окно дедупликации в 60 суток законно и обязано проходить валидацию, хотя оно и
+    /// длиннее предела таймера.
+    /// </remarks>
+    [Test]
+    public void HandlerOptions_RetentionLongerThanTheTimerLimit_IsAccepted()
+    {
+        var options = new InboxHandlerOptions { CleanupOlderThan = TimeSpan.FromDays(60) };
+
+        var result = new InboxHandlerOptionsValidator().Validate(null, options);
+
+        Assert.IsTrue(result.Succeeded, result.FailureMessage ?? string.Empty);
     }
 
     [Test]

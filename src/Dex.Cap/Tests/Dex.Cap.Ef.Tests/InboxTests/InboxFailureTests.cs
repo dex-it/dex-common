@@ -91,7 +91,7 @@ public class InboxFailureTests : BaseTest
         // Ассерт по содержимому: без него тест зелёный при ЛЮБОЙ ошибке и не доказывает,
         // что сработала именно ветка разбора тела.
         Assert.IsTrue(envelope.Error!.Contains(nameof(JsonException), StringComparison.Ordinal),
-            $"the outcome must record the deserialization failure, but was: {envelope.ErrorMessage}");
+            $"the outcome must record the deserialization failure, but was: {envelope.Error}");
     }
 
     [Test]

@@ -45,6 +45,12 @@ public class ConcurrencyInboxTests : BaseTest
             const int handlerCount = 8;
             var tasks = new List<Task>(handlerCount);
 
+            // Дедлайн опроса: happy-path сливает очередь за секунды. Без него регрессия, оставившая строку в
+            // выборке (например, Failed с StartAtUtc в будущем, которого дренаж не дождётся), повесила бы тест
+            // навсегда вместо внятного фейла. Сработавший дедлайн бросает AssertionException, а Task.WhenAll
+            // прокинет её в тело теста.
+            var deadline = DateTime.UtcNow.AddSeconds(60);
+
             for (var i = 0; i < handlerCount; i++)
             {
                 tasks.Add(Task.Run(async () =>
@@ -55,6 +61,10 @@ public class ConcurrencyInboxTests : BaseTest
 
                     while (await db.Set<InboxEnvelope>().AnyAsync(x => x.ScheduledStartIndexing != null))
                     {
+                        Assert.Less(DateTime.UtcNow, deadline,
+                            "inbox did not drain within the deadline: a row is likely stuck in the fetch set. " +
+                            "Failing loudly instead of hanging.");
+
                         await handler.ProcessAsync();
                         await Task.Delay(50);
                     }

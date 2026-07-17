@@ -67,7 +67,12 @@ internal sealed class InboxCleanerBackgroundService(
         }
         catch (Exception ex)
         {
-            loggerInner.LogCritical(ex, "Critical error in Inbox cleaner '{ServiceName}'", service.GetType());
+            // Error, а не Critical: упал ОДИН заход чистки, а не приложение. Приём и обработка сообщений от
+            // чистки не зависят и продолжаются, а сам заход повторится через CleanupInterval. Цена отказа это
+            // неприменённый ретеншен, то есть растущая таблица и растянутое окно дедупликации; на дефолтах
+            // (заход раз в час, ретеншен 30 суток) это становится проблемой не раньше, чем через сотни
+            // пропущенных заходов, и требует разбирательства, а не подъёма дежурного среди ночи.
+            loggerInner.LogError(ex, "Inbox cleaner '{ServiceName}' failed a cycle", service.GetType());
         }
     }
 

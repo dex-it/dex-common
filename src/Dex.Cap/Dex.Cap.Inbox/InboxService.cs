@@ -15,6 +15,8 @@ internal sealed class InboxService(IInboxDataProvider inboxDataProvider, IInboxE
         CancellationToken cancellationToken)
         where T : class, IInboxMessage
     {
+        identity.EnsureInitialized(nameof(identity));
+
         var inboxEnvelope = envelopFactory.CreateEnvelop(message, identity, lockTimeout);
 
         return inboxDataProvider.Add(inboxEnvelope, cancellationToken);

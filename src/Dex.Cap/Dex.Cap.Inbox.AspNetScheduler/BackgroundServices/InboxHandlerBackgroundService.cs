@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Inbox.AspNetScheduler.Options;
 using Dex.Cap.Inbox.Interfaces;
+using Dex.Cap.Inbox.Models;
 using Dex.Cap.Inbox.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,6 +30,8 @@ internal sealed class InboxHandlerBackgroundService(
 
     private readonly int _messagesToProcess = inboxOptions.Value.MessagesToProcess;
 
+    private readonly int _concurrencyLimit = inboxOptions.Value.ConcurrencyLimit;
+
     /// <summary>
     /// Разбирать инбокс, пока хост жив.
     /// </summary>
@@ -40,6 +43,7 @@ internal sealed class InboxHandlerBackgroundService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation(ServiceNameIsStatus, TypeName, "starting");
+        LogPerMessageBudget();
 
         await InitDelay(stoppingToken).ConfigureAwait(false);
 
@@ -95,10 +99,45 @@ internal sealed class InboxHandlerBackgroundService(
         }
         catch (Exception ex)
         {
-            loggerInner.LogCritical(ex, "Critical error in Inbox background handler '{ServiceName}'", service.GetType());
+            // Error, а не Critical: упал ОДИН тик, а не приложение. Отказ восстановим сам собой, потому что
+            // следующий тик заходит заново, и на транзиентной сетевой ошибке цикл продолжается как ни в чём
+            // не бывало. Critical на каждом таком тике будит дежурного на инцидент, которого нет.
+            // Устойчивый сбой при этом не теряется, и ловит его не уровень лога: пока выборка не доходит до
+            // хранилища, признак жизни не обновляется, и health check уходит в Degraded по Period * 2.
+            loggerInner.LogError(ex, "Inbox background handler '{ServiceName}' failed a cycle", service.GetType());
 
             return 0;
         }
+    }
+
+    /// <summary>
+    /// Сообщить на старте расчётный бюджет времени на сообщение при аренде по умолчанию.
+    /// </summary>
+    /// <remarks>
+    /// Это НЕ валидация, а именно наблюдаемость, и намеренно. Валидировать соотношение на старте нельзя честно:
+    /// бюджет = <c>(LockTimeout - CompletionReserve) * ConcurrencyLimit / MessagesToProcess</c>, а
+    /// <see cref="InboxEnvelope.LockTimeout"/> задаётся ПОСООБЩЕННО (у каждого сообщения своя аренда), и хватает
+    /// ли бюджета, зависит от длительности обработчика, которой на старте не знает никто. Жёсткий отказ отверг
+    /// бы заведомо рабочие конфигурации (быстрый обработчик, длинная аренда у конкретного сообщения), а
+    /// предупреждение по порогу было бы догадкой о скорости обработчика. Поэтому не отвергаем и не грозим, а
+    /// показываем число: считаем бюджет по аренде ПО УМОЛЧАНИЮ, чтобы оператор видел его в своих логах и
+    /// сопоставлял с фактом по счётчикам <c>ExpiredBeforeStartCount</c>/<c>LeaseLostCount</c>, а не выводил
+    /// формулу руками. Сообщения со своей арендой считаются от своего LockTimeout и здесь не отражены.
+    /// </remarks>
+    private void LogPerMessageBudget()
+    {
+        var effectiveWindow = InboxEnvelope.DefaultLockTimeout - InboxEnvelope.CompletionReserve;
+        var perMessageBudget = effectiveWindow * _concurrencyLimit / _messagesToProcess;
+
+        logger.LogInformation(
+            "Inbox per-message time budget on the default lock timeout is ~{BudgetMs}ms " +
+            "({Messages} messages per cycle, concurrency {Concurrency}, default lease {LeaseSeconds}s). " +
+            "Handlers that regularly need longer will let messages expire in the queue: watch ExpiredBeforeStartCount " +
+            "and LeaseLostCount, then raise the message LockTimeout or lower MessagesToProcess.",
+            (long)perMessageBudget.TotalMilliseconds,
+            _messagesToProcess,
+            _concurrencyLimit,
+            (int)InboxEnvelope.DefaultLockTimeout.TotalSeconds);
     }
 
     /// <summary>
