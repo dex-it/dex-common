@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Runtime.Loader;
 using Dex.Cap.Ef.Tests.InboxTests.Messages;
 using Dex.Cap.Inbox;
 using Dex.Cap.Inbox.Interfaces;
@@ -46,54 +47,37 @@ public class AppDomainInboxMessageTypeSourceTests
     }
 
     /// <summary>
-    /// Каждый тип обязан прийти один раз, причём по идентичности, а не по ссылке.
+    /// Внутри одного контекста загрузки каждый тип обязан прийти ровно один раз.
     /// </summary>
     /// <remarks>
-    /// Distinct() по ссылке этот случай не ловит в принципе: сборка, загруженная в два контекста, даёт два
-    /// НЕравных Type с одинаковым AssemblyQualifiedName, и такая пара проходит его молча. Проверка по
-    /// идентичности сторожит именно её: реестр на такой паре обязан упасть, поэтому дискавери, отдавший
-    /// её, это уже сломанный процесс.
+    /// Инвариант заявлен про контекст загрузки, а не про процесс, и это не смягчение проверки, а её
+    /// правильная формулировка. Дубли МЕЖДУ контекстами делает среда: сборка, загруженная в два
+    /// AssemblyLoadContext (так работает тест-раннер Rider), даёт два неравных Type с общим
+    /// AssemblyQualifiedName. Источник обязан отдавать их как есть, иначе он соврёт реестру, а тот на такой
+    /// паре обязан упасть. Дефект источника это повтор ВНУТРИ одного контекста, его и сторожим.
     /// <para>
-    /// Тест утверждает инвариант о процессе с ОДНИМ контекстом загрузки. Тест-раннер Rider (NUnit engine)
-    /// держит тест-сборку в двух AssemblyLoadContext, и тогда дубли по AQN появляются штатно — не потому,
-    /// что источник сломан, а потому, что окружение уже не то, для которого инвариант заявлен. Такое
-    /// окружение тест определяет сам и пропускает себя (Ignore, а не Fail): под dotnet test (один контекст)
-    /// он сторожит настоящую регрессию, под ALC-изолирующим раннером не шумит и не требует ручной настройки.
+    /// Distinct() по ссылке здесь бесполезен в принципе: у копий из разных контекстов ссылки разные, и пара
+    /// проходит его молча. Поэтому сравнение идёт по AssemblyQualifiedName.
+    /// </para>
+    /// <para>
+    /// Разбиение по контекстам заменяет пропуск теста под ALC-изолирующим раннером: проверка работает всюду,
+    /// ложных срабатываний от среды не даёт и знать про конкретный раннер не требует. Поведение РЕЕСТРА на
+    /// таком дубле сторожит отдельный тест
+    /// (<c>InboxStartupValidationTests.StartHost_SameMessageTypeLoadedTwice_ReportsTheDuplicateLoadInsteadOfAConflict</c>).
     /// </para>
     /// </remarks>
     [Test]
     public void GetMessageTypes_DoesNotReturnDuplicates()
     {
-        SkipWhenAssemblyLoadedMoreThanOnce();
-
-        var identities = new AppDomainInboxMessageTypeSource(NullLogger<AppDomainInboxMessageTypeSource>.Instance)
+        var types = new AppDomainInboxMessageTypeSource(NullLogger<AppDomainInboxMessageTypeSource>.Instance)
             .GetMessageTypes()
-            .Select(x => x.AssemblyQualifiedName)
             .ToArray();
 
-        NUnit.Framework.Legacy.CollectionAssert.AllItemsAreUnique(identities);
-    }
-
-    /// <summary>
-    /// Пропустить тест, если тест-сборка загружена в процесс больше одного раза.
-    /// </summary>
-    /// <remarks>
-    /// Считаем по имени сборки, а не по ссылке: у копий из разных AssemblyLoadContext ссылки разные, а имя
-    /// одно. Больше одной — окружение с ALC-изоляцией (раннер Rider), инвариант уникальности в нём заведомо
-    /// нарушен не источником, а средой, и проверять нечего.
-    /// </remarks>
-    private static void SkipWhenAssemblyLoadedMoreThanOnce()
-    {
-        var selfName = typeof(AppDomainInboxMessageTypeSourceTests).Assembly.GetName().Name;
-
-        var loadCount = System.AppDomain.CurrentDomain.GetAssemblies()
-            .Count(a => string.Equals(a.GetName().Name, selfName, System.StringComparison.Ordinal));
-
-        if (loadCount > 1)
+        foreach (var perContext in types.GroupBy(x => AssemblyLoadContext.GetLoadContext(x.Assembly)))
         {
-            NUnit.Framework.Assert.Ignore(
-                $"Test assembly '{selfName}' is loaded {loadCount} times (ALC-isolating runner). " +
-                "The uniqueness invariant holds only for a single load context; skipping.");
+            var identities = perContext.Select(x => x.AssemblyQualifiedName).ToArray();
+
+            NUnit.Framework.Legacy.CollectionAssert.AllItemsAreUnique(identities);
         }
     }
 
