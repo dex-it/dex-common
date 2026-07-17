@@ -53,16 +53,48 @@ public class AppDomainInboxMessageTypeSourceTests
     /// НЕравных Type с одинаковым AssemblyQualifiedName, и такая пара проходит его молча. Проверка по
     /// идентичности сторожит именно её: реестр на такой паре обязан упасть, поэтому дискавери, отдавший
     /// её, это уже сломанный процесс.
+    /// <para>
+    /// Тест утверждает инвариант о процессе с ОДНИМ контекстом загрузки. Тест-раннер Rider (NUnit engine)
+    /// держит тест-сборку в двух AssemblyLoadContext, и тогда дубли по AQN появляются штатно — не потому,
+    /// что источник сломан, а потому, что окружение уже не то, для которого инвариант заявлен. Такое
+    /// окружение тест определяет сам и пропускает себя (Ignore, а не Fail): под dotnet test (один контекст)
+    /// он сторожит настоящую регрессию, под ALC-изолирующим раннером не шумит и не требует ручной настройки.
+    /// </para>
     /// </remarks>
     [Test]
     public void GetMessageTypes_DoesNotReturnDuplicates()
     {
+        SkipWhenAssemblyLoadedMoreThanOnce();
+
         var identities = new AppDomainInboxMessageTypeSource(NullLogger<AppDomainInboxMessageTypeSource>.Instance)
             .GetMessageTypes()
             .Select(x => x.AssemblyQualifiedName)
             .ToArray();
 
         NUnit.Framework.Legacy.CollectionAssert.AllItemsAreUnique(identities);
+    }
+
+    /// <summary>
+    /// Пропустить тест, если тест-сборка загружена в процесс больше одного раза.
+    /// </summary>
+    /// <remarks>
+    /// Считаем по имени сборки, а не по ссылке: у копий из разных AssemblyLoadContext ссылки разные, а имя
+    /// одно. Больше одной — окружение с ALC-изоляцией (раннер Rider), инвариант уникальности в нём заведомо
+    /// нарушен не источником, а средой, и проверять нечего.
+    /// </remarks>
+    private static void SkipWhenAssemblyLoadedMoreThanOnce()
+    {
+        var selfName = typeof(AppDomainInboxMessageTypeSourceTests).Assembly.GetName().Name;
+
+        var loadCount = System.AppDomain.CurrentDomain.GetAssemblies()
+            .Count(a => string.Equals(a.GetName().Name, selfName, System.StringComparison.Ordinal));
+
+        if (loadCount > 1)
+        {
+            NUnit.Framework.Assert.Ignore(
+                $"Test assembly '{selfName}' is loaded {loadCount} times (ALC-isolating runner). " +
+                "The uniqueness invariant holds only for a single load context; skipping.");
+        }
     }
 
     [Test]

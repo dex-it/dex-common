@@ -124,6 +124,8 @@ public class InboxSchedulerTests : BaseTest
                         options.HandlerInitDelay = new InitDelayRange { Min = NoInitDelay, Max = NoInitDelay };
                         options.CleanerInitDelay = new InitDelayRange { Min = NoInitDelay, Max = NoInitDelay };
                     });
+
+                UseSingleAssemblyInboxTypeSource(services);
             })
             .Build();
 

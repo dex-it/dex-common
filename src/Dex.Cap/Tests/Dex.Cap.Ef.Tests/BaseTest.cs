@@ -1,12 +1,15 @@
 using System;
 using System.Threading.Tasks;
+using Dex.Cap.Ef.Tests.InboxTests;
 using Dex.Cap.Inbox.Ef.Extensions;
+using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.RetryStrategies;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Dex.Cap.Outbox.Options;
 using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -77,7 +80,30 @@ public abstract class BaseTest
                 },
                 (_, configurator) => strategyConfigure?.Invoke(configurator));
 
+        UseSingleAssemblyInboxTypeSource(serviceCollection);
+
         return serviceCollection;
+    }
+
+    /// <summary>
+    /// Ограничить дискавери типов сообщений инбокса одной тест-сборкой.
+    /// </summary>
+    /// <remarks>
+    /// Реальный <c>AppDomainInboxMessageTypeSource</c> сканирует все контексты загрузки процесса. Тест-раннер
+    /// Rider (NUnit engine) держит тест-сборку в двух AssemblyLoadContext, один тип приходит дважды разными
+    /// Type с общим AssemblyQualifiedName, и построение реестра падает ложным AmbiguousMessageTypeException.
+    /// Скан одной сборки берёт типы одного контекста — дубля нет. Вызывать ПОСЛЕ <c>AddInbox</c>: источник
+    /// регистрируется обычным Add, побеждает последняя регистрация.
+    /// <para>
+    /// Own-host тесты (свой HostBuilder + AddInbox, доходящие до StartAsync/Enqueue) обязаны звать это сами:
+    /// через <see cref="InitInboxServiceCollection"/> они не идут, и подмена до них иначе не доедет.
+    /// </para>
+    /// </remarks>
+    protected static void UseSingleAssemblyInboxTypeSource(IServiceCollection serviceCollection)
+    {
+        serviceCollection.RemoveAll<IInboxMessageTypeSource>();
+        serviceCollection.AddSingleton<IInboxMessageTypeSource>(
+            new SingleAssemblyInboxMessageTypeSource(typeof(BaseTest).Assembly));
     }
 
     protected static void AddLogging(IServiceCollection serviceCollection)

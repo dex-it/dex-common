@@ -30,6 +30,10 @@ public class InboxOptionsStartupTests : BaseTest
                         options.MessagesToProcess = 5;
                         options.ConcurrencyLimit = 50;
                     });
+
+                // Иначе под тест-раннером Rider warm-up реестра упал бы дублем ALC раньше, чем ValidateOnStart
+                // добрался до опций, и тест ловил бы не то исключение.
+                UseSingleAssemblyInboxTypeSource(services);
             })
             .Build();
 
