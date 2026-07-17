@@ -27,29 +27,29 @@ public class InboxStartupValidationTests : BaseTest
     private const string SharedDiscriminator = "6B1D4C0E-2A3F-4E5D-9C8B-7A6F5E4D3C2B";
 
     [Test]
-    public void StartHost_DiscriminatorConflict_FailsAtStartup()
+    public async Task StartHost_DiscriminatorConflict_FailsAtStartup()
     {
         using var host = BuildHost(typeof(FirstClaimant), typeof(SecondClaimant));
 
-        var ex = NUnit.Framework.Assert.ThrowsAsync<DiscriminatorConflictException>(
-            (Func<Task>)(async () => await host.StartAsync()));
+        var ex = await CaptureStartupFailure(host);
 
+        Assert.IsInstanceOf<DiscriminatorConflictException>(ex);
         Assert.IsTrue(ex!.Message.Contains(SharedDiscriminator, StringComparison.Ordinal));
         Assert.IsTrue(ex.Message.Contains(nameof(FirstClaimant), StringComparison.Ordinal));
         Assert.IsTrue(ex.Message.Contains(nameof(SecondClaimant), StringComparison.Ordinal));
     }
 
     [Test]
-    public void StartHost_InheritedDiscriminator_ReportsTheConflictHonestly()
+    public async Task StartHost_InheritedDiscriminator_ReportsTheConflictHonestly()
     {
         // Производный тип наследует статический дискриминатор базового. Компилятор такой код принимает,
         // дискавери подхватывает оба типа, и честный исход это конфликт: два типа заявили один
         // идентификатор.
         using var host = BuildHost(typeof(BaseClaimant), typeof(InheritingClaimant));
 
-        var ex = NUnit.Framework.Assert.ThrowsAsync<DiscriminatorConflictException>(
-            (Func<Task>)(async () => await host.StartAsync()));
+        var ex = await CaptureStartupFailure(host);
 
+        Assert.IsInstanceOf<DiscriminatorConflictException>(ex);
         Assert.IsTrue(ex!.Message.Contains(nameof(BaseClaimant), StringComparison.Ordinal), ex.Message);
         Assert.IsTrue(ex.Message.Contains(nameof(InheritingClaimant), StringComparison.Ordinal), ex.Message);
     }
@@ -65,13 +65,13 @@ public class InboxStartupValidationTests : BaseTest
     }
 
     [Test]
-    public void StartHost_EmptyDiscriminator_FailsAtStartup()
+    public async Task StartHost_EmptyDiscriminator_FailsAtStartup()
     {
         using var host = BuildHost(typeof(EmptyDiscriminator));
 
-        var ex = NUnit.Framework.Assert.ThrowsAsync<DiscriminatorResolveException>(
-            (Func<Task>)(async () => await host.StartAsync()));
+        var ex = await CaptureStartupFailure(host);
 
+        Assert.IsInstanceOf<DiscriminatorResolveException>(ex);
         Assert.IsTrue(ex!.Message.Contains(nameof(IInboxMessage.InboxTypeId), StringComparison.Ordinal));
     }
 
@@ -88,6 +88,24 @@ public class InboxStartupValidationTests : BaseTest
         Assert.IsTrue(provider.SupportedDiscriminators.Contains(TestInboxCommand.InboxTypeId));
 
         await host.StopAsync();
+    }
+
+    /// <summary>
+    /// Запустить хост и вернуть исключение старта (или null, если старт прошёл). Host передаётся
+    /// параметром, а не захватывается замыканием: иначе using-переменная утекла бы в делегат
+    /// (ReSharper AccessToDisposedClosure), хотя здесь это и безопасно.
+    /// </summary>
+    private static async Task<Exception?> CaptureStartupFailure(IHost host)
+    {
+        try
+        {
+            await host.StartAsync();
+            return null;
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
     }
 
     private IHost BuildHost(params Type[] messageTypes)
@@ -114,16 +132,19 @@ public class InboxStartupValidationTests : BaseTest
 
     private sealed class FirstClaimant
     {
+        // ReSharper disable once UnusedMember.Local
         public static string InboxTypeId => SharedDiscriminator;
     }
 
     private sealed class SecondClaimant
     {
+        // ReSharper disable once UnusedMember.Local
         public static string InboxTypeId => SharedDiscriminator;
     }
 
     private class BaseClaimant
     {
+        // ReSharper disable once UnusedMember.Local
         public static string InboxTypeId => SharedDiscriminator;
     }
 
@@ -131,6 +152,7 @@ public class InboxStartupValidationTests : BaseTest
 
     private sealed class EmptyDiscriminator
     {
+        // ReSharper disable once UnusedMember.Local
         public static string InboxTypeId => "  ";
     }
 }

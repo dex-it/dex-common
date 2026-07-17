@@ -1,10 +1,8 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
 using Dex.Cap.Ef.Tests.InboxTests.Messages;
-using Dex.Cap.Ef.Tests.Model;
 using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.Models;
 using Microsoft.EntityFrameworkCore;

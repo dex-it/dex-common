@@ -338,8 +338,8 @@ public class ExecuteInTransactionTests : BaseTest
                     await context.Database.CurrentTransaction!.CommitAsync(ct);
 
                     // 2. Бросаем транзиентное исключение, как будто сеть упала СРАЗУ ПОСЛЕ коммита.
-                    throw new Npgsql.NpgsqlException("Fake network failure after commit",
-                        new Npgsql.PostgresException("Error", "Severity", "Invariant", "57P01"));
+                    throw new NpgsqlException("Fake network failure after commit",
+                        new PostgresException("Error", "Severity", "Invariant", "57P01"));
 #pragma warning disable CS0162 // Unreachable code detected
                     return true;
 #pragma warning restore CS0162

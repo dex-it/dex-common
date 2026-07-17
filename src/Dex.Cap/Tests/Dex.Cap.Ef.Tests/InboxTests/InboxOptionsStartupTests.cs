@@ -17,7 +17,7 @@ namespace Dex.Cap.Ef.Tests.InboxTests;
 public class InboxOptionsStartupTests : BaseTest
 {
     [Test]
-    public void StartHost_InvalidInboxOptions_FailsAtStartup()
+    public async Task StartHost_InvalidInboxOptions_FailsAtStartup()
     {
         using var host = new HostBuilder()
             .ConfigureServices(services =>
@@ -33,9 +33,18 @@ public class InboxOptionsStartupTests : BaseTest
             })
             .Build();
 
-        var ex = NUnit.Framework.Assert.ThrowsAsync<OptionsValidationException>(
-            (Func<Task>)(async () => await host.StartAsync()));
+        // Прямой await, а не ThrowsAsync с лямбдой: замыкание над using-переменной host дало бы ложный AccessToDisposedClosure.
+        OptionsValidationException? ex = null;
+        try
+        {
+            await host.StartAsync();
+        }
+        catch (OptionsValidationException e)
+        {
+            ex = e;
+        }
 
+        Assert.IsNotNull(ex);
         Assert.IsTrue(ex!.Message.Contains(nameof(InboxOptions.ConcurrencyLimit), StringComparison.Ordinal));
     }
 }

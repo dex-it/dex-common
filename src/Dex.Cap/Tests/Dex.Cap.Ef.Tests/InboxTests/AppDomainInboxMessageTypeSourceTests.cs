@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Dex.Cap.Ef.Tests.InboxTests.Messages;
 using Dex.Cap.Inbox;
