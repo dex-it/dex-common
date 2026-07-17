@@ -45,14 +45,24 @@ public class AppDomainInboxMessageTypeSourceTests
         }
     }
 
+    /// <summary>
+    /// Каждый тип обязан прийти один раз, причём по идентичности, а не по ссылке.
+    /// </summary>
+    /// <remarks>
+    /// Distinct() по ссылке этот случай не ловит в принципе: сборка, загруженная в два контекста, даёт два
+    /// НЕравных Type с одинаковым AssemblyQualifiedName, и такая пара проходит его молча. Проверка по
+    /// идентичности сторожит именно её: реестр на такой паре обязан упасть, поэтому дискавери, отдавший
+    /// её, это уже сломанный процесс.
+    /// </remarks>
     [Test]
     public void GetMessageTypes_DoesNotReturnDuplicates()
     {
-        var types = new AppDomainInboxMessageTypeSource(NullLogger<AppDomainInboxMessageTypeSource>.Instance)
+        var identities = new AppDomainInboxMessageTypeSource(NullLogger<AppDomainInboxMessageTypeSource>.Instance)
             .GetMessageTypes()
+            .Select(x => x.AssemblyQualifiedName)
             .ToArray();
 
-        Assert.AreEqual(types.Length, types.Distinct().Count());
+        NUnit.Framework.Legacy.CollectionAssert.AllItemsAreUnique(identities);
     }
 
     [Test]

@@ -482,6 +482,11 @@ large bodies under fresh keys that live until `CleanupOlderThan`.
   start (`AddInbox` registers a warm-up hosted service), so a duplicate or missing discriminator fails the host
   start rather than surfacing later inside the background worker. The discriminator itself is unrestricted: it
   reaches the claim SQL as a parameter, so a MassTransit `urn:message:...` or a nested type name is fine.
+* That assembly must be loaded **once**. If the host puts it into several load contexts (a test runner, coverage
+  instrumentation, a plugin host), the same message type exists twice as two distinct CLR types, and one
+  discriminator maps to both. The inbox fails the start with `AmbiguousMessageTypeException` naming the load
+  contexts instead of picking one: handlers are registered for a single type identity, so a guess would silently
+  leave those messages unprocessed.
 * Ordering between messages is not guaranteed; design handlers to be order-independent.
 
 ---

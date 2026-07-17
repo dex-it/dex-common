@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
 using Dex.Cap.Ef.Tests.InboxTests.Messages;
@@ -25,6 +27,7 @@ namespace Dex.Cap.Ef.Tests.InboxTests;
 public class InboxStartupValidationTests : BaseTest
 {
     private const string SharedDiscriminator = "6B1D4C0E-2A3F-4E5D-9C8B-7A6F5E4D3C2B";
+    private const string DuplicateDiscriminator = "1F0E9D8C-7B6A-4C5D-8E9F-0A1B2C3D4E5F";
 
     [Test]
     public async Task StartHost_DiscriminatorConflict_FailsAtStartup()
@@ -62,6 +65,56 @@ public class InboxStartupValidationTests : BaseTest
         Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(DiscriminatorResolveException)));
         Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(DiscriminatorConflictException)));
         Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(InboxLeaseLostException)));
+        Assert.IsTrue(typeof(InboxException).IsAssignableFrom(typeof(AmbiguousMessageTypeException)));
+    }
+
+    /// <summary>
+    /// Сборка, загруженная в процесс дважды, это не конфликт дискриминаторов: тип заявлен один, а CLR-типов
+    /// стало два. Исход обязан называть настоящую причину, иначе сообщение обвиняет типы сообщений в том,
+    /// чего они не делали, и чинить его идут не туда.
+    /// </summary>
+    /// <remarks>
+    /// Дубль воспроизводится эмитом двух сборок с одной идентичностью, а НЕ вторым AssemblyLoadContext:
+    /// реально загруженная второй раз сборка осталась бы в домене и уронила бы весь остальной набор тестов
+    /// по порядку выполнения, то есть тест воспроизвёл бы ровно тот баг, который сторожит. Эмит даёт ту же
+    /// пару (AssemblyQualifiedName совпадают, Type не равны) и при этом невидим для дискавери: тот
+    /// отбрасывает динамические сборки.
+    /// </remarks>
+    [Test]
+    public async Task StartHost_SameMessageTypeLoadedTwice_ReportsTheDuplicateLoadInsteadOfAConflict()
+    {
+        var first = EmitDuplicateMessageType();
+        var second = EmitDuplicateMessageType();
+
+        Assert.AreEqual(first.AssemblyQualifiedName, second.AssemblyQualifiedName, "стенд обязан повторить идентичность дубля");
+        Assert.AreNotEqual(first, second, "стенд обязан дать два разных CLR-типа");
+
+        using var host = BuildHost(first, second);
+
+        var ex = await CaptureStartupFailure(host);
+
+        Assert.IsInstanceOf<AmbiguousMessageTypeException>(ex);
+        Assert.IsTrue(ex!.Message.Contains("loaded into this process more than once", StringComparison.Ordinal), ex.Message);
+        Assert.IsTrue(ex.Message.Contains(DuplicateDiscriminator, StringComparison.Ordinal), ex.Message);
+
+        // Разбирать такое будут по контексту загрузки и файлу: без них сообщение не указывает, кого искать.
+        Assert.IsTrue(ex.Message.Contains("load context", StringComparison.Ordinal), ex.Message);
+    }
+
+    /// <summary>
+    /// Тот же самый тип, отданный источником дважды, отображение не меняет, поэтому и отказом не является:
+    /// выбирать не из чего.
+    /// </summary>
+    [Test]
+    public async Task StartHost_SourceReturnsTheSameTypeTwice_StartsWithoutError()
+    {
+        using var host = BuildHost(typeof(TestInboxCommand), typeof(TestInboxCommand));
+
+        var ex = await CaptureStartupFailure(host);
+
+        Assert.IsNull(ex, ex?.Message ?? string.Empty);
+
+        await host.StopAsync();
     }
 
     [Test]
@@ -106,6 +159,41 @@ public class InboxStartupValidationTests : BaseTest
         {
             return e;
         }
+    }
+
+    /// <summary>
+    /// Собрать тип сообщения в динамической сборке с фиксированной идентичностью.
+    /// </summary>
+    /// <remarks>
+    /// Имя и версия сборки заданы константами, поэтому два вызова дают ровно то, что даёт одна сборка,
+    /// загруженная в два контекста: одинаковый AssemblyQualifiedName при неравных Type. Дискриминатор
+    /// объявлен статическим свойством, как того требует контракт, и читается тем же путём, что у обычного
+    /// типа.
+    /// </remarks>
+    private static Type EmitDuplicateMessageType()
+    {
+        var assemblyName = new AssemblyName("Dex.Cap.Ef.Tests.EmittedDuplicate") { Version = new Version(1, 0, 0, 0) };
+
+        var module = AssemblyBuilder
+            .DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run)
+            .DefineDynamicModule(assemblyName.Name!);
+
+        var type = module.DefineType("Dex.Cap.Ef.Tests.Emitted.DuplicateCommand", TypeAttributes.Public | TypeAttributes.Class);
+
+        var getter = type.DefineMethod(
+            "get_" + nameof(IInboxMessage.InboxTypeId),
+            MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.SpecialName,
+            typeof(string),
+            Type.EmptyTypes);
+
+        var il = getter.GetILGenerator();
+        il.Emit(OpCodes.Ldstr, DuplicateDiscriminator);
+        il.Emit(OpCodes.Ret);
+
+        type.DefineProperty(nameof(IInboxMessage.InboxTypeId), PropertyAttributes.None, typeof(string), null)
+            .SetGetMethod(getter);
+
+        return type.CreateType();
     }
 
     private IHost BuildHost(params Type[] messageTypes)

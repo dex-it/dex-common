@@ -2,6 +2,7 @@ using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Threading;
 using Dex.Cap.Inbox.Exceptions;
 using Dex.Cap.Inbox.Interfaces;
@@ -59,8 +60,15 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
     /// Конфликт дискриминаторов это ошибка конфигурации, а не повод выбрать один из типов: молчаливый
     /// выбор лишил бы сохранённое сообщение однозначного восстановления, и обработка ушла бы не в тот
     /// обработчик.
+    /// <para>
+    /// Повторно пришедший тот же тип не конфликт: отображение от него не меняется, выбирать не из чего.
+    /// А два разных CLR-типа с одной идентичностью это вообще не про дискриминаторы: так выглядит сборка,
+    /// загруженная в процесс несколько раз. Причина другая, и чинится она в хосте, поэтому и ошибка
+    /// отдельная.
+    /// </para>
     /// </remarks>
     /// <exception cref="DiscriminatorConflictException">Один дискриминатор заявлен несколькими типами.</exception>
+    /// <exception cref="AmbiguousMessageTypeException">Тип сообщения загружен в процесс несколько раз.</exception>
     private Dictionary<string, Type> BuildRegistry()
     {
         var result = new Dictionary<string, Type>(StringComparer.Ordinal);
@@ -69,17 +77,73 @@ internal sealed class InboxTypeDiscriminatorProvider : IInboxTypeDiscriminatorPr
         {
             var discriminator = GetDiscriminator(type);
 
-            if (result.TryGetValue(discriminator, out var existingType))
+            if (!result.TryGetValue(discriminator, out var existingType))
             {
-                throw new DiscriminatorConflictException(
-                    $"Discriminator '{discriminator}' is declared by several inbox message types: " +
-                    $"'{existingType.FullName}' and '{type.FullName}'. A discriminator must be unique.");
+                result.Add(discriminator, type);
+                continue;
             }
 
-            result.Add(discriminator, type);
+            if (existingType == type)
+            {
+                continue;
+            }
+
+            if (IsSameTypeIdentity(existingType, type))
+            {
+                throw new AmbiguousMessageTypeException(BuildAmbiguityMessage(discriminator, existingType, type));
+            }
+
+            throw new DiscriminatorConflictException(
+                $"Discriminator '{discriminator}' is declared by several inbox message types: " +
+                $"'{existingType.FullName}' and '{type.FullName}'. A discriminator must be unique.");
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Один ли это логический тип, приехавший из разных контекстов загрузки.
+    /// </summary>
+    /// <remarks>
+    /// Сравнение по <see cref="Type.AssemblyQualifiedName"/>, потому что ничем другим такие дубли не
+    /// различить: имя типа, идентичность сборки и MVID у них совпадают, а сами <see cref="Type"/> при этом
+    /// не равны. Разные версии сборки дают разный AQN и остаются честным конфликтом дискриминаторов.
+    /// <para>
+    /// Отсутствующий AQN (он есть только у незакрытых обобщений, которые дискавери и так отбрасывает)
+    /// трактуется как разные типы: не сумев доказать, что тип один, честнее сообщить о конфликте.
+    /// </para>
+    /// </remarks>
+    private static bool IsSameTypeIdentity(Type first, Type second) =>
+        first.AssemblyQualifiedName is { } identity &&
+        string.Equals(identity, second.AssemblyQualifiedName, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Назвать настоящую причину и оба места: сборку грузят несколько раз, чинить надо хост.
+    /// </summary>
+    /// <remarks>
+    /// Каждое вхождение описывается целиком, вместе с путём к файлу. Пути у копий совпадают не всегда:
+    /// инструментирование покрытия подсовывает свою копию из временного каталога, и именно этот путь
+    /// показывает, кто загрузил сборку второй раз. Одного пути для разбора не хватило бы.
+    /// </remarks>
+    private static string BuildAmbiguityMessage(string discriminator, Type first, Type second) =>
+        $"Inbox message type '{first.AssemblyQualifiedName}' is loaded into this process more than once: " +
+        $"{DescribeOccurrence(first)} and {DescribeOccurrence(second)}. " +
+        $"Discriminator '{discriminator}' therefore maps to two different CLR types, and the inbox must not pick either: " +
+        "handlers are registered for a single type identity, so picking the other one would silently leave these messages " +
+        "unprocessed. Load the assembly once. A duplicate load usually comes from a test runner, coverage instrumentation " +
+        "or a plugin host that loads the same assembly into its own load context.";
+
+    /// <summary>
+    /// Описать одно вхождение типа: чей контекст загрузки и из какого файла.
+    /// </summary>
+    private static string DescribeOccurrence(Type type)
+    {
+        var assembly = type.Assembly;
+        var context = AssemblyLoadContext.GetLoadContext(assembly);
+        var contextName = context is null ? "<unknown>" : context.Name ?? "<unnamed>";
+        var location = string.IsNullOrEmpty(assembly.Location) ? "<in memory>" : assembly.Location;
+
+        return $"[load context '{contextName}', assembly '{location}']";
     }
 
     private HashSet<string> DiscoverSupportedDiscriminators()
