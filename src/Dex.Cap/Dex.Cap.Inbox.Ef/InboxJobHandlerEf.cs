@@ -1,0 +1,214 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Dex.Cap.Common.Ef;
+using Dex.Cap.Common.Ef.Extensions;
+using Dex.Cap.Inbox.Exceptions;
+using Dex.Cap.Inbox.Interfaces;
+using Dex.Cap.Inbox.Jobs;
+using Dex.Cap.Inbox.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace Dex.Cap.Inbox.Ef;
+
+internal sealed class InboxJobHandlerEf<TDbContext>(
+    TDbContext dbContext,
+    IInboxDataProvider dataProvider,
+    IInboxSerializer serializer,
+    IInboxMessageHandlerFactory handlerFactory,
+    IInboxTypeDiscriminatorProvider discriminatorProvider,
+    IInboxMetricCollector metricCollector,
+    ILogger<InboxJobHandlerEf<TDbContext>> logger) : IInboxJobHandler
+    where TDbContext : DbContext
+{
+    /// <summary>
+    /// Обработать одно захваченное сообщение и зафиксировать исход.
+    /// </summary>
+    /// <remarks>
+    /// Любая ошибка обработки это исход сообщения, а не авария процесса: битое тело, неизвестный
+    /// дискриминатор и падение самого обработчика уводят сообщение в повтор, а по исчерпании попыток в
+    /// dead letter, но хост продолжает работать.
+    /// </remarks>
+    public async Task ProcessJob(IInboxLockedJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+
+        logger.LogDebug("Message has been started to process {MessageId}", job.Envelope.Id);
+
+        try
+        {
+            await ProcessJobCore(job, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (job.LockToken.IsCancellationRequested)
+        {
+            HandleExpiredLease(job);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            HandleHostStopping(job);
+            throw;
+        }
+        catch (InboxLeaseLostException ex)
+        {
+            HandleLeaseTakenOver(job, ex);
+        }
+        catch (Exception ex)
+        {
+            await HandleProcessingFailure(job, ex).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Аренда истекла прямо во время обработки.
+    /// </summary>
+    /// <remarks>
+    /// Попытка не тратится и в строку ничего не пишется. Обработчик не отказал, ему не дали доработать:
+    /// аренда истекла, потому что LockTimeout мал для времени слива всей захваченной партии, то есть это
+    /// ошибка конфигурации, а не свойство сообщения. Списывать за неё попытку значило бы хоронить здоровые
+    /// сообщения, причём только те, чьи обработчики УВАЖАЮТ токен отмены: обработчик, который токен
+    /// игнорирует, доработает до конца, потеряет аренду на фиксации и попытку не потратит. Наказывать за
+    /// корректное поведение нельзя.
+    /// <para>
+    /// Транзакция обработчика откачена, эффект не применён. Аренда истекает в БД сама, после чего
+    /// сообщение возвращается в выборку. Наружу это видно счётчиком потерянных аренд.
+    /// </para>
+    /// </remarks>
+    private void HandleExpiredLease(IInboxLockedJob job)
+    {
+        metricCollector.IncLeaseLostCount();
+
+        logger.LogWarning(
+            "Inbox message {MessageId} ran out of its lease while being processed and is returned to the queue without " +
+            "spending an attempt. Increase LockTimeout above the time needed to drain the whole claimed batch, " +
+            "or lower MessagesToProcess",
+            job.Envelope.Id);
+
+        DiscardRolledBackChanges();
+    }
+
+    /// <summary>
+    /// Штатная остановка хоста.
+    /// </summary>
+    /// <remarks>
+    /// Сообщение не помечается неудачным и попытка не тратится: транзакция откатилась, аренда истечёт
+    /// сама, и сообщение будет обработано заново без штрафа.
+    /// </remarks>
+    private void HandleHostStopping(IInboxLockedJob job) =>
+        logger.LogDebug("Operation canceled due to host stopping. MessageId: {MessageId}", job.Envelope.Id);
+
+    /// <summary>
+    /// Аренду перехватили до фиксации успеха.
+    /// </summary>
+    /// <remarks>
+    /// Транзакция обработчика откачена, эффект не применён, поэтому попытка не тратится и в строку ничего
+    /// не пишется: ею уже владеет другой обработчик, он её и закроет.
+    /// </remarks>
+    private void HandleLeaseTakenOver(IInboxLockedJob job, InboxLeaseLostException exception)
+    {
+        logger.LogWarning(exception,
+            "Inbox message {MessageId} lost its lease before completion, leaving it to the new owner",
+            job.Envelope.Id);
+
+        DiscardRolledBackChanges();
+    }
+
+    /// <summary>
+    /// Обработка завершилась ошибкой: сообщение уходит в повтор.
+    /// </summary>
+    private async Task HandleProcessingFailure(IInboxLockedJob job, Exception exception)
+    {
+        logger.LogError(exception, "Failed to process inbox message {MessageId}", job.Envelope.Id);
+
+        DiscardRolledBackChanges();
+
+        await dataProvider.JobFail(job, exception.Message, exception, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Выбросить изменения обработчика, оставшиеся в ChangeTracker после отката транзакции.
+    /// </summary>
+    /// <remarks>
+    /// Обработчик мог успеть добавить сущности до падения. Транзакция откатилась, и в БД их нет,
+    /// но в ChangeTracker они остались: без очистки следующая транзакция (фиксация неудачи) упала бы
+    /// на защите от несохранённых изменений, а сама неудача не записалась бы.
+    /// <para>
+    /// Чистка безопасна именно здесь: транзакция уже откачена, поэтому все отслеживаемые изменения
+    /// заведомо устарели, а DbContext создаётся на каждое сообщение и ни с кем не разделяется.
+    /// </para>
+    /// </remarks>
+    private void DiscardRolledBackChanges()
+    {
+        dbContext.ChangeTracker.Clear();
+    }
+
+    /// <summary>
+    /// Выполнить обработчик и зафиксировать успех одной транзакцией.
+    /// </summary>
+    /// <remarks>
+    /// Атомарность здесь суть паттерна: если бизнес-эффект закоммитится, а статус нет, сообщение будет
+    /// обработано повторно и эффект применится дважды. Поэтому фиксация успеха идёт внутри той же
+    /// транзакции, что и изменения обработчика.
+    /// <para>
+    /// Проверка идемпотентности нужна ретраю EF ExecutionStrategy: если транзакция всё же закоммитилась,
+    /// повторять обработку нельзя.
+    /// </para>
+    /// <para>
+    /// Успех считается ЗДЕСЬ, а не в <c>JobSucceed</c>, потому что владелец транзакции здесь, и только он
+    /// знает факт. Возврат из <c>ExecuteInTransactionAsync</c> означает ровно одно: строка закоммичена, причём
+    /// один раз. Оба его пути возврата это гарантируют, сколько бы попыток ни сделала стратегия повторов: либо
+    /// коммит прошёл, либо verifySucceeded нашёл работу уже сделанной. Любой отказ уходит в исключение, а его
+    /// перехватывают выше, где сообщение и получает свой исход.
+    /// </para>
+    /// </remarks>
+    private async Task ProcessJobCore(IInboxLockedJob job, CancellationToken cancellationToken)
+    {
+        await dbContext.ExecuteInTransactionAsync(
+            job,
+            async (state, token) =>
+            {
+                await InvokeHandler(state, token).ConfigureAwait(false);
+                await dataProvider.JobSucceed(state, token).ConfigureAwait(false);
+            },
+            async (state, token) => await dbContext
+                .Set<InboxEnvelope>()
+                .AnyAsync(x => x.Id == state.Envelope.Id && x.Status == InboxMessageStatus.Succeeded, token)
+                .ConfigureAwait(false),
+            EfTransactionOptions.Default,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        metricCollector.IncProcessJobSuccessCount();
+    }
+
+    /// <summary>
+    /// Восстановить сообщение из конверта и передать его обработчику.
+    /// </summary>
+    /// <remarks>
+    /// Вызов идёт через контракт интерфейса, а не поиском метода Process рефлексией. Поиск по имени
+    /// выбирал произвольный метод у класса, обрабатывающего несколько типов сообщений, не находил явную
+    /// реализацию интерфейса (она компилируется в приватный метод) и заворачивал синхронно брошенные
+    /// исключения в TargetInvocationException, из-за чего фильтры отмены выше по стеку не срабатывали.
+    /// <para>
+    /// Обработчик не диспозится: он получен из DI, его время жизни принадлежит scope этой задачи, и scope
+    /// закроет его сам. Диспоз чужого объекта сломал бы обработчик, зарегистрированный синглтоном.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="DiscriminatorResolveException">Тип сообщения неизвестен этому сервису.</exception>
+    /// <exception cref="InboxException">Тело сообщения не восстанавливается.</exception>
+    private Task InvokeHandler(IInboxLockedJob job, CancellationToken cancellationToken)
+    {
+        var envelope = job.Envelope;
+
+        if (!discriminatorProvider.CurrentDomainInboxMessageTypes.TryGetValue(envelope.MessageType, out var messageType))
+        {
+            throw new DiscriminatorResolveException($"Can't find Type for discriminator - {envelope.MessageType}.");
+        }
+
+        var message = serializer.Deserialize(messageType, envelope.Content)
+                      ?? throw new InboxException($"Message is null after deserialization, discriminator - {envelope.MessageType}");
+
+        var handler = handlerFactory.GetMessageHandler(messageType);
+
+        return handlerFactory.GetInvoker(messageType).InvokeAsync(handler, message, cancellationToken);
+    }
+}

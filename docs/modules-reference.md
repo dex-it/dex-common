@@ -1,6 +1,6 @@
 # Полный каталог пакетов dex-common
 
-## Dex.Cap — Outbox + OnceExecutor (транзакционная надёжность)
+## Dex.Cap — Outbox + Inbox + OnceExecutor (транзакционная надёжность)
 
 | Пакет | Назначение |
 |---|---|
@@ -11,6 +11,9 @@
 | `Dex.Cap.Outbox.Neo4j` | Neo4j-провайдер для Outbox |
 | `Dex.Cap.Outbox.AspNetScheduler` | Фоновый HostedService, обрабатывающий outbox-очередь |
 | `Dex.Cap.Outbox.OnceExecutor.MassTransit` | Интеграция Outbox с MassTransit (публикация через шину) |
+| `Dex.Cap.Inbox` | Реализация паттерна Inbox: дедупликация входящих сообщений и фоновая обработка |
+| `Dex.Cap.Inbox.Ef` | EF Core-провайдер для Inbox (PostgreSQL) |
+| `Dex.Cap.Inbox.AspNetScheduler` | Фоновые HostedService: обработка inbox-очереди и её чистка |
 | `Dex.Cap.OnceExecutor` | Идемпотентное выполнение операций по ключу |
 | `Dex.Cap.OnceExecutor.Ef` | EF Core-провайдер для OnceExecutor |
 | `Dex.Cap.OnceExecutor.Memory` | In-memory провайдер (для тестов) |

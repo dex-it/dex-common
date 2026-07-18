@@ -1,9 +1,11 @@
 using System;
 using System.IO;
 using Dex.Cap.Ef.Tests.Model;
+using Dex.Cap.Inbox.Ef.Extensions;
 using Dex.Cap.OnceExecutor.Ef.Extensions;
 using Dex.Cap.Outbox.Ef.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -13,6 +15,12 @@ namespace Dex.Cap.Ef.Tests;
 public class TestDbContext(string dbName) : DbContext
 {
     public static bool IsRetryStrategy { get; set; } = true;
+
+    /// <summary>
+    /// Перехватчик, подмешиваемый тестом. Нужен, чтобы воспроизводить отказы самой инфраструктуры EF
+    /// (например, потерю подтверждения уже прошедшего коммита), которые из тела операции не изобразить.
+    /// </summary>
+    public static IInterceptor? Interceptor { get; set; }
 
     private static readonly ILoggerFactory LogFactory =
         LoggerFactory.Create(builder =>
@@ -44,6 +52,11 @@ public class TestDbContext(string dbName) : DbContext
                 }
             });
 
+        if (Interceptor is not null)
+        {
+            optionsBuilder.AddInterceptors(Interceptor);
+        }
+
         optionsBuilder.UseLoggerFactory(LogFactory).EnableSensitiveDataLogging();
     }
 
@@ -57,6 +70,7 @@ public class TestDbContext(string dbName) : DbContext
 
         modelBuilder.OnceExecutorModelCreating();
         modelBuilder.OutboxModelCreating();
+        modelBuilder.InboxModelCreating();
     }
 
     // ReSharper disable once UnusedType.Local

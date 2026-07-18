@@ -9,8 +9,22 @@ A set of building blocks for reliable database-driven messaging and idempotent p
 | `Dex.Cap.Outbox.Ef` | EF Core data provider for the outbox. |
 | `Dex.Cap.Outbox.AspNetScheduler` | Hosted services that drain and clean up the outbox queue. |
 | `Dex.Cap.Outbox.OnceExecutor.MassTransit` | MassTransit integration: auto-publishing handler and idempotent consumers. |
+| `Dex.Cap.Inbox` | Transactional Inbox pattern: deduplicate incoming messages and process them in the background. |
+| `Dex.Cap.Inbox.Ef` | EF Core data provider for the inbox. |
+| `Dex.Cap.Inbox.AspNetScheduler` | Hosted services that drain and clean up the inbox queue. |
 | `Dex.Cap.OnceExecutor` / `Dex.Cap.OnceExecutor.Ef` | Idempotent (once-only) execution by idempotency key. |
 | `Dex.Cap.OnceExecutor.AspNetScheduler` | Hosted service that cleans up obsolete idempotency records. |
+
+**Outbox, Inbox or OnceExecutor?** Outbox solves the *outgoing* side: publish a message atomically with the
+database change that caused it. Inbox and OnceExecutor both solve the *incoming* side, but differently:
+
+* `Dex.Cap.OnceExecutor` runs your logic **inline, inside the consumer**, and remembers the idempotency key so a
+  redelivery short-circuits. The message body is never stored. Use it when the handler is fast and you are happy to
+  hold the message on the broker while it runs.
+* `Dex.Cap.Inbox` **stores the message, lets you acknowledge the source immediately, and processes it later** in a
+  background worker with its own retries, dead-lettering and observability. Use it when processing is slow, when the
+  source must not wait (an HTTP request), or when you want the retry policy to be yours rather than the broker's.
+  Deduplication is built in and is not optional.
 
 ---
 
@@ -196,6 +210,284 @@ Base classes for writing custom outbox handlers that need:
 Base consumers for messages coming directly from MassTransit (not via the outbox). Handle errors, write logs, support `Defer` (throw `DeferConsumerException` → republish into `delay_exchange` after the specified interval).
 
 `IdempotentConsumer` adds idempotency on top of the base consumer.
+
+---
+
+# Dex.Cap.Inbox
+
+Implementation of the Transactional Inbox pattern: an incoming message is stored first, acknowledged to its source
+immediately, and processed later by a background worker inside a single database transaction.
+
+* Deduplicates by `(MessageId, ConsumerId)` — a redelivery never produces a second row.
+* Decouples the source from processing: the broker (or the HTTP caller) is released as soon as the row is committed.
+* Processes the handler and the status change **in one transaction**: the business effect and "message handled"
+  either both commit or both roll back.
+* Retries with a configurable strategy, then dead-letters — a failing message never disappears silently and never
+  loops forever.
+* Scales horizontally: workers claim messages with `FOR UPDATE SKIP LOCKED` plus a lease, so concurrent instances
+  never take the same message.
+* Transport-agnostic: the core knows nothing about MassTransit, HTTP or gRPC.
+
+### What it does not give you
+
+The transaction covers your database only. **Any external call made by the handler (HTTP, broker, push service)
+will be repeated if the message is retried**, so those calls must be idempotent on their own — via a provider-side
+idempotency key or a lookup before the call. The inbox gives you *effectively once*, not *exactly once*.
+
+### Registration
+
+```csharp
+// Define an inbox message
+public class OrderCreatedInboxCommand : IInboxMessage
+{
+    // Discriminator. It is written to the database and read back after a restart or a deploy,
+    // so it must never change for an existing type.
+    public static string InboxTypeId => "3961131e-3961-4c38-8a30-09b91cb56d60";
+
+    public string Args { get; init; } = "";
+}
+
+// A handler is mandatory: only messages with a registered handler are fetched by this service.
+// It runs inside the processing transaction, so it must NOT commit by itself.
+public class OrderCreatedInboxCommandHandler(AppDbContext db) : IInboxMessageHandler<OrderCreatedInboxCommand>
+{
+    public async Task Process(OrderCreatedInboxCommand message, CancellationToken cancellationToken)
+    {
+        await db.Orders.AddAsync(new Order { Args = message.Args }, cancellationToken);
+        // no SaveChanges here — the inbox commits the effect together with the message status
+    }
+}
+```
+
+```csharp
+// ConfigureServices
+using Dex.Cap.Inbox.Ef.Extensions;
+
+services.AddInbox<AppDbContext>();                        // core services + EF data provider
+services.AddDefaultInboxScheduler<AppDbContext>(          // background processing + cleanup
+    periodSeconds: 30,                                     // pause only when the queue is drained
+    cleanupDays: 30);                                      // retention == deduplication window
+
+services.AddScoped<IInboxMessageHandler<OrderCreatedInboxCommand>, OrderCreatedInboxCommandHandler>();
+```
+
+```csharp
+// OnModelCreating
+modelBuilder.InboxModelCreating();
+
+// Remark: when using optimistic concurrency in PostgreSQL — exclude InboxEnvelope:
+modelBuilder.UseXminAsConcurrencyToken(ignoreTypes: typeof(InboxEnvelope));
+```
+
+### Usage: message bus
+
+```csharp
+public class OrderCreatedConsumer(IInboxService inbox) : IConsumer<OrderCreatedEvent>
+{
+    // Stable per consumer: it is part of the deduplication key.
+    private const string ConsumerId = nameof(OrderCreatedConsumer);
+
+    public async Task Consume(ConsumeContext<OrderCreatedEvent> context)
+    {
+        var messageId = context.MessageId ?? throw new InvalidOperationException("MessageId is required for deduplication");
+
+        // A duplicate is a normal outcome of at-least-once delivery, not an error:
+        // returning normally acknowledges the message instead of sending it to the error queue.
+        await inbox.EnqueueAsync(
+            new OrderCreatedInboxCommand { Args = context.Message.Args },
+            new InboxMessageIdentity(messageId.ToString("N"), ConsumerId),
+            cancellationToken: context.CancellationToken);
+    }
+}
+```
+
+### Usage: HTTP
+
+```csharp
+[HttpPost("orders")]
+public async Task<IActionResult> CreateOrder(
+    [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+    CreateOrderRequest request,
+    CancellationToken cancellationToken)
+{
+    var status = await inbox.EnqueueAsync(
+        new OrderCreatedInboxCommand { Args = request.Args },
+        new InboxMessageIdentity(idempotencyKey, "POST /orders"),
+        cancellationToken: cancellationToken);
+
+    // Both outcomes are success for the caller: the message is accepted exactly once either way.
+    return status == InboxEnqueueStatus.Accepted ? Accepted() : Ok();
+}
+```
+
+### `IInboxService.EnqueueAsync` parameters
+
+| Parameter | Meaning |
+|---|---|
+| `identity` | `(MessageId, ConsumerId)` — the deduplication key. `MessageId` must be stable across redeliveries; `ConsumerId` must be stable across restarts and identical on every instance. |
+| `lockTimeout` | Lease duration, default 30s, allowed range 10s to 1 day. **Must exceed the time needed to drain the whole claimed batch**, not just one message: the lease of every message in a batch starts ticking at claim time. If it runs out mid-flight the message is returned to the queue without spending an attempt, and `LeaseLostCount` goes up. The upper bound is technical: the cancellation timer does not accept intervals longer than about 24.8 days. |
+
+Unlike `IOutboxService.EnqueueAsync`, this method **persists immediately in its own transaction**: the point of the
+inbox is to store the message *before* the source is acknowledged, and there is no business work to be atomic with.
+For the same reason enqueuing inside a transaction of your own is rejected with an `InboxException`: an enclosing
+`DbContext` transaction or an ambient `TransactionScope` would roll the message back while the source has already
+been acknowledged.
+
+### Inbox options
+
+`InboxOptions` (validated on host start):
+
+| Option | Default | Meaning |
+|---|---|---|
+| `Retries` | 3 | Attempts before the message is dead-lettered. |
+| `MessagesToProcess` | 25 | Batch size claimed per cycle. Together with the lease it sets the per-message time budget: `(lockTimeout - 5s) * ConcurrencyLimit / MessagesToProcess`, one second on the defaults. A bigger batch does not drain faster: whatever cannot start before the lease runs out simply returns to the queue. |
+| `ConcurrencyLimit` | 1 | Degree of parallelism; must not exceed `MessagesToProcess`. |
+| `GetFreeMessagesTimeout` | 20s | Timeout of the claim query. Whole seconds, at least `1s`: the command timeout has second granularity, so a smaller value would truncate to zero and silently leave the timeout unset. |
+
+`InboxHandlerOptions` (scheduler): `Period` 30s, `CleanupInterval` 1h, `CleanupOlderThan` 30d,
+`HandlerInitDelay` 5–15s, `CleanerInitDelay` 20–40s.
+
+`Period` is a pause **between drained cycles**, not a throughput limit: while the worker keeps claiming full
+batches it continues without pausing.
+
+### Message states
+
+```
+                    ┌──────────────────────────── retry (attempts left) ────────────────────────────┐
+                    │                                                                               │
+   Enqueue ──▶ [New] ──▶ claim (FOR UPDATE SKIP LOCKED + lease) ──▶ handler ──┬── success ──▶ [Succeeded] ──▶ cleanup after CleanupOlderThan
+                    │                                                          │
+                    └──────────────────────────────────────────────────────────┴── failure ──▶ [Failed] ──▶ … ──▶ [DeadLettered] (terminal, kept for review)
+```
+
+There is no separate "in progress" state on purpose: the in-flight marker is the lease
+(`LockId` + `LockExpirationTimeUtc`). A crashed worker lets the lease expire and the message returns to the queue,
+whereas a status flag would stay stuck forever.
+
+### Retention is the deduplication window
+
+`CleanupOlderThan` deletes processed messages, and the row *is* the deduplication key. Once it is gone, a
+redelivery of that message is accepted as new. Keep the retention comfortably above the maximum redelivery horizon
+of the source. Cleanup only removes messages of the discriminators **this** service handles, so a co-tenant sharing the table
+keeps its own deduplication window regardless of your `CleanupOlderThan`.
+
+`DeadLettered` messages are never deleted by cleanup — they exist to be investigated, and
+`DeadLetteredJobCount` reports how many of this service's own messages are waiting.
+
+Once you have fixed the cause, return the message to processing through `IInboxDeadLetterService`, not by editing
+the table by hand. Returning a message takes a coordinated reset of several columns at once — status, attempt count,
+lease and the fetch index — and getting one of them wrong buries the message again on the next cycle, so the reset
+is encapsulated:
+
+```csharp
+// one message, by its (MessageId, ConsumerId):
+await deadLetterService.RequeueAsync(new InboxMessageIdentity("message-id", "consumer-id"));
+
+// or every dead lettered message of this service at once, after fixing a systemic cause:
+var returned = await deadLetterService.RequeueAllAsync();
+```
+
+Both operations touch only this service's own discriminators and only rows that are actually dead lettered, so a
+shared table is safe. `DeadLetteredJobCount` drops on its own as the messages return to processing.
+
+### Retry strategy
+
+```csharp
+services.AddInbox<AppDbContext>(
+    options => options.Retries = 6,
+    (_, configurator) =>
+        configurator.UseExponentialStrategy(baseDelay: TimeSpan.FromMinutes(1), maxDelay: TimeSpan.FromMinutes(30)));
+```
+
+The delay is measured **from the moment the attempt failed**, so a backlog does not eat it.
+
+Default is no extra delay — the next cycle picks the message up. `UseIncrementalStrategy(interval)` and
+`UseExponentialStrategy(baseDelay, maxDelay)` are also available.
+
+Two things to size correctly, or the strategy is decorative:
+
+* A delay below `Period` (default 30s) is not observable: the next attempt happens on the next cycle anyway.
+* The exponent is bounded by `Retries`. The attempt that exhausts the limit dead-letters the message without
+  computing a delay, so with `Retries = N` the multiplier never exceeds `2^(N-2)`. With the default `Retries = 3`
+  and a `maxDelay` above `2*baseDelay` you only ever get `baseDelay` and `2*baseDelay`, and the cap is unreachable.
+  A smaller `maxDelay` is allowed, and then the cap bites earlier.
+
+`UseExponentialStrategy` shortens each delay by a random amount of up to 10%. A mass failure (a downstream service
+is out) fails a whole batch at once, so without jitter every message would become ready again at the same instant
+and hand the recovering service the sharpest possible ramp. The jitter only ever shortens, so `maxDelay` stays a
+hard ceiling and the spread survives at the cap, where messages pile up the most.
+
+### Health check
+
+`AddInboxScheduler` registers the `inbox-scheduler` health check (tag `inbox-scheduler`) itself, so the registration
+order does not matter. It reports `Degraded` when the last processing cycle is older than `2 × Period`.
+
+Note that ASP.NET Core maps `Degraded` to HTTP 200 by default, so a Kubernetes probe treats a stalled inbox as
+healthy. If you want a stalled worker to fail the probe, map it explicitly:
+
+```csharp
+app.MapHealthChecks("/health/inbox", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("inbox-scheduler"),
+    ResultStatusCodes = { [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable },
+});
+```
+
+### Metrics
+
+Meter `Inbox`: `ProcessCount`, `EmptyProcessCount`, `ProcessJobCount`, `ProcessJobSuccessCount`,
+`ProcessJobFailedCount`, `DeadLetteredCount`, `DuplicateCount`, `ExpiredBeforeStartCount`, `LeaseLostCount`,
+`ProcessDuration`, plus two observable up/down counters: `FreeJobCount` (depth of what *this* service can handle) and
+`DeadLetteredJobCount` (buried messages **this** service is expected to review, never removed by cleanup).
+
+`ProcessJobFailedCount` and `DeadLetteredCount` count what was actually written, not what was intended: when the
+lease is lost the outcome is not written at all, and counting the intent would page someone about a dead-lettered
+message that does not exist.
+
+A steadily non-zero `ExpiredBeforeStartCount` or `LeaseLostCount` means the lease dies before the claimed batch is
+drained: raise `lockTimeout`, lower `MessagesToProcess`, or raise `ConcurrencyLimit`. The first counts leases that
+died while the message waited its turn, the second leases lost during processing itself. Neither spends an attempt:
+a lease running out is a sizing mistake, not a message failure, so the message returns to the queue untouched.
+
+### The message body is stored, so its schema is a contract
+
+The body is serialized on enqueue and deserialized **after a restart and after a deploy**, exactly like the
+discriminator. `System.Text.Json` with default options is used, so the schema must stay backward compatible with
+whatever is still sitting in the table (up to `CleanupOlderThan`):
+
+* **Enums are written as numbers.** Reordering or removing enum members silently changes the meaning of stored
+  messages. Append new members at the end, or serialize enums as strings via a custom `IInboxSerializer`.
+* **Renaming a property, or changing its type**, makes stored bodies unreadable: deserialization throws, the message
+  is retried and then dead-lettered. Add new properties instead, and keep the old ones readable.
+* **Adding a property is safe**: missing members deserialize to their default value.
+* Property matching is case-sensitive by default.
+
+Replace `IInboxSerializer` if you need different options; it is resolved from DI, so registering your own after
+`AddInbox` wins.
+
+### The body size is bounded by the transport, not the library
+
+`Content` is stored as PostgreSQL `text`, and the library sets no upper bound on its length, unlike `MessageId` and
+`ConsumerId`, which are capped because they sit in the unique index. The inbox stores what it is handed. If the
+source is untrusted, bound the body size where the message enters the process: on the broker (RabbitMQ
+`MaxMessageSize`, Kafka `message.max.bytes`) or on the HTTP host (Kestrel `MaxRequestBodySize`). Deduplication does
+not help against this, because the `MessageId` is the sender's to choose, so a hostile sender can keep producing
+large bodies under fresh keys that live until `CleanupOlderThan`.
+
+### Limitations
+
+* PostgreSQL only (`Dex.Cap.Inbox.Ef` uses `FOR UPDATE SKIP LOCKED` and `ON CONFLICT`).
+* Message types are discovered by reflection over loaded assemblies, so the assembly declaring `IInboxMessage`
+  implementations must be loaded. In practice registering the handler loads it. The registry is built during host
+  start (`AddInbox` registers a warm-up hosted service), so a duplicate or missing discriminator fails the host
+  start rather than surfacing later inside the background worker. The discriminator itself is unrestricted: it
+  reaches the claim SQL as a parameter, so a MassTransit `urn:message:...` or a nested type name is fine.
+* That assembly must be loaded **once**. If the host puts it into several load contexts (a test runner, coverage
+  instrumentation, a plugin host), the same message type exists twice as two distinct CLR types, and one
+  discriminator maps to both. The inbox fails the start with `AmbiguousMessageTypeException` naming the load
+  contexts instead of picking one: handlers are registered for a single type identity, so a guess would silently
+  leave those messages unprocessed.
+* Ordering between messages is not guaranteed; design handlers to be order-independent.
 
 ---
 

@@ -5,8 +5,8 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <Nullable>enable</Nullable>
         <PackageTags>outbox business-transaction consistency</PackageTags>
-        <InformationalVersion>8.3</InformationalVersion>
-        <PackageVersion>8.3.1</PackageVersion>
+        <InformationalVersion>8.4</InformationalVersion>
+        <PackageVersion>8.4.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>

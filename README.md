@@ -10,6 +10,7 @@
 
 ### Транзакционная надёжность — `Dex.Cap`
 - **Outbox** — транзакционная публикация сообщений (EF Core, Neo4j; scheduler; MassTransit-интеграция)
+- **Inbox** — приём входящих сообщений с дедупликацией и фоновой обработкой (EF Core; scheduler; транспорт-агностичный)
 - **OnceExecutor** — идемпотентное выполнение операций по ключу (EF Core, Memory, ClickHouse, Neo4j)
 
 См. [`src/Dex.Cap/README.md`](src/Dex.Cap/README.md).

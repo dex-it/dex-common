@@ -1,0 +1,209 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Dex.Cap.Inbox.Interfaces;
+using Dex.Cap.Inbox.Jobs;
+using Dex.Cap.Inbox.Models;
+using Dex.Cap.Inbox.Options;
+using Microsoft.Extensions.Options;
+
+namespace Dex.Cap.Inbox;
+
+/// <summary>
+/// Storage-agnostic политика завершения задач инбокса.
+/// </summary>
+/// <remarks>
+/// Здесь живёт решение «повторить или похоронить», а весь ввод-вывод сведён к
+/// <see cref="WriteOutcomeOrThrowAsync"/> и <see cref="TryWriteOutcomeAsync"/>, которые реализует конкретный
+/// провайдер хранилища.
+/// </remarks>
+internal abstract class BaseInboxDataProvider : IInboxDataProvider
+{
+    private readonly IInboxRetryStrategy _retryStrategy;
+
+    protected InboxOptions Options { get; }
+
+    protected IInboxMetricCollector MetricCollector { get; }
+
+    protected BaseInboxDataProvider(
+        IInboxRetryStrategy retryStrategy,
+        IOptions<InboxOptions> options,
+        IInboxMetricCollector metricCollector)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
+        MetricCollector = metricCollector ?? throw new ArgumentNullException(nameof(metricCollector));
+        Options = options.Value ?? throw new ArgumentNullException(nameof(options));
+    }
+
+    public abstract Task<InboxEnqueueStatus> Add(InboxEnvelope inboxEnvelope, CancellationToken cancellationToken);
+
+    public abstract Task<InboxJobBatch> GetWaitingJobs(CancellationToken cancellationToken);
+
+    public abstract int GetFreeMessagesCount();
+
+    public abstract int GetDeadLetteredMessagesCount();
+
+    /// <summary>
+    /// Вернуть в обработку одно похороненное сообщение.
+    /// </summary>
+    /// <remarks>
+    /// Возврат обязан согласованно сбросить состояние отказа: статус в New, число попыток в ноль, снять
+    /// аренду и заново открыть StartAtUtc вместе с ScheduledStartIndexing. Иначе выборка либо не увидит
+    /// строку (ScheduledStartIndexing остался null), либо первый же отказ снова похоронит её (Retries на
+    /// пределе). Затрагиваются только свои дискриминаторы и только строки в статусе DeadLettered.
+    /// </remarks>
+    /// <returns>Число возвращённых строк: ноль или один.</returns>
+    public abstract Task<int> RequeueDeadLetteredAsync(InboxMessageIdentity identity, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Вернуть в обработку все похороненные сообщения этого сервиса.
+    /// </summary>
+    /// <remarks>Сбрасывает состояние отказа так же, как <see cref="RequeueDeadLetteredAsync"/>, но для всех своих строк.</remarks>
+    /// <returns>Число возвращённых строк.</returns>
+    public abstract Task<int> RequeueAllDeadLetteredAsync(CancellationToken cancellationToken);
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Аренда не требуется: неудача фиксируется после отката транзакции обработчика, ронять нечего. Если
+    /// аренда уже у другого обработчика, запись не состоится и он отработает сообщение сам.
+    /// <para>
+    /// Метрики считают фактическую запись, а не намерение. Иначе потерянная аренда давала бы счётчик
+    /// захоронений, которому в БД не соответствует ни одна строка: дежурного разбудил бы алерт на инцидент,
+    /// которого нет, а сообщение в это время спокойно обрабатывал бы новый владелец аренды.
+    /// </para>
+    /// </remarks>
+    public virtual async Task JobFail(
+        IInboxLockedJob inboxJob,
+        string? errorMessage = null,
+        Exception? exception = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(inboxJob);
+
+        var envelope = inboxJob.Envelope;
+        envelope.Updated = DateTime.UtcNow;
+        envelope.Retries++;
+        envelope.ErrorMessage = errorMessage;
+        envelope.Error = exception?.ToString();
+
+        var deadLettered = envelope.Retries >= Options.Retries;
+
+        if (deadLettered)
+        {
+            DeadLetter(envelope);
+        }
+        else
+        {
+            ScheduleRetry(envelope);
+        }
+
+        var outcomeWritten = await TryWriteOutcomeAsync(inboxJob, cancellationToken).ConfigureAwait(false);
+
+        if (!outcomeWritten)
+        {
+            return;
+        }
+
+        MetricCollector.IncProcessJobFailedCount();
+
+        if (deadLettered)
+        {
+            MetricCollector.IncDeadLetteredCount();
+        }
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Аренда требуется: вызов идёт внутри транзакции обработчика, и если аренда потеряна, единственный
+    /// способ не применить эффект дважды это откатить транзакцию исключением.
+    /// <para>
+    /// Сброс ScheduledStartIndexing выводит сообщение из выборки и из частичного индекса: строка остаётся
+    /// только как ключ дедупликации.
+    /// </para>
+    /// <para>
+    /// Успех здесь НЕ считается, в отличие от <see cref="JobFail"/>, и это не забытая симметрия. Тот же
+    /// принцип «считать факт, а не намерение» требует тут другого места: неудача пишется своей транзакцией,
+    /// поэтому вернувшийся <see cref="TryWriteOutcomeAsync"/> уже означает факт. Успех же пишется в ЧУЖУЮ
+    /// транзакцию (обработчика), и на момент возврата отсюда она ещё не закоммичена: её может откатить и
+    /// сам коммит, и переигровка всего блока стратегией повторов EF, которая на транзиентном отказе
+    /// выполняет операцию заново. Счётчик здесь давал бы плюс за каждую попытку при одной строке в БД.
+    /// Факт известен только владельцу транзакции, поэтому успех считает он: см.
+    /// <c>InboxJobHandlerEf.ProcessJobCore</c>.
+    /// </para>
+    /// </remarks>
+    public virtual async Task JobSucceed(IInboxLockedJob inboxJob, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(inboxJob);
+
+        var envelope = inboxJob.Envelope;
+        envelope.Status = InboxMessageStatus.Succeeded;
+        envelope.Updated = DateTime.UtcNow;
+        envelope.ErrorMessage = null;
+        envelope.Error = null;
+        envelope.ScheduledStartIndexing = null;
+
+        await WriteOutcomeOrThrowAsync(inboxJob, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Попытки исчерпаны: сообщение выводится из обработки до ручного разбора.
+    /// </summary>
+    /// <remarks>
+    /// Статус проставляется явно, а не подразумевается тем, что сообщение просто перестаёт попадать в
+    /// выборку: молчаливое исчезновение неотличимо от успеха при разборе инцидента.
+    /// </remarks>
+    private static void DeadLetter(InboxEnvelope envelope)
+    {
+        envelope.Status = InboxMessageStatus.DeadLettered;
+        envelope.ScheduledStartIndexing = null;
+    }
+
+    /// <summary>
+    /// Запланировать следующую попытку.
+    /// </summary>
+    /// <remarks>
+    /// Задержка отсчитывается от момента отказа, а не от прежнего StartAtUtc. Отсчёт от расписания даёт
+    /// задержку только пока обработка успевает за расписанием: стоит ей отстать (бэклог, долгий
+    /// обработчик), и StartAtUtc + delay оказывается в прошлом, то есть повтор идёт мгновенно и все
+    /// попытки сгорают за миллисекунды. Backoff нужен ровно в этом случае, поэтому он не может от него
+    /// зависеть.
+    /// </remarks>
+    private void ScheduleRetry(InboxEnvelope envelope)
+    {
+        envelope.Status = InboxMessageStatus.Failed;
+
+        var nextStartDate = _retryStrategy.CalculateNextStartDate(
+            new InboxRetryStrategyOptions(DateTime.UtcNow, envelope.Retries));
+
+        envelope.StartAtUtc = nextStartDate;
+        envelope.ScheduledStartIndexing = nextStartDate;
+    }
+
+    /// <summary>
+    /// Зафиксировать исход обработки, потребовав, чтобы аренда всё ещё принадлежала этой задаче.
+    /// </summary>
+    /// <remarks>
+    /// Для пути успеха, где вызов идёт внутри транзакции обработчика. Потеря аренды здесь не исход, а
+    /// ошибка: вернуться нормально означало бы закоммитить эффект обработчика со старым статусом
+    /// сообщения, и следующий владелец аренды применил бы эффект второй раз. Ронять транзакцию
+    /// исключением это единственный способ этого не допустить, поэтому метод и не возвращает признак.
+    /// </remarks>
+    /// <param name="lockedJob">Задача с захваченной арендой.</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <exception cref="Exceptions.InboxLeaseLostException">Аренда потеряна: реализация обязана бросить.</exception>
+    protected abstract Task WriteOutcomeOrThrowAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Зафиксировать исход обработки, если аренда всё ещё принадлежит этой задаче.
+    /// </summary>
+    /// <remarks>
+    /// Для пути неудачи, где транзакция обработчика уже откачена и ронять нечего. Потеря аренды здесь
+    /// штатный исход: строку ведёт другой обработчик, он её и закроет.
+    /// </remarks>
+    /// <param name="lockedJob">Задача с захваченной арендой.</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns><see langword="true"/>, если исход записан; <see langword="false"/>, если аренда потеряна.</returns>
+    protected abstract Task<bool> TryWriteOutcomeAsync(IInboxLockedJob lockedJob, CancellationToken cancellationToken);
+}
