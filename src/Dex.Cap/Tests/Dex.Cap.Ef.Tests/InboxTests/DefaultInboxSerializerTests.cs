@@ -13,6 +13,7 @@ public class DefaultInboxSerializerTests
 {
     private enum Sample
     {
+        // ReSharper disable once UnusedMember.Local
         First,
         Second,
         Third

@@ -1,6 +1,5 @@
 using System;
 using System.Data.Common;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Handlers;
@@ -135,7 +134,7 @@ public class InboxMetricAccuracyTests : BaseTest
 
         await Task.Delay(20);
 
-        Assert.CatchAsync((Func<Task>)(async () =>
+        NUnit.Framework.Assert.CatchAsync((Func<Task>)(async () =>
             await sp.GetRequiredService<IInboxHandler>().ProcessAsync(CancellationToken.None)));
 
         Assert.AreEqual(before, statistic.GetLastStamp(),

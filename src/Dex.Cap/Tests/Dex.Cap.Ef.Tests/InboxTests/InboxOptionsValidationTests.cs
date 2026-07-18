@@ -134,7 +134,7 @@ public class InboxOptionsValidationTests
         }
 
         // Прежде всего: значение действительно нерабочее, а не просто «некрасивое».
-        Assert.Throws<ArgumentOutOfRangeException>((Action)(() => Task.Delay(beyondTheLimit, CancellationToken.None)));
+        NUnit.Framework.Assert.Throws<ArgumentOutOfRangeException>((Action)(() => Task.Delay(beyondTheLimit, CancellationToken.None)));
 
         var result = new InboxHandlerOptionsValidator().Validate(null, options);
 

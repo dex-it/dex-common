@@ -54,7 +54,7 @@ public class InboxEnqueueRetryContractTests : BaseTest
         Assert.IsTrue(strategy.RetriesOnFailure, "the test is meaningless unless the retrying strategy is on");
 
         var attemptsUnderStrategy = 0;
-        await strategy.ExecuteAsync(async ct =>
+        await strategy.ExecuteAsync(async _ =>
         {
             attemptsUnderStrategy++;
 
@@ -70,7 +70,7 @@ public class InboxEnqueueRetryContractTests : BaseTest
         Assert.AreEqual(2, attemptsUnderStrategy, "the strategy must treat this exception as transient");
 
         // Собственно проверка: тот же транзиентный отказ на вставке приёма.
-        Assert.CatchAsync<TimeoutException>((Func<Task>)(async () =>
+        NUnit.Framework.Assert.CatchAsync<TimeoutException>((Func<Task>)(async () =>
             await sp.GetRequiredService<IInboxService>()
                 .EnqueueAsync(new TestInboxCommand { Args = "x" }, new InboxMessageIdentity("m-1", "c-1"))));
 

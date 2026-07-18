@@ -19,8 +19,8 @@ public class InboxMessageIdentityTests : BaseTest
     public void Constructor_RejectsEmptyHalves(
         [Values(null, "", " ")] string? messageId)
     {
-        Assert.Catch<ArgumentException>((Action)(() => _ = new InboxMessageIdentity(messageId!, "consumer")));
-        Assert.Catch<ArgumentException>((Action)(() => _ = new InboxMessageIdentity("message", messageId!)));
+        NUnit.Framework.Assert.Catch<ArgumentException>((Action)(() => _ = new InboxMessageIdentity(messageId!, "consumer")));
+        NUnit.Framework.Assert.Catch<ArgumentException>((Action)(() => _ = new InboxMessageIdentity("message", messageId!)));
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public class InboxMessageIdentityTests : BaseTest
             .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
             .BuildServiceProvider();
 
-        var exception = Assert.CatchAsync<ArgumentException>((Func<Task>)(async () =>
+        var exception = NUnit.Framework.Assert.CatchAsync<ArgumentException>((Func<Task>)(async () =>
             await sp.GetRequiredService<IInboxService>()
                 .EnqueueAsync(new TestInboxCommand { Args = "x" }, default)));
 
@@ -59,7 +59,7 @@ public class InboxMessageIdentityTests : BaseTest
             .AddScoped<IInboxMessageHandler<TestInboxCommand>, TestInboxCommandHandler>()
             .BuildServiceProvider();
 
-        var exception = Assert.CatchAsync<ArgumentException>((Func<Task>)(async () =>
+        var exception = NUnit.Framework.Assert.CatchAsync<ArgumentException>((Func<Task>)(async () =>
             await sp.GetRequiredService<IInboxDeadLetterService>().RequeueAsync(default)));
 
         Assert.AreEqual("identity", exception!.ParamName);

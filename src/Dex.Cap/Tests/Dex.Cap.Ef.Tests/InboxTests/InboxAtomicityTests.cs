@@ -64,7 +64,7 @@ public class InboxAtomicityTests : BaseTest
         Assert.AreEqual(1, envelope.Retries);
         Assert.IsNotNull(envelope.ScheduledStartIndexing);
         Assert.IsNull(envelope.LockId);
-        Assert.IsTrue(envelope.Error!.Contains("Handler failed after the business effect", System.StringComparison.Ordinal));
+        Assert.IsTrue(envelope.Error!.Contains("Handler failed after the business effect", StringComparison.Ordinal));
     }
 
     [Test]

@@ -48,10 +48,10 @@ public class InboxProcessingInterruptionTests : BaseTest
         await handlerEntered.Task;
         await hostStopping.CancelAsync();
 
-        Assert.CatchAsync<OperationCanceledException>((Func<Task>)(async () => await processing),
+        NUnit.Framework.Assert.CatchAsync<OperationCanceledException>((Func<Task>)(async () => await processing),
             "host stop during processing must propagate cancellation, not swallow it");
 
-        var envelope = await GetDb(sp).Set<InboxEnvelope>().SingleAsync();
+        var envelope = await GetDb(sp).Set<InboxEnvelope>().SingleAsync(CancellationToken.None);
 
         // Транзакция обработчика откатилась, исход не записан: остановка хоста не отказ.
         Assert.AreEqual(InboxMessageStatus.New, envelope.Status, "host stop must not change the message status");
