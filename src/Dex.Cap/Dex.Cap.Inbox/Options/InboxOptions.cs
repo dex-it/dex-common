@@ -8,6 +8,11 @@ namespace Dex.Cap.Inbox.Options;
 public class InboxOptions
 {
     /// <summary>
+    /// Дефолт для <see cref="MaxContentLength"/>: 1 МиБ.
+    /// </summary>
+    public const int DefaultMaxContentLength = 1024 * 1024;
+
+    /// <summary>
     /// Количество попыток обработки сообщения. По исчерпании сообщение переводится в DeadLettered.
     /// Default: 3
     /// </summary>
@@ -44,4 +49,23 @@ public class InboxOptions
     /// Валидатор отвергает такое значение на старте.
     /// </remarks>
     public TimeSpan GetFreeMessagesTimeout { get; set; } = TimeSpan.FromSeconds(20);
+
+    /// <summary>
+    /// Предельный размер тела сообщения (<see cref="Models.InboxEnvelope.Content"/>) в байтах (UTF-8),
+    /// проверяемый на приёме. Меряется как HTTP-заголовок Content-Length: длина сериализованного тела в
+    /// байтах, а не число символов.
+    /// Default: 1 МиБ (1048576).
+    /// </summary>
+    /// <remarks>
+    /// Предел задан опцией, а не жёстким <c>HasMaxLength</c> на колонке: так существующим таблицам не нужна
+    /// миграция, а потребитель сохраняет контроль. Превышение бросает
+    /// <see cref="Exceptions.InboxContentTooLargeException"/> на приёме, где известен тип сообщения, а не
+    /// глубоко в БД. Для источников с легитимно большими телами предел поднимают; практический потолок -
+    /// колонка <c>text</c> в PostgreSQL, порядка 1 ГБ.
+    /// <para>
+    /// Для инбокса это важнее, чем для аутбокса: тело приходит от внешнего источника и лежит весь ретеншен,
+    /// поэтому один аномально большой payload раздувает таблицу и бэкап и замедляет захват.
+    /// </para>
+    /// </remarks>
+    public int MaxContentLength { get; set; } = DefaultMaxContentLength;
 }

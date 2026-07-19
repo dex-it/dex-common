@@ -45,6 +45,10 @@ public interface IInboxService
     /// <exception cref="Exceptions.DiscriminatorResolveException">
     /// Тип сообщения не найден среди загруженных типов сервиса. Наследует <see cref="Exceptions.InboxException"/>.
     /// </exception>
+    /// <exception cref="Exceptions.InboxContentTooLargeException">
+    /// Размер сериализованного тела превышает <see cref="Options.InboxOptions.MaxContentLength"/>.
+    /// Наследует <see cref="Exceptions.InboxException"/>.
+    /// </exception>
     Task<InboxEnqueueStatus> EnqueueAsync<T>(
         T message,
         InboxMessageIdentity identity,
