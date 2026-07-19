@@ -5,6 +5,7 @@ using Dex.Cap.Outbox.AspNetScheduler.BackgroundServices;
 using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
 using Dex.Cap.Outbox.AspNetScheduler.Options;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Options;
 using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,13 @@ public static class MicrosoftDependencyInjectionExtensions
         where TDbContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        // Регистрируем инфраструктуру опций, чтобы IOptions<OutboxOptions> резолвился для проверки размера
+        // Content в OutboxService, а не оставался неявным требованием к вызывающему. Валидацию правил
+        // OutboxOptions здесь НЕ включаем: валидатор исторически не был подключён, и его включение отвергало бы
+        // значения, которые раньше молча толерировались (например GetFreeMessagesTimeout ниже секунды), ломая
+        // существующих потребителей. Подключение валидатора вынесено в отдельную задачу.
+        services.AddOptions<OutboxOptions>();
 
         services
             .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()

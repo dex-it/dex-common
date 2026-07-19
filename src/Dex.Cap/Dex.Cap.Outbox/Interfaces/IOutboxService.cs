@@ -13,11 +13,15 @@ public interface IOutboxService
     Guid CorrelationId { get; }
 
     /// <summary>
-    /// Perform only publish outbox message to queue.
-    /// This method don't check Transaction, only append outbox message to change context.
-    /// NOTE. LockTimeout must be greater time of process message, against it lead to cycle process.
-    /// Default value is 30sec. Minimum value 10 sec.
+    /// Поставить outbox-сообщение в очередь на публикацию.
+    /// Метод не проверяет транзакцию, только добавляет сообщение в change tracker контекста.
+    /// NOTE. LockTimeout должен превышать время обработки сообщения, иначе обработка зациклится.
+    /// Значение по умолчанию 30 секунд, минимум 10 секунд.
     /// </summary>
+    /// <exception cref="Exceptions.OutboxContentTooLargeException">
+    /// Размер сериализованного тела превышает <see cref="Options.OutboxOptions.MaxContentLength"/>.
+    /// Наследует <see cref="Exceptions.OutboxException"/>.
+    /// </exception>
     Task<Guid> EnqueueAsync<T>(
         T message,
         Guid? correlationId = null,
@@ -27,7 +31,7 @@ public interface IOutboxService
         where T : class, IOutboxMessage;
 
     /// <summary>
-    /// Check if operation with correlationId already exists.
+    /// Проверить, существует ли уже операция с указанным correlationId.
     /// </summary>
     Task<bool> IsOperationExistsAsync(
         Guid? correlationId = null,

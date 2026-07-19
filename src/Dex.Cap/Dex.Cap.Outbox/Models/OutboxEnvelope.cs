@@ -57,8 +57,14 @@ public class OutboxEnvelope
     public string MessageType { get; set; }
 
     /// <summary>
-    /// Сериализованное тело сообщения
+    /// Сериализованное тело сообщения.
     /// </summary>
+    /// <remarks>
+    /// Размер тела ограничен сверху опцией <see cref="Options.OutboxOptions.MaxContentLength"/> (по
+    /// умолчанию 1 МиБ) и проверяется на постановке в аутбокс: превышение бросает
+    /// <see cref="Exceptions.OutboxContentTooLargeException"/> ещё до записи в БД. Жёсткого
+    /// <c>HasMaxLength</c> на колонке нет намеренно, чтобы не навязывать миграцию существующим таблицам.
+    /// </remarks>
     [Required]
     public string Content { get; set; }
 

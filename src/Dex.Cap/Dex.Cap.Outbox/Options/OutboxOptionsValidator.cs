@@ -37,6 +37,11 @@ public class OutboxOptionsValidator : IValidateOptions<OutboxOptions>
             return ValidateOptionsResult.Fail("GetFreeMessagesTimeout can't be less 1 second");
         }
 
+        if (options.MaxContentLength <= 0)
+        {
+            return ValidateOptionsResult.Fail($"MaxContentLength should be a positive number, but was {options.MaxContentLength}");
+        }
+
         return ValidateOptionsResult.Success;
     }
 }
