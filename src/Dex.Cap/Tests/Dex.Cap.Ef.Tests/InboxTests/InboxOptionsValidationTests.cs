@@ -72,6 +72,35 @@ public class InboxOptionsValidationTests
         Assert.IsTrue(result.Succeeded, result.FailureMessage ?? string.Empty);
     }
 
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void Options_NonPositiveMaxContentLength_IsRejected(int maxContentLength)
+    {
+        var options = new InboxOptions { MaxContentLength = maxContentLength };
+
+        var result = new InboxOptionsValidator().Validate(null, options);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.FailureMessage!.Contains(nameof(InboxOptions.MaxContentLength), StringComparison.Ordinal), result.FailureMessage);
+    }
+
+    [Test]
+    public void Options_SmallestPositiveMaxContentLength_IsAccepted()
+    {
+        var options = new InboxOptions { MaxContentLength = 1 };
+
+        var result = new InboxOptionsValidator().Validate(null, options);
+
+        Assert.IsTrue(result.Succeeded, result.FailureMessage ?? string.Empty);
+    }
+
+    [Test]
+    public void DefaultMaxContentLength_Is1MiB()
+    {
+        Assert.AreEqual(1024 * 1024, InboxOptions.DefaultMaxContentLength);
+        Assert.AreEqual(InboxOptions.DefaultMaxContentLength, new InboxOptions().MaxContentLength);
+    }
+
     [Test]
     public void HandlerOptions_Defaults_AreValid()
     {
