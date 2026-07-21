@@ -144,6 +144,7 @@ Configurable via `IOptions<OutboxOptions>` (defaults shown):
 | `MessagesToProcess` | `100` | Batch size — how many messages are fetched and locked per cycle. Processing time of the whole batch counts from the moment of selection. |
 | `ConcurrencyLimit` | `1` | Degree of parallel processing inside a batch. Recommended: `ConcurrencyLimit ≤ MessagesToProcess`. |
 | `GetFreeMessagesTimeout` | `20s` | DB-side timeout for selecting free messages. |
+| `MaxContentLength` | `1 MiB` | Upper bound of the serialized body, in **UTF-8 bytes** (measured like an HTTP `Content-Length`, not in characters). Checked on enqueue, before the row reaches the database; exceeding it throws `OutboxContentTooLargeException`. Raise it if your messages are legitimately large: `services.Configure<OutboxOptions>(o => o.MaxContentLength = 8 * 1024 * 1024);`. Must be positive: registered through `AddOutbox`, a non-positive value fails the host start. |
 
 ### Retry strategy
 
@@ -343,6 +344,7 @@ been acknowledged.
 | `MessagesToProcess` | 25 | Batch size claimed per cycle. Together with the lease it sets the per-message time budget: `(lockTimeout - 5s) * ConcurrencyLimit / MessagesToProcess`, one second on the defaults. A bigger batch does not drain faster: whatever cannot start before the lease runs out simply returns to the queue. |
 | `ConcurrencyLimit` | 1 | Degree of parallelism; must not exceed `MessagesToProcess`. |
 | `GetFreeMessagesTimeout` | 20s | Timeout of the claim query. Whole seconds, at least `1s`: the command timeout has second granularity, so a smaller value would truncate to zero and silently leave the timeout unset. |
+| `MaxContentLength` | 1 MiB | Upper bound of the serialized body, in **UTF-8 bytes** (measured like an HTTP `Content-Length`, not in characters). Checked on receipt, before the row reaches the database; exceeding it throws `InboxContentTooLargeException`. Raise it for sources with legitimately large bodies: `services.Configure<InboxOptions>(o => o.MaxContentLength = 8 * 1024 * 1024);`. Must be positive: registered through `AddInbox`, a non-positive value fails the host start. |
 
 `InboxHandlerOptions` (scheduler): `Period` 30s, `CleanupInterval` 1h, `CleanupOlderThan` 30d,
 `HandlerInitDelay` 5–15s, `CleanerInitDelay` 20–40s.
@@ -465,14 +467,26 @@ whatever is still sitting in the table (up to `CleanupOlderThan`):
 Replace `IInboxSerializer` if you need different options; it is resolved from DI, so registering your own after
 `AddInbox` wins.
 
-### The body size is bounded by the transport, not the library
+### The body size is bounded by the library, and the transport is still the outer echelon
 
-`Content` is stored as PostgreSQL `text`, and the library sets no upper bound on its length, unlike `MessageId` and
-`ConsumerId`, which are capped because they sit in the unique index. The inbox stores what it is handed. If the
-source is untrusted, bound the body size where the message enters the process: on the broker (RabbitMQ
-`MaxMessageSize`, Kafka `message.max.bytes`) or on the HTTP host (Kestrel `MaxRequestBodySize`). Deduplication does
-not help against this, because the `MessageId` is the sender's to choose, so a hostile sender can keep producing
-large bodies under fresh keys that live until `CleanupOlderThan`.
+Since **8.5.0** the body has an upper bound: `MaxContentLength`, 1 MiB by default, measured in UTF-8 bytes and
+checked on receipt, before the row is written. A larger body is rejected with `InboxContentTooLargeException`
+naming the message type, the actual size and the configured limit; raise the option if such traffic is legitimate.
+The bound is an option rather than a `HasMaxLength` on the column, so existing tables need no migration: the column
+itself stays PostgreSQL `text`, whose practical ceiling is around 1 GB. `MessageId` and `ConsumerId` are capped
+separately, because they sit in the unique index.
+
+Two things the limit deliberately does not do. It runs **after** the body has been serialized, so it bounds what
+gets stored, not what gets allocated: by the time the size is measured, the transport has already deserialized the
+message and the envelope factory has serialized it back into a `string`. And it bounds a **single body**, not the
+number of messages or the total size of the table.
+
+So keep bounding the body where the message enters the process as well: on the broker (RabbitMQ `MaxMessageSize`,
+Kafka `message.max.bytes`) or on the HTTP host (Kestrel `MaxRequestBodySize`). That echelon rejects the payload
+before it is deserialized, so it is the one that protects memory. Deduplication does not help against a hostile
+sender either, because the `MessageId` is the sender's to choose, so it can keep producing bodies just under the
+limit under fresh keys that live until `CleanupOlderThan`; flood control stays the broker's or the rate limiter's
+job.
 
 ### Limitations
 
@@ -607,6 +621,13 @@ Behaviour:
 ---
 
 # Breaking changes
+
+## Message body size
+
+| Version | PR | Change |
+|---|---|---|
+| **8.5** | [#238](https://github.com/dex-it/dex-common/pull/238) | `OutboxOptions.MaxContentLength` and `InboxOptions.MaxContentLength` introduced, **1 MiB by default**. A body that used to be enqueued without complaint now throws `OutboxContentTooLargeException` / `InboxContentTooLargeException` once it exceeds the limit in UTF-8 bytes. The check lives on `IOutboxService.EnqueueAsync` / `IInboxService.EnqueueAsync` and runs before the row is written; the read, retry and requeue paths never re-measure, and writing an envelope through your own `DbContext` bypasses the check by design, so rows already stored are unaffected. No database migration: the limit is an option, not a `HasMaxLength` on the column. If your messages are legitimately larger, raise it: `services.Configure<OutboxOptions>(o => o.MaxContentLength = 8 * 1024 * 1024);`. A non-positive value fails the host start. |
+| **8.5** | [#238](https://github.com/dex-it/dex-common/pull/238) | `AddOutbox` now calls `ValidateOnStart()` on `OutboxOptions` in order to enforce the rule above. That switch applies to the **options type**, not to a single validator: every registered `IValidateOptions<OutboxOptions>` now runs during host start. The library itself registers only the body-size rule, but if you registered the public `OutboxOptionsValidator` yourself, its five long-dormant rules (`Retries`, `MessagesToProcess`, `ConcurrencyLimit`, `ConcurrencyLimit > MessagesToProcess`, `GetFreeMessagesTimeout < 1s`) will now fail the host start instead of surfacing later at the first options resolution. `AddInbox` has behaved this way since 8.4. |
 
 ## Transactions
 
