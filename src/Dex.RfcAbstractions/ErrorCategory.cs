@@ -1,12 +1,14 @@
 ﻿namespace Dex.RfcAbstractions;
 
-/// <summary>Категория проблемы. Инфраструктура (middleware) мапит её в HTTP-статус и RFC 9457 type.</summary>
+/// <summary>
+/// Категория проблемы. Инфраструктура (middleware) мапит её в HTTP-статус и RFC 9457 type.
+/// </summary>
 public enum ErrorCategory
 {
     Unknown = 0,        // -> 500
     Validation,         // -> 400 (совместимость; НЕ 422)
     BadRequest,         // -> 400
-    UserError,          // -> 400 (/problems/user-error)
+    UserError,          // -> 400
     Unauthorized,       // -> 401
     Forbidden,          // -> 403
     NotFound,           // -> 404

@@ -5,9 +5,6 @@
 /// </summary>
 public static class RfcErrorCodes
 {
-    /// <summary>Префикс RFC 9457 type. Полный type = ProblemTypePrefix + код.</summary>
-    public const string ProblemTypePrefix = "/problems/";
-
     // 4xx
     public const string BadRequest = "bad-request";
     public const string Unauthorized = "unauthorized";
@@ -67,4 +64,6 @@ public static class RfcErrorCodes
     public const string TemporaryNotAvailable = "service-unavailable-temporary";
     public const string AlreadyExist = "conflict/already-exist";
     public const string AlreadyUsed = "conflict/already-used";
+    public const string ImATeapot = "im-a-teapot";
+    public const string Unknown = "unknown";
 }

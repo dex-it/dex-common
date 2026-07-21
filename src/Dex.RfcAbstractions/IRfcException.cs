@@ -6,18 +6,28 @@
 /// </summary>
 public interface IRfcException
 {
-    /// <summary>Категория проблемы. Единственное обязательное описание природы ошибки.</summary>
+    /// <summary>
+    /// Категория проблемы. Единственное обязательное описание природы ошибки.
+    /// </summary>
     ErrorCategory Category { get; }
 
-    /// <summary>Короткий доменный код без префикса /problems/. null => middleware подставит type по Category.</summary>
+    /// <summary>
+    /// Короткий доменный код без префикса /problems/. null => middleware подставит type по Category.
+    /// </summary>
     string? ErrorCode => null;
 
-    /// <summary>Стабильный заголовок типа проблемы.</summary>
+    /// <summary>
+    /// Стабильный заголовок типа проблемы.
+    /// </summary>
     string Title { get; }
 
-    /// <summary>Описание конкретного случая. null => detail не попадёт в тело.</summary>
+    /// <summary>
+    /// Описание конкретного случая. null => detail не попадёт в тело.
+    /// </summary>
     string? Detail { get; }
 
-    /// <summary>Опциональные машиночитаемые доп-данные для extensions.</summary>
+    /// <summary>
+    /// Опциональные машиночитаемые доп-данные для extensions.
+    /// </summary>
     IReadOnlyDictionary<string, string>? Extensions => null;
 }

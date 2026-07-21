@@ -37,18 +37,22 @@ internal sealed class RfcExceptionHandleMiddleware(
             // rfc problem
             var rfcProblem = ToProblemDetails(exception);
 
-            // rfc code + type
+            // rfc code (без префикса) — префикс клеится в одной точке ниже
+            string errorCode;
             if (exception is IRfcException rfcEx)
             {
-                var (status, typeByCategory) = RfcExceptionCategoryMap.Resolve(rfcEx.Category);
+                var (status, codeByCategory) = RfcExceptionCategoryMap.Resolve(rfcEx.Category);
                 rfcProblem.Status ??= status;
-                rfcProblem.Type ??= rfcEx.ErrorCode is { } code ? RfcErrorCodes.ProblemTypePrefix + code : typeByCategory;
+                errorCode = rfcEx.ErrorCode ?? codeByCategory;
             }
             else
             {
                 rfcProblem.Status ??= config.ResolveHttpStatusCode(exception);
-                rfcProblem.Type ??= ResolveRfcTypeByHttpStatusCode(rfcProblem.Status.Value);
+                errorCode = ResolveErrorCodeByHttpStatusCode(rfcProblem.Status.Value);
             }
+
+            // rfc type — единственная точка склейки префикса
+            rfcProblem.Type ??= RfcTypeConstants.ProblemTypePrefix + errorCode;
 
             // rfc stackTrace
             if (string.IsNullOrEmpty(exception.StackTrace) is false && environment.IsProduction() is false)
@@ -84,53 +88,53 @@ internal sealed class RfcExceptionHandleMiddleware(
         }
     }
 
-    private static string ResolveRfcTypeByHttpStatusCode(int statusCode) => statusCode switch
+    private static string ResolveErrorCodeByHttpStatusCode(int statusCode) => statusCode switch
     {
         // 4xx Client Errors
-        StatusCodes.Status400BadRequest => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.BadRequest,
-        StatusCodes.Status401Unauthorized => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Unauthorized,
-        StatusCodes.Status402PaymentRequired => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.PaymentError,
-        StatusCodes.Status403Forbidden => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Forbidden,
-        StatusCodes.Status404NotFound => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NotFound,
-        StatusCodes.Status405MethodNotAllowed => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.MethodNotAllowed,
-        StatusCodes.Status406NotAcceptable => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NotAcceptable,
-        StatusCodes.Status407ProxyAuthenticationRequired => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.ProxyAuthenticationRequired,
-        StatusCodes.Status408RequestTimeout => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Timeout,
-        StatusCodes.Status409Conflict => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Conflict,
-        StatusCodes.Status410Gone => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Gone,
-        StatusCodes.Status411LengthRequired => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.LengthRequired,
-        StatusCodes.Status412PreconditionFailed => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.PreconditionFailed,
-        StatusCodes.Status413PayloadTooLarge => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.PayloadTooLarge,
-        StatusCodes.Status414UriTooLong => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.UriTooLong,
-        StatusCodes.Status415UnsupportedMediaType => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.UnsupportedMediaType,
-        StatusCodes.Status416RangeNotSatisfiable => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.RangeNotSatisfiable,
-        StatusCodes.Status417ExpectationFailed => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.ExpectationFailed,
-        StatusCodes.Status418ImATeapot => "☕🤦‍♂️",
-        StatusCodes.Status421MisdirectedRequest => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.MisdirectedRequest,
-        StatusCodes.Status422UnprocessableEntity => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.ValidationError,
-        StatusCodes.Status423Locked => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Locked,
-        StatusCodes.Status424FailedDependency => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.FailedDependency,
-        425 => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.TooEarly,
-        StatusCodes.Status426UpgradeRequired => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.UpgradeRequired,
-        StatusCodes.Status428PreconditionRequired => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.PreconditionRequired,
-        StatusCodes.Status429TooManyRequests => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.TooManyRequests,
-        StatusCodes.Status431RequestHeaderFieldsTooLarge => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.RequestHeaderTooLarge,
-        StatusCodes.Status451UnavailableForLegalReasons => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.UnavailableForLegalReasons,
+        StatusCodes.Status400BadRequest => RfcErrorCodes.BadRequest,
+        StatusCodes.Status401Unauthorized => RfcErrorCodes.Unauthorized,
+        StatusCodes.Status402PaymentRequired => RfcErrorCodes.PaymentError,
+        StatusCodes.Status403Forbidden => RfcErrorCodes.Forbidden,
+        StatusCodes.Status404NotFound => RfcErrorCodes.NotFound,
+        StatusCodes.Status405MethodNotAllowed => RfcErrorCodes.MethodNotAllowed,
+        StatusCodes.Status406NotAcceptable => RfcErrorCodes.NotAcceptable,
+        StatusCodes.Status407ProxyAuthenticationRequired => RfcErrorCodes.ProxyAuthenticationRequired,
+        StatusCodes.Status408RequestTimeout => RfcErrorCodes.Timeout,
+        StatusCodes.Status409Conflict => RfcErrorCodes.Conflict,
+        StatusCodes.Status410Gone => RfcErrorCodes.Gone,
+        StatusCodes.Status411LengthRequired => RfcErrorCodes.LengthRequired,
+        StatusCodes.Status412PreconditionFailed => RfcErrorCodes.PreconditionFailed,
+        StatusCodes.Status413PayloadTooLarge => RfcErrorCodes.PayloadTooLarge,
+        StatusCodes.Status414UriTooLong => RfcErrorCodes.UriTooLong,
+        StatusCodes.Status415UnsupportedMediaType => RfcErrorCodes.UnsupportedMediaType,
+        StatusCodes.Status416RangeNotSatisfiable => RfcErrorCodes.RangeNotSatisfiable,
+        StatusCodes.Status417ExpectationFailed => RfcErrorCodes.ExpectationFailed,
+        StatusCodes.Status418ImATeapot => RfcErrorCodes.ImATeapot,
+        StatusCodes.Status421MisdirectedRequest => RfcErrorCodes.MisdirectedRequest,
+        StatusCodes.Status422UnprocessableEntity => RfcErrorCodes.ValidationError,
+        StatusCodes.Status423Locked => RfcErrorCodes.Locked,
+        StatusCodes.Status424FailedDependency => RfcErrorCodes.FailedDependency,
+        425 => RfcErrorCodes.TooEarly,
+        StatusCodes.Status426UpgradeRequired => RfcErrorCodes.UpgradeRequired,
+        StatusCodes.Status428PreconditionRequired => RfcErrorCodes.PreconditionRequired,
+        StatusCodes.Status429TooManyRequests => RfcErrorCodes.TooManyRequests,
+        StatusCodes.Status431RequestHeaderFieldsTooLarge => RfcErrorCodes.RequestHeaderTooLarge,
+        StatusCodes.Status451UnavailableForLegalReasons => RfcErrorCodes.UnavailableForLegalReasons,
 
         // 5xx Server Errors
-        StatusCodes.Status500InternalServerError => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.InternalServerError,
-        StatusCodes.Status501NotImplemented => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NotImplemented,
-        StatusCodes.Status502BadGateway => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.BadGateway,
-        StatusCodes.Status503ServiceUnavailable => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.ServiceUnavailable,
-        StatusCodes.Status504GatewayTimeout => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.GatewayTimeout,
-        StatusCodes.Status505HttpVersionNotsupported => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.HttpVersionNotSupported,
-        StatusCodes.Status506VariantAlsoNegotiates => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.VariantAlsoNegotiates,
-        StatusCodes.Status507InsufficientStorage => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.InsufficientStorage,
-        StatusCodes.Status508LoopDetected => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.LoopDetected,
-        StatusCodes.Status510NotExtended => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NotExtended,
-        StatusCodes.Status511NetworkAuthenticationRequired => RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NetworkAuthenticationRequired,
+        StatusCodes.Status500InternalServerError => RfcErrorCodes.InternalServerError,
+        StatusCodes.Status501NotImplemented => RfcErrorCodes.NotImplemented,
+        StatusCodes.Status502BadGateway => RfcErrorCodes.BadGateway,
+        StatusCodes.Status503ServiceUnavailable => RfcErrorCodes.ServiceUnavailable,
+        StatusCodes.Status504GatewayTimeout => RfcErrorCodes.GatewayTimeout,
+        StatusCodes.Status505HttpVersionNotsupported => RfcErrorCodes.HttpVersionNotSupported,
+        StatusCodes.Status506VariantAlsoNegotiates => RfcErrorCodes.VariantAlsoNegotiates,
+        StatusCodes.Status507InsufficientStorage => RfcErrorCodes.InsufficientStorage,
+        StatusCodes.Status508LoopDetected => RfcErrorCodes.LoopDetected,
+        StatusCodes.Status510NotExtended => RfcErrorCodes.NotExtended,
+        StatusCodes.Status511NetworkAuthenticationRequired => RfcErrorCodes.NetworkAuthenticationRequired,
 
-        _ => "unknown"
+        _ => RfcErrorCodes.Unknown
     };
 
     [SuppressMessage("ReSharper", "SuspiciousTypeConversion.Global", Justification = "Инстансы, реализующие интерфейс, будут в конкретных проектах")]
