@@ -191,28 +191,21 @@ public class RfcExceptionHandleMiddlewareTests
     // --- IRfcException ---
 
     [Test]
-    public async Task RfcException_HttpStatusCode_MatchesExceptionStatusCode()
+    public async Task RfcException_HttpStatusCode_ResolvedFromCategory()
     {
-        using var host = BuildHost(_ => throw new TestRfcException(StatusCodes.Status409Conflict));
+        using var host = BuildHost(_ => throw new TestRfcException(ErrorCategory.Conflict));
         await host.StartAsync();
-
         var (response, _) = await SendAsync(host);
-
         Assert.That((int)response.StatusCode, Is.EqualTo(StatusCodes.Status409Conflict));
     }
 
     [Test]
-    public async Task RfcException_Body_HasCorrectTypeTitleDetail()
+    public async Task RfcException_Body_HasTypeFromCategory_TitleDetail()
     {
         using var host = BuildHost(_ => throw new TestRfcException(
-            StatusCodes.Status404NotFound,
-            RfcTypes.NotFound,
-            "Resource not found",
-            "Order 42 not found"));
+            ErrorCategory.NotFound, "Resource not found", "Order 42 not found"));
         await host.StartAsync();
-
         var (_, body) = await SendAsync(host);
-
         Assert.Multiple((Action)(() =>
         {
             Assert.That(body.RootElement.GetProperty("type").GetString(), Is.EqualTo(RfcTypes.NotFound));
@@ -223,28 +216,33 @@ public class RfcExceptionHandleMiddlewareTests
     }
 
     [Test]
+    public async Task RfcException_WithErrorCode_TypeIsProblemsSlashCode()
+    {
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.Conflict, errorCode: "card-has-debt"));
+        await host.StartAsync();
+        var (_, body) = await SendAsync(host);
+        Assert.That(body.RootElement.GetProperty("type").GetString(), Is.EqualTo("/problems/card-has-debt"));
+    }
+
+    [Test]
     public async Task RfcException_NullDetail_DetailAbsentFromBody()
     {
-        using var host = BuildHost(_ => throw new TestRfcException(StatusCodes.Status400BadRequest, detail: null));
+        using var host = BuildHost(_ => throw new TestRfcException(ErrorCategory.BadRequest, detail: null));
         await host.StartAsync();
-
         var (_, body) = await SendAsync(host);
-
         Assert.That(body.RootElement.TryGetProperty("detail", out _), Is.False);
     }
 
     [Test]
     public async Task RfcException_WithCustomExtensions_ExtensionsMergedIntoBody()
     {
-        var ex = new TestRfcException(StatusCodes.Status400BadRequest);
+        var ex = new TestRfcException(ErrorCategory.BadRequest);
         ex.AddExtension("fieldName", "email");
         ex.AddExtension("errorCode", "INVALID_FORMAT");
-
         using var host = BuildHost(_ => throw ex);
         await host.StartAsync();
-
         var (_, body) = await SendAsync(host);
-
         Assert.Multiple((Action)(() =>
         {
             Assert.That(body.RootElement.GetProperty("fieldName").GetString(), Is.EqualTo("email"));
@@ -319,19 +317,19 @@ public class RfcExceptionHandleMiddlewareTests
     // --- helpers ---
 
     private sealed class TestRfcException(
-        int statusCode,
-        string rfcType = "/problems/test",
+        ErrorCategory category,
         string title = "Test error",
-        string? detail = "test detail")
+        string? detail = "test detail",
+        string? errorCode = null)
         : Exception(detail ?? title), IRfcException
     {
         private readonly Dictionary<string, string> _extensions = new();
 
-        public int StatusCode { get; } = statusCode;
-        public string RfcType { get; } = rfcType;
+        public ErrorCategory Category { get; } = category;
+        public string? ErrorCode { get; } = errorCode;
         public string Title { get; } = title;
         public string? Detail { get; } = detail;
-        public IDictionary<string, string> RfcExtensions => _extensions;
+        public IReadOnlyDictionary<string, string>? Extensions => _extensions.Count == 0 ? null : _extensions;
 
         public void AddExtension(string key, string value) => _extensions[key] = value;
     }

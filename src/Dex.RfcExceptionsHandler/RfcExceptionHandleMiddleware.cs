@@ -37,11 +37,18 @@ internal sealed class RfcExceptionHandleMiddleware(
             // rfc problem
             var rfcProblem = ToProblemDetails(exception);
 
-            // rfc code
-            rfcProblem.Status ??= config.ResolveHttpStatusCode(exception);
-
-            // rfc type
-            rfcProblem.Type ??= ResolveRfcTypeByHttpStatusCode(rfcProblem.Status.Value);
+            // rfc code + type
+            if (exception is IRfcException rfcEx)
+            {
+                var (status, typeByCategory) = RfcExceptionCategoryMap.Resolve(rfcEx.Category);
+                rfcProblem.Status ??= status;
+                rfcProblem.Type ??= rfcEx.ErrorCode is { } code ? $"/problems/{code}" : typeByCategory;
+            }
+            else
+            {
+                rfcProblem.Status ??= config.ResolveHttpStatusCode(exception);
+                rfcProblem.Type ??= ResolveRfcTypeByHttpStatusCode(rfcProblem.Status.Value);
+            }
 
             // rfc stackTrace
             if (string.IsNullOrEmpty(exception.StackTrace) is false && environment.IsProduction() is false)
@@ -149,17 +156,16 @@ internal sealed class RfcExceptionHandleMiddleware(
             };
 
         // custom rfc extensions
-        if (rfcException.RfcExtensions.Count > 0)
-            foreach (var rfcExtension in rfcException.RfcExtensions)
-                extensions[rfcExtension.Key] = rfcExtension.Value;
+        if (rfcException.Extensions is { Count: > 0 } exExt)
+            foreach (var kv in exExt)
+                extensions[kv.Key] = kv.Value;
 
         var problemDetails = new ProblemDetails
         {
-            Type = rfcException.RfcType,
             Title = rfcException.Title,
-            Status = rfcException.StatusCode,
             Detail = rfcException.Detail,
             Extensions = extensions
+            // Type/Status выставляются выше по Category/ErrorCode
         };
 
         return problemDetails;

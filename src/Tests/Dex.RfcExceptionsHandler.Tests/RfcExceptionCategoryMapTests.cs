@@ -24,10 +24,10 @@ public class RfcExceptionCategoryMapTests
     public void Resolve_ReturnsExpectedStatusAndType(ErrorCategory category, int expectedStatus, string expectedType)
     {
         var (status, type) = RfcExceptionCategoryMap.Resolve(category);
-        Assert.Multiple(() =>
+        Assert.Multiple((Action)(() =>
         {
             Assert.That(status, Is.EqualTo(expectedStatus));
             Assert.That(type, Is.EqualTo(expectedType));
-        });
+        }));
     }
 }
