@@ -9,6 +9,7 @@ public class RfcExceptionCategoryMapTests
 {
     [TestCase(ErrorCategory.Validation, 400, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.ValidationError)]
     [TestCase(ErrorCategory.BadRequest, 400, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.BadRequest)]
+    [TestCase(ErrorCategory.UserError, 400, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.UserError)]
     [TestCase(ErrorCategory.Unauthorized, 401, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Unauthorized)]
     [TestCase(ErrorCategory.Forbidden, 403, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Forbidden)]
     [TestCase(ErrorCategory.NotFound, 404, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NotFound)]

@@ -10,6 +10,7 @@ public static class RfcExceptionCategoryMap
     {
         ErrorCategory.Validation         => (StatusCodes.Status400BadRequest, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.ValidationError),
         ErrorCategory.BadRequest         => (StatusCodes.Status400BadRequest, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.BadRequest),
+        ErrorCategory.UserError          => (StatusCodes.Status400BadRequest, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.UserError),
         ErrorCategory.Unauthorized       => (StatusCodes.Status401Unauthorized, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Unauthorized),
         ErrorCategory.Forbidden          => (StatusCodes.Status403Forbidden, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.Forbidden),
         ErrorCategory.NotFound           => (StatusCodes.Status404NotFound, RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NotFound),
