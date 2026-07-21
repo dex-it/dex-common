@@ -39,8 +39,14 @@ internal sealed class InboxOptionsValidator : IValidateOptions<InboxOptions>
                 "so a smaller value truncates to zero and silently leaves the timeout unset");
         }
 
+        // Тип в тексте обязателен: аутбокс объявляет одноимённую опцию, а OptionsValidationException.Message
+        // это склейка отказов, имя типа опций остаётся только в свойстве OptionsType.
         if (options.MaxContentLength <= 0)
-            failures.Add($"{nameof(InboxOptions.MaxContentLength)} should be a positive number, but was {options.MaxContentLength}");
+        {
+            failures.Add(
+                $"{nameof(InboxOptions)}.{nameof(InboxOptions.MaxContentLength)} should be a positive number, " +
+                $"but was {options.MaxContentLength}");
+        }
 
         return failures.Count > 0
             ? ValidateOptionsResult.Fail(failures)
