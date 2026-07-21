@@ -136,7 +136,7 @@ public class RfcExceptionHandleMiddlewareTests
         var (_, body) = await SendAsync(host);
 
         Assert.That(body.RootElement.GetProperty("type").GetString(),
-            Is.EqualTo(RfcTypes.InternalServerError));
+            Is.EqualTo(RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.InternalServerError));
     }
 
     // --- environment-dependent behaviour ---
@@ -208,7 +208,7 @@ public class RfcExceptionHandleMiddlewareTests
         var (_, body) = await SendAsync(host);
         Assert.Multiple((Action)(() =>
         {
-            Assert.That(body.RootElement.GetProperty("type").GetString(), Is.EqualTo(RfcTypes.NotFound));
+            Assert.That(body.RootElement.GetProperty("type").GetString(), Is.EqualTo(RfcErrorCodes.ProblemTypePrefix + RfcErrorCodes.NotFound));
             Assert.That(body.RootElement.GetProperty("title").GetString(), Is.EqualTo("Resource not found"));
             Assert.That(body.RootElement.GetProperty("detail").GetString(), Is.EqualTo("Order 42 not found"));
             Assert.That(body.RootElement.GetProperty("status").GetInt32(), Is.EqualTo(StatusCodes.Status404NotFound));
@@ -222,7 +222,7 @@ public class RfcExceptionHandleMiddlewareTests
             ErrorCategory.Conflict, errorCode: "card-has-debt"));
         await host.StartAsync();
         var (_, body) = await SendAsync(host);
-        Assert.That(body.RootElement.GetProperty("type").GetString(), Is.EqualTo("/problems/card-has-debt"));
+        Assert.That(body.RootElement.GetProperty("type").GetString(), Is.EqualTo(RfcErrorCodes.ProblemTypePrefix + "card-has-debt"));
     }
 
     [Test]

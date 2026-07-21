@@ -5,6 +5,9 @@
 /// </summary>
 public static class RfcErrorCodes
 {
+    /// <summary>Префикс RFC 9457 type. Полный type = ProblemTypePrefix + код.</summary>
+    public const string ProblemTypePrefix = "/problems/";
+
     // 4xx
     public const string BadRequest = "bad-request";
     public const string Unauthorized = "unauthorized";
