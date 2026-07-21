@@ -27,11 +27,20 @@ public static class MicrosoftDependencyInjectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         // Регистрируем инфраструктуру опций, чтобы IOptions<OutboxOptions> резолвился для проверки размера
-        // Content в OutboxService, а не оставался неявным требованием к вызывающему. Валидацию правил
-        // OutboxOptions здесь НЕ включаем: валидатор исторически не был подключён, и его включение отвергало бы
-        // значения, которые раньше молча толерировались (например GetFreeMessagesTimeout ниже секунды), ломая
-        // существующих потребителей. Подключение валидатора вынесено в отдельную задачу.
-        services.AddOptions<OutboxOptions>();
+        // Content в OutboxService, а не оставался неявным требованием к вызывающему. Сама библиотека
+        // регистрирует ЕДИНСТВЕННОЕ правило, про размер тела: оно заведено вместе с опцией, поэтому
+        // конфигураций, которые оно отвергнет, в проде ещё нет. Остальные правила OutboxOptionsValidator НЕ
+        // включаем: валидатор исторически не был подключён, и его включение отвергало бы значения, которые
+        // раньше молча толерировались (например GetFreeMessagesTimeout ниже секунды), ломая существующих
+        // потребителей на старте. Подключение валидатора целиком вынесено в issue #239.
+        // ValidateOnStart при этом взводится на ТИП опций, а не на конкретный валидатор: на старте хоста
+        // исполнятся ВСЕ зарегистрированные IValidateOptions<OutboxOptions>, включая те, что зарегистрировал
+        // сам потребитель. Обойти это нельзя, материализация значения опций всегда прогоняет все валидаторы.
+        services.AddOptions<OutboxOptions>()
+            .ValidateOnStart();
+
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<OutboxOptions>, OutboxMaxContentLengthValidator>());
 
         services
             .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()

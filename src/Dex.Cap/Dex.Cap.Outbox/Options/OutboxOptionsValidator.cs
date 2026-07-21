@@ -3,6 +3,16 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Options;
 
+/// <summary>
+/// Правила <see cref="OutboxOptions"/>, кроме <see cref="OutboxOptions.MaxContentLength"/>.
+/// </summary>
+/// <remarks>
+/// Валидатор исторически не подключён к контейнеру, поэтому перечисленные здесь правила не исполняются;
+/// подключение целиком вынесено в issue #239. Размер тела намеренно вынесен в отдельный внутренний
+/// <c>OutboxMaxContentLengthValidator</c>: его регистрирует <c>AddOutbox</c> из пакета
+/// <c>Dex.Cap.Outbox.Ef</c>, поэтому именно там правило про размер работает на старте хоста. Дубль правила
+/// здесь давал бы два сообщения об одной ошибке. Кто собирает DI руками, регистрирует правила сам.
+/// </remarks>
 public class OutboxOptionsValidator : IValidateOptions<OutboxOptions>
 {
     public ValidateOptionsResult Validate(string? name, OutboxOptions? options)
@@ -35,11 +45,6 @@ public class OutboxOptionsValidator : IValidateOptions<OutboxOptions>
         if (options.GetFreeMessagesTimeout < TimeSpan.FromSeconds(1))
         {
             return ValidateOptionsResult.Fail("GetFreeMessagesTimeout can't be less 1 second");
-        }
-
-        if (options.MaxContentLength <= 0)
-        {
-            return ValidateOptionsResult.Fail($"MaxContentLength should be a positive number, but was {options.MaxContentLength}");
         }
 
         return ValidateOptionsResult.Success;
