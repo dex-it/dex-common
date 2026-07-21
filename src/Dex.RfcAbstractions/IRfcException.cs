@@ -1,4 +1,4 @@
-﻿namespace Dex.RfcExceptions;
+﻿namespace Dex.RfcAbstractions;
 
 /// <summary>
 /// Контракт прикладного исключения для конвертации в RFC 9457 / ProblemDetails.

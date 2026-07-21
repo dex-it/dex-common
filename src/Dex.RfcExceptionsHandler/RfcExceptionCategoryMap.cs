@@ -1,4 +1,4 @@
-using Dex.RfcExceptions;
+using Dex.RfcAbstractions;
 using Microsoft.AspNetCore.Http;
 
 namespace Dex.RfcExceptionsHandler;

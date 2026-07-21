@@ -1,4 +1,4 @@
-﻿namespace Dex.RfcExceptions;
+﻿namespace Dex.RfcAbstractions;
 
 /// <summary>
 /// Коды ошибок для IRfcException.ErrorCode — путь после /problems/ (зеркало RfcTypes без префикса).

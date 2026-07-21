@@ -1,6 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
-using Dex.RfcExceptions;
+using Dex.RfcAbstractions;
 using Dex.RfcExceptionsHandler.Extensions;
 using Microsoft.AspNetCore.TestHost;
 using NUnit.Framework;

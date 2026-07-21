@@ -1,4 +1,4 @@
-﻿namespace Dex.RfcExceptions;
+﻿namespace Dex.RfcAbstractions;
 
 /// <summary>Категория проблемы. Инфраструктура (middleware) мапит её в HTTP-статус и RFC 9457 type.</summary>
 public enum ErrorCategory
