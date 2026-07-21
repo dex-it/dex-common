@@ -316,3 +316,5 @@ run-claude/
 # TLDR
 .tldr/
 .tldrignore
+docs/superpowers/
+src/storage/redis/data/dump.rdb
