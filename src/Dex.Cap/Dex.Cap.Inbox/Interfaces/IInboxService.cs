@@ -25,6 +25,11 @@ public interface IInboxService
     /// <para>
     /// Повторная доставка того же сообщения возвращает <see cref="InboxEnqueueStatus.Duplicate"/> без исключения:
     /// источнику в этом случае следует подтвердить сообщение, а не отправлять его в очередь ошибок.
+    /// Единственное исключение из этого правила: размер тела проверяется ДО вставки, а дедупликация происходит
+    /// В ней, поэтому передоставка тела, которое уже лежит в таблице, но перестало проходить
+    /// <see cref="Options.InboxOptions.MaxContentLengthBytes"/> (предел понизили или подняли версию), отвергается
+    /// <see cref="Exceptions.InboxContentTooLargeException"/>. Отказ детерминирован, так что такое сообщение
+    /// уводят в очередь ошибок, а не передоставляют снова.
     /// </para>
     /// <para>
     /// Транзиентный отказ хранилища доходит до вызывающего исключением, и настроенный на контексте
@@ -46,7 +51,7 @@ public interface IInboxService
     /// Тип сообщения не найден среди загруженных типов сервиса. Наследует <see cref="Exceptions.InboxException"/>.
     /// </exception>
     /// <exception cref="Exceptions.InboxContentTooLargeException">
-    /// Размер сериализованного тела превышает <see cref="Options.InboxOptions.MaxContentLength"/>.
+    /// Размер сериализованного тела превышает <see cref="Options.InboxOptions.MaxContentLengthBytes"/>.
     /// Наследует <see cref="Exceptions.InboxException"/>.
     /// </exception>
     Task<InboxEnqueueStatus> EnqueueAsync<T>(

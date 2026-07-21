@@ -14,11 +14,24 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Ef.Extensions;
 
+/// <summary>
+/// Регистрация аутбокса и его фоновых сервисов в контейнере.
+/// </summary>
 public static class MicrosoftDependencyInjectionExtensions
 {
     // Маркер для однократной регистрации OutboxHealthCheck (guard от дублирования при повторном вызове AddOutboxScheduler).
     private sealed class OutboxHealthCheckRegistered;
 
+    /// <summary>
+    /// Зарегистрировать аутбокс и EF-провайдер данных.
+    /// </summary>
+    /// <remarks>
+    /// Начиная с 8.5 метод взводит <c>ValidateOnStart</c> на <see cref="OutboxOptions"/> и регистрирует одно
+    /// правило: <see cref="OutboxOptions.MaxContentLengthBytes"/> должен быть положительным. Взводится это на
+    /// экземпляр опций, а не на конкретный валидатор, поэтому на старте хоста исполнятся и валидаторы,
+    /// зарегистрированные самим потребителем.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static IServiceCollection AddOutbox<TDbContext>(
         this IServiceCollection services,
         Action<IServiceProvider, OutboxRetryStrategyConfigurator>? retryStrategyImplementation = null)
@@ -33,14 +46,17 @@ public static class MicrosoftDependencyInjectionExtensions
         // включаем: валидатор исторически не был подключён, и его включение отвергало бы значения, которые
         // раньше молча толерировались (например GetFreeMessagesTimeout ниже секунды), ломая существующих
         // потребителей на старте. Подключение валидатора целиком вынесено в issue #239.
-        // ValidateOnStart при этом взводится на ТИП опций, а не на конкретный валидатор: на старте хоста
-        // исполнятся ВСЕ зарегистрированные IValidateOptions<OutboxOptions>, включая те, что зарегистрировал
-        // сам потребитель. Обойти это нельзя, материализация значения опций всегда прогоняет все валидаторы.
+        // ValidateOnStart при этом взводится на ЭКЗЕМПЛЯР опций (пара тип плюс имя, здесь имя по умолчанию),
+        // а не на конкретный валидатор: на старте хоста исполнятся ВСЕ зарегистрированные
+        // IValidateOptions<OutboxOptions>, включая те, что зарегистрировал сам потребитель. Обойти это
+        // нельзя: валидаторы прогоняет OptionsFactory при СОЗДАНИИ значения опций, а значение создаётся
+        // однократно на кеш (для IOptions один раз за процесс), и выбрать подмножество валидаторов
+        // Options API не даёт.
         services.AddOptions<OutboxOptions>()
             .ValidateOnStart();
 
         services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IValidateOptions<OutboxOptions>, OutboxMaxContentLengthValidator>());
+            ServiceDescriptor.Singleton<IValidateOptions<OutboxOptions>, OutboxMaxContentLengthBytesValidator>());
 
         services
             .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()

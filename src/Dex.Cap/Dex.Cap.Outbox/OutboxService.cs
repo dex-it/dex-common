@@ -36,10 +36,10 @@ internal sealed class OutboxService(
 
     private void EnsureContentWithinLimit(OutboxEnvelope envelope)
     {
-        var contentLength = Encoding.UTF8.GetByteCount(envelope.Content);
-        if (contentLength > _options.MaxContentLength)
+        var contentLengthBytes = Encoding.UTF8.GetByteCount(envelope.Content);
+        if (contentLengthBytes > _options.MaxContentLengthBytes)
         {
-            throw new OutboxContentTooLargeException(envelope.MessageType, contentLength, _options.MaxContentLength);
+            throw new OutboxContentTooLargeException(envelope.MessageType, contentLengthBytes, _options.MaxContentLengthBytes);
         }
     }
 

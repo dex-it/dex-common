@@ -21,7 +21,7 @@ public class InboxContentLimitTests : BaseTest
     {
         const int limit = 64;
         await using var sp = InitInboxServiceCollection()
-            .Configure<InboxOptions>(o => o.MaxContentLength = limit)
+            .Configure<InboxOptions>(o => o.MaxContentLengthBytes = limit)
             .BuildServiceProvider();
 
         var inboxService = sp.GetRequiredService<IInboxService>();
@@ -31,8 +31,8 @@ public class InboxContentLimitTests : BaseTest
         var ex = NUnit.Framework.Assert.ThrowsAsync<InboxContentTooLargeException>(
             (Func<Task>)(async () => await inboxService.EnqueueAsync(oversized, identity)));
 
-        Assert.AreEqual(limit, ex!.MaxContentLength);
-        Assert.Greater(ex.ContentLength, limit);
+        Assert.AreEqual(limit, ex!.MaxContentLengthBytes);
+        Assert.Greater(ex.ContentLengthBytes, limit);
         Assert.AreEqual(TestInboxCommand.InboxTypeId, ex.MessageType);
 
         // Проверка на приёме, до INSERT, поэтому строка не появляется.
@@ -44,7 +44,7 @@ public class InboxContentLimitTests : BaseTest
     public async Task Enqueue_ContentWithinLimit_IsAccepted()
     {
         await using var sp = InitInboxServiceCollection()
-            .Configure<InboxOptions>(o => o.MaxContentLength = InboxOptions.DefaultMaxContentLength)
+            .Configure<InboxOptions>(o => o.MaxContentLengthBytes = InboxOptions.DefaultMaxContentLengthBytes)
             .BuildServiceProvider();
 
         var inboxService = sp.GetRequiredService<IInboxService>();
@@ -73,7 +73,7 @@ public class InboxContentLimitTests : BaseTest
 
         // Ровно предел проходит: проверка это `>`, а не `>=`.
         await using var spAtLimit = InitInboxServiceCollection()
-            .Configure<InboxOptions>(o => o.MaxContentLength = exactBytes)
+            .Configure<InboxOptions>(o => o.MaxContentLengthBytes = exactBytes)
             .BuildServiceProvider();
         var status = await spAtLimit.GetRequiredService<IInboxService>().EnqueueAsync(
             message, new InboxMessageIdentity("boundary-ok", "consumer-1"));
@@ -81,14 +81,14 @@ public class InboxContentLimitTests : BaseTest
 
         // На один байт меньше предела - отказ, с точным размером в исключении.
         await using var spOverByOne = InitInboxServiceCollection()
-            .Configure<InboxOptions>(o => o.MaxContentLength = exactBytes - 1)
+            .Configure<InboxOptions>(o => o.MaxContentLengthBytes = exactBytes - 1)
             .BuildServiceProvider();
         var overByOneService = spOverByOne.GetRequiredService<IInboxService>();
         var ex = NUnit.Framework.Assert.ThrowsAsync<InboxContentTooLargeException>(
             (Func<Task>)(async () => await overByOneService.EnqueueAsync(
                 message, new InboxMessageIdentity("boundary-over", "consumer-1"))));
-        Assert.AreEqual(exactBytes, ex!.ContentLength);
-        Assert.AreEqual(exactBytes - 1, ex.MaxContentLength);
+        Assert.AreEqual(exactBytes, ex!.ContentLengthBytes);
+        Assert.AreEqual(exactBytes - 1, ex.MaxContentLengthBytes);
     }
 
     [Test]
@@ -114,15 +114,15 @@ public class InboxContentLimitTests : BaseTest
         // проверка по string.Length пропустила бы это тело.
         await using var sp = InitInboxServiceCollection()
             .AddScoped<IInboxSerializer>(_ => new RawUtf8InboxSerializer())
-            .Configure<InboxOptions>(o => o.MaxContentLength = charLen)
+            .Configure<InboxOptions>(o => o.MaxContentLengthBytes = charLen)
             .BuildServiceProvider();
 
         var inboxService = sp.GetRequiredService<IInboxService>();
         var ex = NUnit.Framework.Assert.ThrowsAsync<InboxContentTooLargeException>(
             (Func<Task>)(async () => await inboxService.EnqueueAsync(
                 message, new InboxMessageIdentity("message-1", "consumer-1"))));
-        Assert.AreEqual(byteLen, ex!.ContentLength);
-        Assert.AreEqual(charLen, ex.MaxContentLength);
+        Assert.AreEqual(byteLen, ex!.ContentLengthBytes);
+        Assert.AreEqual(charLen, ex.MaxContentLengthBytes);
     }
 
     [Test]
@@ -132,7 +132,7 @@ public class InboxContentLimitTests : BaseTest
         // и заведомо большом теле незаполненная identity падает ArgumentException("identity"), а не
         // InboxContentTooLargeException: размер не меряется прежде валидации входа.
         using var sp = InitInboxServiceCollection()
-            .Configure<InboxOptions>(o => o.MaxContentLength = 1)
+            .Configure<InboxOptions>(o => o.MaxContentLengthBytes = 1)
             .BuildServiceProvider();
 
         var inboxService = sp.GetRequiredService<IInboxService>();

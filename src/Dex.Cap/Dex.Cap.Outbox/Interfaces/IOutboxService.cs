@@ -5,6 +5,9 @@ using Dex.Cap.Common.Interfaces;
 
 namespace Dex.Cap.Outbox.Interfaces;
 
+/// <summary>
+/// Постановка исходящих сообщений: точка входа аутбокса для прикладного кода.
+/// </summary>
 public interface IOutboxService
 {
     /// <summary>
@@ -28,7 +31,7 @@ public interface IOutboxService
     /// либо <paramref name="correlationId"/> равен <see cref="Guid.Empty"/>.
     /// </exception>
     /// <exception cref="Exceptions.OutboxContentTooLargeException">
-    /// Размер сериализованного тела превышает <see cref="Options.OutboxOptions.MaxContentLength"/>.
+    /// Размер сериализованного тела превышает <see cref="Options.OutboxOptions.MaxContentLengthBytes"/>.
     /// Наследует <see cref="Exceptions.OutboxException"/>.
     /// </exception>
     Task<Guid> EnqueueAsync<T>(

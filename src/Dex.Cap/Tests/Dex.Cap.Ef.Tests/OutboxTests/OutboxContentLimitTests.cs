@@ -21,7 +21,7 @@ public class OutboxContentLimitTests : BaseTest
     {
         const int limit = 64;
         await using var sp = InitServiceCollection()
-            .Configure<OutboxOptions>(o => o.MaxContentLength = limit)
+            .Configure<OutboxOptions>(o => o.MaxContentLengthBytes = limit)
             .BuildServiceProvider();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
@@ -30,8 +30,8 @@ public class OutboxContentLimitTests : BaseTest
         var ex = NUnit.Framework.Assert.ThrowsAsync<OutboxContentTooLargeException>(
             (Func<Task>)(async () => await outboxService.EnqueueAsync(oversized)));
 
-        Assert.AreEqual(limit, ex!.MaxContentLength);
-        Assert.Greater(ex.ContentLength, limit);
+        Assert.AreEqual(limit, ex!.MaxContentLengthBytes);
+        Assert.Greater(ex.ContentLengthBytes, limit);
         Assert.AreEqual(TestOutboxCommand.OutboxTypeId, ex.MessageType);
 
         // Проверка на постановке, поэтому строка в БД не появляется.
@@ -44,7 +44,7 @@ public class OutboxContentLimitTests : BaseTest
     public async Task Enqueue_ContentWithinLimit_IsStored()
     {
         await using var sp = InitServiceCollection()
-            .Configure<OutboxOptions>(o => o.MaxContentLength = OutboxOptions.DefaultMaxContentLength)
+            .Configure<OutboxOptions>(o => o.MaxContentLengthBytes = OutboxOptions.DefaultMaxContentLengthBytes)
             .BuildServiceProvider();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
@@ -70,7 +70,7 @@ public class OutboxContentLimitTests : BaseTest
 
         // Ровно предел проходит: проверка это `>`, а не `>=`, и строка реально сохраняется.
         await using var spAtLimit = InitServiceCollection()
-            .Configure<OutboxOptions>(o => o.MaxContentLength = exactBytes)
+            .Configure<OutboxOptions>(o => o.MaxContentLengthBytes = exactBytes)
             .BuildServiceProvider();
         var id = await spAtLimit.GetRequiredService<IOutboxService>().EnqueueAsync(message);
         await SaveChanges(spAtLimit);
@@ -80,13 +80,13 @@ public class OutboxContentLimitTests : BaseTest
 
         // На один байт меньше предела - отказ, с точным размером в исключении.
         await using var spOverByOne = InitServiceCollection()
-            .Configure<OutboxOptions>(o => o.MaxContentLength = exactBytes - 1)
+            .Configure<OutboxOptions>(o => o.MaxContentLengthBytes = exactBytes - 1)
             .BuildServiceProvider();
         var overByOneService = spOverByOne.GetRequiredService<IOutboxService>();
         var ex = NUnit.Framework.Assert.ThrowsAsync<OutboxContentTooLargeException>(
             (Func<Task>)(async () => await overByOneService.EnqueueAsync(message)));
-        Assert.AreEqual(exactBytes, ex!.ContentLength);
-        Assert.AreEqual(exactBytes - 1, ex.MaxContentLength);
+        Assert.AreEqual(exactBytes, ex!.ContentLengthBytes);
+        Assert.AreEqual(exactBytes - 1, ex.MaxContentLengthBytes);
     }
 
     [Test]
@@ -112,14 +112,14 @@ public class OutboxContentLimitTests : BaseTest
         // проверка по string.Length пропустила бы это тело.
         await using var sp = InitServiceCollection()
             .AddScoped<IOutboxSerializer>(_ => new RawUtf8OutboxSerializer())
-            .Configure<OutboxOptions>(o => o.MaxContentLength = charLen)
+            .Configure<OutboxOptions>(o => o.MaxContentLengthBytes = charLen)
             .BuildServiceProvider();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
         var ex = NUnit.Framework.Assert.ThrowsAsync<OutboxContentTooLargeException>(
             (Func<Task>)(async () => await outboxService.EnqueueAsync(message)));
-        Assert.AreEqual(byteLen, ex!.ContentLength);
-        Assert.AreEqual(charLen, ex.MaxContentLength);
+        Assert.AreEqual(byteLen, ex!.ContentLengthBytes);
+        Assert.AreEqual(charLen, ex.MaxContentLengthBytes);
     }
 
     [Test]
@@ -128,16 +128,17 @@ public class OutboxContentLimitTests : BaseTest
         // Дискриминатор проверяется в CreateEnvelop ДО байтовой проверки. Даже при предельном лимите в 1 байт
         // незарегистрированный тип падает DiscriminatorResolveException, а не OutboxContentTooLargeException.
         using var sp = InitServiceCollection()
-            .Configure<OutboxOptions>(o => o.MaxContentLength = 1)
+            .Configure<OutboxOptions>(o => o.MaxContentLengthBytes = 1)
             .BuildServiceProvider();
 
         var outboxService = sp.GetRequiredService<IOutboxService>();
 
-        var ex = NUnit.Framework.Assert.CatchAsync<DiscriminatorResolveException>(
+        // ThrowsAsync, а не CatchAsync: нужен ровно этот тип. Его одного достаточно как доказательства
+        // порядка guard-ов, потому что OutboxContentTooLargeException наследует OutboxException и под
+        // DiscriminatorResolveException не подходит. Текст сообщения не проверяем: он русский и упал бы при
+        // переводе рантайм-сообщений, а дискриминатор у TestEmptyMessage пуст, сверяться не с чем.
+        NUnit.Framework.Assert.ThrowsAsync<DiscriminatorResolveException>(
             (Func<Task>)(async () => await outboxService.EnqueueAsync(new TestEmptyMessage())));
-        Assert.IsNotNull(ex);
-        Assert.IsTrue(ex!.Message.Contains("не найдено", StringComparison.Ordinal),
-            "Ожидалось исключение резолва дискриминатора из CreateEnvelop: " + ex.Message);
     }
 
     /// <summary>Сериализатор без экранирования не-ASCII: тело уходит сырым UTF-8, где байт больше символов.</summary>

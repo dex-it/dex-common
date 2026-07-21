@@ -143,7 +143,7 @@ public class InboxEnvelope
     /// Сериализованное тело сообщения.
     /// </summary>
     /// <remarks>
-    /// Размер тела ограничен сверху опцией <see cref="Options.InboxOptions.MaxContentLength"/> (по умолчанию
+    /// Размер тела ограничен сверху опцией <see cref="Options.InboxOptions.MaxContentLengthBytes"/> (по умолчанию
     /// 1 МиБ) и проверяется на приёме: превышение бросает <see cref="Exceptions.InboxContentTooLargeException"/>
     /// ещё до записи строки в БД. Предел задан опцией, а не жёстким <c>HasMaxLength</c> на колонке, чтобы
     /// существующим таблицам не требовалась миграция. В отличие от <see cref="MessageId"/> и
