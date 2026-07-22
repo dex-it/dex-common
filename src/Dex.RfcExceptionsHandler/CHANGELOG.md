@@ -1,7 +1,7 @@
 # Changelog — Dex.RfcExceptionsHandler
 
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
-проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/).
+Мажорная версия привязана к версии .NET; breaking-изменения помечаются в заголовке релиза.
 
 ## [8.1.0] — BREAKING
 

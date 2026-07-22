@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Dex.Extensions;
 using Dex.RfcAbstractions;
 using Dex.RfcExceptionsHandler.Constants;
@@ -16,11 +17,15 @@ namespace Dex.RfcExceptionsHandler;
 /// <summary>
 /// Перехватчик исключений, возникающих при обработке запросов к API.
 /// </summary>
-internal sealed class RfcExceptionHandleMiddleware(
+internal sealed partial class RfcExceptionHandleMiddleware(
     IRfcExceptionHandleConfig config,
     ILogger<RfcExceptionHandleMiddleware> logger,
     IWebHostEnvironment environment) : IMiddleware
 {
+    // допустимый формат ErrorCode: lowercase-kebab-сегменты через '/'
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*(/[a-z0-9]+(-[a-z0-9]+)*)*$")]
+    private static partial Regex ErrorCodeFormatRegex();
+
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         // перехват ошибок лучше не отменять
@@ -92,10 +97,11 @@ internal sealed class RfcExceptionHandleMiddleware(
     }
 
     /// <summary>
-    /// Нормализует доменный код перед склейкой с префиксом: снимает уже присутствующий
-    /// префикс /problems/ и ведущие слэши. Возвращает пустую строку для null/whitespace
-    /// и для вырожденных значений ("/problems/", "///"), чтобы вызывающий код мог
-    /// откатиться на код категории и не получить битый type ("/problems/", "/problems//x").
+    /// Нормализует и валидирует доменный код перед склейкой с префиксом: снимает уже
+    /// присутствующий префикс /problems/ и ведущие слэши. Возвращает пустую строку для
+    /// null/whitespace, вырожденных значений ("/problems/", "///") и значений, не подходящих
+    /// под формат lowercase-kebab (пробелы, "..", регистр, спецсимволы) — чтобы вызывающий
+    /// код откатился на код категории и не получил битый или невалидный как URI type.
     /// </summary>
     private static string NormalizeErrorCode(string? errorCode)
     {
@@ -111,7 +117,12 @@ internal sealed class RfcExceptionHandleMiddleware(
         // снять ведущие слэши (в т.ч. случай "/problems///" -> "//" -> "")
         code = code.TrimStart('/');
 
-        return code.ToString();
+        if (code.IsEmpty)
+            return string.Empty;
+
+        // отбросить всё, что не lowercase-kebab-сегменты (пробелы, "..", регистр и т.п.)
+        var result = code.ToString();
+        return ErrorCodeFormatRegex().IsMatch(result) ? result : string.Empty;
     }
 
     private static string ResolveErrorCodeByHttpStatusCode(int statusCode) => statusCode switch

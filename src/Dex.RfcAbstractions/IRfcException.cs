@@ -18,7 +18,9 @@ public interface IRfcException
 
     /// <summary>
     /// Короткий доменный код без префикса /problems/ (например "card-has-debt").
-    /// null или пусто => middleware подставит type по <see cref="Category"/>.
+    /// Ожидаемый формат — lowercase-kebab-сегменты: ^[a-z0-9-]+(/[a-z0-9-]+)*$.
+    /// Значение, не подходящее под формат (пробелы, "..", регистр и т.п.), middleware
+    /// отбросит и подставит type по <see cref="Category"/>. null/пусто — тоже type по категории.
     /// Не является default-членом намеренно: добавленный только в наследнике DIM-член
     /// не участвует в interface mapping и молча теряется — реализуй явно в каждом типе.
     /// </summary>
@@ -37,9 +39,12 @@ public interface IRfcException
     string? Detail { get; }
 
     /// <summary>
-    /// Опциональные машиночитаемые доп-данные для extensions.
+    /// Опциональные машиночитаемые доп-данные для extensions. null => доп-данных нет.
+    /// Не является default-членом намеренно (симметрично <see cref="ErrorCode"/>):
+    /// добавленный только в наследнике DIM-член не участвует в interface mapping и молча
+    /// теряется — реализуй явно в каждом типе (можно вернуть null).
     /// ВНИМАНИЕ: значения уходят клиенту во ВСЕХ окружениях, включая Production.
     /// Не помещай сюда секреты и внутреннюю диагностику.
     /// </summary>
-    IReadOnlyDictionary<string, string>? Extensions => null;
+    IReadOnlyDictionary<string, string>? Extensions { get; }
 }

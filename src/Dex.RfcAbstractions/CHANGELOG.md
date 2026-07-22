@@ -1,7 +1,7 @@
 # Changelog — Dex.RfcAbstractions
 
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
-проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/).
+Мажорная версия привязана к версии .NET; breaking-изменения помечаются в заголовке релиза.
 
 ## [8.1.0] — BREAKING
 
@@ -10,8 +10,11 @@
   вместо них `ErrorCategory Category` + опциональный `string? ErrorCode`. HTTP-статус
   и RFC 9457 `type` резолвит middleware по категории — домен развязан от транспорта.
 - Namespace изменён: `Dex.RfcExceptions` → `Dex.RfcAbstractions`.
-- `ErrorCode` стал обычным членом интерфейса (не default interface member): прямые
-  реализаторы обязаны объявить его явно (`public string? ErrorCode => null;`).
+- `ErrorCode` и `Extensions` стали обычными членами интерфейса (не default interface
+  members): прямые реализаторы обязаны объявить их явно (можно вернуть null). DIM-член,
+  добавленный только в наследнике, не участвует в interface mapping и молча теряется.
+- `ErrorCode` ожидается в формате lowercase-kebab (`^[a-z0-9-]+(/[a-z0-9-]+)*$`);
+  значение вне формата middleware отбрасывает и подставляет type по категории.
 
 ### Совместимость
 - Минимально совместимая пара `Dex.RfcExceptionsHandler` + `Dex.RfcAbstractions` = 8.1.0.

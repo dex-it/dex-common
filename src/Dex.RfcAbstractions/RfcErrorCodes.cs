@@ -14,7 +14,14 @@ public static class RfcErrorCodes
     public const string MethodNotAllowed = "method-not-allowed";
     public const string NotAcceptable = "not-acceptable";
     public const string ProxyAuthenticationRequired = "proxy-authentication-required";
+
+    /// <summary>
+    /// Часть полного HTTP-реестра. Middleware этот код НЕ выдаёт:
+    /// 408 и в карте категорий, и в fallback по статусу даёт <see cref="Timeout"/>.
+    /// Доступен только для ручного указания в IRfcException.ErrorCode.
+    /// </summary>
     public const string RequestTimeout = "request-timeout";
+
     public const string Conflict = "conflict";
     public const string Gone = "gone";
     public const string LengthRequired = "length-required";
@@ -25,7 +32,15 @@ public static class RfcErrorCodes
     public const string RangeNotSatisfiable = "range-not-satisfiable";
     public const string ExpectationFailed = "expectation-failed";
     public const string MisdirectedRequest = "misdirected-request";
+
+    /// <summary>
+    /// Часть полного HTTP-реестра. Middleware этот код НЕ выдаёт:
+    /// 422 в fallback по статусу даёт <see cref="ValidationError"/>, а категория
+    /// <see cref="ErrorCategory.Validation"/> намеренно мапится в 400.
+    /// Доступен только для ручного указания в IRfcException.ErrorCode.
+    /// </summary>
     public const string UnprocessableEntity = "unprocessable-entity";
+
     public const string ValidationError = "validation-error";
     public const string Locked = "locked";
     public const string FailedDependency = "failed-dependency";

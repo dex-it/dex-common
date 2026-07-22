@@ -339,7 +339,7 @@ public class RfcExceptionHandleMiddlewareTests
         }));
     }
 
-    // --- минимальный реализатор (DIM-дефолты: ErrorCode пуст, Extensions null) ---
+    // --- минимальный реализатор (ErrorCode объявлен явно и возвращает null; Extensions — null) ---
 
     [Test]
     public async Task MinimalRfcException_UsesCategoryCode_NoCustomExtensions()
@@ -378,9 +378,11 @@ public class RfcExceptionHandleMiddlewareTests
     [Test]
     public async Task ErrorCode_WithProblemsPrefix_IsStripped_NoDoublePrefix()
     {
-        // миграционная ловушка: перенос полного URI из 8.0.1 RfcType в ErrorCode
+        // Миграционная ловушка: перенос полного URI из 8.0.1 RfcType в ErrorCode.
+        // Категория Conflict, а код not-found — так тест отличает "префикс снят"
+        // от "код выродился и сработал fallback на код категории".
         using var host = BuildHost(_ => throw new TestRfcException(
-            ErrorCategory.NotFound, errorCode: "/problems/not-found"));
+            ErrorCategory.Conflict, errorCode: "/problems/not-found"));
         await host.StartAsync();
 
         var (_, body) = await SendAsync(host);
@@ -418,6 +420,89 @@ public class RfcExceptionHandleMiddlewareTests
             Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.NotFound));
     }
 
+    [TestCase("../../etc/passwd")]
+    [TestCase("with space")]
+    [TestCase("Card-Has-Debt")]
+    [TestCase("a//b")]
+    [TestCase("code!")]
+    public async Task ErrorCode_InvalidFormat_FallsBackToCategoryCode(string invalid)
+    {
+        // код не в формате lowercase-kebab => отбрасывается, type по категории (валидный URI)
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.Conflict, errorCode: invalid));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("type").GetString(),
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.Conflict));
+    }
+
+    [Test]
+    public async Task ErrorCode_MultiSegmentKebab_IsPreserved()
+    {
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.Conflict, errorCode: "conflict/card-has-debt"));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("type").GetString(),
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + "conflict/card-has-debt"));
+    }
+
+    // --- DIM-ловушка Extensions устранена (#6) ---
+
+    [Test]
+    public async Task DerivedException_ExtensionsFromDerived_AreNotLost()
+    {
+        // Extensions объявлены только в наследнике, IRfcException — на базе.
+        // После перевода Extensions в обычный член значения не теряются.
+        using var host = BuildHost(_ => throw new DerivedWithExtensionsException(ErrorCategory.Conflict));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("custom").GetString(), Is.EqualTo("derived-value"));
+    }
+
+    // --- уровень логирования по статусу (#4) ---
+
+    [Test]
+    public async Task Status5xx_LogsError_WithException()
+    {
+        var logs = new FakeLogCollector();
+        using var host = BuildHost(_ => throw new TestRfcException(ErrorCategory.IntegrationError),
+            configureServices: services => services.AddSingleton<ILoggerProvider>(new FakeLoggerProvider(logs)));
+        await host.StartAsync();
+
+        await SendAsync(host);
+
+        Assert.Multiple((Action)(() =>
+        {
+            Assert.That(logs.Entries.Count(e => e.Level == LogLevel.Error), Is.EqualTo(1));
+            Assert.That(logs.Entries.Any(e => e.Level == LogLevel.Error && e.HasException), Is.True);
+            Assert.That(logs.Entries.Any(e => e.Level == LogLevel.Warning), Is.False);
+        }));
+    }
+
+    [Test]
+    public async Task Status4xx_LogsWarning_NoError()
+    {
+        var logs = new FakeLogCollector();
+        using var host = BuildHost(_ => throw new TestRfcException(ErrorCategory.Conflict),
+            configureServices: services => services.AddSingleton<ILoggerProvider>(new FakeLoggerProvider(logs)));
+        await host.StartAsync();
+
+        await SendAsync(host);
+
+        Assert.Multiple((Action)(() =>
+        {
+            Assert.That(logs.Entries.Any(e => e.Level == LogLevel.Warning), Is.True);
+            Assert.That(logs.Entries.Any(e => e.Level == LogLevel.Error), Is.False);
+        }));
+    }
+
     // --- helpers ---
 
     private sealed class TestRfcException(
@@ -440,8 +525,8 @@ public class RfcExceptionHandleMiddlewareTests
 
     /// <summary>
     /// Минимальный реализатор контракта: только обязательные члены.
-    /// ErrorCode берётся из обычного члена интерфейса (по умолчанию null),
-    /// Extensions — из DIM-дефолта (null).
+    /// ErrorCode и Extensions объявлены явно и возвращают null
+    /// (оба — обычные члены интерфейса, не DIM).
     /// </summary>
     private sealed class MinimalRfcException(ErrorCategory category)
         : Exception("minimal"), IRfcException
@@ -450,6 +535,32 @@ public class RfcExceptionHandleMiddlewareTests
         public string? ErrorCode => null;
         public string Title => "Minimal";
         public string Detail => "minimal detail";
+        public IReadOnlyDictionary<string, string>? Extensions => null;
+    }
+
+    /// <summary>
+    /// Базовое доменное исключение, реализующее IRfcException.
+    /// </summary>
+    private abstract class BaseDomainException(ErrorCategory category)
+        : Exception("domain"), IRfcException
+    {
+        public ErrorCategory Category { get; } = category;
+        public virtual string? ErrorCode => null;
+        public string Title => "Domain";
+        public string Detail => "domain detail";
+        public virtual IReadOnlyDictionary<string, string>? Extensions => null;
+    }
+
+    /// <summary>
+    /// Наследник, добавляющий Extensions поверх базы. Проверяет, что после перевода
+    /// Extensions в обычный член (не DIM) значения наследника НЕ теряются при
+    /// интерфейсном вызове (доминирующий сценарий миграции 8.0.1 -> 8.1.0).
+    /// </summary>
+    private sealed class DerivedWithExtensionsException(ErrorCategory category)
+        : BaseDomainException(category)
+    {
+        public override IReadOnlyDictionary<string, string> Extensions =>
+            new Dictionary<string, string> { ["custom"] = "derived-value" };
     }
 
     private sealed class MappingConfig : DefaultRfcExceptionHandleConfig
@@ -460,5 +571,45 @@ public class RfcExceptionHandleMiddlewareTests
     private sealed class TeapotConfig : DefaultRfcExceptionHandleConfig
     {
         public override int ResolveHttpStatusCode(Exception exception) => StatusCodes.Status418ImATeapot;
+    }
+
+    // --- фейковый логгер для проверки уровня логирования ---
+
+    private sealed record LogEntry(LogLevel Level, bool HasException);
+
+    private sealed class FakeLogCollector
+    {
+        private readonly List<LogEntry> _entries = new();
+
+        public IReadOnlyList<LogEntry> Entries
+        {
+            get
+            {
+                lock (_entries)
+                    return _entries.ToList();
+            }
+        }
+
+        public void Add(LogEntry entry)
+        {
+            lock (_entries)
+                _entries.Add(entry);
+        }
+    }
+
+    private sealed class FakeLoggerProvider(FakeLogCollector collector) : ILoggerProvider
+    {
+        public ILogger CreateLogger(string categoryName) => new FakeLogger(collector);
+        public void Dispose() { }
+    }
+
+    private sealed class FakeLogger(FakeLogCollector collector) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state,
+            Exception? exception, Func<TState, Exception?, string> formatter)
+            => collector.Add(new LogEntry(logLevel, exception is not null));
     }
 }
