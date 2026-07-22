@@ -8,10 +8,9 @@
 ### Изменено
 - Работает с новым контрактом `Dex.RfcAbstractions` 8.1.0 (`ErrorCategory` + `ErrorCode`
   вместо `StatusCode` / `RfcType`). HTTP-статус и RFC 9457 `type` резолвит middleware.
-- `IntegrationError` теперь мапится в HTTP 503 (ранее 412): серверная retriable-семантика,
-  попадает в `LogError` и алерты.
-- Категория `Timeout` даёт `type` `timeout` (ранее `request-timeout`) — выровнено с
-  fallback-путём по HTTP-статусу.
+- Новая категория `IntegrationError` мапится в HTTP 503 (серверная retriable-семантика,
+  попадает в `LogError` и алерты).
+- Новая категория `Timeout` даёт `type` `timeout` (совпадает с fallback-путём 408).
 - Fallback-`type` для незамапленных статусов стал URI-подобным: `/problems/unknown`
   (ранее `unknown`), 418 → `/problems/im-a-teapot`.
 
