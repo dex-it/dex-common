@@ -16,6 +16,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>dex; middleware; exceptions handle; rfc</PackageTags>
         <Authors>dex team</Authors>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/CHANGELOG.md'))</PackageReleaseNotes>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>

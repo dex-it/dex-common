@@ -43,8 +43,10 @@ internal sealed class RfcExceptionHandleMiddleware(
             {
                 var (status, codeByCategory) = RfcExceptionCategoryMap.Resolve(rfcEx.Category);
                 rfcProblem.Status ??= status;
-                // пустой/whitespace доменный код => берём код по категории
-                errorCode = string.IsNullOrWhiteSpace(rfcEx.ErrorCode) ? codeByCategory : rfcEx.ErrorCode;
+                // нормализуем доменный код ДО выбора; если после нормализации пусто
+                // (null/whitespace/"/problems/"/"///") — берём код по категории
+                var normalized = NormalizeErrorCode(rfcEx.ErrorCode);
+                errorCode = normalized.Length == 0 ? codeByCategory : normalized;
             }
             else
             {
@@ -53,7 +55,7 @@ internal sealed class RfcExceptionHandleMiddleware(
             }
 
             // rfc type — единственная точка склейки префикса
-            rfcProblem.Type ??= RfcTypeConstants.ProblemTypePrefix + NormalizeErrorCode(errorCode);
+            rfcProblem.Type ??= RfcTypeConstants.ProblemTypePrefix + errorCode;
 
             // rfc stackTrace
             if (string.IsNullOrEmpty(exception.StackTrace) is false && environment.IsProduction() is false)
@@ -90,18 +92,23 @@ internal sealed class RfcExceptionHandleMiddleware(
     }
 
     /// <summary>
-    /// Нормализует код перед склейкой с префиксом: снимает уже присутствующий префикс
-    /// /problems/ и ведущие слэши, чтобы избежать битого type (/problems//x, двойного префикса).
+    /// Нормализует доменный код перед склейкой с префиксом: снимает уже присутствующий
+    /// префикс /problems/ и ведущие слэши. Возвращает пустую строку для null/whitespace
+    /// и для вырожденных значений ("/problems/", "///"), чтобы вызывающий код мог
+    /// откатиться на код категории и не получить битый type ("/problems/", "/problems//x").
     /// </summary>
-    private static string NormalizeErrorCode(string errorCode)
+    private static string NormalizeErrorCode(string? errorCode)
     {
+        if (string.IsNullOrWhiteSpace(errorCode))
+            return string.Empty;
+
         var code = errorCode.AsSpan().Trim();
 
         // снять уже присутствующий префикс /problems/ (миграционная ловушка из 8.0.1)
         if (code.StartsWith(RfcTypeConstants.ProblemTypePrefix, StringComparison.OrdinalIgnoreCase))
             code = code[RfcTypeConstants.ProblemTypePrefix.Length..];
 
-        // снять ведущие слэши
+        // снять ведущие слэши (в т.ч. случай "/problems///" -> "//" -> "")
         code = code.TrimStart('/');
 
         return code.ToString();

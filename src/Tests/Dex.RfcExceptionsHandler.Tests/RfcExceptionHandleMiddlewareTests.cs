@@ -402,6 +402,22 @@ public class RfcExceptionHandleMiddlewareTests
             Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + "custom-code"));
     }
 
+    [TestCase("/problems/")]
+    [TestCase("///")]
+    [TestCase("/problems///")]
+    public async Task ErrorCode_DegenerateAfterNormalization_FallsBackToCategoryCode(string degenerate)
+    {
+        // код, который непуст ДО нормализации, но пуст ПОСЛЕ — не должен давать битый "/problems/"
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.NotFound, errorCode: degenerate));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("type").GetString(),
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.NotFound));
+    }
+
     // --- helpers ---
 
     private sealed class TestRfcException(
