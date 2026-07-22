@@ -66,12 +66,12 @@ public enum ErrorCategory
     TooManyRequests,
 
     /// <summary>
-    /// Тайм-аут запроса. HTTP 408, код <see cref="RfcErrorCodes.RequestTimeout"/>.
+    /// Тайм-аут запроса. HTTP 408, код <see cref="RfcErrorCodes.Timeout"/>.
     /// </summary>
     Timeout,
 
     /// <summary>
-    /// Ошибка интеграции с внешним сервисом. HTTP 412, код <see cref="RfcErrorCodes.IntegrationError"/>.
+    /// Ошибка интеграции с внешним сервисом (серверная, retriable). HTTP 503, код <see cref="RfcErrorCodes.IntegrationError"/>.
     /// </summary>
     IntegrationError,
 

@@ -304,14 +304,102 @@ public class RfcExceptionHandleMiddlewareTests
     }
 
     [Test]
-    public async Task OperationCanceledException_Returns499()
+    public async Task OperationCanceledException_Returns499_WithUnknownType()
     {
         using var host = BuildHost(_ => throw new OperationCanceledException());
         await host.StartAsync();
 
-        var (response, _) = await SendAsync(host);
+        var (response, body) = await SendAsync(host);
 
-        Assert.That((int)response.StatusCode, Is.EqualTo(StatusCodes.Status499ClientClosedRequest));
+        Assert.Multiple((Action)(() =>
+        {
+            // 499 нет в таблице статусов => fallback-код "unknown"
+            Assert.That((int)response.StatusCode, Is.EqualTo(StatusCodes.Status499ClientClosedRequest));
+            Assert.That(body.RootElement.GetProperty("type").GetString(),
+                Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.Unknown));
+        }));
+    }
+
+    [Test]
+    public async Task Status418_Fallback_ReturnsImATeapotType()
+    {
+        // конфиг мапит любое не-IRfcException исключение в 418
+        using var host = BuildHost(_ => throw new InvalidOperationException("teapot"),
+            configureServices: services =>
+                services.AddSingleton<IRfcExceptionHandleConfig>(new TeapotConfig()));
+        await host.StartAsync();
+
+        var (response, body) = await SendAsync(host);
+
+        Assert.Multiple((Action)(() =>
+        {
+            Assert.That((int)response.StatusCode, Is.EqualTo(StatusCodes.Status418ImATeapot));
+            Assert.That(body.RootElement.GetProperty("type").GetString(),
+                Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.ImATeapot));
+        }));
+    }
+
+    // --- минимальный реализатор (DIM-дефолты: ErrorCode пуст, Extensions null) ---
+
+    [Test]
+    public async Task MinimalRfcException_UsesCategoryCode_NoCustomExtensions()
+    {
+        using var host = BuildHost(_ => throw new MinimalRfcException(ErrorCategory.NotFound));
+        await host.StartAsync();
+
+        var (response, body) = await SendAsync(host);
+
+        Assert.Multiple((Action)(() =>
+        {
+            Assert.That((int)response.StatusCode, Is.EqualTo(StatusCodes.Status404NotFound));
+            // ErrorCode не задан => type по категории
+            Assert.That(body.RootElement.GetProperty("type").GetString(),
+                Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.NotFound));
+            // кастомных extensions нет — только служебные (exceptionType/traceId)
+            Assert.That(body.RootElement.TryGetProperty("custom", out _), Is.False);
+        }));
+    }
+
+    // --- нормализация ErrorCode (#4) ---
+
+    [Test]
+    public async Task ErrorCode_Empty_FallsBackToCategoryCode()
+    {
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.Conflict, errorCode: "   "));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("type").GetString(),
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.Conflict));
+    }
+
+    [Test]
+    public async Task ErrorCode_WithProblemsPrefix_IsStripped_NoDoublePrefix()
+    {
+        // миграционная ловушка: перенос полного URI из 8.0.1 RfcType в ErrorCode
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.NotFound, errorCode: "/problems/not-found"));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("type").GetString(),
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + "not-found"));
+    }
+
+    [Test]
+    public async Task ErrorCode_WithLeadingSlash_IsTrimmed()
+    {
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.BadRequest, errorCode: "/custom-code"));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("type").GetString(),
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + "custom-code"));
     }
 
     // --- helpers ---
@@ -334,8 +422,27 @@ public class RfcExceptionHandleMiddlewareTests
         public void AddExtension(string key, string value) => _extensions[key] = value;
     }
 
+    /// <summary>
+    /// Минимальный реализатор контракта: только обязательные члены.
+    /// ErrorCode берётся из обычного члена интерфейса (по умолчанию null),
+    /// Extensions — из DIM-дефолта (null).
+    /// </summary>
+    private sealed class MinimalRfcException(ErrorCategory category)
+        : Exception("minimal"), IRfcException
+    {
+        public ErrorCategory Category { get; } = category;
+        public string? ErrorCode => null;
+        public string Title => "Minimal";
+        public string Detail => "minimal detail";
+    }
+
     private sealed class MappingConfig : DefaultRfcExceptionHandleConfig
     {
         public override Exception Map(Exception exception) => new ArgumentException("mapped", exception);
+    }
+
+    private sealed class TeapotConfig : DefaultRfcExceptionHandleConfig
+    {
+        public override int ResolveHttpStatusCode(Exception exception) => StatusCodes.Status418ImATeapot;
     }
 }

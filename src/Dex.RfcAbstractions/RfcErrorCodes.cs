@@ -1,7 +1,8 @@
 ﻿namespace Dex.RfcAbstractions;
 
 /// <summary>
-/// Коды ошибок для IRfcException.ErrorCode — путь после /problems/ (зеркало RfcTypes без префикса).
+/// Коды ошибок для IRfcException.ErrorCode — путь после /problems/.
+/// Полный RFC 9457 type собирается как RfcTypeConstants.ProblemTypePrefix + код.
 /// </summary>
 public static class RfcErrorCodes
 {

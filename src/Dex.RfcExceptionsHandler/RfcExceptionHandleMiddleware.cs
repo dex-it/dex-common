@@ -43,7 +43,8 @@ internal sealed class RfcExceptionHandleMiddleware(
             {
                 var (status, codeByCategory) = RfcExceptionCategoryMap.Resolve(rfcEx.Category);
                 rfcProblem.Status ??= status;
-                errorCode = rfcEx.ErrorCode ?? codeByCategory;
+                // пустой/whitespace доменный код => берём код по категории
+                errorCode = string.IsNullOrWhiteSpace(rfcEx.ErrorCode) ? codeByCategory : rfcEx.ErrorCode;
             }
             else
             {
@@ -52,7 +53,7 @@ internal sealed class RfcExceptionHandleMiddleware(
             }
 
             // rfc type — единственная точка склейки префикса
-            rfcProblem.Type ??= RfcTypeConstants.ProblemTypePrefix + errorCode;
+            rfcProblem.Type ??= RfcTypeConstants.ProblemTypePrefix + NormalizeErrorCode(errorCode);
 
             // rfc stackTrace
             if (string.IsNullOrEmpty(exception.StackTrace) is false && environment.IsProduction() is false)
@@ -86,6 +87,24 @@ internal sealed class RfcExceptionHandleMiddleware(
                 // ignore
             }
         }
+    }
+
+    /// <summary>
+    /// Нормализует код перед склейкой с префиксом: снимает уже присутствующий префикс
+    /// /problems/ и ведущие слэши, чтобы избежать битого type (/problems//x, двойного префикса).
+    /// </summary>
+    private static string NormalizeErrorCode(string errorCode)
+    {
+        var code = errorCode.AsSpan().Trim();
+
+        // снять уже присутствующий префикс /problems/ (миграционная ловушка из 8.0.1)
+        if (code.StartsWith(RfcTypeConstants.ProblemTypePrefix, StringComparison.OrdinalIgnoreCase))
+            code = code[RfcTypeConstants.ProblemTypePrefix.Length..];
+
+        // снять ведущие слэши
+        code = code.TrimStart('/');
+
+        return code.ToString();
     }
 
     private static string ResolveErrorCodeByHttpStatusCode(int statusCode) => statusCode switch

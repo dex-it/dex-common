@@ -22,8 +22,8 @@ public static class RfcExceptionCategoryMap
         ErrorCategory.PreconditionFailed => (StatusCodes.Status412PreconditionFailed, RfcErrorCodes.PreconditionFailed),
         ErrorCategory.PaymentRequired => (StatusCodes.Status402PaymentRequired, RfcErrorCodes.PaymentError),
         ErrorCategory.TooManyRequests => (StatusCodes.Status429TooManyRequests, RfcErrorCodes.TooManyRequests),
-        ErrorCategory.Timeout => (StatusCodes.Status408RequestTimeout, RfcErrorCodes.RequestTimeout),
-        ErrorCategory.IntegrationError => (StatusCodes.Status412PreconditionFailed, RfcErrorCodes.IntegrationError),
+        ErrorCategory.Timeout => (StatusCodes.Status408RequestTimeout, RfcErrorCodes.Timeout),
+        ErrorCategory.IntegrationError => (StatusCodes.Status503ServiceUnavailable, RfcErrorCodes.IntegrationError),
         ErrorCategory.ServiceUnavailable => (StatusCodes.Status503ServiceUnavailable, RfcErrorCodes.ServiceUnavailable),
         _ => (StatusCodes.Status500InternalServerError, RfcErrorCodes.InternalServerError)
     };
