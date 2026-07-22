@@ -13,6 +13,13 @@
 - Новая категория `Timeout` даёт `type` `timeout` (совпадает с fallback-путём 408).
 - Fallback-`type` для незамапленных статусов стал URI-подобным: `/problems/unknown`
   (ранее `unknown`), 418 → `/problems/im-a-teapot`.
+- Доменный `ErrorCode` нормализуется и валидируется: снимаются префикс `/problems/` и
+  ведущие слэши; значение проверяется на формат lowercase-kebab
+  `^[a-z0-9]+(-[a-z0-9]+)*(/[a-z0-9]+(-[a-z0-9]+)*)*$`. Невалидное или вырожденное
+  значение отбрасывается с откатом на код по категории.
+- Кастомные `Extensions` не могут перезаписать зарезервированные ключи RFC 9457
+  (`type`/`title`/`status`/`detail`/`instance`) и служебные (`exceptionType`/
+  `exceptionData`/`stackTrace`/`traceId`) — такие ключи пропускаются.
 
 ### Совместимость
 - Минимально совместимая пара `Dex.RfcExceptionsHandler` + `Dex.RfcAbstractions` = 8.1.0.

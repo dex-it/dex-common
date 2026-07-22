@@ -196,10 +196,19 @@ internal sealed partial class RfcExceptionHandleMiddleware(
                 Extensions = extensions
             };
 
-        // custom rfc extensions
+        // custom rfc extensions — reserved-ключи (RFC 9457 top-level + служебные) не
+        // перезаписываем: иначе дубль-ключи в JSON и подмена валидированного type/status
         if (rfcException.Extensions is { Count: > 0 } exExt)
             foreach (var kv in exExt)
+            {
+                if (RfcExtensionKeys.ReservedKeys.Contains(kv.Key))
+                {
+                    logger.LogDebug("Custom extension key {ExtensionKey} is reserved and was skipped", kv.Key);
+                    continue;
+                }
+
                 extensions[kv.Key] = kv.Value;
+            }
 
         var problemDetails = new ProblemDetails
         {

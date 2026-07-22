@@ -2,6 +2,9 @@ namespace Dex.RfcAbstractions;
 
 /// <summary>
 /// Категория проблемы. Инфраструктура (middleware) мапит её в HTTP-статус и RFC 9457 type.
+/// HTTP-статусы в xml-doc членов ниже приведены для справки; ЕДИНСТВЕННЫЙ источник истины —
+/// RfcExceptionCategoryMap в пакете Dex.RfcExceptionsHandler. При изменении статуса в карте
+/// синхронно обновляй соответствующий xml-doc здесь.
 /// </summary>
 public enum ErrorCategory
 {

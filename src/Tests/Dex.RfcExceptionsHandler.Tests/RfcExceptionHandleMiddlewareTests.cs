@@ -375,20 +375,37 @@ public class RfcExceptionHandleMiddlewareTests
             Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + RfcErrorCodes.Conflict));
     }
 
-    [Test]
-    public async Task ErrorCode_WithProblemsPrefix_IsStripped_NoDoublePrefix()
+    // Миграционная ловушка: перенос полного URI из 8.0.1 RfcType в ErrorCode.
+    // Категория Conflict, а код not-found — так тест отличает "префикс снят"
+    // от "код выродился и сработал fallback на код категории".
+    // Разный регистр префикса проверяет, что срез регистронезависимый.
+    [TestCase("/problems/not-found", "not-found")]
+    [TestCase("/PROBLEMS/not-found", "not-found")]
+    [TestCase("/Problems/not-found", "not-found")]
+    public async Task ErrorCode_WithProblemsPrefix_IsStripped_NoDoublePrefix(string errorCode, string expected)
     {
-        // Миграционная ловушка: перенос полного URI из 8.0.1 RfcType в ErrorCode.
-        // Категория Conflict, а код not-found — так тест отличает "префикс снят"
-        // от "код выродился и сработал fallback на код категории".
         using var host = BuildHost(_ => throw new TestRfcException(
-            ErrorCategory.Conflict, errorCode: "/problems/not-found"));
+            ErrorCategory.Conflict, errorCode: errorCode));
         await host.StartAsync();
 
         var (_, body) = await SendAsync(host);
 
         Assert.That(body.RootElement.GetProperty("type").GetString(),
-            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + "not-found"));
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + expected));
+    }
+
+    [TestCase("error-404", "error-404")]
+    [TestCase("conflict/sub-2", "conflict/sub-2")]
+    public async Task ErrorCode_WithDigits_IsPreserved(string errorCode, string expected)
+    {
+        using var host = BuildHost(_ => throw new TestRfcException(
+            ErrorCategory.Conflict, errorCode: errorCode));
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        Assert.That(body.RootElement.GetProperty("type").GetString(),
+            Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + expected));
     }
 
     [Test]
@@ -464,6 +481,43 @@ public class RfcExceptionHandleMiddlewareTests
         var (_, body) = await SendAsync(host);
 
         Assert.That(body.RootElement.GetProperty("custom").GetString(), Is.EqualTo("derived-value"));
+    }
+
+    // --- reserved-ключи в custom Extensions не перезаписываются (#A) ---
+
+    [Test]
+    public async Task CustomExtensions_ReservedRfcKeys_AreNotOverwritten()
+    {
+        var ex = new TestRfcException(ErrorCategory.Conflict, errorCode: "card-has-debt");
+        // попытка инъекции зарезервированных RFC 9457 членов через Extensions
+        ex.AddExtension("type", "javascript:alert(1)");
+        ex.AddExtension("status", "200");
+        ex.AddExtension("detail", "injected");
+        ex.AddExtension("instance", "/injected");
+        ex.AddExtension("title", "injected title");
+        // и служебного ключа middleware
+        ex.AddExtension("exceptionType", "Fake");
+        // легитимный кастомный ключ должен пройти
+        ex.AddExtension("customField", "ok");
+
+        using var host = BuildHost(_ => throw ex);
+        await host.StartAsync();
+
+        var (response, body) = await SendAsync(host);
+        var root = body.RootElement;
+
+        Assert.Multiple((Action)(() =>
+        {
+            // reserved-ключи сохранили значения middleware, а не инъекцию
+            Assert.That((int)response.StatusCode, Is.EqualTo(StatusCodes.Status409Conflict));
+            Assert.That(root.GetProperty("type").GetString(),
+                Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + "card-has-debt"));
+            Assert.That(root.GetProperty("status").GetInt32(), Is.EqualTo(StatusCodes.Status409Conflict));
+            Assert.That(root.GetProperty("detail").GetString(), Is.Not.EqualTo("injected"));
+            Assert.That(root.GetProperty("exceptionType").GetString(), Is.Not.EqualTo("Fake"));
+            // легитимный ключ прошёл
+            Assert.That(root.GetProperty("customField").GetString(), Is.EqualTo("ok"));
+        }));
     }
 
     // --- уровень логирования по статусу (#4) ---
