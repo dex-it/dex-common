@@ -489,14 +489,16 @@ public class RfcExceptionHandleMiddlewareTests
     public async Task CustomExtensions_ReservedRfcKeys_AreNotOverwritten()
     {
         var ex = new TestRfcException(ErrorCategory.Conflict, errorCode: "card-has-debt");
-        // попытка инъекции зарезервированных RFC 9457 членов через Extensions
+        // попытка инъекции всех reserved-ключей RFC 9457 (в т.ч. разный регистр)
         ex.AddExtension("type", "javascript:alert(1)");
-        ex.AddExtension("status", "200");
+        ex.AddExtension("Status", "200");        // смена регистра не должна обойти защиту
         ex.AddExtension("detail", "injected");
         ex.AddExtension("instance", "/injected");
         ex.AddExtension("title", "injected title");
-        // и служебного ключа middleware
+        // и служебных ключей middleware
         ex.AddExtension("exceptionType", "Fake");
+        ex.AddExtension("exceptionData", "injected-data");
+        ex.AddExtension("traceId", "injected-trace");
         // легитимный кастомный ключ должен пройти
         ex.AddExtension("customField", "ok");
 
@@ -514,10 +516,33 @@ public class RfcExceptionHandleMiddlewareTests
                 Is.EqualTo(RfcTypeConstants.ProblemTypePrefix + "card-has-debt"));
             Assert.That(root.GetProperty("status").GetInt32(), Is.EqualTo(StatusCodes.Status409Conflict));
             Assert.That(root.GetProperty("detail").GetString(), Is.Not.EqualTo("injected"));
+            Assert.That(root.GetProperty("title").GetString(), Is.Not.EqualTo("injected title"));
+            Assert.That(root.GetProperty("instance").GetString(), Is.Not.EqualTo("/injected"));
             Assert.That(root.GetProperty("exceptionType").GetString(), Is.Not.EqualTo("Fake"));
+            Assert.That(root.GetProperty("traceId").GetString(), Is.Not.EqualTo("injected-trace"));
+            // "Status" в другом регистре не должен просочиться отдельным членом
+            Assert.That(root.TryGetProperty("Status", out _), Is.False);
             // легитимный ключ прошёл
             Assert.That(root.GetProperty("customField").GetString(), Is.EqualTo("ok"));
         }));
+    }
+
+    [Test]
+    public async Task CustomExtensions_StackTrace_NotLeakedInProduction()
+    {
+        // домен кладёт stackTrace в Extensions — reserved-ключ, не должен утечь в тело
+        var ex = new TestRfcException(ErrorCategory.Conflict, errorCode: "card-has-debt");
+        ex.AddExtension("stackTrace", "SECRET-INTERNAL-TRACE");
+
+        using var host = BuildHost(_ => throw ex, Environments.Production);
+        await host.StartAsync();
+
+        var (_, body) = await SendAsync(host);
+
+        // в Production middleware свой stackTrace не пишет, а кастомный reserved-ключ отброшен
+        var hasLeak = body.RootElement.TryGetProperty("stackTrace", out var st)
+            && st.GetString() == "SECRET-INTERNAL-TRACE";
+        Assert.That(hasLeak, Is.False);
     }
 
     // --- уровень логирования по статусу (#4) ---
