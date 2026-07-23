@@ -520,6 +520,8 @@ public class RfcExceptionHandleMiddlewareTests
             Assert.That(root.GetProperty("instance").GetString(), Is.Not.EqualTo("/injected"));
             Assert.That(root.GetProperty("exceptionType").GetString(), Is.Not.EqualTo("Fake"));
             Assert.That(root.GetProperty("traceId").GetString(), Is.Not.EqualTo("injected-trace"));
+            // exceptionData: reserved, выставляется middleware ДО слияния — кастом его не подменяет
+            Assert.That(root.TryGetProperty("exceptionData", out _), Is.False);
             // "Status" в другом регистре не должен просочиться отдельным членом
             Assert.That(root.TryGetProperty("Status", out _), Is.False);
             // легитимный ключ прошёл
