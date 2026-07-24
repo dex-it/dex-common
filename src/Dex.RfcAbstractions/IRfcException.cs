@@ -1,67 +1,51 @@
-﻿using System.Collections.Immutable;
-using Microsoft.AspNetCore.Http;
-
-namespace Dex.RfcExceptions;
+﻿namespace Dex.RfcAbstractions;
 
 /// <summary>
-/// Represents an application exception that can be converted to
-/// an RFC 7807 / HTTP API error response.
+/// Контракт прикладного исключения для конвертации в RFC 9457 / ProblemDetails.
+/// НЕ несёт HTTP-статус и RFC-URI — их резолвит middleware по <see cref="Category"/>.
+/// HTTP-статус выбирается ТОЛЬКО категорией (см. RfcExceptionCategoryMap): произвольные
+/// статусы (410, 422, 423, 451 и т.п.) контрактом не выражаются — подберите ближайшую по
+/// смыслу <see cref="ErrorCategory"/> (статус возьмётся из неё), при необходимости уточните
+/// type через <see cref="ErrorCode"/>.
 /// </summary>
-/// <remarks>
-/// Use this contract for domain and application exceptions that should be
-/// exposed to API clients in a stable and predictable format.
-/// <para>
-/// The values returned by this interface are used to populate
-/// <see cref="Microsoft.AspNetCore.Mvc.ProblemDetails"/>.
-/// </para>
-/// </remarks>
 public interface IRfcException
 {
-    protected internal static readonly ImmutableDictionary<string, string> NoExtensions = ImmutableDictionary.Create<string, string>();
+    /// <summary>
+    /// Категория проблемы. Единственное обязательное описание природы ошибки.
+    /// Определяет HTTP-статус и (при пустом <see cref="ErrorCode"/>) RFC 9457 type.
+    /// </summary>
+    ErrorCategory Category { get; }
 
     /// <summary>
-    /// Gets the HTTP status code that should be returned to the client.
+    /// Короткий доменный код без префикса /problems/ (например "card-has-debt").
+    /// Ожидаемый формат — lowercase-kebab-сегменты: ^[a-z0-9]+(-[a-z0-9]+)*(/[a-z0-9]+(-[a-z0-9]+)*)*$
+    /// (крайние и сдвоенные дефисы не допускаются).
+    /// Значение, не подходящее под формат (пробелы, "..", регистр и т.п.), middleware
+    /// отбросит и подставит type по <see cref="Category"/>. null/пусто — тоже type по категории.
+    /// Не является default-членом намеренно: добавленный только в наследнике DIM-член
+    /// не участвует в interface mapping и молча теряется — реализуй явно в каждом типе.
     /// </summary>
-    /// <value>
-    /// A valid HTTP status code, for example
-    /// <see cref="Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest"/>,
-    /// <see cref="StatusCodes.Status404NotFound"/>,
-    /// <see cref="StatusCodes.Status409Conflict"/>.
-    /// </value>
-    int StatusCode { get; }
+    string? ErrorCode { get; }
 
     /// <summary>
-    /// Gets the stable problem type identifier.
+    /// Стабильный заголовок типа проблемы.
     /// </summary>
-    /// <value>
-    /// A stable URI or URI-like string that identifies the category of the problem,
-    /// for example <c>/problems/not-found</c> or <c>/problems/validation-error</c>.
-    /// </value>
-    /// <remarks>
-    /// This value should describe the problem category, not the .NET exception type.
-    /// </remarks>
-    string RfcType { get; }
-
-    /// <summary>
-    /// Gets the short, human-readable summary of the problem type.
-    /// </summary>
-    /// <value>
-    /// A stable title such as <c>Resource not found</c>,
-    /// <c>Validation failed</c>, or <c>Conflict</c>.
-    /// </value>
     string Title { get; }
 
     /// <summary>
-    /// Gets the human-readable explanation specific to the current occurrence.
+    /// Описание конкретного случая. null => detail не попадёт в тело.
+    /// ВНИМАНИЕ: значение уходит клиенту во ВСЕХ окружениях, включая Production.
+    /// Не помещай сюда stack trace, секреты, строки подключения и внутреннюю диагностику.
     /// </summary>
-    /// <value>
-    /// Additional details for the current error instance.
-    /// This value may be <see langword="null"/> when no extra details should be exposed.
-    /// </value>
-    /// <remarks>
-    /// Do not put stack traces, secrets, connection strings, or other internal diagnostics here.
-    /// </remarks>
     string? Detail { get; }
 
-    IDictionary<string, string> RfcExtensions => NoExtensions;
+    /// <summary>
+    /// Опциональные машиночитаемые доп-данные для extensions. null => доп-данных нет.
+    /// Не является default-членом намеренно (симметрично <see cref="ErrorCode"/>):
+    /// добавленный только в наследнике DIM-член не участвует в interface mapping и молча
+    /// теряется — реализуй явно в каждом типе (можно вернуть null).
+    /// ВНИМАНИЕ: значения уходят клиенту во ВСЕХ окружениях, включая Production.
+    /// Не помещай сюда секреты и внутреннюю диагностику.
+    /// </summary>
+    IReadOnlyDictionary<string, string>? Extensions { get; }
 }
