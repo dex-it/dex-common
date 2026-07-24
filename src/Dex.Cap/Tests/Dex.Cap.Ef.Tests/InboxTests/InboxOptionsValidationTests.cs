@@ -23,10 +23,12 @@ public class InboxOptionsValidationTests
         Assert.IsTrue(result.Succeeded, result.FailureMessage ?? string.Empty);
     }
 
-    [TestCase(0, 100, 1, "Retries")]
-    [TestCase(-1, 100, 1, "Retries")]
-    [TestCase(3, 0, 1, "MessagesToProcess")]
-    [TestCase(3, 100, 0, "ConcurrencyLimit")]
+    // Ожидаемые подстроки идут ВМЕСТЕ с именем типа опций: аутбокс объявляет опции с теми же именами, и
+    // проверка по голому имени свойства не заметила бы потерю префикса.
+    [TestCase(0, 100, 1, "InboxOptions.Retries")]
+    [TestCase(-1, 100, 1, "InboxOptions.Retries")]
+    [TestCase(3, 0, 1, "InboxOptions.MessagesToProcess")]
+    [TestCase(3, 100, 0, "InboxOptions.ConcurrencyLimit")]
     [TestCase(3, 10, 11, "should not exceed")]
     public void Options_InvalidCombination_IsRejected(int retries, int messagesToProcess, int concurrencyLimit, string expectedInMessage)
     {
@@ -59,7 +61,9 @@ public class InboxOptionsValidationTests
         var result = new InboxOptionsValidator().Validate(null, options);
 
         Assert.IsFalse(result.Succeeded);
-        Assert.IsTrue(result.FailureMessage!.Contains(nameof(InboxOptions.GetFreeMessagesTimeout), StringComparison.Ordinal));
+        Assert.IsTrue(
+            result.FailureMessage!.Contains($"{nameof(InboxOptions)}.{nameof(InboxOptions.GetFreeMessagesTimeout)}", StringComparison.Ordinal),
+            result.FailureMessage);
     }
 
     [Test]
@@ -70,6 +74,40 @@ public class InboxOptionsValidationTests
         var result = new InboxOptionsValidator().Validate(null, options);
 
         Assert.IsTrue(result.Succeeded, result.FailureMessage ?? string.Empty);
+    }
+
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void Options_NonPositiveMaxContentLengthBytes_IsRejected(int maxContentLengthBytes)
+    {
+        var options = new InboxOptions { MaxContentLengthBytes = maxContentLengthBytes };
+
+        var result = new InboxOptionsValidator().Validate(null, options);
+
+        Assert.IsFalse(result.Succeeded);
+
+        // Именно с типом: аутбокс объявляет одноимённую опцию, а склейка отказов в
+        // OptionsValidationException.Message тип не несёт, он остаётся только в OptionsType.
+        Assert.IsTrue(
+            result.FailureMessage!.Contains($"{nameof(InboxOptions)}.{nameof(InboxOptions.MaxContentLengthBytes)}", StringComparison.Ordinal),
+            result.FailureMessage);
+    }
+
+    [Test]
+    public void Options_SmallestPositiveMaxContentLengthBytes_IsAccepted()
+    {
+        var options = new InboxOptions { MaxContentLengthBytes = 1 };
+
+        var result = new InboxOptionsValidator().Validate(null, options);
+
+        Assert.IsTrue(result.Succeeded, result.FailureMessage ?? string.Empty);
+    }
+
+    [Test]
+    public void DefaultMaxContentLengthBytes_Is1MiB()
+    {
+        Assert.AreEqual(1024 * 1024, InboxOptions.DefaultMaxContentLengthBytes);
+        Assert.AreEqual(InboxOptions.DefaultMaxContentLengthBytes, new InboxOptions().MaxContentLengthBytes);
     }
 
     [Test]

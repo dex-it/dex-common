@@ -3,8 +3,21 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Options;
 
+/// <summary>
+/// Правила <see cref="OutboxOptions"/>, кроме <see cref="OutboxOptions.MaxContentLengthBytes"/>.
+/// </summary>
+/// <remarks>
+/// Валидатор исторически не подключён к контейнеру, поэтому перечисленные здесь правила не исполняются;
+/// подключение целиком вынесено в issue #239. Размер тела намеренно вынесен в отдельный внутренний
+/// <c>OutboxMaxContentLengthBytesValidator</c>: его регистрирует <c>AddOutbox</c> из пакета
+/// <c>Dex.Cap.Outbox.Ef</c>, поэтому именно там правило про размер работает на старте хоста. Дубль правила
+/// здесь давал бы два сообщения об одной ошибке. Кто собирает DI руками, регистрирует правила сам.
+/// </remarks>
 public class OutboxOptionsValidator : IValidateOptions<OutboxOptions>
 {
+    /// <summary>Проверить конфигурацию аутбокса. Возвращает первый отказ, а не полный список.</summary>
+    /// <param name="name">Имя экземпляра опций; правила от него не зависят.</param>
+    /// <param name="options">Проверяемая конфигурация.</param>
     public ValidateOptionsResult Validate(string? name, OutboxOptions? options)
     {
         if (options == null)

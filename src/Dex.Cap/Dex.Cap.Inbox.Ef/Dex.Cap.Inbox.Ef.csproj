@@ -5,8 +5,8 @@
         <Nullable>enable</Nullable>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <PackageTags>inbox business-transaction consistency idempotency EF implementation</PackageTags>
-        <InformationalVersion>8.4</InformationalVersion>
-        <PackageVersion>8.4.0</PackageVersion>
+        <InformationalVersion>8.5</InformationalVersion>
+        <PackageVersion>8.5.0</PackageVersion>
         <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
         <FileVersion>$(PackageVersion)</FileVersion>
     </PropertyGroup>
@@ -17,6 +17,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>dex team</Authors>
         <Description>Хранилище Dex.Cap.Inbox на Entity Framework Core и PostgreSQL: атомарный захват сообщения и его обработка в одной транзакции с обработчиком.</Description>
+        <PackageReleaseNotes>8.5.0: размер Content ограничен опцией MaxContentLengthBytes (дефолт 1 МиБ, байты UTF-8), приём тела сверх предела бросает InboxContentTooLargeException. Проверка идёт до записи в БД, неположительное значение роняет старт хоста (AddInbox валидирует опции на старте). Миграция не нужна. Поднять предел: services.Configure&lt;InboxOptions&gt;(o =&gt; o.MaxContentLengthBytes = 8 * 1024 * 1024). Полный список изменений поведения: https://github.com/dex-it/dex-common/tree/main/src/Dex.Cap#breaking-changes</PackageReleaseNotes>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
