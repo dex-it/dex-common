@@ -5,16 +5,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.MassTransit.Rabbit;
 
-public abstract class BaseConsumer<TMessage>(ILogger logger) : IConsumer<TMessage>
-    where TMessage : class
+public abstract class BaseConsumer<TMessage>(ILogger logger) : IConsumer<TMessage> where TMessage : class
 {
     private ConsumeContext<TMessage>? _context;
     protected ILogger Logger { get; } = logger;
 
     public virtual async Task Consume(ConsumeContext<TMessage> context)
     {
-        context = context ?? throw new ArgumentNullException(nameof(context));
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
 
         try
         {
