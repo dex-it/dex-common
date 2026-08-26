@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -43,9 +45,16 @@ public abstract class BaseConsumer<TMessage>(ILogger logger) : IConsumer<TMessag
         throw new DeferConsumerException();
     }
 
-    protected virtual void LogError(ConsumeContext<TMessage> context, Exception e)
+    protected void LogError(ConsumeContext<TMessage> context, Exception e)
     {
-        Logger.LogError(e, "Consumer process failed. [{@MessageData}]", context.Message);
+        const int messageDataLimit = 500;
+
+        var messageJson = JsonSerializer.Serialize(context.Message);
+
+        var messageDataOversize = messageJson.Length > messageDataLimit;
+        var messageData = messageJson.Take(messageDataLimit).Concat(messageDataOversize ? "..." : []);
+
+        Logger.LogError(e, "Consumer process failed. [{MessageData}]", messageData);
     }
 
     private sealed class DeferConsumerException : Exception;
