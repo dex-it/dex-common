@@ -45,7 +45,7 @@ public abstract class BaseConsumer<TMessage>(ILogger logger) : IConsumer<TMessag
         throw new DeferConsumerException();
     }
 
-    protected void LogError(ConsumeContext<TMessage> context, Exception e)
+    protected virtual void LogError(ConsumeContext<TMessage> context, Exception e)
     {
         Logger.LogError(e, "Consumer process failed. [{@MessageData}]", context.Message);
     }
