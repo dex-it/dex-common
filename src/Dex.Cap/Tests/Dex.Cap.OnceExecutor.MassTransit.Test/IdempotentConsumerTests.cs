@@ -1,6 +1,5 @@
 using Dex.Cap.Common.Ef;
 using Dex.Cap.Common.Interfaces;
-using Dex.Cap.OnceExecutor;
 using Dex.Cap.Outbox.OnceExecutor.MassTransit;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -25,7 +24,7 @@ public class IdempotentConsumerTests
         var logger = new RecordingLogger();
         var consumer = new FailingConsumer<KeyedMessage>(logger);
 
-        ConsumeAndCatch(consumer, Context(new KeyedMessage { IdempotentKey = "order-42" }));
+        ConsumeExpectingFailure(consumer, Context(new KeyedMessage { IdempotentKey = "order-42" }));
 
         Assert.That(logger.Records.Single().Scope["IdempotentKey"], Is.EqualTo("order-42"));
     }
@@ -37,7 +36,7 @@ public class IdempotentConsumerTests
         var consumer = new FailingConsumer<PlainMessage>(logger);
         var messageId = Guid.NewGuid();
 
-        ConsumeAndCatch(consumer, Context(new PlainMessage(), messageId));
+        ConsumeExpectingFailure(consumer, Context(new PlainMessage(), messageId));
 
         Assert.That(logger.Records.Single().Scope["IdempotentKey"], Is.EqualTo(messageId.ToString("N")));
     }
@@ -49,7 +48,7 @@ public class IdempotentConsumerTests
         var consumer = new FailingConsumer<PlainMessage>(logger);
 
         // ни ключа в сообщении, ни MessageId: вычисление ключа падает само, ещё до операции
-        Func<Task> consume = () => consumer.Consume(Context(new PlainMessage()));
+        var consume = () => consumer.Consume(Context(new PlainMessage()));
         var exception = Assert.ThrowsAsync<ArgumentNullException>(consume)!;
 
         var record = logger.Records.Single();
@@ -57,12 +56,12 @@ public class IdempotentConsumerTests
         Assert.That(record.Scope["IdempotentKey"], Is.Null);
     }
 
-    private static InvalidOperationException ConsumeAndCatch<TMessage>(IConsumer<TMessage> consumer, ConsumeContext<TMessage> context)
+    private static void ConsumeExpectingFailure<TMessage>(IConsumer<TMessage> consumer, ConsumeContext<TMessage> context)
         where TMessage : class
     {
-        Func<Task> consume = () => consumer.Consume(context);
+        var consume = () => consumer.Consume(context);
 
-        return Assert.ThrowsAsync<InvalidOperationException>(consume)!;
+        Assert.ThrowsAsync<InvalidOperationException>(consume);
     }
 
     private static ConsumeContext<TMessage> Context<TMessage>(TMessage message, Guid? messageId = null)
@@ -78,14 +77,10 @@ public class IdempotentConsumerTests
     /// <summary>
     /// Консьюмер, падающий до обращения к базе: тело операции не выполняется.
     /// </summary>
-    private sealed class FailingConsumer<TMessage> : IdempotentConsumer<TMessage, object>
+    private sealed class FailingConsumer<TMessage>(ILogger logger) : IdempotentConsumer<TMessage, object>(OnceExecutor(), logger)
         where TMessage : class
     {
-        public const string FailureMessage = "process failed";
-
-        public FailingConsumer(ILogger logger) : base(OnceExecutor(), logger)
-        {
-        }
+        private const string FailureMessage = "process failed";
 
         protected override Task IdempotentProcess(ConsumeContext<TMessage> context) => Task.CompletedTask;
 
@@ -113,7 +108,7 @@ public class IdempotentConsumerTests
                 .SelectMany(x => x)
                 .ToDictionary(x => x.Key, x => x.Value);
 
-            Records.Add(new Record(logLevel, exception, scope));
+            Records.Add(new Record(exception, scope));
         }
 
         public bool IsEnabled(LogLevel logLevel) => true;
@@ -125,12 +120,12 @@ public class IdempotentConsumerTests
 
             _scopes.Add(scope);
 
-            return new Scope(_scopes, scope);
+            return new ScopeToken(_scopes, scope);
         }
 
-        internal sealed record Record(LogLevel Level, Exception? Exception, Dictionary<string, object?> Scope);
+        internal sealed record Record(Exception? Exception, Dictionary<string, object?> Scope);
 
-        private sealed class Scope(List<Dictionary<string, object?>> scopes, Dictionary<string, object?> scope) : IDisposable
+        private sealed class ScopeToken(List<Dictionary<string, object?>> scopes, Dictionary<string, object?> scope) : IDisposable
         {
             public void Dispose() => scopes.Remove(scope);
         }
@@ -148,7 +143,4 @@ public sealed class KeyedMessage : IIdempotentKey
 /// <summary>
 /// Сообщение без ключа: ключом становится MessageId.
 /// </summary>
-public sealed class PlainMessage
-{
-    public string Name { get; init; } = string.Empty;
-}
+public sealed class PlainMessage;
