@@ -119,20 +119,32 @@ public class PaymentConsumer(ILogger<PaymentConsumer> log) : BaseConsumer<Paymen
 
 On failure `BaseConsumer<T>` writes one error record via `ILogger.LogConsumeError` (a consumer of several message types calls it from its own `catch`): message type, `MessageId`, `ConversationId`, retry attempt and the message body as a single JSON string, truncated to `MessageDataLimit` bytes of UTF-8 (4000 by default, overridable).
 
-The body is written as is. To mask secrets in it, register an `IMessageDataMasker` in the container the consumers are resolved from — consumers themselves stay unchanged:
+The body is written as is unless an `IMessageDataMasker` is registered in the container the consumers are resolved from — consumers themselves stay unchanged. The package does **not** register one. A ready-made masker by field names is included; register it yourself:
 
 ```csharp
-services.AddSingleton<IMessageDataMasker, MyMasker>();
+// default names: fragments password, passwd, secret, token, apikey, authorization, credential, privatekey;
+// exact names pin, pwd, cvv, cvc, otp (case, "_", "-" and "." are ignored)
+services.AddSingleton<IMessageDataMasker, SensitiveNamesMessageDataMasker>();
 
+// or your own list instead of the default one
+services.AddSingleton<IMessageDataMasker>(SensitiveNamesMessageDataMasker.Create(
+    nameFragments: ["password", "token", "iban"],
+    exactNames: ["pin"]));
+```
+
+A value under a matching name — string, number, object or array — is replaced with `"***"` as a whole. To apply your own rules, implement the interface and register it the same way:
+
+```csharp
 public sealed class MyMasker : IMessageDataMasker
 {
-    // json: the serialized body, at most `limit` bytes, cut on a character boundary;
+    // json: the serialized body or its beginning, cut on a character boundary;
     // isComplete == false means only the beginning of the body was passed.
+    // Return at most `limit` bytes of UTF-8 and mark an incomplete result yourself.
     public string Mask(ReadOnlySpan<byte> json, bool isComplete, int limit) => ...;
 }
 ```
 
-The input size limit stays with the package: the masker receives the already truncated beginning of the body, and the package appends the `...` truncation mark itself. The masker's result is not truncated — keeping it within `limit` is the masker's job. Only consumers resolved from the container get the masker: a consumer registered by factory or instance (`e.Consumer(() => new ...)`, `Instance`, `Handler`) writes the body unmasked. If the masker (or its resolution) throws, the record gets `<not masked: ExceptionType>` instead of the body, and the original consumer exception is kept.
+With a masker the package serializes up to four times `MessageDataLimit` and hands that to the masker, so the space freed by masked values goes to the following fields; the whole message graph is still never walked. The result is written as the masker returns it: the package neither truncates it nor adds the `...` mark. Only consumers resolved from the container get the masker: a consumer registered by factory or instance (`e.Consumer(() => new ...)`, `Instance`, `Handler`) writes the body unmasked. If the masker (or its resolution) throws, the record gets `<not masked: ExceptionType>` instead of the body, and the original consumer exception is kept.
 
 ### Retry and redelivery
 

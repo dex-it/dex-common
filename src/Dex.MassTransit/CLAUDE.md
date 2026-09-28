@@ -15,8 +15,9 @@
 `RabbitMqOptions`: Host, Port, VHost, Username, Password, IsSecure, CertificatePath.
 Методы: `RegisterBus<>()`, `RegisterReceiveEndpoint<>()`, `RegisterSendEndPoint<>()`.
 `BaseConsumer<TMessage>`: абстрактный базовый consumer с обработкой ошибок и `Defer()`.
-Запись об ошибке — `ILogger.LogConsumeError`: тело сообщения усекается до `MessageDataLimit` и, если в контейнере консьюмера
-зарегистрирован `IMessageDataMasker`, проходит через него (берётся из payload `IServiceProvider` контекста).
+Запись об ошибке — `ILogger.LogConsumeError`: тело сообщения усекается до `MessageDataLimit`; если в контейнере консьюмера
+зарегистрирован `IMessageDataMasker` (берётся из payload `IServiceProvider` контекста), он получает вход с запасом
+`MaskerInputFactor` над лимитом и сам укладывает результат в лимит. Готовый `SensitiveNamesMessageDataMasker` пакет не регистрирует.
 Retry-конфигурация: `UseRedeliveryRetryConfiguration()`, `UseRetryConfiguration()`, `UseLimitPrefetchConfiguration()`.
 
 ## SQS
@@ -43,3 +44,5 @@ configurator.LinkActivityTracingContext(); // включено по умолча
 - BaseConsumer.Defer() бросает internal exception для пропуска логирования ошибки
 - Сбой маскировщика или его разрешения из контейнера тело не открывает: в `MessageData` уходит `<not masked: Тип>`
 - Маскировщик получает только консьюмер из контейнера: зарегистрированный фабрикой или экземпляром пишет тело без маски
+- У `SensitiveNamesMessageDataMasker` публичный конструктор только без параметров, свой список — через `Create`: конструктор со
+  списками контейнер выбрал бы как самый полный и подставил бы пустые `IEnumerable<string>`

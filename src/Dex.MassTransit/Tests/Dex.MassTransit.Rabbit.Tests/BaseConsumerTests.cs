@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -143,11 +144,11 @@ public class BaseConsumerTests
     }
 
     /// <remarks>
-    /// Предел размера остаётся за пакетом: маскировщик получает только начало тела, и граф
-    /// сообщения целиком не обходится, какой бы маскировщик ни был подключён.
+    /// Вход маскировщика ограничен запасом над лимитом, поэтому граф сообщения целиком не обходится,
+    /// какой бы маскировщик ни был подключён; метку усечения ставит маскировщик.
     /// </remarks>
     [Test]
-    public void Consume_WhenMaskerRegisteredAndBodyExceedsLimit_PassesPrefixAndMarksTruncation()
+    public void Consume_WhenMaskerRegisteredAndBodyExceedsInputReserve_PassesPrefix()
     {
         var logger = new RecordingLogger();
         var consumer = new FailingConsumer<TestMessage>(logger, messageDataLimit: 32);
@@ -156,11 +157,26 @@ public class BaseConsumerTests
         ConsumeAndCatch(consumer, Context(new TestMessage { Name = new string('a', 500) }, services: Services(masker)));
 
         var call = masker.Calls.Single();
-        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo("masked prefix..."));
+        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo("masked prefix"));
         Assert.That(call.Json, Does.StartWith("""{"Name":"aaa"""));
-        Assert.That(call.Json, Has.Length.EqualTo(32));
+        Assert.That(call.Json, Has.Length.EqualTo(32 * MessageDataFormatter.MaskerInputFactor));
         Assert.That(call.IsComplete, Is.False);
         Assert.That(call.Limit, Is.EqualTo(32));
+    }
+
+    /// <remarks>
+    /// Лимит режет вывод маски, а не вход: замаскированный длинный токен освобождает место под следующие поля.
+    /// </remarks>
+    [Test]
+    public void Consume_WhenMaskFreesSpace_FollowingFieldsFitIntoLimit()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TokenMessage>(logger, messageDataLimit: 60);
+        var services = Services(new SensitiveNamesMessageDataMasker());
+
+        ConsumeAndCatch(consumer, Context(new TokenMessage { Token = new string('x', 100), Tail = "end" }, services: services));
+
+        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo("""{"Token":"***","Tail":"end"}"""));
     }
 
     [Test]
@@ -168,13 +184,13 @@ public class BaseConsumerTests
     {
         var logger = new RecordingLogger();
 
-        // {"Name":" — девять однобайтовых символов, дальше кириллица по два байта на символ
-        var consumer = new FailingConsumer<TestMessage>(logger, messageDataLimit: 12);
+        // {"Name":" — девять однобайтовых символов, дальше кириллица по два байта на символ; вход маскировщика — 12 байт
+        var consumer = new FailingConsumer<TestMessage>(logger, messageDataLimit: 12 / MessageDataFormatter.MaskerInputFactor);
         var masker = new RecordingMasker(output: "masked");
 
         ConsumeAndCatch(consumer, Context(new TestMessage { Name = new string('я', 20) }, services: Services(masker)));
 
-        Assert.That(masker.Calls.Single().Bytes, Is.EqualTo(Encoding.UTF8.GetBytes("""{"Name":"я""")));
+        Assert.That(masker.Calls.Single().Bytes, Is.EqualTo("""{"Name":"я"""u8.ToArray()));
     }
 
     /// <remarks>
@@ -306,6 +322,7 @@ public class BaseConsumerTests
 /// <summary>
 /// Сообщение с коллекцией в теле.
 /// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed class TestMessage
 {
     public string Name { get; init; } = string.Empty;
@@ -313,8 +330,19 @@ public sealed class TestMessage
 }
 
 /// <summary>
+/// Сообщение с токеном и полем после него.
+/// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+public sealed class TokenMessage
+{
+    public string Token { get; init; } = string.Empty;
+    public string Tail { get; init; } = string.Empty;
+}
+
+/// <summary>
 /// Сообщение, которое нельзя сериализовать.
 /// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed class BrokenMessage
 {
     public string Value => throw new NotSupportedException("getter is broken");

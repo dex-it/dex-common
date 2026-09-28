@@ -19,7 +19,16 @@ internal static class MessageDataFormatter
     private static readonly JsonSerializerOptions Options = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     /// <summary>
-    /// Отдаёт тело сообщения в JSON, усечённое до <paramref name="limit"/> байт и пропущенное через <paramref name="masker"/>, если он задан.
+    /// Во сколько раз вход маскировщика больше лимита записи.
+    /// </summary>
+    /// <remarks>
+    /// Маска укорачивает значения, и освобождённое место должно достаться следующим полям: лимит
+    /// режет вывод маскировщика, а не его вход.
+    /// </remarks>
+    internal const int MaskerInputFactor = 4;
+
+    /// <summary>
+    /// Отдаёт тело сообщения в JSON, усечённое до <paramref name="limit"/> байт; с <paramref name="masker"/> — его результат.
     /// </summary>
     /// <remarks>
     /// Сериализация идёт в буфер фиксированного размера, а не в строку: размер тела ничем не
@@ -28,7 +37,8 @@ internal static class MessageDataFormatter
     /// </remarks>
     public static string Format<TMessage>(TMessage? message, int limit, IMessageDataMasker? masker = null)
     {
-        using var buffer = new BoundedBuffer(Math.Max(0, limit));
+        limit = Math.Max(0, limit);
+        using var buffer = new BoundedBuffer(masker == null ? limit : (int)Math.Min((long)limit * MaskerInputFactor, Array.MaxLength));
 
         try
         {
@@ -43,7 +53,7 @@ internal static class MessageDataFormatter
             return $"<not serialized: {e.GetType().Name}>";
         }
 
-        return masker == null ? buffer.GetText() : buffer.GetMaskedText(masker);
+        return masker == null ? buffer.GetText() : buffer.GetMaskedText(masker, limit);
     }
 
     /// <summary>
@@ -112,13 +122,13 @@ internal static class MessageDataFormatter
         public string GetText() => Encoding.UTF8.GetString(WholeChars()) + TruncationMark;
 
         /// <summary>
-        /// Отдаёт принятые байты через маскировщик, помечая усечение.
+        /// Отдаёт принятые байты через маскировщик; метку усечения ставит он.
         /// </summary>
-        public string GetMaskedText(IMessageDataMasker masker)
+        public string GetMaskedText(IMessageDataMasker masker, int limit)
         {
             try
             {
-                return masker.Mask(WholeChars(), !_truncated, _buffer.Length) + TruncationMark;
+                return masker.Mask(WholeChars(), !_truncated, limit);
             }
             catch (Exception e)
             {

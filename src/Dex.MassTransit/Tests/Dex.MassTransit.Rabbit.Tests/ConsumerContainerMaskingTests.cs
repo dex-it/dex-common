@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using MassTransit;
 using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +36,14 @@ public class ConsumerContainerMaskingTests
         var logger = await ConsumeFailing(services => services.AddScoped<IMessageDataMasker, ReplacingMasker>());
 
         Assert.That(logger.MessageData, Is.EqualTo(ReplacingMasker.Output));
+    }
+
+    [Test]
+    public async Task Consume_WhenDefaultMaskerRegistered_HidesSecret()
+    {
+        var logger = await ConsumeFailing(services => services.AddSingleton<IMessageDataMasker, SensitiveNamesMessageDataMasker>());
+
+        Assert.That(logger.MessageData, Is.EqualTo("""{"Secret":"***"}"""));
     }
 
     [Test]
@@ -104,6 +113,7 @@ public class ConsumerContainerMaskingTests
 /// <summary>
 /// Сообщение с секретом в теле.
 /// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed class SecretMessage
 {
     public string Secret { get; init; } = string.Empty;
@@ -112,6 +122,7 @@ public sealed class SecretMessage
 /// <summary>
 /// Консьюмер, падающий на любом сообщении.
 /// </summary>
+[UsedImplicitly]
 public sealed class SecretConsumer(ILogger<SecretConsumer> logger) : BaseConsumer<SecretMessage>(logger)
 {
     protected override Task Process(ConsumeContext<SecretMessage> context) => throw new InvalidOperationException("process failed");
