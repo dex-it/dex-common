@@ -30,6 +30,14 @@ public class ConsumerContainerMaskingTests
     }
 
     [Test]
+    public async Task Consume_WhenMaskerRegisteredAsScoped_WritesMaskedBody()
+    {
+        var logger = await ConsumeFailing(services => services.AddScoped<IMessageDataMasker, ReplacingMasker>());
+
+        Assert.That(logger.MessageData, Is.EqualTo(ReplacingMasker.Output));
+    }
+
+    [Test]
     public async Task Consume_WhenContainerHasNoMasker_WritesPlainBody()
     {
         var logger = await ConsumeFailing(_ => { });
@@ -45,7 +53,7 @@ public class ConsumerContainerMaskingTests
         configure(services);
         services.AddMassTransitTestHarness(x => x.AddConsumer<SecretConsumer>());
 
-        await using var provider = services.BuildServiceProvider();
+        await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         var harness = provider.GetRequiredService<ITestHarness>();
         await harness.Start();
 

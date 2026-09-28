@@ -132,7 +132,7 @@ public sealed class MyMasker : IMessageDataMasker
 }
 ```
 
-The size limit stays with the package: the masker receives the already truncated beginning of the body, and the package appends the `...` truncation mark itself. If the masker (or its resolution) throws, the record gets `<not masked: ExceptionType>` instead of the body, and the original consumer exception is kept.
+The input size limit stays with the package: the masker receives the already truncated beginning of the body, and the package appends the `...` truncation mark itself. The masker's result is not truncated — keeping it within `limit` is the masker's job. Only consumers resolved from the container get the masker: a consumer registered by factory or instance (`e.Consumer(() => new ...)`, `Instance`, `Handler`) writes the body unmasked. If the masker (or its resolution) throws, the record gets `<not masked: ExceptionType>` instead of the body, and the original consumer exception is kept.
 
 ### Retry and redelivery
 

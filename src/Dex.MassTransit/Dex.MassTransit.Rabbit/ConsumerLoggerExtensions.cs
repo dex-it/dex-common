@@ -38,7 +38,7 @@ public static class ConsumerLoggerExtensions
     }
 
     /// <remarks>
-    /// Контейнер MassTransit кладёт в контекст консьюмера, созданного через DI. Сбой разрешения
+    /// <see cref="IServiceProvider"/> MassTransit кладёт в контекст только консьюмеру, созданному контейнером. Сбой разрешения
     /// оставляет неизвестным, подключён ли маскировщик, поэтому тело в таком случае не пишется.
     /// </remarks>
     private static string FormatMessageData<TMessage>(ConsumeContext<TMessage> context, int limit)
