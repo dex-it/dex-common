@@ -115,6 +115,25 @@ public class PaymentConsumer(ILogger<PaymentConsumer> log) : BaseConsumer<Paymen
 
 > Requires the RabbitMQ plugin **`rabbitmq_delayed_message_exchange`** for `Defer` to work.
 
+### Error record and message body masking
+
+On failure `BaseConsumer<T>` writes one error record via `ILogger.LogConsumeError` (a consumer of several message types calls it from its own `catch`): message type, `MessageId`, `ConversationId`, retry attempt and the message body as a single JSON string, truncated to `MessageDataLimit` bytes of UTF-8 (4000 by default, overridable).
+
+The body is written as is. To mask secrets in it, register an `IMessageDataMasker` in the container the consumers are resolved from — consumers themselves stay unchanged:
+
+```csharp
+services.AddSingleton<IMessageDataMasker, MyMasker>();
+
+public sealed class MyMasker : IMessageDataMasker
+{
+    // json: the serialized body, at most `limit` bytes, cut on a character boundary;
+    // isComplete == false means only the beginning of the body was passed.
+    public string Mask(ReadOnlySpan<byte> json, bool isComplete, int limit) => ...;
+}
+```
+
+The size limit stays with the package: the masker receives the already truncated beginning of the body, and the package appends the `...` truncation mark itself. If the masker (or its resolution) throws, the record gets `<not masked: ExceptionType>` instead of the body, and the original consumer exception is kept.
+
 ### Retry and redelivery
 
 Two extension methods on `IConsumerConfigurator<TConsumer>`:

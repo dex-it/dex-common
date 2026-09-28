@@ -19,14 +19,14 @@ internal static class MessageDataFormatter
     private static readonly JsonSerializerOptions Options = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     /// <summary>
-    /// Отдаёт тело сообщения в JSON, усечённое до <paramref name="limit"/> байт.
+    /// Отдаёт тело сообщения в JSON, усечённое до <paramref name="limit"/> байт и пропущенное через <paramref name="masker"/>, если он задан.
     /// </summary>
     /// <remarks>
     /// Сериализация идёт в буфер фиксированного размера, а не в строку: размер тела ничем не
     /// ограничен сверху. Вызов приходит из обработчика ошибки, где своё исключение подменило бы
-    /// исходное, поэтому ни сбой сериализации, ни отсутствие тела наружу не выходят.
+    /// исходное, поэтому ни сбой сериализации или маски, ни отсутствие тела наружу не выходят.
     /// </remarks>
-    public static string Format<TMessage>(TMessage? message, int limit)
+    public static string Format<TMessage>(TMessage? message, int limit, IMessageDataMasker? masker = null)
     {
         using var buffer = new BoundedBuffer(Math.Max(0, limit));
 
@@ -43,8 +43,13 @@ internal static class MessageDataFormatter
             return $"<not serialized: {e.GetType().Name}>";
         }
 
-        return buffer.GetText();
+        return masker == null ? buffer.GetText() : buffer.GetMaskedText(masker);
     }
+
+    /// <summary>
+    /// Маркер на месте тела, когда маска не удалась: тело без маски в запись не идёт.
+    /// </summary>
+    public static string NotMasked(Exception e) => $"<not masked: {e.GetType().Name}>";
 
     /// <summary>
     /// Поток, принимающий не больше заданного числа байт.
@@ -99,14 +104,33 @@ internal static class MessageDataFormatter
 
         public override void SetLength(long value) => throw new NotSupportedException();
 
+        private string TruncationMark => _truncated ? "..." : string.Empty;
+
         /// <summary>
         /// Отдаёт принятые байты текстом, помечая усечение.
         /// </summary>
+        public string GetText() => Encoding.UTF8.GetString(WholeChars()) + TruncationMark;
+
+        /// <summary>
+        /// Отдаёт принятые байты через маскировщик, помечая усечение.
+        /// </summary>
+        public string GetMaskedText(IMessageDataMasker masker)
+        {
+            try
+            {
+                return masker.Mask(WholeChars(), !_truncated, _buffer.Length) + TruncationMark;
+            }
+            catch (Exception e)
+            {
+                return NotMasked(e);
+            }
+        }
+
         /// <remarks>
         /// Обрез по байтам разрывает многобайтовую последовательность UTF-8, поэтому незакрытый
         /// хвост отбрасывается: иначе на его месте оказывается символ замены.
         /// </remarks>
-        public string GetText()
+        private ReadOnlySpan<byte> WholeChars()
         {
             var length = _length;
 
@@ -119,7 +143,7 @@ internal static class MessageDataFormatter
                     length--;
             }
 
-            return Encoding.UTF8.GetString(_buffer, 0, length) + (_truncated ? "..." : string.Empty);
+            return _buffer.AsSpan(0, length);
         }
 
         /// <summary>

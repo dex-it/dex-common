@@ -15,6 +15,8 @@
 `RabbitMqOptions`: Host, Port, VHost, Username, Password, IsSecure, CertificatePath.
 Методы: `RegisterBus<>()`, `RegisterReceiveEndpoint<>()`, `RegisterSendEndPoint<>()`.
 `BaseConsumer<TMessage>`: абстрактный базовый consumer с обработкой ошибок и `Defer()`.
+Запись об ошибке — `ILogger.LogConsumeError`: тело сообщения усекается до `MessageDataLimit` и, если в контейнере консьюмера
+зарегистрирован `IMessageDataMasker`, проходит через него (берётся из payload `IServiceProvider` контекста).
 Retry-конфигурация: `UseRedeliveryRetryConfiguration()`, `UseRetryConfiguration()`, `UseLimitPrefetchConfiguration()`.
 
 ## SQS
@@ -39,3 +41,4 @@ configurator.LinkActivityTracingContext(); // включено по умолча
 - Не использовать `concurrencyLimit=1 + prefetchCount=1` с Redelivery: ломает порядок сообщений
 - SQS FIFO: имена DTO обязаны заканчиваться на "Fifo"
 - BaseConsumer.Defer() бросает internal exception для пропуска логирования ошибки
+- Сбой маскировщика или его разрешения из контейнера тело не открывает: в `MessageData` уходит `<not masked: Тип>`

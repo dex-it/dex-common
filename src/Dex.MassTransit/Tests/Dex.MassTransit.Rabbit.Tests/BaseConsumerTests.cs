@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -125,6 +126,101 @@ public class BaseConsumerTests
         Assert.That(record.Values["MessageData"], Is.EqualTo("""{"Name":"abc","Ids":[]}"""));
     }
 
+    [Test]
+    public void Consume_WhenMaskerRegistered_WritesMaskedBody()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TestMessage>(logger);
+        var masker = new RecordingMasker(output: "masked body");
+
+        ConsumeAndCatch(consumer, Context(new TestMessage { Name = "secret" }, services: Services(masker)));
+
+        var call = masker.Calls.Single();
+        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo("masked body"));
+        Assert.That(call.Json, Is.EqualTo("""{"Name":"secret","Ids":[]}"""));
+        Assert.That(call.IsComplete, Is.True);
+        Assert.That(call.Limit, Is.EqualTo(ConsumerLoggerExtensions.DefaultMessageDataLimit));
+    }
+
+    /// <remarks>
+    /// Предел размера остаётся за пакетом: маскировщик получает только начало тела, и граф
+    /// сообщения целиком не обходится, какой бы маскировщик ни был подключён.
+    /// </remarks>
+    [Test]
+    public void Consume_WhenMaskerRegisteredAndBodyExceedsLimit_PassesPrefixAndMarksTruncation()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TestMessage>(logger, messageDataLimit: 32);
+        var masker = new RecordingMasker(output: "masked prefix");
+
+        ConsumeAndCatch(consumer, Context(new TestMessage { Name = new string('a', 500) }, services: Services(masker)));
+
+        var call = masker.Calls.Single();
+        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo("masked prefix..."));
+        Assert.That(call.Json, Does.StartWith("""{"Name":"aaa"""));
+        Assert.That(call.Json, Has.Length.EqualTo(32));
+        Assert.That(call.IsComplete, Is.False);
+        Assert.That(call.Limit, Is.EqualTo(32));
+    }
+
+    [Test]
+    public void Consume_WhenMaskerRegisteredAndLimitSplitsMultibyteChar_PassesWholeChars()
+    {
+        var logger = new RecordingLogger();
+
+        // {"Name":" — девять однобайтовых символов, дальше кириллица по два байта на символ
+        var consumer = new FailingConsumer<TestMessage>(logger, messageDataLimit: 12);
+        var masker = new RecordingMasker(output: "masked");
+
+        ConsumeAndCatch(consumer, Context(new TestMessage { Name = new string('я', 20) }, services: Services(masker)));
+
+        Assert.That(masker.Calls.Single().Bytes, Is.EqualTo(Encoding.UTF8.GetBytes("""{"Name":"я""")));
+    }
+
+    /// <remarks>
+    /// Маскировщик — чужой код в обработчике ошибки: его сбой не должен ни подменить исходное
+    /// исключение, ни открыть тело, ради маски которого он подключён.
+    /// </remarks>
+    [Test]
+    public void Consume_WhenMaskerThrows_KeepsOriginalExceptionAndHidesBody()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TestMessage>(logger);
+        var masker = new RecordingMasker(failure: new FormatException("masker is broken"));
+
+        var exception = ConsumeAndCatch(consumer, Context(new TestMessage { Name = "secret" }, services: Services(masker)));
+
+        var record = logger.Records.Single();
+        Assert.That(record.Exception, Is.SameAs(exception));
+        Assert.That(record.Values["MessageData"], Is.EqualTo("<not masked: FormatException>"));
+    }
+
+    [Test]
+    public void Consume_WhenMaskerCannotBeResolved_KeepsOriginalExceptionAndHidesBody()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TestMessage>(logger);
+        var services = new Mock<IServiceProvider>();
+        services.Setup(x => x.GetService(typeof(IMessageDataMasker))).Throws(new ObjectDisposedException("scope"));
+
+        var exception = ConsumeAndCatch(consumer, Context(new TestMessage { Name = "secret" }, services: services.Object));
+
+        var record = logger.Records.Single();
+        Assert.That(record.Exception, Is.SameAs(exception));
+        Assert.That(record.Values["MessageData"], Is.EqualTo("<not masked: ObjectDisposedException>"));
+    }
+
+    [Test]
+    public void Consume_WhenContainerHasNoMasker_WritesPlainBody()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TestMessage>(logger);
+
+        ConsumeAndCatch(consumer, Context(new TestMessage { Name = "abc" }, services: Services(masker: null)));
+
+        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo("""{"Name":"abc","Ids":[]}"""));
+    }
+
     private static InvalidOperationException ConsumeAndCatch<TMessage>(BaseConsumer<TMessage> consumer, ConsumeContext<TMessage> context)
         where TMessage : class
     {
@@ -133,15 +229,42 @@ public class BaseConsumerTests
         return Assert.ThrowsAsync<InvalidOperationException>(consume)!;
     }
 
-    private static ConsumeContext<TMessage> Context<TMessage>(TMessage message, Guid? messageId = null, Guid? conversationId = null)
+    private static ConsumeContext<TMessage> Context<TMessage>(TMessage message, Guid? messageId = null, Guid? conversationId = null,
+        IServiceProvider? services = null)
         where TMessage : class
     {
         var context = new Mock<ConsumeContext<TMessage>>();
         context.SetupGet(x => x.Message).Returns(message);
         context.SetupGet(x => x.MessageId).Returns(messageId);
         context.SetupGet(x => x.ConversationId).Returns(conversationId);
+        context.Setup(x => x.TryGetPayload(out services)).Returns(services != null);
 
         return context.Object;
+    }
+
+    private static IServiceProvider Services(IMessageDataMasker? masker)
+    {
+        var services = new Mock<IServiceProvider>();
+        services.Setup(x => x.GetService(typeof(IMessageDataMasker))).Returns(masker);
+
+        return services.Object;
+    }
+
+    private sealed class RecordingMasker(string output = "", Exception? failure = null) : IMessageDataMasker
+    {
+        public List<Call> Calls { get; } = [];
+
+        public string Mask(ReadOnlySpan<byte> json, bool isComplete, int limit)
+        {
+            Calls.Add(new Call(json.ToArray(), isComplete, limit));
+
+            return failure == null ? output : throw failure;
+        }
+
+        internal sealed record Call(byte[] Bytes, bool IsComplete, int Limit)
+        {
+            public string Json => Encoding.UTF8.GetString(Bytes);
+        }
     }
 
     private sealed class FailingConsumer<TMessage>(ILogger logger, int? messageDataLimit = null) : BaseConsumer<TMessage>(logger)
