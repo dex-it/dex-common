@@ -51,6 +51,19 @@ public class MessageDataFormatterTests
         Assert.That(Encoding.UTF8.GetByteCount(messageData[..^3]), Is.LessThanOrEqualTo(40));
     }
 
+    /// <remarks>
+    /// Буфер растёт по мере записи: тело больше начального размера буфера должно дойти до лимита целиком.
+    /// </remarks>
+    [Test]
+    public void Format_WhenBodyExceedsInitialBuffer_TruncatesToLimit()
+    {
+        var messageData = MessageDataFormatter.Format(new { Name = new string('a', 20_000) }, limit: 8000);
+
+        Assert.That(messageData, Does.StartWith("""{"Name":"aaa"""));
+        Assert.That(messageData, Does.EndWith("..."));
+        Assert.That(messageData[..^3], Has.Length.EqualTo(8000));
+    }
+
     [Test]
     public void Format_WhenLimitIsNotPositive_ReturnsOnlyTruncationMark()
     {
