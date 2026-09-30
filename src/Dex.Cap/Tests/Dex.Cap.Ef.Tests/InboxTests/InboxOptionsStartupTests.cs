@@ -49,6 +49,11 @@ public class InboxOptionsStartupTests : BaseTest
         }
 
         Assert.IsNotNull(ex);
-        Assert.IsTrue(ex!.Message.Contains(nameof(InboxOptions.ConcurrencyLimit), StringComparison.Ordinal));
+
+        // Вместе с именем типа опций: аутбокс объявляет одноимённую опцию, а склейка отказов в
+        // OptionsValidationException.Message тип не несёт, он остаётся только в OptionsType.
+        Assert.IsTrue(
+            ex!.Message.Contains($"{nameof(InboxOptions)}.{nameof(InboxOptions.ConcurrencyLimit)}", StringComparison.Ordinal),
+            ex.Message);
     }
 }
