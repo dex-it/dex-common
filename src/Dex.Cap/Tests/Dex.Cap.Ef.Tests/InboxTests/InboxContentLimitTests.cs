@@ -1,15 +1,19 @@
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Dex.Cap.Ef.Tests.InboxTests.Messages;
+using Dex.Cap.Inbox;
 using Dex.Cap.Inbox.Exceptions;
 using Dex.Cap.Inbox.Interfaces;
 using Dex.Cap.Inbox.Models;
 using Dex.Cap.Inbox.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace Dex.Cap.Ef.Tests.InboxTests;
@@ -38,6 +42,47 @@ public class InboxContentLimitTests : BaseTest
         // Проверка на приёме, до INSERT, поэтому строка не появляется.
         var count = await GetDb(sp).Set<InboxEnvelope>().CountAsync();
         Assert.AreEqual(0, count);
+    }
+
+    [Test]
+    public async Task Enqueue_ContentOverLimit_LogsSingleWarningWithoutBody()
+    {
+        // Отказ по размеру не оставляет строки в таблице, поэтому запись в лог - единственный след для оператора.
+        // Закрепляем оба обещания InboxService: ровно одно предупреждение с типом и обоими размерами, и тела в нём нет.
+        const int limit = 64;
+        const string bodyMarker = "BODY-MARKER-";
+        var recorder = new RecordingLoggerProvider();
+        var services = InitInboxServiceCollection()
+            .Configure<InboxOptions>(o => o.MaxContentLengthBytes = limit);
+        services.AddLogging(builder => builder.AddProvider(recorder));
+        await using var sp = services.BuildServiceProvider();
+
+        var inboxService = sp.GetRequiredService<IInboxService>();
+        var oversized = new TestInboxCommand { Args = string.Concat(Enumerable.Repeat(bodyMarker, 100)) };
+
+        var ex = NUnit.Framework.Assert.ThrowsAsync<InboxContentTooLargeException>(
+            (Func<Task>)(async () => await inboxService.EnqueueAsync(oversized, new InboxMessageIdentity("message-1", "consumer-1"))));
+
+        var warnings = recorder.Records
+            .Where(r => r.Category == typeof(InboxService).FullName && r.Level >= LogLevel.Warning)
+            .ToArray();
+        Assert.AreEqual(1, warnings.Length);
+
+        var record = warnings[0];
+        Assert.AreEqual(LogLevel.Warning, record.Level);
+        Assert.IsNull(record.Exception);
+
+        var state = record.State.ToDictionary(p => p.Key, p => p.Value);
+        Assert.AreEqual(TestInboxCommand.InboxTypeId, state["MessageType"]);
+        Assert.AreEqual(ex!.ContentLengthBytes, state["ContentLengthBytes"]);
+        Assert.AreEqual(limit, state["MaxContentLengthBytes"]);
+
+        Assert.IsFalse(record.Message.Contains(bodyMarker, StringComparison.Ordinal), record.Message);
+        foreach (var (key, value) in state)
+        {
+            var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+            Assert.IsFalse(text.Contains(bodyMarker, StringComparison.Ordinal), key);
+        }
     }
 
     [Test]
