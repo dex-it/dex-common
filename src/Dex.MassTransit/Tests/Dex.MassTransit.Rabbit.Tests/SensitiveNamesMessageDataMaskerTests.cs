@@ -54,6 +54,8 @@ public class SensitiveNamesMessageDataMaskerTests
     [TestCase("OtpCode")]
     [TestCase("SmsOtp")]
     [TestCase("Otp")]
+    [TestCase("Pin2")]
+    [TestCase("Otp1")]
     [TestCase("NewPwd")]
     [TestCase("UserPwd")]
     public void Mask_WhenNameHasCardCodeOrOneTimeCode_ReplacesValue(string name)
