@@ -12,7 +12,7 @@ namespace Dex.MassTransit.Rabbit;
 /// Маскирует значения полей тела по именам: <see cref="IMessageDataMasker"/> по умолчанию, пакетом не регистрируется.
 /// </summary>
 /// <remarks>
-/// Фрагмент ищется по вхождению в имя без учёта регистра и разделителей (<c>_ - .</c>, пробел); слово — среди слов имени, разбитого
+/// Фрагмент ищется по вхождению в имя без учёта регистра и разделителей (любой символ, кроме буквы и цифры); слово — среди слов имени, разбитого
 /// по разделителям, смене регистра и границе цифр, с множественным числом (<c>PinCode</c>, <c>PINs</c>): по вхождению короткие
 /// <c>pin</c>, <c>otp</c> задели бы <c>Shipping</c> и <c>RootPath</c>; запись из нескольких слов совпадает с именем целиком.
 /// Значение под таким именем заменяется целиком и в результат не попадает даже началом. Обычная строка, не влезшая в лимит,
@@ -258,7 +258,10 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
     private static bool IsPluralTail(string name, int i)
         => name[i] == 's' && (i + 1 == name.Length || !char.IsLower(name[i + 1]));
 
-    private static bool IsSeparator(char c) => c is '_' or '-' or '.' || char.IsWhiteSpace(c);
+    /// <remarks>
+    /// Разделитель — любой символ, кроме буквы и цифры: ключи словаря несут и <c>:</c>, <c>/</c>, <c>[</c>, которых нет в именах свойств.
+    /// </remarks>
+    private static bool IsSeparator(char c) => !char.IsLetterOrDigit(c);
 
     /// <summary>
     /// Длина начала вывода не больше <paramref name="limit"/> байт, не разрывающая символ UTF-8.

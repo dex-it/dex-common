@@ -62,6 +62,13 @@ public class SensitiveNamesMessageDataMaskerTests
     [TestCase("SmsOtps")]
     [TestCase("PINsCount")]
     [TestCase("Pin Code")]
+    [TestCase("Card:Pin")]
+    [TestCase("Payment:Otp")]
+    [TestCase("card/pin")]
+    [TestCase("@pin")]
+    [TestCase("$otp")]
+    [TestCase("Card[Pin]")]
+    [TestCase("pin#")]
     [TestCase("NewPwd")]
     [TestCase("UserPwd")]
     public void Mask_WhenNameHasCardCodeOrOneTimeCode_ReplacesValue(string name)
@@ -238,9 +245,21 @@ public class SensitiveNamesMessageDataMaskerTests
     [Test]
     public void Mask_KeepsEscapedNameEscaped()
     {
-        var result = Mask("""{"to\"ken":"v"}""");
+        var result = Mask("""{"a\"b":"v"}""");
 
-        Assert.That(result, Is.EqualTo("""{"to\"ken":"v"}"""));
+        Assert.That(result, Is.EqualTo("""{"a\"b":"v"}"""));
+    }
+
+    /// <remarks>
+    /// Фрагмент ищется и через разделители, которых нет в именах свойств, — в ключах словаря (<c>User:Password</c>).
+    /// </remarks>
+    [TestCase("User:Password")]
+    [TestCase("api/key")]
+    public void Mask_WhenFragmentIsSplitByAnySeparator_ReplacesValue(string name)
+    {
+        var result = Mask($$"""{"{{name}}":"v"}""");
+
+        Assert.That(result, Is.EqualTo($$"""{"{{name}}":"***"}"""));
     }
 
     /// <remarks>
