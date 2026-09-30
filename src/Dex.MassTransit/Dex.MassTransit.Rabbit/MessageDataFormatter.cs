@@ -69,10 +69,14 @@ internal static class MessageDataFormatter
     /// <remarks>
     /// На переполнении бросает <see cref="LimitReachedException"/>, чтобы сериализатор прекратил
     /// обход: размер графа ничем не ограничен, а всё после лимита всё равно отбрасывается.
+    /// Буфер растёт до потолка по мере записи: память на лимит заранее дала бы в обработчике ошибки
+    /// нехватку памяти, подменяющую исходное исключение, даже на маленьком теле.
     /// </remarks>
-    private sealed class BoundedBuffer(int limit) : Stream
+    private sealed class BoundedBuffer(int capacity) : Stream
     {
-        private readonly byte[] _buffer = new byte[limit];
+        private const int InitialSize = 4096;
+
+        private byte[] _buffer = new byte[Math.Min(capacity, InitialSize)];
         private int _length;
         private bool _truncated;
 
@@ -91,7 +95,7 @@ internal static class MessageDataFormatter
 
         public override void Write(ReadOnlySpan<byte> buffer)
         {
-            var free = _buffer.Length - _length;
+            var free = capacity - _length;
 
             if (buffer.Length > free)
             {
@@ -99,6 +103,7 @@ internal static class MessageDataFormatter
                 buffer = buffer[..free];
             }
 
+            EnsureSize(_length + buffer.Length);
             buffer.CopyTo(_buffer.AsSpan(_length));
             _length += buffer.Length;
 
@@ -108,6 +113,14 @@ internal static class MessageDataFormatter
 
         public override void Flush()
         {
+        }
+
+        private void EnsureSize(int required)
+        {
+            if (required <= _buffer.Length)
+                return;
+
+            Array.Resize(ref _buffer, (int)Math.Min(capacity, Math.Max(required, (long)_buffer.Length * 2)));
         }
 
         public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();

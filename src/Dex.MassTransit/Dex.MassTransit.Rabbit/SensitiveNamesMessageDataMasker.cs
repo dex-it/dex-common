@@ -12,11 +12,12 @@ namespace Dex.MassTransit.Rabbit;
 /// Маскирует значения полей тела по именам: <see cref="IMessageDataMasker"/> по умолчанию, пакетом не регистрируется.
 /// </summary>
 /// <remarks>
-/// Фрагмент ищется по вхождению в имя без учёта регистра и разделителей <c>_</c>, <c>-</c>, <c>.</c>; слово — среди слов имени,
-/// разбитого по разделителям, смене регистра и границе цифр (<c>PinCode</c> — pin, code): по вхождению короткие <c>pin</c> и
-/// <c>otp</c> задели бы <c>Shipping</c> и <c>RootPath</c>; запись из нескольких слов совпадает с именем целиком. Значение под таким именем, включая объект и массив, заменяется целиком
-/// и в результат не попадает даже началом, в том числе оборванное на входе. Обычная строка, не влезшая в лимит, обрезается по
-/// границе символа, как и без маски.
+/// Фрагмент ищется по вхождению в имя без учёта регистра и разделителей (<c>_ - .</c>, пробел); слово — среди слов имени, разбитого
+/// по разделителям, смене регистра и границе цифр, с множественным числом (<c>PinCode</c>, <c>PINs</c>): по вхождению короткие
+/// <c>pin</c>, <c>otp</c> задели бы <c>Shipping</c> и <c>RootPath</c>; запись из нескольких слов совпадает с именем целиком.
+/// Значение под таким именем заменяется целиком и в результат не попадает даже началом. Обычная строка, не влезшая в лимит,
+/// обрезается по границе символа, если дочитана на входе, а оборванная на входе выпадает. Имя в соседнем поле (пары Key/Value) и
+/// JSON внутри строки маска не видит — README модуля.
 /// </remarks>
 public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
 {
@@ -198,8 +199,14 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
 
         return _nameWords.Contains(normalized)
                || _nameFragments.Any(x => normalized.Contains(x, StringComparison.Ordinal))
-               || Words(name).Any(_nameWords.Contains);
+               || Words(name).Any(IsListedWord);
     }
+
+    /// <summary>
+    /// Слово из списка или его множественное число (<c>Pins</c>, <c>OTPs</c>).
+    /// </summary>
+    private bool IsListedWord(string word)
+        => _nameWords.Contains(word) || (word.Length > 1 && word[^1] == 's' && _nameWords.Contains(word[..^1]));
 
     /// <summary>
     /// Слова имени в нижнем регистре: границы — разделители, начало заглавной после строчной или цифры, последняя заглавная
@@ -213,7 +220,7 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
         {
             var c = name[i];
 
-            if (c is '_' or '-' or '.')
+            if (IsSeparator(c))
             {
                 if (word.Length > 0)
                     yield return word.ToString();
@@ -241,9 +248,17 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
         var previous = name[i - 1];
 
         return (char.IsUpper(c) && (char.IsLower(previous) || char.IsDigit(previous)))
-               || (char.IsUpper(c) && char.IsUpper(previous) && i + 1 < name.Length && char.IsLower(name[i + 1]))
+               || (char.IsUpper(c) && char.IsUpper(previous) && i + 1 < name.Length && char.IsLower(name[i + 1]) && !IsPluralTail(name, i + 1))
                || char.IsDigit(c) != char.IsDigit(previous);
     }
+
+    /// <summary>
+    /// Строчная <c>s</c> в конце слова после аббревиатуры: <c>PINs</c> — одно слово, а не pi, ns.
+    /// </summary>
+    private static bool IsPluralTail(string name, int i)
+        => name[i] == 's' && (i + 1 == name.Length || !char.IsLower(name[i + 1]));
+
+    private static bool IsSeparator(char c) => c is '_' or '-' or '.' || char.IsWhiteSpace(c);
 
     /// <summary>
     /// Длина начала вывода не больше <paramref name="limit"/> байт, не разрывающая символ UTF-8.
@@ -258,13 +273,19 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
         return length;
     }
 
-    private static string Normalize(string name)
+    /// <remarks>
+    /// Принимает <see langword="null"/>: запись своего списка может прийти пустой, и тогда она пропускается, а не роняет создание.
+    /// </remarks>
+    private static string Normalize(string? name)
     {
+        if (name == null)
+            return string.Empty;
+
         var builder = new StringBuilder(name.Length);
 
         foreach (var c in name)
         {
-            if (c is not ('_' or '-' or '.'))
+            if (!IsSeparator(c))
                 builder.Append(char.ToLowerInvariant(c));
         }
 

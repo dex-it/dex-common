@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using NUnit.Framework;
 
 namespace Dex.MassTransit.Rabbit.Tests;
@@ -76,6 +78,36 @@ public class MessageDataFormatterTests
         Assert.That(messageData, Is.EqualTo("""{"A":"x","Password":"***"}"""));
     }
 
+    /// <remarks>
+    /// Память должна зависеть от тела, а не от лимита: заранее выделенный буфер на лимит даёт в обработчике ошибки
+    /// нехватку памяти, подменяющую исходное исключение.
+    /// </remarks>
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Format_WithMaximalLimit_AllocatesInProportionToBody(bool withMasker)
+    {
+        var masker = withMasker ? new SensitiveNamesMessageDataMasker() : null;
+        MessageDataFormatter.Format(new { A = "x" }, 1000, masker);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var messageData = MessageDataFormatter.Format(new { A = "x" }, int.MaxValue, masker);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.That(messageData, Is.EqualTo("""{"A":"x"}"""));
+        Assert.That(allocated, Is.LessThan(1_000_000));
+    }
+
+    /// <remarks>
+    /// Результат маски с её меткой, уложившийся в лимит с запасом на метку, проходит как есть: метка не удваивается.
+    /// </remarks>
+    [Test]
+    public void Format_WhenMaskerMarksResultWithinLimit_KeepsSingleMark()
+    {
+        var messageData = MessageDataFormatter.Format(new { Ab = "cd", Pin = 1 }, 11, new SensitiveNamesMessageDataMasker());
+
+        Assert.That(messageData, Is.EqualTo("""{"Ab":"cd"..."""));
+    }
+
     /// <summary>
     /// Сообщение, считающее обращения сериализатора к элементам тела.
     /// </summary>
@@ -89,6 +121,7 @@ public class MessageDataFormatterTests
 
         private void Visit() => Visited++;
 
+        [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         public sealed class Item(CountingMessage owner)
         {
             public string Name

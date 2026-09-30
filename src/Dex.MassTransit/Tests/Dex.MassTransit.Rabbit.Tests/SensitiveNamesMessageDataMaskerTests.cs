@@ -56,6 +56,12 @@ public class SensitiveNamesMessageDataMaskerTests
     [TestCase("Otp")]
     [TestCase("Pin2")]
     [TestCase("Otp1")]
+    [TestCase("Pins")]
+    [TestCase("PINs")]
+    [TestCase("OTPs")]
+    [TestCase("SmsOtps")]
+    [TestCase("PINsCount")]
+    [TestCase("Pin Code")]
     [TestCase("NewPwd")]
     [TestCase("UserPwd")]
     public void Mask_WhenNameHasCardCodeOrOneTimeCode_ReplacesValue(string name)
@@ -78,6 +84,8 @@ public class SensitiveNamesMessageDataMaskerTests
     [TestCase("RootPath")]
     [TestCase("Footprint")]
     [TestCase("HotPath")]
+    [TestCase("Spins")]
+    [TestCase("Opinions")]
     public void Mask_WhenShortNameIsPartOfOrdinaryWord_KeepsValue(string name)
     {
         var result = Mask($$"""{"{{name}}":"v"}""");
@@ -201,6 +209,51 @@ public class SensitiveNamesMessageDataMaskerTests
         var result = masker.Mask(Encoding.UTF8.GetBytes(json), isComplete: true, limit: NoLimit);
 
         Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Mask_WhenResultIsExactlyLimit_WritesItWhole()
+    {
+        var result = Masker.Mask("""{"A":"x"}"""u8, isComplete: true, limit: 9);
+
+        Assert.That(result, Is.EqualTo("""{"A":"x"}"""));
+    }
+
+    [Test]
+    public void Mask_WhenNumberExceedsLimit_DropsItAndMarks()
+    {
+        var result = Masker.Mask("""{"A":123456789}"""u8, isComplete: true, limit: 8);
+
+        Assert.That(result, Is.EqualTo("""{"A":..."""));
+    }
+
+    [Test]
+    public void Mask_WhenMaskedPairExceedsLimit_DropsItAndMarks()
+    {
+        var result = Masker.Mask("""{"A":1,"Password":"x"}"""u8, isComplete: true, limit: 10);
+
+        Assert.That(result, Is.EqualTo("""{"A":1..."""));
+    }
+
+    [Test]
+    public void Mask_KeepsEscapedNameEscaped()
+    {
+        var result = Mask("""{"to\"ken":"v"}""");
+
+        Assert.That(result, Is.EqualTo("""{"to\"ken":"v"}"""));
+    }
+
+    /// <remarks>
+    /// Список из конфига через <c>Split(',')</c> несёт пробелы; пустая после нормализации запись совпала бы с любым именем.
+    /// </remarks>
+    [Test]
+    public void Mask_WithCustomNames_IgnoresWhitespaceSeparatorsAndEmptyEntries()
+    {
+        var masker = SensitiveNamesMessageDataMasker.Create(nameFragments: [" password ", "_", " ", "", null!], nameWords: [" pin ", "-"]);
+
+        var result = masker.Mask("""{"Password":"a","PinCode":"b","Other":"c"}"""u8, isComplete: true, limit: NoLimit);
+
+        Assert.That(result, Is.EqualTo("""{"Password":"***","PinCode":"***","Other":"c"}"""));
     }
 
     private static string Mask(string json) => Masker.Mask(Encoding.UTF8.GetBytes(json), isComplete: true, limit: NoLimit);
