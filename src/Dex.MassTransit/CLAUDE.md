@@ -17,7 +17,8 @@
 `BaseConsumer<TMessage>`: абстрактный базовый consumer с обработкой ошибок и `Defer()`.
 Запись об ошибке — `ILogger.LogConsumeError`: тело сообщения усекается до `MessageDataLimit`; если в контейнере консьюмера
 зарегистрирован `IMessageDataMasker` (берётся из payload `IServiceProvider` контекста), он получает вход с запасом
-`MaskerInputFactor` над лимитом и сам укладывает результат в лимит. Готовый `SensitiveNamesMessageDataMasker` пакет не регистрирует.
+`MaskerInputFactor` над лимитом; результат длиннее лимита пакет обрезает сам — потолок записи за пакетом. Готовый
+`SensitiveNamesMessageDataMasker` пакет не регистрирует.
 Retry-конфигурация: `UseRedeliveryRetryConfiguration()`, `UseRetryConfiguration()`, `UseLimitPrefetchConfiguration()`.
 
 ## SQS

@@ -12,10 +12,11 @@ namespace Dex.MassTransit.Rabbit;
 /// Маскирует значения полей тела по именам: <see cref="IMessageDataMasker"/> по умолчанию, пакетом не регистрируется.
 /// </summary>
 /// <remarks>
-/// Имя сравнивается без учёта регистра и разделителей <c>_</c>, <c>-</c>, <c>.</c>: фрагмент — по вхождению, точное имя —
-/// целиком (короткие имена по вхождению задели бы <c>Shipping</c> и <c>Mapping</c>). Значение под таким именем, включая
-/// объект и массив, заменяется целиком. Копирование идёт по токенам, поэтому ни оборванный на входе секрет, ни значение,
-/// не влезшее в лимит, в результат не попадают даже началом.
+/// Фрагмент ищется по вхождению в имя без учёта регистра и разделителей <c>_</c>, <c>-</c>, <c>.</c>; слово — среди слов имени,
+/// разбитого по разделителям, смене регистра и границе цифр (<c>PinCode</c> — pin, code): по вхождению короткие <c>pin</c> и
+/// <c>otp</c> задели бы <c>Shipping</c> и <c>RootPath</c>. Значение под таким именем, включая объект и массив, заменяется целиком
+/// и в результат не попадает даже началом, в том числе оборванное на входе. Обычная строка, не влезшая в лимит, обрезается по
+/// границе символа, как и без маски.
 /// </remarks>
 public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
 {
@@ -33,13 +34,13 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
     };
 
     private readonly string[] _nameFragments;
-    private readonly HashSet<string> _exactNames;
+    private readonly HashSet<string> _nameWords;
 
     /// <summary>
-    /// Маска по списку по умолчанию: <see cref="DefaultNameFragments"/> и <see cref="DefaultExactNames"/>.
+    /// Маска по списку по умолчанию: <see cref="DefaultNameFragments"/> и <see cref="DefaultNameWords"/>.
     /// </summary>
     public SensitiveNamesMessageDataMasker()
-        : this(DefaultNameFragments, DefaultExactNames)
+        : this(DefaultNameFragments, DefaultNameWords)
     {
     }
 
@@ -47,34 +48,34 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
     /// Закрыт намеренно: публичный конструктор со списками контейнер выбрал бы как самый полный и подставил бы
     /// пустые <see cref="IEnumerable{T}"/> — маскировщик из контейнера не маскировал бы ничего.
     /// </remarks>
-    private SensitiveNamesMessageDataMasker(IEnumerable<string> nameFragments, IEnumerable<string> exactNames)
+    private SensitiveNamesMessageDataMasker(IEnumerable<string> nameFragments, IEnumerable<string> nameWords)
     {
         _nameFragments = nameFragments.Select(Normalize).Where(x => x.Length > 0).Distinct().ToArray();
-        _exactNames = exactNames.Select(Normalize).Where(x => x.Length > 0).ToHashSet();
+        _nameWords = nameWords.Select(Normalize).Where(x => x.Length > 0).ToHashSet();
     }
 
     /// <summary>
     /// Фрагменты имён по умолчанию.
     /// </summary>
     public static IReadOnlyList<string> DefaultNameFragments { get; } =
-        ["password", "passwd", "secret", "token", "apikey", "authorization", "credential", "privatekey"];
+        ["password", "passwd", "pwd", "secret", "token", "apikey", "authorization", "credential", "privatekey", "cvv", "cvc"];
 
     /// <summary>
-    /// Точные имена по умолчанию.
+    /// Слова имён по умолчанию.
     /// </summary>
-    public static IReadOnlyList<string> DefaultExactNames { get; } = ["pin", "pwd", "cvv", "cvc", "otp"];
+    public static IReadOnlyList<string> DefaultNameWords { get; } = ["pin", "otp"];
 
     /// <summary>
     /// Маска по своему списку имён вместо списка по умолчанию.
     /// </summary>
     /// <param name="nameFragments">Фрагменты, при вхождении которых в имя значение маскируется.</param>
-    /// <param name="exactNames">Имена, совпадение с которыми целиком маскирует значение.</param>
-    public static SensitiveNamesMessageDataMasker Create(IEnumerable<string> nameFragments, IEnumerable<string> exactNames)
+    /// <param name="nameWords">Слова, при наличии которых среди слов имени значение маскируется.</param>
+    public static SensitiveNamesMessageDataMasker Create(IEnumerable<string> nameFragments, IEnumerable<string> nameWords)
     {
         ArgumentNullException.ThrowIfNull(nameFragments);
-        ArgumentNullException.ThrowIfNull(exactNames);
+        ArgumentNullException.ThrowIfNull(nameWords);
 
-        return new SensitiveNamesMessageDataMasker(nameFragments, exactNames);
+        return new SensitiveNamesMessageDataMasker(nameFragments, nameWords);
     }
 
     /// <inheritdoc />
@@ -93,7 +94,7 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
     /// <param name="isComplete">Ложь — передано только начало тела.</param>
     /// <param name="limit">Предельный размер вывода в байтах.</param>
     /// <param name="output">Куда писать.</param>
-    /// <param name="length">Длина результата: вывод до последнего токена, уложившегося в лимит.</param>
+    /// <param name="length">Длина результата: вывод до последнего токена, уложившегося в лимит, или до лимита внутри обычной строки.</param>
     private bool Copy(ReadOnlySpan<byte> json, bool isComplete, int limit, ArrayBufferWriter<byte> output, out int length)
     {
         var reader = new Utf8JsonReader(json, isComplete, default);
@@ -102,14 +103,18 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
 
         while (reader.Read())
         {
-            var whole = reader.TokenType == JsonTokenType.PropertyName && IsSensitive(reader.GetString())
-                ? CopyMasked(ref reader, writer)
-                : CopyToken(ref reader, writer);
+            var sensitive = reader.TokenType == JsonTokenType.PropertyName && IsSensitive(reader.GetString());
+            var whole = sensitive ? CopyMasked(ref reader, writer) : CopyToken(ref reader, writer);
 
             writer.Flush();
 
             if (output.WrittenCount > limit)
+            {
+                if (!sensitive && reader.TokenType == JsonTokenType.String)
+                    length = WholeCharsLength(output.WrittenSpan, limit);
+
                 return false;
+            }
 
             length = output.WrittenCount;
 
@@ -191,7 +196,64 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
 
         var normalized = Normalize(name);
 
-        return _exactNames.Contains(normalized) || _nameFragments.Any(x => normalized.Contains(x, StringComparison.Ordinal));
+        return _nameFragments.Any(x => normalized.Contains(x, StringComparison.Ordinal)) || Words(name).Any(_nameWords.Contains);
+    }
+
+    /// <summary>
+    /// Слова имени в нижнем регистре: границы — разделители, начало заглавной после строчной или цифры, последняя заглавная
+    /// аббревиатуры перед строчной (<c>PINCode</c> — pin, code) и переход между цифрой и буквой.
+    /// </summary>
+    private static IEnumerable<string> Words(string name)
+    {
+        var word = new StringBuilder();
+
+        for (var i = 0; i < name.Length; i++)
+        {
+            var c = name[i];
+
+            if (c is '_' or '-' or '.')
+            {
+                if (word.Length > 0)
+                    yield return word.ToString();
+
+                word.Clear();
+                continue;
+            }
+
+            if (word.Length > 0 && IsWordBoundary(name, i))
+            {
+                yield return word.ToString();
+                word.Clear();
+            }
+
+            word.Append(char.ToLowerInvariant(c));
+        }
+
+        if (word.Length > 0)
+            yield return word.ToString();
+    }
+
+    private static bool IsWordBoundary(string name, int i)
+    {
+        var c = name[i];
+        var previous = name[i - 1];
+
+        return (char.IsUpper(c) && (char.IsLower(previous) || char.IsDigit(previous)))
+               || (char.IsUpper(c) && char.IsUpper(previous) && i + 1 < name.Length && char.IsLower(name[i + 1]))
+               || char.IsDigit(c) != char.IsDigit(previous);
+    }
+
+    /// <summary>
+    /// Длина начала вывода не больше <paramref name="limit"/> байт, не разрывающая символ UTF-8.
+    /// </summary>
+    private static int WholeCharsLength(ReadOnlySpan<byte> output, int limit)
+    {
+        var length = limit;
+
+        while (length > 0 && (output[length] & 0xC0) == 0x80)
+            length--;
+
+        return length;
     }
 
     private static string Normalize(string name)

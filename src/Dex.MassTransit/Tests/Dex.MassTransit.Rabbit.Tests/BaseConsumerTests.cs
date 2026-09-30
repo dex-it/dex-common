@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MassTransit;
@@ -179,6 +180,51 @@ public class BaseConsumerTests
         Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo("""{"Token":"***","Tail":"end"}"""));
     }
 
+    /// <remarks>
+    /// Потолок записи держит пакет: своя маска может лимит не смотреть, а поле в хранилище логов ограничено по длине.
+    /// </remarks>
+    [Test]
+    public void Consume_WhenMaskerOutputExceedsLimit_CutsItToLimit()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TestMessage>(logger, messageDataLimit: 33);
+        var masker = new RecordingMasker(output: new string('я', 100));
+
+        ConsumeAndCatch(consumer, Context(new TestMessage { Name = "abc" }, services: Services(masker)));
+
+        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo(new string('я', 16) + "..."));
+    }
+
+    [Test]
+    public void Consume_WhenMaskerReturnsNull_WritesEmptyBody()
+    {
+        var logger = new RecordingLogger();
+        var consumer = new FailingConsumer<TestMessage>(logger);
+        var masker = new RecordingMasker(output: null);
+
+        ConsumeAndCatch(consumer, Context(new TestMessage { Name = "abc" }, services: Services(masker)));
+
+        Assert.That(logger.Records.Single().Values["MessageData"], Is.EqualTo(string.Empty));
+    }
+
+    /// <remarks>
+    /// Маска, не смотрящая на <c>isComplete</c>, пропускает оборванное на входе значение; его место — в хвосте входа,
+    /// за лимитом записи, и обрез результата по лимиту его отсекает.
+    /// </remarks>
+    [Test]
+    public void Consume_WhenNaiveMaskerMissesSecretCutOnInput_SecretDoesNotReachRecord()
+    {
+        var logger = new RecordingLogger();
+
+        // {"Filler":" — 11 байт, филлер 130, ","Password":" — 14: значение начинается со 155-го байта, вход режется на 160
+        var consumer = new FailingConsumer<LoginMessage>(logger, messageDataLimit: 160 / MessageDataFormatter.MaskerInputFactor);
+        var services = Services(new RegexPasswordMasker());
+
+        ConsumeAndCatch(consumer, Context(new LoginMessage { Filler = new string('f', 130), Password = "hunter2-secret" }, services: services));
+
+        Assert.That((string) logger.Records.Single().Values["MessageData"]!, Does.Not.Contain("hunte"));
+    }
+
     [Test]
     public void Consume_WhenMaskerRegisteredAndLimitSplitsMultibyteChar_PassesWholeChars()
     {
@@ -266,11 +312,20 @@ public class BaseConsumerTests
         return services.Object;
     }
 
-    private sealed class RecordingMasker(string output = "", Exception? failure = null) : IMessageDataMasker
+    /// <summary>
+    /// Маска регулярным выражением по строке: лимит и признак полноты входа не смотрит.
+    /// </summary>
+    private sealed class RegexPasswordMasker : IMessageDataMasker
+    {
+        public string Mask(ReadOnlySpan<byte> json, bool isComplete, int limit)
+            => Regex.Replace(Encoding.UTF8.GetString(json), "\"Password\":\"[^\"]*\"", "\"Password\":\"***\"");
+    }
+
+    private sealed class RecordingMasker(string? output = "", Exception? failure = null) : IMessageDataMasker
     {
         public List<Call> Calls { get; } = [];
 
-        public string Mask(ReadOnlySpan<byte> json, bool isComplete, int limit)
+        public string? Mask(ReadOnlySpan<byte> json, bool isComplete, int limit)
         {
             Calls.Add(new Call(json.ToArray(), isComplete, limit));
 
@@ -337,6 +392,16 @@ public sealed class TokenMessage
 {
     public string Token { get; init; } = string.Empty;
     public string Tail { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Сообщение с паролем после длинного поля.
+/// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+public sealed class LoginMessage
+{
+    public string Filler { get; init; } = string.Empty;
+    public string Password { get; init; } = string.Empty;
 }
 
 /// <summary>

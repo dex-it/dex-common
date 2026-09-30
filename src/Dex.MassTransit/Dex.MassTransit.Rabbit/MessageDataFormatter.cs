@@ -27,6 +27,8 @@ internal static class MessageDataFormatter
     /// </remarks>
     internal const int MaskerInputFactor = 4;
 
+    private const string Ellipsis = "...";
+
     /// <summary>
     /// Отдаёт тело сообщения в JSON, усечённое до <paramref name="limit"/> байт; с <paramref name="masker"/> — его результат.
     /// </summary>
@@ -114,7 +116,7 @@ internal static class MessageDataFormatter
 
         public override void SetLength(long value) => throw new NotSupportedException();
 
-        private string TruncationMark => _truncated ? "..." : string.Empty;
+        private string TruncationMark => _truncated ? Ellipsis : string.Empty;
 
         /// <summary>
         /// Отдаёт принятые байты текстом, помечая усечение.
@@ -122,18 +124,43 @@ internal static class MessageDataFormatter
         public string GetText() => Encoding.UTF8.GetString(WholeChars()) + TruncationMark;
 
         /// <summary>
-        /// Отдаёт принятые байты через маскировщик; метку усечения ставит он.
+        /// Отдаёт принятые байты через маскировщик, уложив его результат в лимит.
         /// </summary>
+        /// <remarks>
+        /// Потолок записи держит пакет, а не маскировщик: своя маска может лимит не смотреть, а поле в хранилище
+        /// логов ограничено по длине. Неполный результат, уложившийся в лимит, помечает сам маскировщик.
+        /// </remarks>
         public string GetMaskedText(IMessageDataMasker masker, int limit)
         {
+            string? masked;
+
             try
             {
-                return masker.Mask(WholeChars(), !_truncated, limit);
+                masked = masker.Mask(WholeChars(), !_truncated, limit);
             }
             catch (Exception e)
             {
                 return NotMasked(e);
             }
+
+            return FitToLimit(masked ?? string.Empty, limit);
+        }
+
+        /// <remarks>
+        /// Результат с меткой усечения, уложенный в лимит, проходит как есть, чтобы метка не удваивалась.
+        /// </remarks>
+        private static string FitToLimit(string text, int limit)
+        {
+            if (Encoding.UTF8.GetByteCount(text) <= limit + Ellipsis.Length)
+                return text;
+
+            var bytes = Encoding.UTF8.GetBytes(text);
+            var length = limit;
+
+            while (length > 0 && (bytes[length] & 0xC0) == 0x80)
+                length--;
+
+            return Encoding.UTF8.GetString(bytes, 0, length) + Ellipsis;
         }
 
         /// <remarks>
