@@ -62,6 +62,20 @@ public class MessageDataFormatterTests
         Assert.That(MessageDataFormatter.Format<object>(null, limit: 4000), Is.EqualTo("null"));
     }
 
+    /// <remarks>
+    /// Вызов приходит из обработчика ошибки: предельный лимит не должен ни переполнить арифметику лимита, ни подменить
+    /// исходное исключение своим.
+    /// </remarks>
+    [TestCase(int.MaxValue)]
+    [TestCase(int.MaxValue - 1)]
+    [TestCase(int.MaxValue - 2)]
+    public void Format_WithMaskerAndMaximalLimit_ReturnsMaskedBody(int limit)
+    {
+        var messageData = MessageDataFormatter.Format(new { A = "x", Password = "p" }, limit, new SensitiveNamesMessageDataMasker());
+
+        Assert.That(messageData, Is.EqualTo("""{"A":"x","Password":"***"}"""));
+    }
+
     /// <summary>
     /// Сообщение, считающее обращения сериализатора к элементам тела.
     /// </summary>

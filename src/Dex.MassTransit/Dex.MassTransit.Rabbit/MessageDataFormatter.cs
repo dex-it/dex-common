@@ -151,7 +151,7 @@ internal static class MessageDataFormatter
         /// </remarks>
         private static string FitToLimit(string text, int limit)
         {
-            if (Encoding.UTF8.GetByteCount(text) <= limit + Ellipsis.Length)
+            if (Encoding.UTF8.GetByteCount(text) <= (long)limit + Ellipsis.Length)
                 return text;
 
             var bytes = Encoding.UTF8.GetBytes(text);

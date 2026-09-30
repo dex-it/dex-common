@@ -124,7 +124,8 @@ The body is written as is unless an `IMessageDataMasker` is registered in the co
 ```csharp
 // default names: fragments password, passwd, pwd, secret, token, apikey, authorization, credential, privatekey, cvv, cvc
 // match anywhere in the name (case, "_", "-" and "." are ignored: CardCvv, x-api-key);
-// words pin, otp match a whole word of the name (PinCode, SmsOtp, PINCode — but not Shipping, RootPath)
+// words pin, otp match a whole word of the name (PinCode, SmsOtp, PINCode — but not Shipping, RootPath);
+// a word entry of several words (PayerBic, pin_code) matches the whole name in any form (payer_bic, PAYERBIC)
 services.AddSingleton<IMessageDataMasker, SensitiveNamesMessageDataMasker>();
 
 // or your own list instead of the default one

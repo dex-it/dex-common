@@ -187,5 +187,21 @@ public class SensitiveNamesMessageDataMaskerTests
         Assert.That(result, Is.EqualTo("""{"PayerIban":"***","PayerBic":"***","Bicycle":"b","Password":"p"}"""));
     }
 
+    /// <remarks>
+    /// Запись своего списка из нескольких слов совпадает с именем целиком в любой записи, а не только слитной.
+    /// </remarks>
+    [TestCase("cvv2", """{"Cvv2":"a","CVV2":"b","cvv2":"c"}""", """{"Cvv2":"***","CVV2":"***","cvv2":"***"}""")]
+    [TestCase("PayerBic", """{"PayerBic":"a","payer_bic":"b","PayerBIC":"c","payerbic":"d"}""", """{"PayerBic":"***","payer_bic":"***","PayerBIC":"***","payerbic":"***"}""")]
+    [TestCase("pin_code", """{"PinCode":"a","pin_code":"b","PINCODE":"c"}""", """{"PinCode":"***","pin_code":"***","PINCODE":"***"}""")]
+    [TestCase("card-pin", """{"CardPin":"a","card-pin":"b","cardpin":"c"}""", """{"CardPin":"***","card-pin":"***","cardpin":"***"}""")]
+    public void Mask_WhenCustomWordHasSeveralWords_MatchesWholeNameInAnyForm(string word, string json, string expected)
+    {
+        var masker = SensitiveNamesMessageDataMasker.Create(nameFragments: [], nameWords: [word]);
+
+        var result = masker.Mask(Encoding.UTF8.GetBytes(json), isComplete: true, limit: NoLimit);
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
     private static string Mask(string json) => Masker.Mask(Encoding.UTF8.GetBytes(json), isComplete: true, limit: NoLimit);
 }

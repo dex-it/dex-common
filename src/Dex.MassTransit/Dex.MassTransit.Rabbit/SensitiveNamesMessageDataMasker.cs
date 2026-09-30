@@ -14,7 +14,7 @@ namespace Dex.MassTransit.Rabbit;
 /// <remarks>
 /// Фрагмент ищется по вхождению в имя без учёта регистра и разделителей <c>_</c>, <c>-</c>, <c>.</c>; слово — среди слов имени,
 /// разбитого по разделителям, смене регистра и границе цифр (<c>PinCode</c> — pin, code): по вхождению короткие <c>pin</c> и
-/// <c>otp</c> задели бы <c>Shipping</c> и <c>RootPath</c>. Значение под таким именем, включая объект и массив, заменяется целиком
+/// <c>otp</c> задели бы <c>Shipping</c> и <c>RootPath</c>; запись из нескольких слов совпадает с именем целиком. Значение под таким именем, включая объект и массив, заменяется целиком
 /// и в результат не попадает даже началом, в том числе оборванное на входе. Обычная строка, не влезшая в лимит, обрезается по
 /// границе символа, как и без маски.
 /// </remarks>
@@ -69,7 +69,7 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
     /// Маска по своему списку имён вместо списка по умолчанию.
     /// </summary>
     /// <param name="nameFragments">Фрагменты, при вхождении которых в имя значение маскируется.</param>
-    /// <param name="nameWords">Слова, при наличии которых среди слов имени значение маскируется.</param>
+    /// <param name="nameWords">Слова, при наличии которых среди слов имени значение маскируется; запись из нескольких слов (<c>PayerBic</c>, <c>pin_code</c>) совпадает с именем целиком.</param>
     public static SensitiveNamesMessageDataMasker Create(IEnumerable<string> nameFragments, IEnumerable<string> nameWords)
     {
         ArgumentNullException.ThrowIfNull(nameFragments);
@@ -196,7 +196,9 @@ public sealed class SensitiveNamesMessageDataMasker : IMessageDataMasker
 
         var normalized = Normalize(name);
 
-        return _nameFragments.Any(x => normalized.Contains(x, StringComparison.Ordinal)) || Words(name).Any(_nameWords.Contains);
+        return _nameWords.Contains(normalized)
+               || _nameFragments.Any(x => normalized.Contains(x, StringComparison.Ordinal))
+               || Words(name).Any(_nameWords.Contains);
     }
 
     /// <summary>
