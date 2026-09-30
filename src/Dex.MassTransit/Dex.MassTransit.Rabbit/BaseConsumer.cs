@@ -5,16 +5,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Dex.MassTransit.Rabbit;
 
-public abstract class BaseConsumer<TMessage>(ILogger logger) : IConsumer<TMessage>
-    where TMessage : class
+public abstract class BaseConsumer<TMessage>(ILogger logger) : IConsumer<TMessage> where TMessage : class
 {
     private ConsumeContext<TMessage>? _context;
     protected ILogger Logger { get; } = logger;
 
     public virtual async Task Consume(ConsumeContext<TMessage> context)
     {
-        context = context ?? throw new ArgumentNullException(nameof(context));
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
 
         try
         {
@@ -45,10 +43,16 @@ public abstract class BaseConsumer<TMessage>(ILogger logger) : IConsumer<TMessag
         throw new DeferConsumerException();
     }
 
-    protected void LogError(ConsumeContext<TMessage> context, Exception e)
-    {
-        Logger.LogError(e, "Consumer process failed. [{@MessageData}]", context.Message);
-    }
+    /// <summary>
+    /// Предельный размер тела сообщения в логе, в байтах UTF-8.
+    /// </summary>
+    protected virtual int MessageDataLimit => ConsumerLoggerExtensions.DefaultMessageDataLimit;
+
+    /// <summary>
+    /// Запись об упавшей обработке сообщения.
+    /// </summary>
+    protected virtual void LogError(ConsumeContext<TMessage> context, Exception e)
+        => Logger.LogConsumeError(context, e, MessageDataLimit);
 
     private sealed class DeferConsumerException : Exception;
 }

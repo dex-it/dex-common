@@ -1,4 +1,5 @@
 using Dex.Cap.Common.Ef;
+using Dex.Cap.Common.Interfaces;
 using Dex.Cap.OnceExecutor;
 using Dex.Cap.Outbox.OnceExecutor.MassTransit.Extensions;
 using Dex.MassTransit.Rabbit;
@@ -12,29 +13,19 @@ namespace Dex.Cap.Outbox.OnceExecutor.MassTransit;
 /// MessageId - ключ идемпотентности.
 /// Перед использованием, убедитесь что TDbContext зарегистрирован OnceExecutor
 /// </summary>
-public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TMessage>
+public abstract class IdempotentConsumer<TMessage, TDbContext>(
+    IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor,
+    ILogger logger) : BaseConsumer<TMessage>(logger)
     where TMessage : class
 {
-    private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
     protected virtual EfTransactionOptions TransactionOptions => EfTransactionOptions.Default;
 
-    /// <inheritdoc/>
-    protected IdempotentConsumer(
-        IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor,
-        ILogger logger)
-        : base(logger)
-    {
-        _onceExecutor = onceExecutor ?? throw new ArgumentNullException(nameof(onceExecutor));
-    }
-
-    /// <inheritdoc/>
     protected sealed override Task Process(ConsumeContext<TMessage> context)
     {
-        return _onceExecutor.ExecuteAsync(
+        return onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
             async (_, _) => await IdempotentProcess(context).ConfigureAwait(false),
             options: TransactionOptions,
@@ -51,6 +42,41 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
     /// Вычисление ключа идемпотентности
     /// </summary>
     protected virtual string GetIdempotentKey(ConsumeContext<TMessage> context) => context.GetIdempotentKey();
+
+    /// <summary>
+    /// Запись об ошибке с ключом идемпотентности.
+    /// </summary>
+    /// <remarks>
+    /// Ключ добавляется областью логирования: по нему запись связывается с записью once-executor
+    /// и с повторной доставкой того же сообщения. В шаблон базового класса он не входит —
+    /// идемпотентность живёт на этом слое.
+    /// </remarks>
+    protected override void LogError(ConsumeContext<TMessage> context, Exception e)
+    {
+        using var scope = Logger.BeginScope(new Dictionary<string, object?> { ["IdempotentKey"] = TryGetIdempotentKey(context) });
+
+        base.LogError(context, e);
+    }
+
+    /// <summary>
+    /// Ключ идемпотентности или null, если вычислить его нельзя.
+    /// </summary>
+    /// <remarks>
+    /// Вычисление ключа само бросает исключение — например, у сообщения без
+    /// <see cref="IIdempotentKey"/> может не быть MessageId. В обработчике ошибки это подменило бы
+    /// исходное исключение, поэтому ключ просто не попадает в запись: причину несёт исключение.
+    /// </remarks>
+    private string? TryGetIdempotentKey(ConsumeContext<TMessage> context)
+    {
+        try
+        {
+            return GetIdempotentKey(context);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 }
 
 /// <summary>
@@ -58,18 +84,14 @@ public abstract class IdempotentConsumer<TMessage, TDbContext> : BaseConsumer<TM
 /// MessageId - ключ идемпотентности.
 /// Перед использованием, убедитесь что TDbContext зарегистрирован OnceExecutor
 /// </summary>
-public abstract class IdempotentConsumer<TDbContext>
+/// <remarks>
+/// Вариант для консьюмера на несколько типов сообщений: он не зависит от TMessage, но и не
+/// наследует BaseConsumer, поэтому Consume, обработка исключений и запись об ошибке — за
+/// наследником. Запись той же формы даёт <see cref="ConsumerLoggerExtensions"/>.LogConsumeError,
+/// ключ идемпотентности добавляется к ней областью логирования.
+/// </remarks>
+public abstract class IdempotentConsumer<TDbContext>(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
 {
-    private readonly IOnceExecutor<IEfTransactionOptions, TDbContext> _onceExecutor;
-
-    /// <summary>
-    /// Конструктор
-    /// </summary>
-    protected IdempotentConsumer(IOnceExecutor<IEfTransactionOptions, TDbContext> onceExecutor)
-    {
-        _onceExecutor = onceExecutor;
-    }
-
     /// <summary>
     /// Переопределить EfTransactionOptions
     /// </summary>
@@ -83,7 +105,7 @@ public abstract class IdempotentConsumer<TDbContext>
         Func<TDbContext, CancellationToken, Task> operation)
         where TMessage : class
     {
-        return _onceExecutor.ExecuteAsync(
+        return onceExecutor.ExecuteAsync(
             GetIdempotentKey(context),
             operation,
             options: TransactionOptions,
