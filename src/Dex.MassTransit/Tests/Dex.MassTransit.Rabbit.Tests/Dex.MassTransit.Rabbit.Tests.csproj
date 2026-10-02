@@ -16,6 +16,8 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Moq"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+        <PackageReference Include="JetBrains.Annotations" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
