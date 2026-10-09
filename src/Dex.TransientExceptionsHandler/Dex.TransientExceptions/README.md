@@ -30,6 +30,8 @@
 
 Начиная с 8.1.0 предикаты срабатывают и на наследниках (раньше — только на точном типе): добавленный через `Add<T>(predicate)` предикат теперь применяется и к наследникам `T`.
 
+Начиная с 8.1.0 `innerExceptionsSearchDepth` конструктора понимается так же, как `SetInnerExceptionsSearchDepth`: `0` — без вложенных исключений (раньше `0` молча становился глубиной по умолчанию 10), отрицательное значение — `ArgumentOutOfRangeException` (раньше тоже 10). `SetInnerExceptionsSearchDepth` с положительной глубиной раньше бросал `ArgumentOutOfRangeException`, теперь работает.
+
 В консьюмере MassTransit отмена (`OperationCanceledException`, в том числе таймаут `HttpClient`) до политики повторов не доходит: MassTransit подменяет её на `ConsumerCanceledException`. `UseRetryConfiguration`, `UseRedeliveryRetryConfiguration` и `r.HandleTransient(...)` из Dex.MassTransit.Rabbit передают её политике как `OperationCanceledException`, поэтому с `Default` она повторяется; обычный `UseMessageRetry(r => r.Handle(TransientExceptionsHandler.Default))` такую отмену не повторит — используйте `r.HandleTransient(TransientExceptionsHandler.Default)`.
 
 Вложенные исключения проверяются в глубину, у `AggregateException` — все `InnerExceptions`, а не только первое. Глубина считает само исключение первым уровнем: при глубине N проверяются N-1 уровней вложенности.
