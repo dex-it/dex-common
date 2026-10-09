@@ -162,7 +162,7 @@ Two extension methods on `IConsumerConfigurator<TConsumer>`:
 configurator.RegisterReceiveEndpoint<PaymentDto, PaymentConsumer>(factory, endpoint =>
 {
     endpoint.UseRedeliveryRetryConfiguration(
-        checkTransientException: ex => ex is HttpRequestException or TimeoutException,
+        checkTransientException: TransientExceptionsHandler.Default,
         retryIntervals: new RetryExponentialIntervals(
             MinInterval: TimeSpan.FromSeconds(2),
             MaxInterval: TimeSpan.FromSeconds(30),
@@ -171,6 +171,8 @@ configurator.RegisterReceiveEndpoint<PaymentDto, PaymentConsumer>(factory, endpo
 ```
 
 Pair the `checkTransientException` callback with [`Dex.TransientExceptions`](https://github.com/dex-it/dex-common) for a project-wide policy of which errors are considered transient.
+
+MassTransit replaces an `OperationCanceledException` thrown by a consumer while the bus is running (for example, an `HttpClient.Timeout`) with `ConsumerCanceledException`, and drops the original exception, before the retry filters see it. Both methods pass it to `checkTransientException` as an `OperationCanceledException`, and `RequestTimeoutException` as a `TimeoutException`; the MassTransit exception is the `InnerException`. As a result, a cancellation inside a consumer is retried exactly when the policy retries `OperationCanceledException` (`TransientExceptionsHandler.Default` does). A consumer that cancels on purpose to skip a message is retried as well. Calling `UseMessageRetry(r => r.Handle(...))` directly bypasses this mapping.
 
 ### Concurrency / prefetch
 

@@ -40,6 +40,11 @@ configurator.LinkActivityTracingContext(); // включено по умолча
 ## Ограничения и gotchas
 
 - UseDelayedRedelivery ОБЯЗАТЕЛЬНО вызывать ДО UseMessageRetry (порядок критичен)
+- MassTransit подменяет отмену изнутри консьюмера (при живой шине) на `ConsumerCanceledException` без вложенного
+  исключения до фильтров повтора. `UseRetryConfiguration`/`UseRedeliveryRetryConfiguration` отдают её политике как
+  `OperationCanceledException`, а `RequestTimeoutException` — как `TimeoutException`. Прямой `UseMessageRetry` этого не делает.
+- `RetryConsumeContext` откладывает `Fault<T>`, если политика принимает исходное исключение консьюмера, и публикует его,
+  только если политика примет и итоговое. Политика, принимающая OCE, но не `ConsumerCanceledException`, теряет `Fault<T>`.
 - Не использовать `concurrencyLimit=1 + prefetchCount=1` с Redelivery: ломает порядок сообщений
 - SQS FIFO: имена DTO обязаны заканчиваться на "Fifo"
 - BaseConsumer.Defer() бросает internal exception для пропуска логирования ошибки

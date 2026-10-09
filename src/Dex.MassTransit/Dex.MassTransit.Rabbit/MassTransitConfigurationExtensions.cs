@@ -14,7 +14,11 @@ public static class MassTransitConfigurationExtensions
 
     /// <summary>
     /// Конфигурация с настроенными Redelivery и Retry
-    /// <remarks> Используйте TransientExceptionsHandler для перехвата временных ошибок </remarks>
+    /// <remarks>
+    /// Используйте TransientExceptionsHandler для перехвата временных ошибок.
+    /// <see cref="ConsumerCanceledException"/> проверяется политикой как <see cref="OperationCanceledException"/>,
+    /// <see cref="RequestTimeoutException"/> — как <see cref="TimeoutException"/>.
+    /// </remarks>
     /// </summary>
     public static IConsumerConfigurator UseRedeliveryRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
@@ -30,7 +34,7 @@ public static class MassTransitConfigurationExtensions
         configurator.UseDelayedRedelivery(redeliveryConfigurator =>
         {
             redeliveryConfigurator.Intervals(redeliveryIntervals ?? DefaultRedeliveryIntervals);
-            redeliveryConfigurator.Handle(checkTransientException);
+            redeliveryConfigurator.Handle(AsBclExceptions(checkTransientException));
         });
 
         configurator.UseRetryConfiguration(checkTransientException, retryLimit, retryIntervals);
@@ -40,7 +44,11 @@ public static class MassTransitConfigurationExtensions
 
     /// <summary>
     /// Конфигурация Retry
-    /// <remarks> Используйте TransientExceptionsHandler для перехвата временных ошибок </remarks>
+    /// <remarks>
+    /// Используйте TransientExceptionsHandler для перехвата временных ошибок.
+    /// <see cref="ConsumerCanceledException"/> проверяется политикой как <see cref="OperationCanceledException"/>,
+    /// <see cref="RequestTimeoutException"/> — как <see cref="TimeoutException"/>.
+    /// </remarks>
     /// </summary>
     public static IConsumerConfigurator UseRetryConfiguration<TConsumer>(
         this IConsumerConfigurator<TConsumer> configurator,
@@ -57,11 +65,24 @@ public static class MassTransitConfigurationExtensions
             var intervals = retryIntervals ?? DefaultRetryIntervals;
 
             retryConfigurator.Exponential(retryLimit.Value, intervals.MinInterval, intervals.MaxInterval, intervals.Delta);
-            retryConfigurator.Handle(checkTransientException);
+            retryConfigurator.Handle(AsBclExceptions(checkTransientException));
         });
 
         return configurator;
     }
+
+    /// <summary>
+    /// Отмену внутри консьюмера MassTransit до фильтров повтора подменяет на <see cref="ConsumerCanceledException"/>
+    /// без вложенного исключения, а таймаут request client — не <see cref="TimeoutException"/>. Политика, не знающая
+    /// MassTransit, получает их как исключения BCL того же смысла; исходное — во вложенном.
+    /// </summary>
+    private static Func<Exception, bool> AsBclExceptions(Func<Exception, bool> checkTransientException)
+        => exception => exception switch
+        {
+            ConsumerCanceledException => checkTransientException(new OperationCanceledException(exception.Message, exception)),
+            RequestTimeoutException => checkTransientException(new TimeoutException(exception.Message, exception)),
+            _ => checkTransientException(exception),
+        };
 
     /// <summary>
     /// Не использовать дефолтную настройку эндпоинта (concurrencyLimit = 1 и prefetchCount = 1) совместно с настройкой консьюмера с Redelivery,
