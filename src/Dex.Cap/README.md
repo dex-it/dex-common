@@ -144,6 +144,32 @@ Configurable via `IOptions<OutboxOptions>` (defaults shown):
 | `MessagesToProcess` | `100` | Batch size — how many messages are fetched and locked per cycle. Processing time of the whole batch counts from the moment of selection. |
 | `ConcurrencyLimit` | `1` | Degree of parallel processing inside a batch. Recommended: `ConcurrencyLimit ≤ MessagesToProcess`. |
 | `GetFreeMessagesTimeout` | `20s` | DB-side timeout for selecting free messages. |
+| `MaxContentLengthBytes` | `1 MiB` | Upper bound of the serialized body, in **UTF-8 bytes** (measured like an HTTP `Content-Length`, not in characters). Checked on enqueue, before the row reaches the database; exceeding it throws `OutboxContentTooLargeException`. Raise it if your messages are legitimately large: `services.Configure<OutboxOptions>(o => o.MaxContentLengthBytes = 8 * 1024 * 1024);`. Must be positive: registered through `AddOutbox`, a non-positive value fails the host start. See the notes below. |
+
+#### Notes on `MaxContentLengthBytes`
+
+The same three caveats apply to the outbox and to the inbox, and the inbox section
+[below](#the-body-size-is-bounded-by-the-library-and-the-transport-is-still-the-outer-echelon) spells them out in
+full. In short:
+
+* The size is measured **after** serialization, so it bounds what gets stored, not what gets allocated.
+* What is measured is the JSON the default serializer produced, and that serializer escapes every non-ASCII
+  character as `\uXXXX`. A Cyrillic or CJK character therefore spends **6 bytes** of the budget rather than the 2 or
+  3 it occupies on the wire. If you want the budget to match the wire size, register your own `IOutboxSerializer`
+  built on `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`.
+* The limit is per body. It says nothing about the number of messages or the total size of the table.
+
+To turn the limit off, set `int.MaxValue`: `Encoding.UTF8.GetByteCount` cannot exceed it, so the check never fires.
+Zero and negative values are rejected at host start instead, because a silently disabled limit is worse than an
+explicit one.
+
+Before upgrading, it is worth checking that the default does not cut off traffic you already accept:
+
+```sql
+select max(octet_length("Content")) from cap.outbox;   -- and cap.inbox
+```
+
+If the answer is above 1 MiB, raise `MaxContentLengthBytes` above it in the same deployment that brings in 8.5.
 
 ### Retry strategy
 
@@ -320,6 +346,12 @@ public async Task<IActionResult> CreateOrder(
 }
 ```
 
+Over HTTP, map `InboxContentTooLargeException` to **413 Payload Too Large** rather than letting it become a 500: it
+is a client error, and the limit is measured in the same units as `Content-Length` (see
+[the notes on `MaxContentLengthBytes`](#the-body-size-is-bounded-by-the-library-and-the-transport-is-still-the-outer-echelon)).
+On a message bus the opposite is true: the exception must reach the transport, so that the message is not
+acknowledged.
+
 ### `IInboxService.EnqueueAsync` parameters
 
 | Parameter | Meaning |
@@ -343,6 +375,7 @@ been acknowledged.
 | `MessagesToProcess` | 25 | Batch size claimed per cycle. Together with the lease it sets the per-message time budget: `(lockTimeout - 5s) * ConcurrencyLimit / MessagesToProcess`, one second on the defaults. A bigger batch does not drain faster: whatever cannot start before the lease runs out simply returns to the queue. |
 | `ConcurrencyLimit` | 1 | Degree of parallelism; must not exceed `MessagesToProcess`. |
 | `GetFreeMessagesTimeout` | 20s | Timeout of the claim query. Whole seconds, at least `1s`: the command timeout has second granularity, so a smaller value would truncate to zero and silently leave the timeout unset. |
+| `MaxContentLengthBytes` | 1 MiB | Upper bound of the serialized body, in **UTF-8 bytes** (measured like an HTTP `Content-Length`, not in characters). Checked on receipt, before the row reaches the database; exceeding it throws `InboxContentTooLargeException`. Raise it for sources with legitimately large bodies: `services.Configure<InboxOptions>(o => o.MaxContentLengthBytes = 8 * 1024 * 1024);`. Must be positive: registered through `AddInbox`, a non-positive value fails the host start. Escaping, deduplication and the upgrade check are covered [below](#the-body-size-is-bounded-by-the-library-and-the-transport-is-still-the-outer-echelon). |
 
 `InboxHandlerOptions` (scheduler): `Period` 30s, `CleanupInterval` 1h, `CleanupOlderThan` 30d,
 `HandlerInitDelay` 5–15s, `CleanerInitDelay` 20–40s.
@@ -452,11 +485,17 @@ a lease running out is a sizing mistake, not a message failure, so the message r
 ### The message body is stored, so its schema is a contract
 
 The body is serialized on enqueue and deserialized **after a restart and after a deploy**, exactly like the
-discriminator. `System.Text.Json` with default options is used, so the schema must stay backward compatible with
-whatever is still sitting in the table (up to `CleanupOlderThan`):
+discriminator. `System.Text.Json` is used, so the schema must stay backward compatible with whatever is still
+sitting in the table (up to `CleanupOlderThan`):
 
-* **Enums are written as numbers.** Reordering or removing enum members silently changes the meaning of stored
-  messages. Append new members at the end, or serialize enums as strings via a custom `IInboxSerializer`.
+* **Enums are written as strings.** `DefaultInboxSerializer` adds a `JsonStringEnumConverter`, so reordering enum
+  members is safe, unlike with the numeric default of `System.Text.Json`. **Renaming** an enum member is what
+  breaks stored bodies; pin the wire name with `[JsonStringEnumMemberName]` if you have to rename the member
+  itself. Note the asymmetry: `DefaultOutboxSerializer` has no such converter, so outbox bodies do store enums as
+  numbers.
+* **Do not replace `IInboxSerializer` with one built on bare `JsonSerializerOptions`** while rows are still in the
+  table: it would expect numbers where names are stored, and every pending message would fail deserialization and
+  end up dead-lettered.
 * **Renaming a property, or changing its type**, makes stored bodies unreadable: deserialization throws, the message
   is retried and then dead-lettered. Add new properties instead, and keep the old ones readable.
 * **Adding a property is safe**: missing members deserialize to their default value.
@@ -465,14 +504,43 @@ whatever is still sitting in the table (up to `CleanupOlderThan`):
 Replace `IInboxSerializer` if you need different options; it is resolved from DI, so registering your own after
 `AddInbox` wins.
 
-### The body size is bounded by the transport, not the library
+### The body size is bounded by the library, and the transport is still the outer echelon
 
-`Content` is stored as PostgreSQL `text`, and the library sets no upper bound on its length, unlike `MessageId` and
-`ConsumerId`, which are capped because they sit in the unique index. The inbox stores what it is handed. If the
-source is untrusted, bound the body size where the message enters the process: on the broker (RabbitMQ
-`MaxMessageSize`, Kafka `message.max.bytes`) or on the HTTP host (Kestrel `MaxRequestBodySize`). Deduplication does
-not help against this, because the `MessageId` is the sender's to choose, so a hostile sender can keep producing
-large bodies under fresh keys that live until `CleanupOlderThan`.
+Since **8.5.0** the body has an upper bound: `MaxContentLengthBytes`, 1 MiB by default, measured in UTF-8 bytes and
+checked on receipt, before the row is written. A larger body is rejected with `InboxContentTooLargeException`
+naming the message type, the actual size and the configured limit; raise the option if such traffic is legitimate.
+The bound is an option rather than a `HasMaxLength` on the column, so existing tables need no migration: the column
+itself stays PostgreSQL `text`, whose practical ceiling is around 1 GB. `MessageId` and `ConsumerId` are capped
+separately, because they sit in the unique index.
+
+Two things the limit deliberately does not do. It runs **after** the body has been serialized, so it bounds what
+gets stored, not what gets allocated: by the time the size is measured, the transport has already deserialized the
+message and the envelope factory has serialized it back into a `string`. And it bounds a **single body**, not the
+number of messages or the total size of the table.
+
+One thing to know before you pick a number. What is measured is the JSON the serializer produced, and
+`DefaultInboxSerializer` (like `DefaultOutboxSerializer`) leaves `JsonSerializerOptions.Encoder` at its default,
+which escapes every non-ASCII character as `\uXXXX`. So `я` costs 6 bytes of the budget instead of the 2 it
+occupies on the wire, and a CJK or emoji character costs 6 or 12 instead of 3 or 4. A body that is 300 KiB on the
+wire can therefore be close to 1 MiB by the time it is measured. Two consequences: aligning `MaxContentLengthBytes` with
+a broker limit does not give you that limit, and the difference between bytes and characters that this option
+insists on is invisible on the default serializer, whose output is always ASCII. Register your own
+`IInboxSerializer` on `JavaScriptEncoder.UnsafeRelaxedJsonEscaping` if you want the budget to track the wire size.
+
+There is also an interaction with deduplication worth stating. The size is checked **before** the row is inserted,
+and deduplication happens **during** the insert, so a redelivery of a message whose body is already stored but no
+longer fits the current limit is rejected with `InboxContentTooLargeException` instead of coming back as
+`Duplicate`. This can only happen if the body was stored while the limit was higher or absent, that is right after
+an upgrade to 8.5 or after lowering the option on a live service. Measure before you do either (see the query in
+the outbox notes above); the failure is deterministic, so such a message has to go to the transport's error queue,
+not be redelivered again.
+
+So keep bounding the body where the message enters the process as well: on the broker (RabbitMQ `MaxMessageSize`,
+Kafka `message.max.bytes`) or on the HTTP host (Kestrel `MaxRequestBodySize`). That echelon rejects the payload
+before it is deserialized, so it is the one that protects memory. Deduplication does not help against a hostile
+sender either, because the `MessageId` is the sender's to choose, so it can keep producing bodies just under the
+limit under fresh keys that live until `CleanupOlderThan`; flood control stays the broker's or the rate limiter's
+job.
 
 ### Limitations
 
@@ -607,6 +675,13 @@ Behaviour:
 ---
 
 # Breaking changes
+
+## Message body size
+
+| Version | PR | Change |
+|---|---|---|
+| **8.5** | [#238](https://github.com/dex-it/dex-common/pull/238) | `OutboxOptions.MaxContentLengthBytes` and `InboxOptions.MaxContentLengthBytes` introduced, **1 MiB by default**. A body that used to be enqueued without complaint now throws `OutboxContentTooLargeException` / `InboxContentTooLargeException` once it exceeds the limit in UTF-8 bytes. The check lives on `IOutboxService.EnqueueAsync` / `IInboxService.EnqueueAsync` and runs before the row is written; the read, retry and requeue paths never re-measure, and writing an envelope through your own `DbContext` bypasses the check by design, so rows already stored are unaffected. No database migration: the limit is an option, not a `HasMaxLength` on the column. **Before upgrading, measure**: `select max(octet_length("Content")) from cap.outbox;` and the same for `cap.inbox`. If the answer is above 1 MiB, raise the option above it in the same deployment: `services.Configure<OutboxOptions>(o => o.MaxContentLengthBytes = 8 * 1024 * 1024);`. Note that the measured size is of the escaped JSON, so non-ASCII bodies cost about three times their wire size. A non-positive value fails the host start; `int.MaxValue` turns the limit off. One more consequence on the inbox side: a redelivery of a stored body that no longer fits is rejected instead of returning `Duplicate`, which is another reason to measure first. |
+| **8.5** | [#238](https://github.com/dex-it/dex-common/pull/238) | `AddOutbox` now calls `ValidateOnStart()` on `OutboxOptions` in order to enforce the rule above. That switch applies to the **options instance** (the type plus the name, here the default name), not to a single validator: every registered `IValidateOptions<OutboxOptions>` now runs during host start. The library itself registers only the body-size rule, but if you registered the public `OutboxOptionsValidator` yourself, its five long-dormant rules (`Retries`, `MessagesToProcess`, `ConcurrencyLimit`, `ConcurrencyLimit > MessagesToProcess`, `GetFreeMessagesTimeout < 1s`) will now fail the host start instead of surfacing later at the first options resolution. `AddInbox` has behaved this way since 8.4. |
 
 ## Transactions
 

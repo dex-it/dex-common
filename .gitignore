@@ -313,6 +313,9 @@ tools.yaml
 run-claude/
 .claude/
 
+# IDE test-run exports
+All tests from *
+
 # TLDR
 .tldr/
 .tldrignore

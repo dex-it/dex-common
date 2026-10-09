@@ -8,6 +8,11 @@ namespace Dex.Cap.Inbox.Options;
 public class InboxOptions
 {
     /// <summary>
+    /// Дефолт для <see cref="MaxContentLengthBytes"/>: 1 МиБ.
+    /// </summary>
+    public const int DefaultMaxContentLengthBytes = 1024 * 1024;
+
+    /// <summary>
     /// Количество попыток обработки сообщения. По исчерпании сообщение переводится в DeadLettered.
     /// Default: 3
     /// </summary>
@@ -44,4 +49,38 @@ public class InboxOptions
     /// Валидатор отвергает такое значение на старте.
     /// </remarks>
     public TimeSpan GetFreeMessagesTimeout { get; set; } = TimeSpan.FromSeconds(20);
+
+    /// <summary>
+    /// Предельный размер тела сообщения (<see cref="Models.InboxEnvelope.Content"/>) в байтах (UTF-8),
+    /// проверяемый на приёме. Меряется как HTTP-заголовок Content-Length: длина сериализованного тела в
+    /// байтах, а не число символов.
+    /// Default: 1 МиБ (1048576).
+    /// </summary>
+    /// <remarks>
+    /// Предел задан опцией, а не жёстким <c>HasMaxLength</c> на колонке: так существующим таблицам не нужна
+    /// миграция, а потребитель сохраняет контроль. Превышение бросает
+    /// <see cref="Exceptions.InboxContentTooLargeException"/> на приёме, где известен тип сообщения, а не
+    /// глубоко в БД. Для источников с легитимно большими телами предел поднимают; практический потолок -
+    /// колонка <c>text</c> в PostgreSQL, порядка 1 ГБ. Снять предел целиком можно значением
+    /// <see cref="int.MaxValue"/>: <c>Encoding.UTF8.GetByteCount</c> его не превышает. Ноль и отрицательные
+    /// значения отвергаются на старте хоста.
+    /// <para>
+    /// Для инбокса это важнее, чем для аутбокса: тело приходит от внешнего источника и лежит весь ретеншен,
+    /// поэтому один аномально большой payload раздувает таблицу и бэкап и замедляет захват.
+    /// </para>
+    /// <para>
+    /// Меряется вывод сериализатора, а <c>DefaultInboxSerializer</c> оставляет <c>Encoder</c> по умолчанию и
+    /// экранирует не-ASCII в <c>\uXXXX</c>. Кириллический символ поэтому расходует 6 байт предела вместо 2 на
+    /// проводе, и предел, выставленный по лимиту брокера, окажется примерно втрое строже ожидаемого. Кому
+    /// нужно совпадение с размером на проводе, подменяет <c>IInboxSerializer</c> на построенный поверх
+    /// <c>JavaScriptEncoder.UnsafeRelaxedJsonEscaping</c>.
+    /// </para>
+    /// <para>
+    /// Понижать предел на живом сервисе опасно: размер проверяется ДО вставки, а дедупликация происходит В
+    /// ней, поэтому передоставка уже сохранённого тела, не проходящего новый предел, отвергается исключением
+    /// вместо <see cref="Models.InboxEnqueueStatus.Duplicate"/>. Перед сменой значения стоит померить
+    /// <c>max(octet_length("Content"))</c> по таблице инбокса.
+    /// </para>
+    /// </remarks>
+    public int MaxContentLengthBytes { get; set; } = DefaultMaxContentLengthBytes;
 }
