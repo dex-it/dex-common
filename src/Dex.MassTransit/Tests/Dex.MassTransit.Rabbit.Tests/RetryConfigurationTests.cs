@@ -120,6 +120,23 @@ public class RetryConfigurationTests
     }
 
     /// <remarks>
+    /// Обработчик без консьюмера: подмену делает HandlerMessageFilter, retry — свой у endpoint.
+    /// </remarks>
+    [Test]
+    public async Task HandleTransient_WhenHandlerIsCanceledAndPolicyAcceptsCancellation_RetriesUpToLimit()
+    {
+        var calls = await HandleUntilFault(
+            HttpClientTimeout(),
+            r =>
+            {
+                r.Immediate(2);
+                r.HandleTransient(ex => ex is OperationCanceledException);
+            });
+
+        Assert.That(calls, Is.EqualTo(3));
+    }
+
+    /// <remarks>
     /// Как у <c>HttpClient</c> по таймауту: свой отменённый токен и <see cref="TimeoutException"/> внутри.
     /// </remarks>
     private static TaskCanceledException HttpClientTimeout()
@@ -132,7 +149,20 @@ public class RetryConfigurationTests
         return false;
     }
 
-    private static async Task<int> ConsumeUntilFault(Exception failure, Action<IConsumerConfigurator<FailingConsumer>> configure)
+    private static Task<int> ConsumeUntilFault(Exception failure, Action<IConsumerConfigurator<FailingConsumer>> configure)
+        => RunUntilFault(failure, x => x.AddConsumer<FailingConsumer>((_, c) => configure(c)), static (_, _) => { });
+
+    private static Task<int> HandleUntilFault(Exception failure, Action<IRetryConfigurator> configureRetry)
+        => RunUntilFault(failure, static _ => { }, (state, cfg) => cfg.ReceiveEndpoint("retry-handler", e =>
+        {
+            e.UseMessageRetry(configureRetry);
+            e.Handler<RetryTestMessage>(_ => throw state.Fail());
+        }));
+
+    private static async Task<int> RunUntilFault(
+        Exception failure,
+        Action<IBusRegistrationConfigurator> register,
+        Action<ConsumerState, IInMemoryBusFactoryConfigurator> configureBus)
     {
         var state = new ConsumerState(failure);
 
@@ -141,10 +171,11 @@ public class RetryConfigurationTests
             .AddMassTransitTestHarness(x =>
             {
                 x.AddDelayedMessageScheduler();
-                x.AddConsumer<FailingConsumer>((_, c) => configure(c));
+                register(x);
                 x.UsingInMemory((context, cfg) =>
                 {
                     cfg.UseDelayedMessageScheduler();
+                    configureBus(state, cfg);
                     cfg.ConfigureEndpoints(context);
                 });
             })

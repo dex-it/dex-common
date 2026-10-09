@@ -19,7 +19,9 @@
 зарегистрирован `IMessageDataMasker` (берётся из payload `IServiceProvider` контекста), он получает вход с запасом
 `MaskerInputFactor` над лимитом; результат длиннее лимита пакет обрезает сам — потолок записи за пакетом. Готовый
 `SensitiveNamesMessageDataMasker` пакет не регистрирует.
-Retry-конфигурация: `UseRedeliveryRetryConfiguration()`, `UseRetryConfiguration()`, `UseLimitPrefetchConfiguration()`.
+Retry-конфигурация: `UseRedeliveryRetryConfiguration()`, `UseRetryConfiguration()`, `UseLimitPrefetchConfiguration()`;
+`HandleTransient()` на `IExceptionConfigurator` — та же политика для любого `UseMessageRetry`/`UseDelayedRedelivery`
+(обработчик, сага, endpoint); оба `Use*Configuration` идут через него.
 
 ## SQS
 
@@ -40,12 +42,12 @@ configurator.LinkActivityTracingContext(); // включено по умолча
 ## Ограничения и gotchas
 
 - UseDelayedRedelivery ОБЯЗАТЕЛЬНО вызывать ДО UseMessageRetry (порядок критичен)
-- MassTransit подменяет отмену изнутри консьюмера (при живой шине) на `ConsumerCanceledException` без вложенного
-  исключения до фильтров повтора. `UseRetryConfiguration`/`UseRedeliveryRetryConfiguration` спрашивают политику об исходном
+- MassTransit подменяет отмену изнутри консьюмера, обработчика, саги, Courier-активности и по `UseTimeout` (при живой шине)
+  на `ConsumerCanceledException` без вложенного исключения до фильтров повтора. `HandleTransient` спрашивает политику об исходном
   исключении, а при отказе — ещё раз, о `ConsumerCanceledException` как `OperationCanceledException` и о `RequestTimeoutException`
-  как `TimeoutException`. Прямой `UseMessageRetry` этого не делает.
+  как `TimeoutException`. Обычный `r.Handle(...)` этого не делает.
 - `RetryConsumeContext` решает про `Fault<T>` по исходному исключению консьюмера (до подмены): принятое политикой откладывает
-  `Fault<T>` до конца повторов, и он публикуется, только если политика примет и итоговое. Прямой `UseMessageRetry` с политикой,
+  `Fault<T>` до конца повторов, и он публикуется, только если политика примет и итоговое. `r.Handle(...)` с политикой,
   принимающей OCE, но не `ConsumerCanceledException`, не публикует `Fault<T>` вовсе (уходит только нетипизированный `ReceiveFault`);
   политика, не принимающая исходное, но принимающая итоговое, получает `Fault<T>` на каждой попытке.
 - Не использовать `concurrencyLimit=1 + prefetchCount=1` с Redelivery: ломает порядок сообщений

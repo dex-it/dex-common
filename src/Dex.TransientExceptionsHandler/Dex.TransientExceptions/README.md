@@ -19,7 +19,7 @@
 - OperationCanceledException
 - RedisConnectionException
 - RedisTimeoutException
-- Polly.Timeout.TimeoutRejectedException, Polly.CircuitBreaker.BrokenCircuitException (включая IsolatedCircuitException) — типы Polly.Core, их же бросают Polly 8.x и Microsoft.Extensions.Http.Resilience; одноимённые типы Polly 7.x — другие и не перехватываются
+- Polly.ExecutionRejectedException и все наследники — отказы Polly: TimeoutRejectedException, BrokenCircuitException, IsolatedCircuitException, RateLimiterRejectedException, BulkheadRejectedException. Тип из Polly.Core; от него же наследуют отказы Polly 8.x и Microsoft.Extensions.Http.Resilience. Одноимённые типы Polly 7.x — другие и не перехватываются
 - NpgsqlException (с флагом IsTransient), включая PostgresException: deadlock, конфликт сериализации и другие коды, которые Npgsql считает временными
 - HttpRequestException (со статус-кодами 408, 429 и любым 5XX)
 - Refit.ApiException (со статус-кодами 408, 429 и любым 5XX)
@@ -30,7 +30,9 @@
 
 Начиная с 8.1.0 предикаты срабатывают и на наследниках (раньше — только на точном типе): добавленный через `Add<T>(predicate)` предикат теперь применяется и к наследникам `T`.
 
-В консьюмере MassTransit отмена (`OperationCanceledException`, в том числе таймаут `HttpClient`) до политики повторов не доходит: MassTransit подменяет её на `ConsumerCanceledException`. `UseRetryConfiguration` и `UseRedeliveryRetryConfiguration` из Dex.MassTransit.Rabbit передают её политике как `OperationCanceledException`, поэтому с `Default` она повторяется; прямой `UseMessageRetry(r => r.Handle(TransientExceptionsHandler.Default))` такую отмену не повторит.
+В консьюмере MassTransit отмена (`OperationCanceledException`, в том числе таймаут `HttpClient`) до политики повторов не доходит: MassTransit подменяет её на `ConsumerCanceledException`. `UseRetryConfiguration`, `UseRedeliveryRetryConfiguration` и `r.HandleTransient(...)` из Dex.MassTransit.Rabbit передают её политике как `OperationCanceledException`, поэтому с `Default` она повторяется; обычный `UseMessageRetry(r => r.Handle(TransientExceptionsHandler.Default))` такую отмену не повторит — используйте `r.HandleTransient(TransientExceptionsHandler.Default)`.
+
+Вложенные исключения проверяются в глубину, у `AggregateException` — все `InnerExceptions`, а не только первое. Глубина считает само исключение первым уровнем: при глубине N проверяются N-1 уровней вложенности.
 
 #### Глобальные маркеры трансиентности:
 - Все ошибки с интерфейсом-маркером ITransientException всегда будут безусловно трансиентными, независимо от конфигурации.
@@ -65,7 +67,7 @@ private static TransientExceptionsHandler BuildCustomHandler()
 
     // конфигурирование глубины проверки InnerExceptions
     // любая найденная InnerException подходящая под описанные выше правила, делает входящую ошибку transient
-    // при значении 0, InnerExceptions не будут проверяться
+    // при значении 0 или 1 InnerExceptions не будут проверяться (само исключение — первый уровень), отрицательное — ArgumentOutOfRangeException
     // НЕОБЯЗАТЕЛЬНО, так как по умолчанию уже установлена не-нулевая глубина проверки
     builder.SetInnerExceptionsSearchDepth(99);
 

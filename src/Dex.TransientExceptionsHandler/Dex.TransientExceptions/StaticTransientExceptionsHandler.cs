@@ -1,13 +1,11 @@
 ﻿using System.Collections.Frozen;
 using System.Net;
 using System.Net.Sockets;
-using Dex.Extensions;
 using Dex.TransientExceptions.Exceptions;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Polly.CircuitBreaker;
-using Polly.Timeout;
+using Polly;
 using Refit;
 using StackExchange.Redis;
 
@@ -20,7 +18,7 @@ public partial class TransientExceptionsHandler
     /// <summary>
     /// Стандартная конфигурация, включает наиболее распространенные временные ошибки
     /// TimeoutException, IOException, SocketException, OperationCanceledException,
-    /// TimeoutRejectedException и BrokenCircuitException из Polly 8
+    /// отказы Polly 8 (ExecutionRejectedException: таймаут, circuit breaker, rate limiter, bulkhead)
     /// HttpCodes: 408, 429, 5XX
     /// </summary>
     /// <remarks>
@@ -45,8 +43,7 @@ public partial class TransientExceptionsHandler
         typeof(OperationCanceledException),
         typeof(RedisConnectionException),
         typeof(RedisTimeoutException),
-        typeof(TimeoutRejectedException),
-        typeof(BrokenCircuitException)
+        typeof(ExecutionRejectedException)
     ]).ToFrozenSet();
 
     private static readonly FrozenDictionary<Type, Func<Exception, bool>> StaticTransientExceptionsPredicate = new Dictionary<Type, Func<Exception, bool>>
@@ -104,7 +101,7 @@ public partial class TransientExceptionsHandler
         if (exception is ITransientException)
             return true;
 
-        foreach (var inner in exception.GetInnerExceptions(innerExceptionsSearchDepth))
+        foreach (var inner in EnumerateInnerExceptions(exception, innerExceptionsSearchDepth))
         {
             if (inner is ITransientExceptionCandidate innerCandidate)
                 return innerCandidate.IsTransient;
@@ -139,7 +136,7 @@ public partial class TransientExceptionsHandler
             return true;
 
         // inner exceptions check
-        foreach (var innerException in exception.GetInnerExceptions(innerExceptionsSearchDepth))
+        foreach (var innerException in EnumerateInnerExceptions(exception, innerExceptionsSearchDepth))
             if (exceptions.Contains(innerException.GetType()) || exceptions.Any(x => x.IsInstanceOfType(innerException)))
                 return true;
 
@@ -156,7 +153,7 @@ public partial class TransientExceptionsHandler
             return true;
 
         // inner exceptions check
-        foreach (var innerException in exception.GetInnerExceptions(innerExceptionsSearchDepth))
+        foreach (var innerException in EnumerateInnerExceptions(exception, innerExceptionsSearchDepth))
             if (AnyPredicateMatches(exceptions, innerException))
                 return true;
 
@@ -171,6 +168,39 @@ public partial class TransientExceptionsHandler
                 return true;
 
         return false;
+    }
+
+    // Вложенные исключения без самого исключения, в глубину; у AggregateException — все InnerExceptions, а не только первое.
+    // Само исключение — первый уровень глубины: при depth = N проверяются уровни вложенности 1..N-1.
+    private static IEnumerable<Exception> EnumerateInnerExceptions(Exception exception, int depth)
+    {
+        var pending = new Stack<(Exception Exception, int Level)>();
+        PushInner(pending, exception, level: 1, depth);
+
+        while (pending.Count > 0)
+        {
+            var (current, level) = pending.Pop();
+            yield return current;
+
+            PushInner(pending, current, level + 1, depth);
+        }
+    }
+
+    private static void PushInner(Stack<(Exception Exception, int Level)> pending, Exception exception, int level, int depth)
+    {
+        if (level >= depth)
+            return;
+
+        if (exception is AggregateException aggregate)
+        {
+            // в обратном порядке: со стека первым уйдёт первое вложенное
+            for (var i = aggregate.InnerExceptions.Count - 1; i >= 0; i--)
+                pending.Push((aggregate.InnerExceptions[i], level));
+        }
+        else if (exception.InnerException is not null)
+        {
+            pending.Push((exception.InnerException, level));
+        }
     }
 
     public static implicit operator Func<Exception, bool>(TransientExceptionsHandler handler)

@@ -126,7 +126,7 @@ public partial class TransientExceptionsHandler
 
     public TransientExceptionsHandler SetInnerExceptionsSearchDepth(int depth)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(0, depth, nameof(depth));
+        ArgumentOutOfRangeException.ThrowIfNegative(depth);
 
         if (BuildCompleted)
             throw new InvalidOperationException($"{nameof(TransientExceptionsHandler)} is already built");

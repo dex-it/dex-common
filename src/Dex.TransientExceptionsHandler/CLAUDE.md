@@ -9,7 +9,7 @@
 
 ## Default покрывает
 
-По типу (с наследованием): TimeoutException, IOException, SocketException, OutOfMemoryException, DbUpdateConcurrencyException, OperationCanceledException, RedisConnectionException, RedisTimeoutException, Polly `TimeoutRejectedException`, `BrokenCircuitException` (типы Polly.Core; Polly 8.x переадресует их туда, Polly 7.x — другие типы, не покрываются).
+По типу (с наследованием): TimeoutException, IOException, SocketException, OutOfMemoryException, DbUpdateConcurrencyException, OperationCanceledException, RedisConnectionException, RedisTimeoutException, Polly `ExecutionRejectedException` — все отказы Polly: таймаут, circuit breaker, rate limiter, bulkhead (тип Polly.Core; отказы Polly 8.x наследуют от него, Polly 7.x — другие типы, не покрываются).
 
 По предикату (с наследованием): NpgsqlException (только IsTransient=true, в том числе PostgresException), HttpRequestException (408, 429, 5xx), Refit.ApiException (408, 429, 5xx), RpcException (Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted), WebException (ConnectFailure, Timeout, и др.).
 
@@ -55,5 +55,6 @@ if (handler.Check(exception)) { /* retry */ }
 - Предикат ищется по цепочке базовых типов исключения: срабатывает на наследниках; из нескольких предикатов на цепочке достаточно одного true
 - Polly подключён пакетом `Polly.Core`, а не сравнением имён типов: выбрана проверка по типу; цена — Polly 7.x не покрыт
 - `PostgresException.IsTransient` (Npgsql 8) не включает `57014` (statement_timeout): такой таймаут не повторяется, это решение Npgsql
-- `ConsumerCanceledException` MassTransit пакет не знает: перевод в `OperationCanceledException` делают retry-расширения Dex.MassTransit.Rabbit
-- InnerException проверяются до указанной глубины (default 10): любое совпадение делает внешнее исключение transient
+- `ConsumerCanceledException` MassTransit пакет не знает: перевод в `OperationCanceledException` делает `HandleTransient` из Dex.MassTransit.Rabbit
+- InnerException проверяются до указанной глубины (default 10; само исключение — первый уровень, 0 и 1 — без вложенных): любое совпадение делает внешнее исключение transient
+- Обход вложенных — свой (`EnumerateInnerExceptions`), в глубину, с заходом во все `AggregateException.InnerExceptions`; `GetInnerExceptions` из Dex.Extensions идёт только по `InnerException`. Ссылка на Dex.Extensions оставлена: потребители могли получать его транзитивно
