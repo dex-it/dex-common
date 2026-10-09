@@ -19,11 +19,18 @@
 - OperationCanceledException
 - RedisConnectionException
 - RedisTimeoutException
-- NpgsqlException (с флагом IsTransient)
+- Polly.Timeout.TimeoutRejectedException, Polly.CircuitBreaker.BrokenCircuitException (включая IsolatedCircuitException) — типы Polly.Core, их же бросают Polly 8.x и Microsoft.Extensions.Http.Resilience; одноимённые типы Polly 7.x — другие и не перехватываются
+- NpgsqlException (с флагом IsTransient), включая PostgresException: deadlock, конфликт сериализации и другие коды, которые Npgsql считает временными
 - HttpRequestException (со статус-кодами 408, 429 и любым 5XX)
 - Refit.ApiException (со статус-кодами 408, 429 и любым 5XX)
 - RpcException (со статусами Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted)
 - WebException (со статусами ConnectFailure, Timeout, NameResolutionFailure, ProxyNameResolutionFailure, SendFailure, ReceiveFailure, KeepAliveFailure, PipelineFailure, ProtocolError, Pending)
+
+Проверки по типу и по предикату учитывают наследников, в том числе у вложенных исключений. Если на цепочке базовых типов исключения несколько предикатов, достаточно одного, вернувшего true.
+
+Начиная с 8.1.0 предикаты срабатывают и на наследниках (раньше — только на точном типе): добавленный через `Add<T>(predicate)` предикат теперь применяется и к наследникам `T`.
+
+В консьюмере MassTransit отмена (`OperationCanceledException`, в том числе таймаут `HttpClient`) до политики повторов не доходит: MassTransit подменяет её на `ConsumerCanceledException`. `UseRetryConfiguration` и `UseRedeliveryRetryConfiguration` из Dex.MassTransit.Rabbit передают её политике как `OperationCanceledException`, поэтому с `Default` она повторяется; прямой `UseMessageRetry(r => r.Handle(TransientExceptionsHandler.Default))` такую отмену не повторит.
 
 #### Глобальные маркеры трансиентности:
 - Все ошибки с интерфейсом-маркером ITransientException всегда будут безусловно трансиентными, независимо от конфигурации.

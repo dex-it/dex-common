@@ -3,7 +3,10 @@ using System.Net.Sockets;
 using Dex.TransientExceptions.Exceptions;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using NUnit.Framework;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 using Refit;
 
 namespace Dex.TransientExceptions.Tests;
@@ -177,6 +180,76 @@ public class TransientExceptionsHandlerTests
     }
 
     // -------------------------------------------------------------------------
+    // Static Default — предикаты срабатывают на наследниках
+    // -------------------------------------------------------------------------
+
+    [Test]
+    [TestCase(PostgresErrorCodes.SerializationFailure)]
+    [TestCase(PostgresErrorCodes.DeadlockDetected)]
+    [TestCase(PostgresErrorCodes.TooManyConnections)]
+    public void Default_PostgresException_TransientSqlState_ReturnsTrue(string sqlState)
+    {
+        Assert.That(TransientExceptionsHandler.Default.Check(Postgres(sqlState)), Is.True);
+    }
+
+    [Test]
+    [TestCase(PostgresErrorCodes.UndefinedTable)]
+    [TestCase(PostgresErrorCodes.UniqueViolation)]
+    public void Default_PostgresException_PermanentSqlState_ReturnsFalse(string sqlState)
+    {
+        Assert.That(TransientExceptionsHandler.Default.Check(Postgres(sqlState)), Is.False);
+    }
+
+    [Test]
+    public void Default_DbUpdateExceptionWithTransientPostgresInner_ReturnsTrue()
+    {
+        var ex = new DbUpdateException("save failed", Postgres(PostgresErrorCodes.SerializationFailure));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_DbUpdateExceptionWithPermanentPostgresInner_ReturnsFalse()
+    {
+        var ex = new DbUpdateException("save failed", Postgres(PostgresErrorCodes.UniqueViolation));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void Default_DerivedHttpRequestException_TransientStatusCode_ReturnsTrue()
+    {
+        var ex = new DerivedHttpRequestException(HttpStatusCode.ServiceUnavailable);
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_DerivedHttpRequestException_NonTransientStatusCode_ReturnsFalse()
+    {
+        var ex = new DerivedHttpRequestException(HttpStatusCode.BadRequest);
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    // -------------------------------------------------------------------------
+    // Static Default — отказы Polly
+    // -------------------------------------------------------------------------
+
+    [Test]
+    [TestCase(typeof(TimeoutRejectedException))]
+    [TestCase(typeof(BrokenCircuitException))]
+    [TestCase(typeof(IsolatedCircuitException))]
+    public void Default_PollyRejection_ReturnsTrue(Type exceptionType)
+    {
+        var ex = (Exception)Activator.CreateInstance(exceptionType)!;
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_PollyRejectionAsInner_ReturnsTrue()
+    {
+        var ex = new InvalidOperationException("outer", new TimeoutRejectedException());
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    // -------------------------------------------------------------------------
     // ITransientException marker interface
     // -------------------------------------------------------------------------
 
@@ -307,6 +380,30 @@ public class TransientExceptionsHandlerTests
     }
 
     [Test]
+    public void CustomHandler_PredicateOnBaseType_AppliesToDerived()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add<ArgumentException>(ex => ex.Message.Contains("retry"))
+            .Build();
+
+        Assert.That(handler.Check(new ArgumentNullException("param", "please retry")), Is.True);
+        Assert.That(handler.Check(new ArgumentNullException("param", "permanent error")), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_PredicatesOnBaseAndDerived_AnyMatchReturnsTrue()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add<ArgumentNullException>(_ => false)
+            .Add<ArgumentException>(_ => true)
+            .Build();
+
+        Assert.That(handler.Check(new ArgumentNullException()), Is.True);
+    }
+
+    [Test]
     public void CustomHandler_DisableDefaultBehaviour_WellKnownTransientType_ReturnsFalse()
     {
         var handler = new TransientExceptionsHandler()
@@ -374,6 +471,10 @@ public class TransientExceptionsHandlerTests
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    private static PostgresException Postgres(string sqlState) => new("error", "ERROR", "ERROR", sqlState);
+
+    private sealed class DerivedHttpRequestException(HttpStatusCode statusCode) : HttpRequestException(null, null, statusCode);
 
     private sealed class TestCandidateException(bool isTransient, Exception? inner = null)
         : Exception("test", inner), ITransientExceptionCandidate

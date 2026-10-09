@@ -113,7 +113,7 @@
 
 | Пакет | Назначение |
 |---|---|
-| `Dex.TransientExceptions` | Конфигурируемый определитель transient-ошибок для Polly/MassTransit retry (Default покрывает timeout/socket/Npgsql/HTTP 5xx/gRPC) |
+| `Dex.TransientExceptions` | Конфигурируемый определитель transient-ошибок для Polly/MassTransit retry (Default покрывает timeout/socket/Npgsql/HTTP 5xx/gRPC/Polly) |
 
 Подробности: [`src/Dex.TransientExceptionsHandler/Dex.TransientExceptions/README.md`](../src/Dex.TransientExceptionsHandler/Dex.TransientExceptions/README.md)
 

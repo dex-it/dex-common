@@ -71,6 +71,7 @@
         <!--misc -->
         <PackageReference Update="Npgsql" Version="8.0.9"/>
         <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11"/>
+        <PackageReference Update="Polly.Core" Version="8.6.6"/>
         <PackageReference Update="Neo4jClient" Version="5.1.20"/>
         <PackageReference Update="MassTransit*" Version="8.5.10"/>                 <!-- 9.x — коммерческая лицензия (Massient), не обновлять -->
         <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>

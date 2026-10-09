@@ -6,6 +6,8 @@ using Dex.TransientExceptions.Exceptions;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 using Refit;
 using StackExchange.Redis;
 
@@ -17,9 +19,14 @@ public partial class TransientExceptionsHandler
 
     /// <summary>
     /// Стандартная конфигурация, включает наиболее распространенные временные ошибки
-    /// TimeoutException, IOException, SocketException, OperationCanceledException
+    /// TimeoutException, IOException, SocketException, OperationCanceledException,
+    /// TimeoutRejectedException и BrokenCircuitException из Polly 8
     /// HttpCodes: 408, 429, 5XX
     /// </summary>
+    /// <remarks>
+    /// Отмену изнутри консьюмера MassTransit подменяет на ConsumerCanceledException; как OperationCanceledException
+    /// её передают политике UseRetryConfiguration и UseRedeliveryRetryConfiguration из Dex.MassTransit.Rabbit.
+    /// </remarks>
     public static TransientExceptionsHandler Default { get; } = new(runBuild: true);
 
     /// <summary>
@@ -37,7 +44,9 @@ public partial class TransientExceptionsHandler
         typeof(DbUpdateConcurrencyException),
         typeof(OperationCanceledException),
         typeof(RedisConnectionException),
-        typeof(RedisTimeoutException)
+        typeof(RedisTimeoutException),
+        typeof(TimeoutRejectedException),
+        typeof(BrokenCircuitException)
     ]).ToFrozenSet();
 
     private static readonly FrozenDictionary<Type, Func<Exception, bool>> StaticTransientExceptionsPredicate = new Dictionary<Type, Func<Exception, bool>>
@@ -143,15 +152,23 @@ public partial class TransientExceptionsHandler
             return false;
 
         // main exception check
-        if (exceptions.TryGetValue(exception.GetType(), out var predicate))
-            if (predicate(exception))
-                return true;
+        if (AnyPredicateMatches(exceptions, exception))
+            return true;
 
         // inner exceptions check
         foreach (var innerException in exception.GetInnerExceptions(innerExceptionsSearchDepth))
-            if (exceptions.TryGetValue(innerException.GetType(), out var predicateForInner))
-                if (predicateForInner(innerException))
-                    return true;
+            if (AnyPredicateMatches(exceptions, innerException))
+                return true;
+
+        return false;
+    }
+
+    // предикат базового типа применяется и к наследникам, как Add(Type): иначе PostgresException мимо предиката NpgsqlException
+    private static bool AnyPredicateMatches(FrozenDictionary<Type, Func<Exception, bool>> exceptions, Exception exception)
+    {
+        for (var type = exception.GetType(); type is not null; type = type.BaseType)
+            if (exceptions.TryGetValue(type, out var predicate) && predicate(exception))
+                return true;
 
         return false;
     }

@@ -9,9 +9,9 @@
 
 ## Default покрывает
 
-По типу (с наследованием): TimeoutException, IOException, SocketException, OutOfMemoryException, DbUpdateConcurrencyException, OperationCanceledException, RedisConnectionException, RedisTimeoutException.
+По типу (с наследованием): TimeoutException, IOException, SocketException, OutOfMemoryException, DbUpdateConcurrencyException, OperationCanceledException, RedisConnectionException, RedisTimeoutException, Polly `TimeoutRejectedException`, `BrokenCircuitException` (типы Polly.Core; Polly 8.x переадресует их туда, Polly 7.x — другие типы, не покрываются).
 
-По предикату: NpgsqlException (только IsTransient=true), HttpRequestException (408, 429, 5xx), Refit.ApiException (408, 429, 5xx), RpcException (Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted), WebException (ConnectFailure, Timeout, и др.).
+По предикату (с наследованием): NpgsqlException (только IsTransient=true, в том числе PostgresException), HttpRequestException (408, 429, 5xx), Refit.ApiException (408, 429, 5xx), RpcException (Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted), WebException (ConnectFailure, Timeout, и др.).
 
 ## Глобальные маркеры
 
@@ -52,5 +52,6 @@ if (handler.Check(exception)) { /* retry */ }
 
 - `Build()` ОБЯЗАТЕЛЕН перед `Check()` (иначе InvalidOperationException)
 - После `Build()` экземпляр заморожен: Add/Disable бросают InvalidOperationException
-- Предикаты проверяются по точному типу (не по наследованию); для наследования использовать `Add(Type)`
+- Предикат ищется по цепочке базовых типов исключения: срабатывает на наследниках; из нескольких предикатов на цепочке достаточно одного true
+- `ConsumerCanceledException` MassTransit пакет не знает: перевод в `OperationCanceledException` делают retry-расширения Dex.MassTransit.Rabbit
 - InnerException проверяются до указанной глубины (default 10): любое совпадение делает внешнее исключение transient
