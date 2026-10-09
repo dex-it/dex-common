@@ -609,6 +609,34 @@ public class TransientExceptionsHandlerTests
     }
 
     [Test]
+    public void CustomHandler_MarkerBeyondSearchDepth_IsIgnored()
+    {
+        TransientExceptionsHandler Handler(int depth) => new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .SetInnerExceptionsSearchDepth(depth)
+            .Build();
+
+        var candidate = new TestCandidateException(isTransient: true);
+
+        Assert.That(Handler(1).Check(new Exception("L1", candidate)), Is.False);
+        Assert.That(Handler(2).Check(new Exception("L1", new AggregateException(candidate))), Is.False);
+        Assert.That(Handler(3).Check(new Exception("L1", new AggregateException(candidate))), Is.True);
+    }
+
+    [Test]
+    public void AggregateWithoutMarkers_TypesAboveAndOfAggregateDecide()
+    {
+        var timeoutOverAggregate = new TimeoutException("outer", new AggregateException(new ArgumentException()));
+        Assert.That(TransientExceptionsHandler.Default.Check(timeoutOverAggregate), Is.True);
+
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add(typeof(AggregateException))
+            .Build();
+        Assert.That(handler.Check(new AggregateException(new ArgumentException())), Is.True);
+    }
+
+    [Test]
     public void CustomHandler_InnerExceptionSearchDepth0_DoesNotCheckInner()
     {
         var handler = new TransientExceptionsHandler()
