@@ -1,3 +1,5 @@
+extern alias PollyV7;
+
 using System.Net;
 using System.Net.Sockets;
 using Dex.TransientExceptions.Exceptions;
@@ -244,11 +246,40 @@ public class TransientExceptionsHandlerTests
         Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
     }
 
+    /// <remarks>
+    /// Сборка Polly 7 (Polly.dll), как у сервисов на Microsoft.Extensions.Http.Polly: свои типы, не Polly.Core.
+    /// </remarks>
+    [Test]
+    [TestCase(typeof(PollyV7::Polly.Timeout.TimeoutRejectedException))]
+    [TestCase(typeof(PollyV7::Polly.CircuitBreaker.BrokenCircuitException))]
+    [TestCase(typeof(PollyV7::Polly.Bulkhead.BulkheadRejectedException))]
+    public void Default_Polly7Rejection_ReturnsTrue(Type exceptionType)
+    {
+        var ex = (Exception)Activator.CreateInstance(exceptionType)!;
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
     [Test]
     public void Default_PollyRejectionAsInner_ReturnsTrue()
     {
         var ex = new InvalidOperationException("outer", new TimeoutRejectedException());
         Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_RejectionOutsidePollyNamespace_ReturnsFalse()
+    {
+        Assert.That(TransientExceptionsHandler.Default.Check(new NotPolly.ExecutionRejectedException()), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_DisableDefaultBehaviour_PollyRejection_ReturnsFalse()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Build();
+
+        Assert.That(handler.Check(new TimeoutRejectedException()), Is.False);
     }
 
     // -------------------------------------------------------------------------
@@ -562,6 +593,12 @@ public class TransientExceptionsHandlerTests
 
     // любой отказ Polly, в том числе из пакетов вне Polly.Core (RateLimiterRejectedException, BulkheadRejectedException)
     private sealed class OtherPollyRejectionException : ExecutionRejectedException;
+
+    // тот же короткий тип вне пространства имён Polly
+    private static class NotPolly
+    {
+        public sealed class ExecutionRejectedException : Exception;
+    }
 
     private sealed class TestCandidateException(bool isTransient, Exception? inner = null)
         : Exception("test", inner), ITransientExceptionCandidate

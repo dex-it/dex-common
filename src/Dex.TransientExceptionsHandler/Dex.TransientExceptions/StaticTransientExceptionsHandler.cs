@@ -5,7 +5,6 @@ using Dex.TransientExceptions.Exceptions;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Polly;
 using Refit;
 using StackExchange.Redis;
 
@@ -18,7 +17,7 @@ public partial class TransientExceptionsHandler
     /// <summary>
     /// Стандартная конфигурация, включает наиболее распространенные временные ошибки
     /// TimeoutException, IOException, SocketException, OperationCanceledException,
-    /// отказы Polly 8 (ExecutionRejectedException: таймаут, circuit breaker, rate limiter, bulkhead)
+    /// отказы Polly 7 и 8 (наследники Polly.ExecutionRejectedException: таймаут, circuit breaker, rate limiter, bulkhead)
     /// HttpCodes: 408, 429, 5XX
     /// </summary>
     /// <remarks>
@@ -43,9 +42,12 @@ public partial class TransientExceptionsHandler
         typeof(DbUpdateConcurrencyException),
         typeof(OperationCanceledException),
         typeof(RedisConnectionException),
-        typeof(RedisTimeoutException),
-        typeof(ExecutionRejectedException)
+        typeof(RedisTimeoutException)
     ]).ToFrozenSet();
+
+    // Polly 7 (Polly.dll) и Polly 8 (Polly.Core) объявляют этот тип в разных сборках. Ссылка на любую из них давала бы
+    // потребителю с другой версией CS0433 на одноимённых типах, поэтому сравнение по имени, без зависимости от Polly
+    private const string PollyExecutionRejectedException = "Polly.ExecutionRejectedException";
 
     private static readonly FrozenDictionary<Type, Func<Exception, bool>> StaticTransientExceptionsPredicate = new Dictionary<Type, Func<Exception, bool>>
     {
@@ -123,6 +125,22 @@ public partial class TransientExceptionsHandler
 
         if (PredicateCheckInternal(StaticTransientExceptionsPredicate, exception, innerExceptionsSearchDepth))
             return true;
+
+        if (IsPollyRejection(exception))
+            return true;
+
+        foreach (var innerException in EnumerateInnerExceptions(exception, innerExceptionsSearchDepth))
+            if (IsPollyRejection(innerException))
+                return true;
+
+        return false;
+    }
+
+    private static bool IsPollyRejection(Exception exception)
+    {
+        for (var type = exception.GetType(); type is not null; type = type.BaseType)
+            if (string.Equals(type.FullName, PollyExecutionRejectedException, StringComparison.Ordinal))
+                return true;
 
         return false;
     }

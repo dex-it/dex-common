@@ -37,6 +37,8 @@
         <PackageReference Update="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0"/>
         <PackageReference Update="FluentAssertions" Version="8.10.0"/>
         <PackageReference Update="xunit.runner.visualstudio" Version="4.0.0"/>
+        <PackageReference Update="Polly.Core" Version="8.6.6"/>
+        <PackageReference Update="Polly" Version="7.2.4"/>                     <!-- только тесты: отказы Polly 7 рядом с Polly.Core (extern alias) -->
 
         <!--microsoft extensions -->
         <PackageReference Update="Microsoft.Extensions.Hosting" Version="8.0.1"/>
@@ -71,7 +73,6 @@
         <!--misc -->
         <PackageReference Update="Npgsql" Version="8.0.9"/>
         <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11"/>
-        <PackageReference Update="Polly.Core" Version="8.6.6"/>
         <PackageReference Update="Neo4jClient" Version="5.1.20"/>
         <PackageReference Update="MassTransit*" Version="8.5.10"/>                 <!-- 9.x — коммерческая лицензия (Massient), не обновлять -->
         <PackageReference Update="RndUsr0.DinkToPdf" Version="1.0.9-20190207.1"/>

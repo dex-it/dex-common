@@ -19,7 +19,7 @@
 - OperationCanceledException
 - RedisConnectionException
 - RedisTimeoutException
-- Polly.ExecutionRejectedException и все наследники — отказы Polly: TimeoutRejectedException, BrokenCircuitException, IsolatedCircuitException, RateLimiterRejectedException, BulkheadRejectedException. Тип из Polly.Core; от него же наследуют отказы Polly 8.x и Microsoft.Extensions.Http.Resilience. Одноимённые типы Polly 7.x — другие и не перехватываются
+- Polly.ExecutionRejectedException и все наследники — отказы Polly: TimeoutRejectedException, BrokenCircuitException, IsolatedCircuitException, RateLimiterRejectedException, BulkheadRejectedException. И Polly 7.x, и Polly 8.x / Microsoft.Extensions.Http.Resilience: тип распознаётся по полному имени, пакет от Polly не зависит
 - NpgsqlException (с флагом IsTransient), включая PostgresException: deadlock, конфликт сериализации и другие коды, которые Npgsql считает временными
 - HttpRequestException (со статус-кодами 408, 429 и любым 5XX)
 - Refit.ApiException (со статус-кодами 408, 429 и любым 5XX)
