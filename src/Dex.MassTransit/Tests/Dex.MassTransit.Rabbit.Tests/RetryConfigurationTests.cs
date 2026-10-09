@@ -51,8 +51,27 @@ public class RetryConfigurationTests
             HttpClientTimeout(),
             c => c.UseRetryConfiguration(ex => Record(seen, ex), retryLimit: 2, FastRetry));
 
-        Assert.That(seen, Has.None.TypeOf<ConsumerCanceledException>());
         Assert.That(seen, Has.Some.Matches<Exception>(ex => ex.GetType() == typeof(OperationCanceledException) && ex.InnerException is ConsumerCanceledException));
+    }
+
+    [Test]
+    public async Task Retry_WhenPolicyAcceptsConsumerCanceledException_RetriesUpToLimit()
+    {
+        var calls = await ConsumeUntilFault(
+            HttpClientTimeout(),
+            c => c.UseRetryConfiguration(ex => ex is ConsumerCanceledException, retryLimit: 2, FastRetry));
+
+        Assert.That(calls, Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task Retry_WhenPolicyAcceptsRequestTimeoutException_RetriesUpToLimit()
+    {
+        var calls = await ConsumeUntilFault(
+            new RequestTimeoutException(Guid.NewGuid().ToString()),
+            c => c.UseRetryConfiguration(ex => ex is RequestTimeoutException, retryLimit: 2, FastRetry));
+
+        Assert.That(calls, Is.EqualTo(3));
     }
 
     [Test]
@@ -61,6 +80,16 @@ public class RetryConfigurationTests
         var calls = await ConsumeUntilFault(
             new RequestTimeoutException(Guid.NewGuid().ToString()),
             c => c.UseRetryConfiguration(ex => ex is TimeoutException, retryLimit: 2, FastRetry));
+
+        Assert.That(calls, Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task Retry_WhenPolicyAcceptsOtherException_RetriesUpToLimit()
+    {
+        var calls = await ConsumeUntilFault(
+            new InvalidOperationException("transient by policy"),
+            c => c.UseRetryConfiguration(ex => ex is InvalidOperationException, retryLimit: 2, FastRetry));
 
         Assert.That(calls, Is.EqualTo(3));
     }
@@ -123,11 +152,15 @@ public class RetryConfigurationTests
 
         var harness = provider.GetRequiredService<ITestHarness>();
         harness.TestTimeout = TimeSpan.FromSeconds(10);
+        harness.TestInactivityTimeout = TimeSpan.FromMilliseconds(500);
         await harness.Start();
 
         await harness.Bus.Publish(new RetryTestMessage());
 
         Assert.That(await harness.Published.Any<Fault<RetryTestMessage>>(), Is.True, "Fault<T> не опубликован");
+
+        // политика, не принявшая исходное исключение консьюмера, получает Fault<T> на каждой попытке — считаем после затишья
+        await harness.InactivityTask;
 
         return state.Calls;
     }

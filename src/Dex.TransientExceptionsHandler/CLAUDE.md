@@ -53,5 +53,7 @@ if (handler.Check(exception)) { /* retry */ }
 - `Build()` ОБЯЗАТЕЛЕН перед `Check()` (иначе InvalidOperationException)
 - После `Build()` экземпляр заморожен: Add/Disable бросают InvalidOperationException
 - Предикат ищется по цепочке базовых типов исключения: срабатывает на наследниках; из нескольких предикатов на цепочке достаточно одного true
+- Polly подключён пакетом `Polly.Core`, а не сравнением имён типов: выбрана проверка по типу; цена — Polly 7.x не покрыт
+- `PostgresException.IsTransient` (Npgsql 8) не включает `57014` (statement_timeout): такой таймаут не повторяется, это решение Npgsql
 - `ConsumerCanceledException` MassTransit пакет не знает: перевод в `OperationCanceledException` делают retry-расширения Dex.MassTransit.Rabbit
 - InnerException проверяются до указанной глубины (default 10): любое совпадение делает внешнее исключение transient

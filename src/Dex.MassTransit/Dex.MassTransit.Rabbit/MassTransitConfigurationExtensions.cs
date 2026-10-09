@@ -74,14 +74,15 @@ public static class MassTransitConfigurationExtensions
     /// <summary>
     /// Отмену внутри консьюмера MassTransit до фильтров повтора подменяет на <see cref="ConsumerCanceledException"/>
     /// без вложенного исключения, а таймаут request client — не <see cref="TimeoutException"/>. Политика, не знающая
-    /// MassTransit, получает их как исключения BCL того же смысла; исходное — во вложенном.
+    /// MassTransit, получает их ещё и как исключения BCL того же смысла; исходное — во вложенном. Сначала политика видит
+    /// исходное: политика, принимающая сами типы MassTransit, продолжает работать.
     /// </summary>
     private static Func<Exception, bool> AsBclExceptions(Func<Exception, bool> checkTransientException)
-        => exception => exception switch
+        => exception => checkTransientException(exception) || exception switch
         {
             ConsumerCanceledException => checkTransientException(new OperationCanceledException(exception.Message, exception)),
             RequestTimeoutException => checkTransientException(new TimeoutException(exception.Message, exception)),
-            _ => checkTransientException(exception),
+            _ => false,
         };
 
     /// <summary>
