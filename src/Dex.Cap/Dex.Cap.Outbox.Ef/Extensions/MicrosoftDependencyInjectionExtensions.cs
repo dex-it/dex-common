@@ -5,6 +5,7 @@ using Dex.Cap.Outbox.AspNetScheduler.BackgroundServices;
 using Dex.Cap.Outbox.AspNetScheduler.Interfaces;
 using Dex.Cap.Outbox.AspNetScheduler.Options;
 using Dex.Cap.Outbox.Interfaces;
+using Dex.Cap.Outbox.Options;
 using Dex.Cap.Outbox.RetryStrategies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,17 +14,49 @@ using Microsoft.Extensions.Options;
 
 namespace Dex.Cap.Outbox.Ef.Extensions;
 
+/// <summary>
+/// Регистрация аутбокса и его фоновых сервисов в контейнере.
+/// </summary>
 public static class MicrosoftDependencyInjectionExtensions
 {
     // Маркер для однократной регистрации OutboxHealthCheck (guard от дублирования при повторном вызове AddOutboxScheduler).
     private sealed class OutboxHealthCheckRegistered;
 
+    /// <summary>
+    /// Зарегистрировать аутбокс и EF-провайдер данных.
+    /// </summary>
+    /// <remarks>
+    /// Начиная с 8.5 метод взводит <c>ValidateOnStart</c> на <see cref="OutboxOptions"/> и регистрирует одно
+    /// правило: <see cref="OutboxOptions.MaxContentLengthBytes"/> должен быть положительным. Взводится это на
+    /// экземпляр опций, а не на конкретный валидатор, поэтому на старте хоста исполнятся и валидаторы,
+    /// зарегистрированные самим потребителем.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static IServiceCollection AddOutbox<TDbContext>(
         this IServiceCollection services,
         Action<IServiceProvider, OutboxRetryStrategyConfigurator>? retryStrategyImplementation = null)
         where TDbContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        // Регистрируем инфраструктуру опций, чтобы IOptions<OutboxOptions> резолвился для проверки размера
+        // Content в OutboxService, а не оставался неявным требованием к вызывающему. Сама библиотека
+        // регистрирует ЕДИНСТВЕННОЕ правило, про размер тела: оно заведено вместе с опцией, поэтому
+        // конфигураций, которые оно отвергнет, в проде ещё нет. Остальные правила OutboxOptionsValidator НЕ
+        // включаем: валидатор исторически не был подключён, и его включение отвергало бы значения, которые
+        // раньше молча толерировались (например GetFreeMessagesTimeout ниже секунды), ломая существующих
+        // потребителей на старте. Подключение валидатора целиком вынесено в issue #239.
+        // ValidateOnStart при этом взводится на ЭКЗЕМПЛЯР опций (пара тип плюс имя, здесь имя по умолчанию),
+        // а не на конкретный валидатор: на старте хоста исполнятся ВСЕ зарегистрированные
+        // IValidateOptions<OutboxOptions>, включая те, что зарегистрировал сам потребитель. Обойти это
+        // нельзя: валидаторы прогоняет OptionsFactory при СОЗДАНИИ значения опций, а значение создаётся
+        // однократно на кеш (для IOptions один раз за процесс), и выбрать подмножество валидаторов
+        // Options API не даёт.
+        services.AddOptions<OutboxOptions>()
+            .ValidateOnStart();
+
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<OutboxOptions>, OutboxMaxContentLengthBytesValidator>());
 
         services
             .AddSingleton<IOutboxMetricCollector, DefaultOutboxMetricCollector>()
