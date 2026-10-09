@@ -386,11 +386,11 @@ public class TransientExceptionsHandlerTests
     {
         var handler = new TransientExceptionsHandler()
             .DisableDefaultBehaviour()
-            .Add<ArgumentException>(ex => ex.Message.Contains("retry"))
+            .Add<IOException>(ex => ex.Message.Contains("retry"))
             .Build();
 
-        Assert.That(handler.Check(new ArgumentNullException("param", "please retry")), Is.True);
-        Assert.That(handler.Check(new ArgumentNullException("param", "permanent error")), Is.False);
+        Assert.That(handler.Check(new FileNotFoundException("please retry")), Is.True);
+        Assert.That(handler.Check(new FileNotFoundException("permanent error")), Is.False);
     }
 
     [Test]
@@ -436,6 +436,20 @@ public class TransientExceptionsHandlerTests
     {
         var ex = new Exception("L1", new Exception("L2", new TimeoutException()));
         Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Constructor_InnerExceptionsSearchDepth0_DoesNotCheckInner()
+    {
+        var handler = new TransientExceptionsHandler([typeof(TimeoutException)], innerExceptionsSearchDepth: 0, runBuild: true, disableDefaultBehaviour: true);
+
+        Assert.That(handler.Check(new Exception("outer", new TimeoutException())), Is.False);
+    }
+
+    [Test]
+    public void Constructor_NegativeInnerExceptionsSearchDepth_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>((Action)(() => _ = new TransientExceptionsHandler(innerExceptionsSearchDepth: -1)));
     }
 
     [Test]

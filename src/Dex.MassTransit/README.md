@@ -270,6 +270,7 @@ This registers the pipe specification on consume, send and publish pipelines.
 
 | Version | PR / Commit | Change |
 |---|---|---|
+| **8.1.0** | [#248](https://github.com/dex-it/dex-common/issues/248) | `UseRetryConfiguration` / `UseRedeliveryRetryConfiguration` now retry a `ConsumerCanceledException` (a cancellation or `UseTimeout` inside the consumer) and a `RequestTimeoutException` when the policy accepts `OperationCanceledException` / `TimeoutException`. With `TransientExceptionsHandler.Default` such messages are retried and redelivered (up to the whole redelivery window) instead of going to `_error` on the first attempt, including a consumer that throws `OperationCanceledException` on purpose to skip a message. New `HandleTransient` on the retry configurator. |
 | **8.0.11+** | [#199](https://github.com/dex-it/dex-common/pull/199) (`92c3e8b`) | Bumped to MassTransit **8.5.3**. Review your consumer signatures and middleware against the upstream changelog. |
 | 8.0.7+ | [#203](https://github.com/dex-it/dex-common/pull/203) (`9f78bd4`) | MassTransit packages bumped together with `Dex.Cap.Outbox` `AddOutboxPublisher()`. No source-level break in `Dex.MassTransit.*`. |
 | `13eda98` | local feat | `UseRedeliveryRetryConfiguration` and `UseRetryConfiguration` gained a new `RetryExponentialIntervals? retryIntervals = null` optional parameter. The default `(1s, 5s, 1s)` is preserved, but **named-argument** callers should double-check argument order. |

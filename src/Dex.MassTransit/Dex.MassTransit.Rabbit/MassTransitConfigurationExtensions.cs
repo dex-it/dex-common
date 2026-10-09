@@ -89,7 +89,7 @@ public static class MassTransitConfigurationExtensions
         {
             ConsumerCanceledException => checkTransientException(new OperationCanceledException(exception.Message, exception)),
             RequestTimeoutException => checkTransientException(new TimeoutException(exception.Message, exception)),
-            _ => false,
+            _ => false
         });
     }
 

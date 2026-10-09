@@ -23,7 +23,8 @@ public partial class TransientExceptionsHandler
     /// </summary>
     /// <remarks>
     /// Отмену изнутри консьюмера MassTransit подменяет на ConsumerCanceledException; как OperationCanceledException
-    /// её передают политике UseRetryConfiguration и UseRedeliveryRetryConfiguration из Dex.MassTransit.Rabbit.
+    /// её передаёт политике HandleTransient из Dex.MassTransit.Rabbit (на нём же UseRetryConfiguration и UseRedeliveryRetryConfiguration),
+    /// обычный Handle в UseMessageRetry — нет.
     /// </remarks>
     public static TransientExceptionsHandler Default { get; } = new(runBuild: true);
 

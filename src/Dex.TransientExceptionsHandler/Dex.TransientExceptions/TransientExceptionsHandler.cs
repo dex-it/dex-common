@@ -31,9 +31,10 @@ public partial class TransientExceptionsHandler
     {
         _disableDefaultBehaviour = disableDefaultBehaviour;
 
-        _innerExceptionsSearchDepth = innerExceptionsSearchDepth is > 0
-            ? innerExceptionsSearchDepth.Value
-            : DefaultInnerExceptionSearchDepth;
+        if (innerExceptionsSearchDepth is { } depth)
+            ArgumentOutOfRangeException.ThrowIfNegative(depth, nameof(innerExceptionsSearchDepth));
+
+        _innerExceptionsSearchDepth = innerExceptionsSearchDepth ?? DefaultInnerExceptionSearchDepth;
 
         if (exceptionTypes is not null)
             Add(exceptionTypes);
