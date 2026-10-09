@@ -19,15 +19,28 @@
 - OperationCanceledException
 - RedisConnectionException
 - RedisTimeoutException
-- NpgsqlException (с флагом IsTransient)
+- Polly.ExecutionRejectedException и все наследники — отказы Polly: TimeoutRejectedException, BrokenCircuitException, IsolatedCircuitException, RateLimiterRejectedException, BulkheadRejectedException. И Polly 7.x, и Polly 8.x / Microsoft.Extensions.Http.Resilience: тип распознаётся по полному имени, пакет от Polly не зависит
+- NpgsqlException (с флагом IsTransient), включая PostgresException: deadlock, конфликт сериализации и другие коды, которые Npgsql считает временными
 - HttpRequestException (со статус-кодами 408, 429 и любым 5XX)
 - Refit.ApiException (со статус-кодами 408, 429 и любым 5XX)
 - RpcException (со статусами Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted)
 - WebException (со статусами ConnectFailure, Timeout, NameResolutionFailure, ProxyNameResolutionFailure, SendFailure, ReceiveFailure, KeepAliveFailure, PipelineFailure, ProtocolError, Pending)
 
+Проверки по типу и по предикату учитывают наследников, в том числе у вложенных исключений. Если на цепочке базовых типов исключения несколько предикатов, достаточно одного, вернувшего true.
+
+Начиная с 8.1.0 предикаты срабатывают и на наследниках (раньше — только на точном типе): добавленный через `Add<T>(predicate)` предикат теперь применяется и к наследникам `T`.
+
+Начиная с 8.1.0 `innerExceptionsSearchDepth` конструктора понимается так же, как `SetInnerExceptionsSearchDepth`: `0` — без вложенных исключений (раньше `0` молча становился глубиной по умолчанию 10), отрицательное значение — `ArgumentOutOfRangeException` (раньше тоже 10). `SetInnerExceptionsSearchDepth` с положительной глубиной раньше бросал `ArgumentOutOfRangeException`, теперь работает.
+
+В консьюмере MassTransit отмена (`OperationCanceledException`, в том числе таймаут `HttpClient`) до политики повторов не доходит: MassTransit подменяет её на `ConsumerCanceledException`. `UseRetryConfiguration`, `UseRedeliveryRetryConfiguration` и `r.HandleTransient(...)` из Dex.MassTransit.Rabbit передают её политике как `OperationCanceledException`, поэтому с `Default` она повторяется; обычный `UseMessageRetry(r => r.Handle(TransientExceptionsHandler.Default))` такую отмену не повторит — используйте `r.HandleTransient(TransientExceptionsHandler.Default)`.
+
+Вложенные исключения проверяются в глубину, у `AggregateException` — все `InnerExceptions`, а не только первое. Глубина считает само исключение первым уровнем: при глубине N проверяются N-1 уровней вложенности.
+
 #### Глобальные маркеры трансиентности:
 - Все ошибки с интерфейсом-маркером ITransientException всегда будут безусловно трансиентными, независимо от конфигурации.
 - Все ошибки с интерфейсом-маркером ITransientExceptionCandidate будут условно трансиентными, независимо от конфигурации. Условие трансиентности необходимо реализовать внутри ошибки, согласно интерфейсу.
+- Решает первый маркер на пути вниз по `InnerException` (кандидат — раньше `ITransientException` на том же исключении), и его решение финальное: `ITransientExceptionCandidate` с `IsTransient = false` отменяет совпадения по типу и выше, и ниже себя.
+- Ветки `AggregateException` между собой не вложены, поэтому маркер одной ветки не решает за соседнюю: если маркер есть хоть в одной ветке, каждая ветка проверяется отдельно по тем же правилам (маркер ветки решает за неё, без маркера — совпадения по типу внутри ветки), и исключение трансиентное, если трансиентна хоть одна. Например, `AggregateException(TimeoutException, кандидат с false)` — трансиентное при любом порядке веток. Сам агрегат и исключения над ним в этом случае по типу не проверяются, как и всё над маркером в цепочке. Если маркеров нет ни в одной ветке, решают совпадения по типу во всём дереве.
 
 #### Пример использования (для настройки консьюмера MassTransit)
 
@@ -58,7 +71,7 @@ private static TransientExceptionsHandler BuildCustomHandler()
 
     // конфигурирование глубины проверки InnerExceptions
     // любая найденная InnerException подходящая под описанные выше правила, делает входящую ошибку transient
-    // при значении 0, InnerExceptions не будут проверяться
+    // при значении 0 или 1 InnerExceptions не будут проверяться (само исключение — первый уровень), отрицательное — ArgumentOutOfRangeException
     // НЕОБЯЗАТЕЛЬНО, так как по умолчанию уже установлена не-нулевая глубина проверки
     builder.SetInnerExceptionsSearchDepth(99);
 

@@ -21,6 +21,8 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Grpc.Core.Api"/>
+        <PackageReference Include="Polly.Core"/>
+        <PackageReference Include="Polly" Aliases="PollyV7"/>
         <PackageReference Include="Refit"/>
     </ItemGroup>
 

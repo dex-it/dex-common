@@ -37,6 +37,8 @@
         <PackageReference Update="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0"/>
         <PackageReference Update="FluentAssertions" Version="8.10.0"/>
         <PackageReference Update="xunit.runner.visualstudio" Version="4.0.0"/>
+        <PackageReference Update="Polly.Core" Version="8.6.6"/>
+        <PackageReference Update="Polly" Version="7.2.4"/>                     <!-- только тесты: отказы Polly 7 рядом с Polly.Core (extern alias) -->
 
         <!--microsoft extensions -->
         <PackageReference Update="Microsoft.Extensions.Hosting" Version="8.0.1"/>

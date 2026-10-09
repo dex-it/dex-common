@@ -1,9 +1,15 @@
+extern alias PollyV7;
+
 using System.Net;
 using System.Net.Sockets;
 using Dex.TransientExceptions.Exceptions;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using NUnit.Framework;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 using Refit;
 
 namespace Dex.TransientExceptions.Tests;
@@ -177,6 +183,106 @@ public class TransientExceptionsHandlerTests
     }
 
     // -------------------------------------------------------------------------
+    // Static Default — предикаты срабатывают на наследниках
+    // -------------------------------------------------------------------------
+
+    [Test]
+    [TestCase(PostgresErrorCodes.SerializationFailure)]
+    [TestCase(PostgresErrorCodes.DeadlockDetected)]
+    [TestCase(PostgresErrorCodes.TooManyConnections)]
+    public void Default_PostgresException_TransientSqlState_ReturnsTrue(string sqlState)
+    {
+        Assert.That(TransientExceptionsHandler.Default.Check(Postgres(sqlState)), Is.True);
+    }
+
+    [Test]
+    [TestCase(PostgresErrorCodes.UndefinedTable)]
+    [TestCase(PostgresErrorCodes.UniqueViolation)]
+    public void Default_PostgresException_PermanentSqlState_ReturnsFalse(string sqlState)
+    {
+        Assert.That(TransientExceptionsHandler.Default.Check(Postgres(sqlState)), Is.False);
+    }
+
+    [Test]
+    public void Default_DbUpdateExceptionWithTransientPostgresInner_ReturnsTrue()
+    {
+        var ex = new DbUpdateException("save failed", Postgres(PostgresErrorCodes.SerializationFailure));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_DbUpdateExceptionWithPermanentPostgresInner_ReturnsFalse()
+    {
+        var ex = new DbUpdateException("save failed", Postgres(PostgresErrorCodes.UniqueViolation));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void Default_DerivedHttpRequestException_TransientStatusCode_ReturnsTrue()
+    {
+        var ex = new DerivedHttpRequestException(HttpStatusCode.ServiceUnavailable);
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_DerivedHttpRequestException_NonTransientStatusCode_ReturnsFalse()
+    {
+        var ex = new DerivedHttpRequestException(HttpStatusCode.BadRequest);
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    // -------------------------------------------------------------------------
+    // Static Default — отказы Polly
+    // -------------------------------------------------------------------------
+
+    [Test]
+    [TestCase(typeof(TimeoutRejectedException))]
+    [TestCase(typeof(BrokenCircuitException))]
+    [TestCase(typeof(IsolatedCircuitException))]
+    [TestCase(typeof(OtherPollyRejectionException))]
+    public void Default_PollyRejection_ReturnsTrue(Type exceptionType)
+    {
+        var ex = (Exception)Activator.CreateInstance(exceptionType)!;
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    /// <remarks>
+    /// Сборка Polly 7 (Polly.dll), как у сервисов на Microsoft.Extensions.Http.Polly: свои типы, не Polly.Core.
+    /// </remarks>
+    [Test]
+    [TestCase(typeof(PollyV7::Polly.Timeout.TimeoutRejectedException))]
+    [TestCase(typeof(PollyV7::Polly.CircuitBreaker.BrokenCircuitException))]
+    [TestCase(typeof(PollyV7::Polly.Bulkhead.BulkheadRejectedException))]
+    public void Default_Polly7Rejection_ReturnsTrue(Type exceptionType)
+    {
+        var ex = (Exception)Activator.CreateInstance(exceptionType)!;
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_PollyRejectionAsInner_ReturnsTrue()
+    {
+        var ex = new InvalidOperationException("outer", new TimeoutRejectedException());
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_RejectionOutsidePollyNamespace_ReturnsFalse()
+    {
+        Assert.That(TransientExceptionsHandler.Default.Check(new NotPolly.ExecutionRejectedException()), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_DisableDefaultBehaviour_PollyRejection_ReturnsFalse()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Build();
+
+        Assert.That(handler.Check(new TimeoutRejectedException()), Is.False);
+    }
+
+    // -------------------------------------------------------------------------
     // ITransientException marker interface
     // -------------------------------------------------------------------------
 
@@ -307,6 +413,30 @@ public class TransientExceptionsHandlerTests
     }
 
     [Test]
+    public void CustomHandler_PredicateOnBaseType_AppliesToDerived()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add<IOException>(ex => ex.Message.Contains("retry"))
+            .Build();
+
+        Assert.That(handler.Check(new FileNotFoundException("please retry")), Is.True);
+        Assert.That(handler.Check(new FileNotFoundException("permanent error")), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_PredicatesOnBaseAndDerived_AnyMatchReturnsTrue()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add<ArgumentNullException>(_ => false)
+            .Add<ArgumentException>(_ => true)
+            .Build();
+
+        Assert.That(handler.Check(new ArgumentNullException()), Is.True);
+    }
+
+    [Test]
     public void CustomHandler_DisableDefaultBehaviour_WellKnownTransientType_ReturnsFalse()
     {
         var handler = new TransientExceptionsHandler()
@@ -337,6 +467,173 @@ public class TransientExceptionsHandlerTests
     {
         var ex = new Exception("L1", new Exception("L2", new TimeoutException()));
         Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Constructor_InnerExceptionsSearchDepth0_DoesNotCheckInner()
+    {
+        var handler = new TransientExceptionsHandler([typeof(TimeoutException)], innerExceptionsSearchDepth: 0, runBuild: true, disableDefaultBehaviour: true);
+
+        Assert.That(handler.Check(new Exception("outer", new TimeoutException())), Is.False);
+    }
+
+    [Test]
+    public void Constructor_NegativeInnerExceptionsSearchDepth_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>((Action)(() => _ = new TransientExceptionsHandler(innerExceptionsSearchDepth: -1)));
+    }
+
+    [Test]
+    public void SetInnerExceptionsSearchDepth_Negative_ThrowsArgumentOutOfRangeException()
+    {
+        var handler = new TransientExceptionsHandler();
+        Assert.Throws<ArgumentOutOfRangeException>((Action)(() => handler.SetInnerExceptionsSearchDepth(-1)));
+    }
+
+    [Test]
+    public void CustomHandler_InnerExceptionSearchDepth_CountsOuterExceptionAsFirstLevel()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add(typeof(TimeoutException))
+            .SetInnerExceptionsSearchDepth(2)
+            .Build();
+
+        Assert.That(handler.Check(new Exception("L1", new TimeoutException())), Is.True);
+        Assert.That(handler.Check(new Exception("L1", new Exception("L2", new TimeoutException()))), Is.False);
+    }
+
+    [Test]
+    public void Default_AggregateWithTransientNotFirst_ReturnsTrue()
+    {
+        var ex = new AggregateException(new ArgumentException(), new TimeoutException());
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateWithTransientPredicateNotFirst_ReturnsTrue()
+    {
+        var ex = new AggregateException(new ArgumentException(), Postgres(PostgresErrorCodes.DeadlockDetected));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateWithTransientMarkerNotFirst_ReturnsTrue()
+    {
+        var ex = new AggregateException(new ArgumentException(), new TransientException());
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateNestedInChain_ReturnsTrue()
+    {
+        var ex = new InvalidOperationException("outer", new AggregateException(new ArgumentException(), new TimeoutException()));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateWithoutTransient_ReturnsFalse()
+    {
+        var ex = new AggregateException(new ArgumentException(), new InvalidOperationException());
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_AggregateBeyondSearchDepth_ReturnsFalse()
+    {
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add(typeof(TimeoutException))
+            .SetInnerExceptionsSearchDepth(2)
+            .Build();
+
+        var ex = new Exception("L1", new AggregateException(new ArgumentException(), new TimeoutException()));
+        Assert.That(handler.Check(ex), Is.False);
+    }
+
+    // -------------------------------------------------------------------------
+    // Маркеры в ветках AggregateException — решение своей ветки, не соседней
+    // -------------------------------------------------------------------------
+
+    [Test]
+    public void Default_AggregateTransientBranchAndCandidateFalse_ReturnsTrueInAnyOrder()
+    {
+        var timeout = new TimeoutException();
+        var candidate = new TestCandidateException(isTransient: false);
+
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(timeout, candidate)), Is.True);
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(candidate, timeout)), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateMarkerAndCandidateFalse_ReturnsTrueInAnyOrder()
+    {
+        var marker = new TransientException();
+        var candidate = new TestCandidateException(isTransient: false);
+
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(marker, candidate)), Is.True);
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(candidate, marker)), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateCandidateFalseAndNonTransient_ReturnsFalse()
+    {
+        // таймаут под кандидатом остаётся под его вето и в ветке агрегата
+        var candidate = new TestCandidateException(isTransient: false, new TimeoutException());
+        var ex = new AggregateException(candidate, new ArgumentException());
+
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void Default_AggregateWithCandidateFalseUnderTransientOuter_ReturnsFalse()
+    {
+        var ex = new TimeoutException("outer", new AggregateException(new TestCandidateException(isTransient: false), new ArgumentException()));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_AggregateBranchWithCandidate_RespectsSearchDepth()
+    {
+        TransientExceptionsHandler Handler(int depth) => new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add(typeof(TimeoutException))
+            .SetInnerExceptionsSearchDepth(depth)
+            .Build();
+
+        // таймаут на втором уровне вложенности: виден при глубине 3, не виден при 2
+        var ex = new AggregateException(new TestCandidateException(isTransient: false), new Exception("L1", new TimeoutException()));
+
+        Assert.That(Handler(3).Check(ex), Is.True);
+        Assert.That(Handler(2).Check(ex), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_MarkerBeyondSearchDepth_IsIgnored()
+    {
+        TransientExceptionsHandler Handler(int depth) => new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .SetInnerExceptionsSearchDepth(depth)
+            .Build();
+
+        var candidate = new TestCandidateException(isTransient: true);
+
+        Assert.That(Handler(1).Check(new Exception("L1", candidate)), Is.False);
+        Assert.That(Handler(2).Check(new Exception("L1", new AggregateException(candidate))), Is.False);
+        Assert.That(Handler(3).Check(new Exception("L1", new AggregateException(candidate))), Is.True);
+    }
+
+    [Test]
+    public void AggregateWithoutMarkers_TypesAboveAndOfAggregateDecide()
+    {
+        var timeoutOverAggregate = new TimeoutException("outer", new AggregateException(new ArgumentException()));
+        Assert.That(TransientExceptionsHandler.Default.Check(timeoutOverAggregate), Is.True);
+
+        var handler = new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add(typeof(AggregateException))
+            .Build();
+        Assert.That(handler.Check(new AggregateException(new ArgumentException())), Is.True);
     }
 
     [Test]
@@ -374,6 +671,19 @@ public class TransientExceptionsHandlerTests
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    private static PostgresException Postgres(string sqlState) => new("error", "ERROR", "ERROR", sqlState);
+
+    private sealed class DerivedHttpRequestException(HttpStatusCode statusCode) : HttpRequestException(null, null, statusCode);
+
+    // любой отказ Polly, в том числе из пакетов вне Polly.Core (RateLimiterRejectedException, BulkheadRejectedException)
+    private sealed class OtherPollyRejectionException : ExecutionRejectedException;
+
+    // тот же короткий тип вне пространства имён Polly
+    private static class NotPolly
+    {
+        public sealed class ExecutionRejectedException : Exception;
+    }
 
     private sealed class TestCandidateException(bool isTransient, Exception? inner = null)
         : Exception("test", inner), ITransientExceptionCandidate

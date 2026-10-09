@@ -11,7 +11,9 @@
 
 По типу (с наследованием): TimeoutException, IOException, SocketException, OutOfMemoryException, DbUpdateConcurrencyException, OperationCanceledException, RedisConnectionException, RedisTimeoutException.
 
-По предикату: NpgsqlException (только IsTransient=true), HttpRequestException (408, 429, 5xx), Refit.ApiException (408, 429, 5xx), RpcException (Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted), WebException (ConnectFailure, Timeout, и др.).
+По полному имени типа на цепочке наследования: `Polly.ExecutionRejectedException` — все отказы Polly 7.x и 8.x: таймаут, circuit breaker, rate limiter, bulkhead.
+
+По предикату (с наследованием): NpgsqlException (только IsTransient=true, в том числе PostgresException), HttpRequestException (408, 429, 5xx), Refit.ApiException (408, 429, 5xx), RpcException (Unknown, Internal, Unavailable, Aborted, DeadlineExceeded, ResourceExhausted), WebException (ConnectFailure, Timeout, и др.).
 
 ## Глобальные маркеры
 
@@ -52,5 +54,10 @@ if (handler.Check(exception)) { /* retry */ }
 
 - `Build()` ОБЯЗАТЕЛЕН перед `Check()` (иначе InvalidOperationException)
 - После `Build()` экземпляр заморожен: Add/Disable бросают InvalidOperationException
-- Предикаты проверяются по точному типу (не по наследованию); для наследования использовать `Add(Type)`
-- InnerException проверяются до указанной глубины (default 10): любое совпадение делает внешнее исключение transient
+- Предикат ищется по цепочке базовых типов исключения: срабатывает на наследниках; из нескольких предикатов на цепочке достаточно одного true
+- Polly — по имени типа, без ссылки на пакет: `Polly.ExecutionRejectedException` лежит в Polly.dll у 7.x и в Polly.Core у 8.x; ссылка на Polly.Core давала потребителю на Polly 7.x (его тянет `Microsoft.Extensions.Http.Polly` 8.0.x) CS0433 на `TimeoutRejectedException` и прочих. Тесты идут на обеих настоящих сборках: Polly 7 подключён в тестовый проект через `extern alias PollyV7`
+- `PostgresException.IsTransient` (Npgsql 8) не включает `57014` (statement_timeout): такой таймаут не повторяется, это решение Npgsql
+- `ConsumerCanceledException` MassTransit пакет не знает: перевод в `OperationCanceledException` делает `HandleTransient` из Dex.MassTransit.Rabbit
+- InnerException проверяются до указанной глубины (default 10; само исключение — первый уровень, 0 и 1 — без вложенных): любое совпадение делает внешнее исключение transient
+- Маркеры (`MarkerCheck`): первый на пути по `InnerException` решает финально, в том числе против совпадений по типу выше него. На `AggregateException` ветки независимы (`AggregateMarkerCheck`): есть маркер хоть в одной — каждая ветка проверяется отдельно на оставшуюся глубину (маркер ветки решает за неё, без маркера — `TypeCheck` ветки), итог any-true, а тип самого агрегата и всего над ним не смотрится; маркеров нет — решают типы по всему дереву. Иначе исход зависел бы от порядка веток, а `Candidate(false)` в соседней ветке гасил бы таймаут
+- Обход вложенных для типов и предикатов — свой (`EnumerateInnerExceptions`), в глубину, с заходом во все `AggregateException.InnerExceptions`; `GetInnerExceptions` из Dex.Extensions идёт только по `InnerException`. Ссылка на Dex.Extensions оставлена: потребители могли получать его транзитивно

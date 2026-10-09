@@ -151,10 +151,11 @@ With a masker the package serializes up to four times `MessageDataLimit` and han
 
 ### Retry and redelivery
 
-Two extension methods on `IConsumerConfigurator<TConsumer>`:
+Two extension methods on `IConsumerConfigurator<TConsumer>` and one on the retry configurator:
 
 | Method | Effect |
 |---|---|
+| `HandleTransient(checkTransient)` | On `IExceptionConfigurator` (inside `UseMessageRetry` / `UseDelayedRedelivery`): retries what `checkTransient` accepts, with the MassTransit exception mapping described below. |
 | `UseRetryConfiguration(checkTransient, retryLimit?, retryIntervals?)` | In-process exponential retry (defaults: 3 attempts, `1s`–`5s` with `1s` delta). |
 | `UseRedeliveryRetryConfiguration(checkTransient, retryLimit?, retryIntervals?, redeliveryIntervals?)` | Delayed redelivery via the broker **followed by** in-process retry (defaults: 5 min, 15 min, 30 min, 1 h, 3 h, 6 h). |
 
@@ -162,7 +163,7 @@ Two extension methods on `IConsumerConfigurator<TConsumer>`:
 configurator.RegisterReceiveEndpoint<PaymentDto, PaymentConsumer>(factory, endpoint =>
 {
     endpoint.UseRedeliveryRetryConfiguration(
-        checkTransientException: ex => ex is HttpRequestException or TimeoutException,
+        checkTransientException: TransientExceptionsHandler.Default,
         retryIntervals: new RetryExponentialIntervals(
             MinInterval: TimeSpan.FromSeconds(2),
             MaxInterval: TimeSpan.FromSeconds(30),
@@ -171,6 +172,20 @@ configurator.RegisterReceiveEndpoint<PaymentDto, PaymentConsumer>(factory, endpo
 ```
 
 Pair the `checkTransientException` callback with [`Dex.TransientExceptions`](https://github.com/dex-it/dex-common) for a project-wide policy of which errors are considered transient.
+
+MassTransit replaces an `OperationCanceledException` thrown by a consumer, a handler, a saga or a `UseTimeout` filter while the bus is running (for example, an `HttpClient.Timeout`) with `ConsumerCanceledException`, and drops the original exception, before the retry filters see it. Both methods first pass the exception to `checkTransientException` as is; if the policy rejects it, they pass `ConsumerCanceledException` again as an `OperationCanceledException` and `RequestTimeoutException` as a `TimeoutException`, with the MassTransit exception as the `InnerException`. As a result, a cancellation inside a consumer is retried when the policy retries either `ConsumerCanceledException` or `OperationCanceledException` (`TransientExceptionsHandler.Default` does). A consumer that cancels on purpose to skip a message is retried as well.
+
+The same mapping is available for any retry or redelivery — a handler, a saga, an endpoint — through `HandleTransient` on the retry configurator. A plain `r.Handle(...)` bypasses it.
+
+```csharp
+endpoint.UseMessageRetry(r =>
+{
+    r.Intervals(100, 500, 1000);
+    r.HandleTransient(TransientExceptionsHandler.Default);
+});
+```
+
+MassTransit decides whether to publish `Fault<T>` after each attempt by asking the policy about the consumer's original exception, before the substitution. A policy that rejects the original exception but accepts the final one (for example, `ex is ConsumerCanceledException`, or a cancellation wrapped in another exception with a policy that does not look at inner exceptions) gets a `Fault<T>` for every attempt rather than one after the last.
 
 ### Concurrency / prefetch
 
@@ -255,6 +270,7 @@ This registers the pipe specification on consume, send and publish pipelines.
 
 | Version | PR / Commit | Change |
 |---|---|---|
+| **8.1.0** | [#248](https://github.com/dex-it/dex-common/issues/248) | `UseRetryConfiguration` / `UseRedeliveryRetryConfiguration` now retry a `ConsumerCanceledException` (a cancellation or `UseTimeout` inside the consumer) and a `RequestTimeoutException` when the policy accepts `OperationCanceledException` / `TimeoutException`. With `TransientExceptionsHandler.Default` such messages are retried and redelivered (up to the whole redelivery window) instead of going to `_error` on the first attempt, including a consumer that throws `OperationCanceledException` on purpose to skip a message. New `HandleTransient` on the retry configurator. |
 | **8.0.11+** | [#199](https://github.com/dex-it/dex-common/pull/199) (`92c3e8b`) | Bumped to MassTransit **8.5.3**. Review your consumer signatures and middleware against the upstream changelog. |
 | 8.0.7+ | [#203](https://github.com/dex-it/dex-common/pull/203) (`9f78bd4`) | MassTransit packages bumped together with `Dex.Cap.Outbox` `AddOutboxPublisher()`. No source-level break in `Dex.MassTransit.*`. |
 | `13eda98` | local feat | `UseRedeliveryRetryConfiguration` and `UseRetryConfiguration` gained a new `RetryExponentialIntervals? retryIntervals = null` optional parameter. The default `(1s, 5s, 1s)` is preserved, but **named-argument** callers should double-check argument order. |

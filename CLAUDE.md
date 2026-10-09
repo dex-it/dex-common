@@ -30,7 +30,8 @@ ClickHouse доступен только в CI (`publish.yml`). Credentials: с�
 - `net8.0`, версии `8.x`: Cap, Audit, Lock, DistributedCache, Pagination, Specifications.EntityFramework
 - Исключение: `Dex.Configuration.ProtectedJson` таргетит `netstandard2.0;net8.0`, но версия `8.x`
 - Версия задаётся вручную в `<PackageVersion>` каждого .csproj
-- Централизованные зависимости: `src/Directory.Build.targets`
+- Bump: patch — исправление без смены контракта; minor — меняется документированное поведение (в README/`CLAUDE.md` модуля), расширяется набор по умолчанию или появляется новая зависимость пакета
+- Централизованные зависимости: `src/Directory.Build.targets` (`PackageReference Update` с `Version`); в .csproj — только `Include` без `Version`, новая зависимость добавляется в оба места
 
 ## Каталог модулей
 
