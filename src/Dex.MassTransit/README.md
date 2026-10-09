@@ -115,6 +115,40 @@ public class PaymentConsumer(ILogger<PaymentConsumer> log) : BaseConsumer<Paymen
 
 > Requires the RabbitMQ plugin **`rabbitmq_delayed_message_exchange`** for `Defer` to work.
 
+### Error record and message body masking
+
+On failure `BaseConsumer<T>` writes one error record via `ILogger.LogConsumeError` (a consumer of several message types calls it from its own `catch`): message type, `MessageId`, `ConversationId`, retry attempt and the message body as a single JSON string, truncated to `MessageDataLimit` bytes of UTF-8 (4000 by default, overridable).
+
+The body is written as is unless an `IMessageDataMasker` is registered in the container the consumers are resolved from — consumers themselves stay unchanged. The package does **not** register one. A ready-made masker by field names is included; register it yourself:
+
+```csharp
+// default names: fragments password, passwd, pwd, secret, token, apikey, authorization, credential, privatekey, cvv, cvc
+// match anywhere in the name (case and any character other than a letter or digit are ignored: CardCvv, x-api-key, User:Password);
+// words pin, otp match a whole word of the name or its plural (PinCode, SmsOtp, PINCode, PINs, Card:Pin — but not Shipping, RootPath);
+// a word entry of several words (PayerBic, pin_code) matches the whole name in any form (payer_bic, PAYERBIC)
+services.AddSingleton<IMessageDataMasker, SensitiveNamesMessageDataMasker>();
+
+// or your own list instead of the default one
+services.AddSingleton<IMessageDataMasker>(SensitiveNamesMessageDataMasker.Create(
+    nameFragments: ["password", "token", "iban"],
+    nameWords: ["pin"]));
+```
+
+A value under a matching name — string, number, object or array — is replaced with `"***"` as a whole and never reaches the record even partially, including one cut off at the end of the input. An ordinary string that does not fit the limit is cut on a character boundary, as without a masker — unless it was already cut off at the end of the masker's input (roughly longer than three times the limit): such a string is dropped. The masker looks at field names only: a name held in a neighbouring field (a list of `Key`/`Value` pairs) and JSON inside a string value are not masked. Entries of your own list are normalized the same way as names, so `" token"` from a `Split(',')` still matches. To apply your own rules, implement the interface and register it the same way:
+
+```csharp
+public sealed class MyMasker : IMessageDataMasker
+{
+    // json: the serialized body or its beginning, cut on a character boundary;
+    // isComplete == false means only the beginning of the body was passed.
+    // Honour isComplete: a value cut off at the end of the input must not be written even partially.
+    // Keep the result within `limit` bytes of UTF-8 plus the truncation mark, and mark an incomplete result yourself.
+    public string Mask(ReadOnlySpan<byte> json, bool isComplete, int limit) => ...;
+}
+```
+
+With a masker the package serializes up to four times `MessageDataLimit` and hands that to the masker, so the space freed by masked values goes to the following fields; the whole message graph is still never walked. The record ceiling stays with the package: a result longer than `limit` bytes (plus the `...` mark) is cut to `limit` on a character boundary and marked, and `null` is written as an empty body. A result within the limit is written as is. Only consumers resolved from the container get the masker: a consumer registered by factory or instance (`e.Consumer(() => new ...)`, `Instance`, `Handler`) writes the body unmasked, unless the endpoint opens a message scope with `UseMessageScope(context)`. If the masker (or its resolution) throws, the record gets `<not masked: ExceptionType>` instead of the body, and the original consumer exception is kept.
+
 ### Retry and redelivery
 
 Two extension methods on `IConsumerConfigurator<TConsumer>`:

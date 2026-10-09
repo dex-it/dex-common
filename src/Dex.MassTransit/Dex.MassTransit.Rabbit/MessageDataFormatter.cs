@@ -19,16 +19,28 @@ internal static class MessageDataFormatter
     private static readonly JsonSerializerOptions Options = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     /// <summary>
-    /// Отдаёт тело сообщения в JSON, усечённое до <paramref name="limit"/> байт.
+    /// Во сколько раз вход маскировщика больше лимита записи.
+    /// </summary>
+    /// <remarks>
+    /// Маска укорачивает значения, и освобождённое место должно достаться следующим полям: лимит
+    /// режет вывод маскировщика, а не его вход.
+    /// </remarks>
+    internal const int MaskerInputFactor = 4;
+
+    private const string Ellipsis = "...";
+
+    /// <summary>
+    /// Отдаёт тело сообщения в JSON, усечённое до <paramref name="limit"/> байт; с <paramref name="masker"/> — его результат.
     /// </summary>
     /// <remarks>
     /// Сериализация идёт в буфер фиксированного размера, а не в строку: размер тела ничем не
     /// ограничен сверху. Вызов приходит из обработчика ошибки, где своё исключение подменило бы
-    /// исходное, поэтому ни сбой сериализации, ни отсутствие тела наружу не выходят.
+    /// исходное, поэтому ни сбой сериализации или маски, ни отсутствие тела наружу не выходят.
     /// </remarks>
-    public static string Format<TMessage>(TMessage? message, int limit)
+    public static string Format<TMessage>(TMessage? message, int limit, IMessageDataMasker? masker = null)
     {
-        using var buffer = new BoundedBuffer(Math.Max(0, limit));
+        limit = Math.Max(0, limit);
+        using var buffer = new BoundedBuffer(masker == null ? limit : (int)Math.Min((long)limit * MaskerInputFactor, Array.MaxLength));
 
         try
         {
@@ -43,8 +55,13 @@ internal static class MessageDataFormatter
             return $"<not serialized: {e.GetType().Name}>";
         }
 
-        return buffer.GetText();
+        return masker == null ? buffer.GetText() : buffer.GetMaskedText(masker, limit);
     }
+
+    /// <summary>
+    /// Маркер на месте тела, когда маска не удалась: тело без маски в запись не идёт.
+    /// </summary>
+    public static string NotMasked(Exception e) => $"<not masked: {e.GetType().Name}>";
 
     /// <summary>
     /// Поток, принимающий не больше заданного числа байт.
@@ -52,10 +69,14 @@ internal static class MessageDataFormatter
     /// <remarks>
     /// На переполнении бросает <see cref="LimitReachedException"/>, чтобы сериализатор прекратил
     /// обход: размер графа ничем не ограничен, а всё после лимита всё равно отбрасывается.
+    /// Буфер растёт до потолка по мере записи: память на лимит заранее дала бы в обработчике ошибки
+    /// нехватку памяти, подменяющую исходное исключение, даже на маленьком теле.
     /// </remarks>
-    private sealed class BoundedBuffer(int limit) : Stream
+    private sealed class BoundedBuffer(int capacity) : Stream
     {
-        private readonly byte[] _buffer = new byte[limit];
+        private const int InitialSize = 4096;
+
+        private byte[] _buffer = new byte[Math.Min(capacity, InitialSize)];
         private int _length;
         private bool _truncated;
 
@@ -74,7 +95,7 @@ internal static class MessageDataFormatter
 
         public override void Write(ReadOnlySpan<byte> buffer)
         {
-            var free = _buffer.Length - _length;
+            var free = capacity - _length;
 
             if (buffer.Length > free)
             {
@@ -82,6 +103,7 @@ internal static class MessageDataFormatter
                 buffer = buffer[..free];
             }
 
+            EnsureSize(_length + buffer.Length);
             buffer.CopyTo(_buffer.AsSpan(_length));
             _length += buffer.Length;
 
@@ -93,20 +115,72 @@ internal static class MessageDataFormatter
         {
         }
 
+        private void EnsureSize(int required)
+        {
+            if (required <= _buffer.Length)
+                return;
+
+            Array.Resize(ref _buffer, (int)Math.Min(capacity, Math.Max(required, (long)_buffer.Length * 2)));
+        }
+
         public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
         public override void SetLength(long value) => throw new NotSupportedException();
 
+        private string TruncationMark => _truncated ? Ellipsis : string.Empty;
+
         /// <summary>
         /// Отдаёт принятые байты текстом, помечая усечение.
         /// </summary>
+        public string GetText() => Encoding.UTF8.GetString(WholeChars()) + TruncationMark;
+
+        /// <summary>
+        /// Отдаёт принятые байты через маскировщик, уложив его результат в лимит.
+        /// </summary>
+        /// <remarks>
+        /// Потолок записи держит пакет, а не маскировщик: своя маска может лимит не смотреть, а поле в хранилище
+        /// логов ограничено по длине. Неполный результат, уложившийся в лимит, помечает сам маскировщик.
+        /// </remarks>
+        public string GetMaskedText(IMessageDataMasker masker, int limit)
+        {
+            string? masked;
+
+            try
+            {
+                masked = masker.Mask(WholeChars(), !_truncated, limit);
+            }
+            catch (Exception e)
+            {
+                return NotMasked(e);
+            }
+
+            return FitToLimit(masked ?? string.Empty, limit);
+        }
+
+        /// <remarks>
+        /// Результат с меткой усечения, уложенный в лимит, проходит как есть, чтобы метка не удваивалась.
+        /// </remarks>
+        private static string FitToLimit(string text, int limit)
+        {
+            if (Encoding.UTF8.GetByteCount(text) <= (long)limit + Ellipsis.Length)
+                return text;
+
+            var bytes = Encoding.UTF8.GetBytes(text);
+            var length = limit;
+
+            while (length > 0 && (bytes[length] & 0xC0) == 0x80)
+                length--;
+
+            return Encoding.UTF8.GetString(bytes, 0, length) + Ellipsis;
+        }
+
         /// <remarks>
         /// Обрез по байтам разрывает многобайтовую последовательность UTF-8, поэтому незакрытый
         /// хвост отбрасывается: иначе на его месте оказывается символ замены.
         /// </remarks>
-        public string GetText()
+        private ReadOnlySpan<byte> WholeChars()
         {
             var length = _length;
 
@@ -119,7 +193,7 @@ internal static class MessageDataFormatter
                     length--;
             }
 
-            return Encoding.UTF8.GetString(_buffer, 0, length) + (_truncated ? "..." : string.Empty);
+            return _buffer.AsSpan(0, length);
         }
 
         /// <summary>

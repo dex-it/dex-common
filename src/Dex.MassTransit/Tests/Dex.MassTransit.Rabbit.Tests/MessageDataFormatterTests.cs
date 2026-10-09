@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using NUnit.Framework;
 
 namespace Dex.MassTransit.Rabbit.Tests;
@@ -49,6 +51,19 @@ public class MessageDataFormatterTests
         Assert.That(Encoding.UTF8.GetByteCount(messageData[..^3]), Is.LessThanOrEqualTo(40));
     }
 
+    /// <remarks>
+    /// Буфер растёт по мере записи: тело больше начального размера буфера должно дойти до лимита целиком.
+    /// </remarks>
+    [Test]
+    public void Format_WhenBodyExceedsInitialBuffer_TruncatesToLimit()
+    {
+        var messageData = MessageDataFormatter.Format(new { Name = new string('a', 20_000) }, limit: 8000);
+
+        Assert.That(messageData, Does.StartWith("""{"Name":"aaa"""));
+        Assert.That(messageData, Does.EndWith("..."));
+        Assert.That(messageData[..^3], Has.Length.EqualTo(8000));
+    }
+
     [Test]
     public void Format_WhenLimitIsNotPositive_ReturnsOnlyTruncationMark()
     {
@@ -60,6 +75,50 @@ public class MessageDataFormatterTests
     public void Format_WhenMessageIsNull_ReturnsJsonNull()
     {
         Assert.That(MessageDataFormatter.Format<object>(null, limit: 4000), Is.EqualTo("null"));
+    }
+
+    /// <remarks>
+    /// Вызов приходит из обработчика ошибки: предельный лимит не должен ни переполнить арифметику лимита, ни подменить
+    /// исходное исключение своим.
+    /// </remarks>
+    [TestCase(int.MaxValue)]
+    [TestCase(int.MaxValue - 1)]
+    [TestCase(int.MaxValue - 2)]
+    public void Format_WithMaskerAndMaximalLimit_ReturnsMaskedBody(int limit)
+    {
+        var messageData = MessageDataFormatter.Format(new { A = "x", Password = "p" }, limit, new SensitiveNamesMessageDataMasker());
+
+        Assert.That(messageData, Is.EqualTo("""{"A":"x","Password":"***"}"""));
+    }
+
+    /// <remarks>
+    /// Память должна зависеть от тела, а не от лимита: заранее выделенный буфер на лимит даёт в обработчике ошибки
+    /// нехватку памяти, подменяющую исходное исключение.
+    /// </remarks>
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Format_WithMaximalLimit_AllocatesInProportionToBody(bool withMasker)
+    {
+        var masker = withMasker ? new SensitiveNamesMessageDataMasker() : null;
+        MessageDataFormatter.Format(new { A = "x" }, 1000, masker);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var messageData = MessageDataFormatter.Format(new { A = "x" }, int.MaxValue, masker);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.That(messageData, Is.EqualTo("""{"A":"x"}"""));
+        Assert.That(allocated, Is.LessThan(1_000_000));
+    }
+
+    /// <remarks>
+    /// Результат маски с её меткой, уложившийся в лимит с запасом на метку, проходит как есть: метка не удваивается.
+    /// </remarks>
+    [Test]
+    public void Format_WhenMaskerMarksResultWithinLimit_KeepsSingleMark()
+    {
+        var messageData = MessageDataFormatter.Format(new { Ab = "cd", Pin = 1 }, 11, new SensitiveNamesMessageDataMasker());
+
+        Assert.That(messageData, Is.EqualTo("""{"Ab":"cd"..."""));
     }
 
     /// <summary>
@@ -75,6 +134,7 @@ public class MessageDataFormatterTests
 
         private void Visit() => Visited++;
 
+        [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         public sealed class Item(CountingMessage owner)
         {
             public string Name
