@@ -551,6 +551,63 @@ public class TransientExceptionsHandlerTests
         Assert.That(handler.Check(ex), Is.False);
     }
 
+    // -------------------------------------------------------------------------
+    // Маркеры в ветках AggregateException — решение своей ветки, не соседней
+    // -------------------------------------------------------------------------
+
+    [Test]
+    public void Default_AggregateTransientBranchAndCandidateFalse_ReturnsTrueInAnyOrder()
+    {
+        var timeout = new TimeoutException();
+        var candidate = new TestCandidateException(isTransient: false);
+
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(timeout, candidate)), Is.True);
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(candidate, timeout)), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateMarkerAndCandidateFalse_ReturnsTrueInAnyOrder()
+    {
+        var marker = new TransientException();
+        var candidate = new TestCandidateException(isTransient: false);
+
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(marker, candidate)), Is.True);
+        Assert.That(TransientExceptionsHandler.Default.Check(new AggregateException(candidate, marker)), Is.True);
+    }
+
+    [Test]
+    public void Default_AggregateCandidateFalseAndNonTransient_ReturnsFalse()
+    {
+        // таймаут под кандидатом остаётся под его вето и в ветке агрегата
+        var candidate = new TestCandidateException(isTransient: false, new TimeoutException());
+        var ex = new AggregateException(candidate, new ArgumentException());
+
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void Default_AggregateWithCandidateFalseUnderTransientOuter_ReturnsFalse()
+    {
+        var ex = new TimeoutException("outer", new AggregateException(new TestCandidateException(isTransient: false), new ArgumentException()));
+        Assert.That(TransientExceptionsHandler.Default.Check(ex), Is.False);
+    }
+
+    [Test]
+    public void CustomHandler_AggregateBranchWithCandidate_RespectsSearchDepth()
+    {
+        TransientExceptionsHandler Handler(int depth) => new TransientExceptionsHandler()
+            .DisableDefaultBehaviour()
+            .Add(typeof(TimeoutException))
+            .SetInnerExceptionsSearchDepth(depth)
+            .Build();
+
+        // таймаут на втором уровне вложенности: виден при глубине 3, не виден при 2
+        var ex = new AggregateException(new TestCandidateException(isTransient: false), new Exception("L1", new TimeoutException()));
+
+        Assert.That(Handler(3).Check(ex), Is.True);
+        Assert.That(Handler(2).Check(ex), Is.False);
+    }
+
     [Test]
     public void CustomHandler_InnerExceptionSearchDepth0_DoesNotCheckInner()
     {

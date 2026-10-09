@@ -92,30 +92,6 @@ public partial class TransientExceptionsHandler
         }
     }.ToFrozenDictionary();
 
-    // null = кандидат не найден, продолжать проверки
-    // true/false = кандидат найден, его решение финальное
-    private static bool? TransientExceptionInterfaceCheck(Exception exception, int innerExceptionsSearchDepth)
-    {
-        // ITransientExceptionCandidate проверяется первым — более специфичный контракт,
-        // позволяет явно переопределить поведение даже если базовый класс реализует ITransientException
-        if (exception is ITransientExceptionCandidate candidate)
-            return candidate.IsTransient;
-
-        if (exception is ITransientException)
-            return true;
-
-        foreach (var inner in EnumerateInnerExceptions(exception, innerExceptionsSearchDepth))
-        {
-            if (inner is ITransientExceptionCandidate innerCandidate)
-                return innerCandidate.IsTransient;
-
-            if (inner is ITransientException)
-                return true;
-        }
-
-        return null;
-    }
-
     private static bool StaticCheck(Exception exception, int innerExceptionsSearchDepth)
     {
         ArgumentNullException.ThrowIfNull(exception);

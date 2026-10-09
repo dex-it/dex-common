@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using Dex.TransientExceptions.Exceptions;
 
 namespace Dex.TransientExceptions;
 
@@ -98,18 +99,73 @@ public partial class TransientExceptionsHandler
             throw new InvalidOperationException(
                 $"Завершите настройку {nameof(TransientExceptionsHandler)} и вызовите {nameof(Build)} перед использованием {nameof(Check)}");
 
-        var interfaceCheckResult = TransientExceptionInterfaceCheck(exception, _innerExceptionsSearchDepth);
-        if (interfaceCheckResult.HasValue)
-            return interfaceCheckResult.Value;
+        return MarkerCheck(exception, _innerExceptionsSearchDepth) ?? TypeCheck(exception, _innerExceptionsSearchDepth);
+    }
 
-        if (ExceptionsCheckInternal(_transientExceptions!, exception, _innerExceptionsSearchDepth))
+    // null = маркеров нет, решают типы по всему дереву
+    // true/false = первый маркер на пути вниз по InnerException; его решение финальное и для типов выше него
+    private bool? MarkerCheck(Exception exception, int innerExceptionsSearchDepth)
+    {
+        for (var (current, level) = (exception, 1); ; level++)
+        {
+            // ITransientExceptionCandidate проверяется первым — более специфичный контракт,
+            // позволяет явно переопределить поведение даже если базовый класс реализует ITransientException
+            if (current is ITransientExceptionCandidate candidate)
+                return candidate.IsTransient;
+
+            if (current is ITransientException)
+                return true;
+
+            if (level >= innerExceptionsSearchDepth)
+                return null;
+
+            if (current is AggregateException aggregate)
+                return AggregateMarkerCheck(aggregate, innerExceptionsSearchDepth - level);
+
+            if (current.InnerException is null)
+                return null;
+
+            current = current.InnerException;
+        }
+    }
+
+    // Ветки агрегата между собой не вложены, поэтому маркер одной ветки не решает за соседнюю:
+    // каждая проверяется целиком, transient — если transient хоть одна
+    private bool? AggregateMarkerCheck(AggregateException aggregate, int branchSearchDepth)
+    {
+        var branches = aggregate.InnerExceptions;
+        var markers = new bool?[branches.Count];
+        var markerFound = false;
+
+        for (var i = 0; i < branches.Count; i++)
+        {
+            markers[i] = MarkerCheck(branches[i], branchSearchDepth);
+            if (markers[i] is true)
+                return true;
+
+            markerFound |= markers[i].HasValue;
+        }
+
+        if (!markerFound)
+            return null;
+
+        for (var i = 0; i < branches.Count; i++)
+            if (markers[i] is null && TypeCheck(branches[i], branchSearchDepth))
+                return true;
+
+        return false;
+    }
+
+    private bool TypeCheck(Exception exception, int innerExceptionsSearchDepth)
+    {
+        if (ExceptionsCheckInternal(_transientExceptions!, exception, innerExceptionsSearchDepth))
             return true;
 
-        if (PredicateCheckInternal(_transientExceptionsPredicate!, exception, _innerExceptionsSearchDepth))
+        if (PredicateCheckInternal(_transientExceptionsPredicate!, exception, innerExceptionsSearchDepth))
             return true;
 
         // run default behaviour if it is not disabled
-        return !_disableDefaultBehaviour && StaticCheck(exception, _innerExceptionsSearchDepth);
+        return !_disableDefaultBehaviour && StaticCheck(exception, innerExceptionsSearchDepth);
     }
 
     /// <summary>
